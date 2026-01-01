@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+data/garments/**/images/
+data/garments/**/masks/
+data/garments/**/meshes/
+data/garments/**/renders/
+experiments/**/outputs/
+.DS_Store
