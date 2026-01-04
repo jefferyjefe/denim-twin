@@ -34,7 +34,7 @@ def check_image(path, board=None, spec=None, *, blur_min=80.0, clip_max=0.02,
             r.mm_per_px = mm_per_pixel(corners, ids, board, spec)
             hull = cv2.convexHull(corners.astype(np.float32)).astype(np.int32)
             m = np.zeros_like(gray); cv2.fillConvexPoly(m, hull, 255)
-            pad = int(1.5 * spec['square_mm'] / r.mm_per_px) + 2 * int(10 / r.mm_per_px)  # outer squares + paper margin
+            pad = int(2.5 * spec['square_mm'] / r.mm_per_px) + 2 * int(10 / r.mm_per_px)  # outer squares + paper margin
             m = cv2.dilate(m, np.ones((pad | 1, pad | 1), np.uint8))
             valid = m == 0
     # blur: variance of Laplacian (whole frame)
