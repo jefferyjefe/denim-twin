@@ -1,0 +1,12 @@
+{
+  "cols": 8,
+  "rows": 11,
+  "square_mm": 25.0,
+  "marker_mm": 18.0,
+  "dictionary": "DICT_5X5_100",
+  "dpi": 300,
+  "printed_size_mm": [
+    220.0,
+    295.0
+  ]
+}
