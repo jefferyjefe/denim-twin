@@ -3,3 +3,6 @@ opencv-contrib-python
 pillow
 pyyaml
 jsonschema
+scikit-image
+scipy
+pytest
