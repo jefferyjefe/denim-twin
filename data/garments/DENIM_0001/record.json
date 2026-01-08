@@ -32,7 +32,7 @@
     {
       "type": "print",
       "location": "back, both legs",
-      "note": "large painted seagull logo (identity-critical, high preservation priority)"
+      "note": "large ecru painted seagull ('Daicock' family) on back, both legs. 185/86A is a CN size code (height 185 cm / waist 86 cm), not a style number; exact SKU unidentified. Evisu care guidance for painted seagull lines: hand/delicate cold, hang dry, no iron on print."
     },
     {
       "type": "fade",
@@ -44,7 +44,8 @@
   "quality_flags": [
     "prepilot_capture_no_fiducial",
     "background_wood_floor",
-    "handheld_perspective"
+    "handheld_perspective",
+    "style_sku_unknown"
   ],
   "protocol_deviations": [
     "care label: HAND WASH COLD / HANG DRY / DO NOT TUMBLE / steam ironing may cause irreversible damage \u2014 conflicts with standardized machine wash+dry; decide per-garment wash handling before cutting"

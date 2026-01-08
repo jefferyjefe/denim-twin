@@ -4,9 +4,9 @@
   "acquisition_source": "owner (Jeffery), pre-owned",
   "acquisition_price_usd": null,
   "brand_optional": "Our Legacy",
-  "garment_style": "straight",
+  "garment_style": "wide",
   "wash_shade": "light",
-  "fiber_composition": "UNKNOWN \u2014 care/composition label not photographed",
+  "fiber_composition": "100% cotton (brand spec: Our Legacy Third Cut Digital Denim Print, M4205TDD; Italian denim, made in Portugal \u2014 verify against sewn care label)",
   "elastane_percentage": 0,
   "mass_grams": null,
   "fabric_thickness_mm": null,
@@ -30,14 +30,9 @@
   "landmarks": null,
   "existing_damage_annotations": [
     {
-      "type": "print/distress",
-      "location": "front thighs, back pockets, back right hem",
-      "note": "pale paint-like marks; fades look printed (possible digitally printed denim) \u2014 verify by close-up: printed fades have no weave-level color change"
-    },
-    {
-      "type": "fade",
-      "location": "overall",
-      "note": "heavy overall light wash"
+      "type": "print",
+      "location": "entire garment",
+      "note": "CONFIRMED trompe-l'oeil DIGITAL PRINT on bleached Italian denim \u2014 all visible fades/marks are printed, not worn. Cut hem will expose unprinted base fabric; fray threads will be base color."
     }
   ],
   "fray_measurements": null,
@@ -45,8 +40,10 @@
     "prepilot_capture_no_fiducial",
     "background_wood_floor",
     "handheld_perspective",
-    "composition_missing"
+    "composition_from_web_not_label"
   ],
-  "protocol_deviations": [],
+  "protocol_deviations": [
+    "printed denim: hem fray color/appearance differs from surface print \u2014 treat as its own stratum"
+  ],
   "dataset_split": "unassigned"
 }
