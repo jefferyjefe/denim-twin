@@ -1,19 +1,19 @@
 {
-  "garment_id": "DENIM_0001",
+  "garment_id": "DENIM_0002",
   "protocol_version": "0.1",
   "acquisition_source": "owner (Jeffery), pre-owned",
   "acquisition_price_usd": null,
-  "brand_optional": "Evisu",
-  "garment_style": "wide",
+  "brand_optional": "Our Legacy",
+  "garment_style": "straight",
   "wash_shade": "light",
-  "fiber_composition": "100% cotton",
+  "fiber_composition": "UNKNOWN \u2014 care/composition label not photographed",
   "elastane_percentage": 0,
   "mass_grams": null,
   "fabric_thickness_mm": null,
   "waist_cm": 91.4,
   "front_rise_cm": null,
   "leg_opening_cm": null,
-  "original_inseam_cm": 76.2,
+  "original_inseam_cm": null,
   "target_inseam_cm": null,
   "cut_path_coordinates": null,
   "cut_tool": null,
@@ -30,24 +30,23 @@
   "landmarks": null,
   "existing_damage_annotations": [
     {
-      "type": "print",
-      "location": "back, both legs",
-      "note": "large painted seagull logo (identity-critical, high preservation priority)"
+      "type": "print/distress",
+      "location": "front thighs, back pockets, back right hem",
+      "note": "pale paint-like marks; fades look printed (possible digitally printed denim) \u2014 verify by close-up: printed fades have no weave-level color change"
     },
     {
       "type": "fade",
-      "location": "front thighs/knees",
-      "note": "pronounced whiskering and knee fades"
+      "location": "overall",
+      "note": "heavy overall light wash"
     }
   ],
   "fray_measurements": null,
   "quality_flags": [
     "prepilot_capture_no_fiducial",
     "background_wood_floor",
-    "handheld_perspective"
+    "handheld_perspective",
+    "composition_missing"
   ],
-  "protocol_deviations": [
-    "care label: HAND WASH COLD / HANG DRY / DO NOT TUMBLE / steam ironing may cause irreversible damage \u2014 conflicts with standardized machine wash+dry; decide per-garment wash handling before cutting"
-  ],
+  "protocol_deviations": [],
   "dataset_split": "unassigned"
 }
