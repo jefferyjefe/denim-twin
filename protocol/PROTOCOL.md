@@ -66,3 +66,12 @@ Reject and retake if: garment cropped, uneven lighting, motion blur, board missi
   landmark consistency.
 - Wash two pilot garments twice under identical protocol; measure fray-metric
   noise floor.
+
+## 7. Offcut swatches (added 2026-08-28)
+Retained lower-leg sections carry a raw edge identical to the garment's. Label each
+`<GARMENT_ID>_OFFCUT_L` / `_R`, photograph before washing, then assign wash conditions:
+- Default: one offcut follows the standard §4 protocol; the other follows the garment's
+  actual wash condition (control for scrap-vs-garment equivalence).
+- Garments whose care label forbids machine washing (e.g. painted prints) are washed per
+  label; the standard-protocol data point comes from the offcut.
+- Measure fray on offcuts exactly as in §5. Record `offcut_wash` in the garment record.

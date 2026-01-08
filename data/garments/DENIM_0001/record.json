@@ -49,7 +49,7 @@
     "measurements_not_physically_taken"
   ],
   "protocol_deviations": [
-    "care label: HAND WASH COLD / HANG DRY / DO NOT TUMBLE / steam ironing may cause irreversible damage \u2014 conflicts with standardized machine wash+dry; decide per-garment wash handling before cutting"
+    "DECIDED 2026-08-28: garment hand-washed cold + hang dry per care label (print preservation). Cut-off leg sections used as swatches: leg A = standard machine wash+dry protocol; leg B = hand wash + hang dry (scrap-vs-garment control)."
   ],
   "dataset_split": "unassigned"
 }
