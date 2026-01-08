@@ -10,10 +10,10 @@
   "elastane_percentage": 0,
   "mass_grams": null,
   "fabric_thickness_mm": null,
-  "waist_cm": 91.4,
-  "front_rise_cm": null,
-  "leg_opening_cm": null,
-  "original_inseam_cm": null,
+  "waist_cm": 96.5,
+  "front_rise_cm": 33.7,
+  "leg_opening_cm": 52.0,
+  "original_inseam_cm": 76.2,
   "target_inseam_cm": null,
   "cut_path_coordinates": null,
   "cut_tool": null,
@@ -21,7 +21,7 @@
   "cut_legs_together": false,
   "wash": null,
   "capture_device": "iPhone (handheld, no rig)",
-  "capture_calibration": null,
+  "capture_calibration": "none; measurements from retailer size chart (lost & found, size 36/32): waist 38in, rise 13.25in, hem 10.25in flat, thigh 14.25in, inseam 30in. 'Mid-weight non-stretch' (Shopbop). Weight/thickness unmeasured.",
   "before_image_paths": [],
   "marked_image_paths": [],
   "immediate_after_image_paths": [],
@@ -40,7 +40,8 @@
     "prepilot_capture_no_fiducial",
     "background_wood_floor",
     "handheld_perspective",
-    "composition_from_web_not_label"
+    "composition_from_web_not_label",
+    "measurements_not_physically_taken"
   ],
   "protocol_deviations": [
     "printed denim: hem fray color/appearance differs from surface print \u2014 treat as its own stratum"

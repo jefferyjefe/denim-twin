@@ -10,9 +10,9 @@
   "elastane_percentage": 0,
   "mass_grams": null,
   "fabric_thickness_mm": null,
-  "waist_cm": 91.4,
-  "front_rise_cm": null,
-  "leg_opening_cm": null,
+  "waist_cm": 97.0,
+  "front_rise_cm": 33.0,
+  "leg_opening_cm": 60.0,
   "original_inseam_cm": 76.2,
   "target_inseam_cm": null,
   "cut_path_coordinates": null,
@@ -21,7 +21,7 @@
   "cut_legs_together": false,
   "wash": null,
   "capture_device": "iPhone (handheld, no rig)",
-  "capture_calibration": null,
+  "capture_calibration": "none; inseam from tag (30in). waist/rise/leg opening ESTIMATED from photo proportions using DENIM_0002 chart as scale (+/-10%). Evisu publishes no oz weight; loose-fit line est. 12-13oz class. Exact SKU unknown (185/86A = CN size code).",
   "before_image_paths": [],
   "marked_image_paths": [],
   "immediate_after_image_paths": [],
@@ -45,7 +45,8 @@
     "prepilot_capture_no_fiducial",
     "background_wood_floor",
     "handheld_perspective",
-    "style_sku_unknown"
+    "style_sku_unknown",
+    "measurements_not_physically_taken"
   ],
   "protocol_deviations": [
     "care label: HAND WASH COLD / HANG DRY / DO NOT TUMBLE / steam ironing may cause irreversible damage \u2014 conflicts with standardized machine wash+dry; decide per-garment wash handling before cutting"
