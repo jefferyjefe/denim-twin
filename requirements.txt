@@ -6,3 +6,6 @@ jsonschema
 scikit-image
 scipy
 pytest
+torch
+torchvision
+segment-anything

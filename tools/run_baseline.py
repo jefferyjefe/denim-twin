@@ -11,10 +11,16 @@ from denimtwin.eval import identity as I
 p = argparse.ArgumentParser()
 p.add_argument("image"); p.add_argument("landmarks"); p.add_argument("--inseam-frac", type=float, required=True)
 p.add_argument("--mask"); p.add_argument("--out", default="experiments/baseline_out")
+p.add_argument("--segmenter", choices=["sam", "grabcut"], default="sam")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
 img = cv2.imread(a.image); lm = json.load(open(a.landmarks))["landmarks"]
 if a.mask:
     mask = cv2.imread(a.mask, 0) > 127
+elif a.segmenter == "sam":
+    from denimtwin.seg.sam import SamSegmenter
+    mask, score = SamSegmenter().segment(img, landmarks=lm)
+    print(f"sam score {score:.3f}")
+    cv2.imwrite(os.path.join(a.out, "mask_auto.png"), mask.astype(np.uint8) * 255)
 else:
     # seed from the garment OUTLINE polygon (not the convex hull) so the gap between legs stays background
     outline = ["waist_left", "waist_right", "hip_right", "knee_right_outer", "hem_right_outer", "hem_right_inner",

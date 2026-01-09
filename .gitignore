@@ -8,3 +8,4 @@ data/garments/**/renders/
 data/external/images/
 experiments/**/outputs/
 .DS_Store
+models/

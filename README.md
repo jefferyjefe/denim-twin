@@ -28,3 +28,8 @@ for the physical experimental protocol, and `docs/PLAN.md` for the 12-month plan
 
     python3 -m venv .venv && source .venv/bin/activate
     pip install -r requirements.txt
+
+## Models
+Download the SAM ViT-B checkpoint (375 MB, not in git):
+
+    mkdir -p models && curl -L -o models/sam_vit_b_01ec64.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
