@@ -22,6 +22,7 @@ for im in a.images:
     else:
         status = "OK  " if r.ok else "FAIL"
         scale = f" {r.mm_per_px:.3f} mm/px" if r.mm_per_px else ""
+        scale += " [cutout bg]" if r.cutout_background else ""
         print(f"{status} {im}  blur={r.blur_score:.0f} mean={r.mean_intensity:.0f} board={r.board_corners}{scale}"
               + ("" if r.ok else "  <- " + "; ".join(r.reasons)))
 sys.exit(1 if bad else 0)
