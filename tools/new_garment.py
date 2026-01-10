@@ -36,6 +36,9 @@ def main():
         "existing_damage_annotations": [], "fray_measurements": None,
         "quality_flags": [], "protocol_deviations": [],
         "dataset_split": "unassigned",
+        "measurement_convention": "waist_cm/leg_opening_cm/thigh_cm are full circumferences (flat x2); rise from crotch seam to top of waistband along fly; inseam crotch seam to hem along inside leg; each *_cm is the mean of two readings recorded in measurement_readings",
+        "measurement_readings": {}, "measurements_source": "measured", "thigh_cm": None, "back_rise_cm": None,
+        "offcut_wash": None, "capture_mm_per_px": None, "capture_board_corners": None, "cut_path_frame": None,
     }
     (d / "record.json").write_text(json.dumps(record, indent=2) + "\n")
     (d / "images" / ".gitkeep").touch()

@@ -12,7 +12,9 @@ def unchanged_ssim(pred, orig, keep_mask):
     """SSIM over the unchanged region (mean of per-pixel SSIM map inside mask)."""
     keep = np.asarray(keep_mask, bool)
     ys, xs = _masked_bbox(keep)
-    a = cv2.cvtColor(pred[ys, xs], cv2.COLOR_BGR2GRAY)
+    # neutralise the modified region so SSIM windows straddling the keep boundary don't leak it
+    p2 = pred.copy(); p2[~keep] = orig[~keep]
+    a = cv2.cvtColor(p2[ys, xs], cv2.COLOR_BGR2GRAY)
     b = cv2.cvtColor(orig[ys, xs], cv2.COLOR_BGR2GRAY)
     _, smap = structural_similarity(a, b, full=True, data_range=255)
     return float(smap[keep[ys, xs]].mean())
@@ -20,8 +22,9 @@ def unchanged_ssim(pred, orig, keep_mask):
 def unchanged_color_delta_e(pred, orig, keep_mask):
     """Mean CIE76 ΔE in the unchanged region (BGR uint8 inputs)."""
     keep = np.asarray(keep_mask, bool)
-    la = cv2.cvtColor(pred, cv2.COLOR_BGR2LAB).astype(float)
-    lb = cv2.cvtColor(orig, cv2.COLOR_BGR2LAB).astype(float)
+    # float input -> true CIE L*a*b* (L in 0..100); uint8 input would give L*2.55 and a/b+128
+    la = cv2.cvtColor(pred.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB).astype(float)
+    lb = cv2.cvtColor(orig.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB).astype(float)
     d = np.linalg.norm(la - lb, axis=2)
     return float(d[keep].mean())
 
@@ -32,9 +35,10 @@ def changed_pixel_fraction_outside(pred, orig, keep_mask, thresh=8):
     diff = np.abs(pred.astype(int) - orig.astype(int)).max(axis=2)
     return float((diff[keep] > thresh).mean())
 
-def feature_retention(pred, orig, keep_mask, ratio=0.75):
-    """Fraction of ORB keypoints in the original's unchanged region that find a
-    ratio-test match in the prediction. Proxy for logo/stitch/pocket preservation."""
+def feature_retention(pred, orig, keep_mask, ratio=0.75, max_shift_px=5.0):
+    """Fraction of ORB keypoints in the original's unchanged region that find a ratio-test
+    match in the prediction AT (nearly) THE SAME LOCATION (within max_shift_px).
+    Proxy for logo/stitch/pocket preservation that a translated/warped garment cannot game."""
     keep = (np.asarray(keep_mask, bool) * 255).astype(np.uint8)
     orb = cv2.ORB_create(2000)
     k1, d1 = orb.detectAndCompute(orig, keep)
@@ -42,7 +46,11 @@ def feature_retention(pred, orig, keep_mask, ratio=0.75):
     if d1 is None or d2 is None or len(k1) == 0:
         return 0.0
     m = cv2.BFMatcher(cv2.NORM_HAMMING).knnMatch(d1, d2, k=2)
-    good = sum(1 for pair in m if len(pair) == 2 and pair[0].distance < ratio * pair[1].distance)
+    good = 0
+    for pair in m:
+        if len(pair) == 2 and pair[0].distance < ratio * pair[1].distance:
+            a, b = k1[pair[0].queryIdx].pt, k2[pair[0].trainIdx].pt
+            if np.hypot(a[0] - b[0], a[1] - b[1]) <= max_shift_px: good += 1
     return float(good / len(k1))
 
 def diff_map(pred, orig, thresh=8):

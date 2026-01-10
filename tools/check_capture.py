@@ -7,7 +7,7 @@ from denimtwin.capture.quality import check_image
 
 p = argparse.ArgumentParser()
 p.add_argument("images", nargs="+")
-p.add_argument("--board", default="protocol/charuco_board.json")
+p.add_argument("--board", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protocol", "charuco_board.json"))
 p.add_argument("--no-board", action="store_true")
 p.add_argument("--json", action="store_true")
 a = p.parse_args()

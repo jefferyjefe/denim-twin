@@ -10,8 +10,13 @@ from denimtwin.eval import identity as I
 
 p = argparse.ArgumentParser()
 p.add_argument("image"); p.add_argument("landmarks"); p.add_argument("--inseam-frac", type=float, required=True)
-p.add_argument("--mask"); p.add_argument("--out", default="experiments/baseline_out")
-p.add_argument("--segmenter", choices=["sam", "grabcut"], default="sam")
+p.add_argument("--mask"); p.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiments", "baseline_out"))
+try:
+    import segment_anything, torch  # noqa: F401
+    _DEFAULT_SEG = "sam"
+except Exception:
+    _DEFAULT_SEG = "grabcut"
+p.add_argument("--segmenter", choices=["sam", "grabcut"], default=_DEFAULT_SEG)
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
 img = cv2.imread(a.image); lm = json.load(open(a.landmarks))["landmarks"]
 if a.mask:

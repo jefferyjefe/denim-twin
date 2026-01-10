@@ -14,9 +14,18 @@ def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None
     """Return (out_image, removed_mask_image, keep_mask_image).
     Pixels in removed region are replaced by background (median of non-garment pixels
     unless background_fill given). All other pixels are byte-identical to the input."""
-    canon = (remove_canon_mask * 255).astype(np.uint8)
-    removed = cmap.canon_to_image(canon, image.shape) > 127
-    removed &= garment_mask.astype(bool)
+    gm = garment_mask.astype(bool)
+    rows = np.nonzero(remove_canon_mask.any(axis=1))[0]
+    if len(rows) == 0:
+        removed = np.zeros_like(gm)
+    else:
+        canon_y = float(rows.min())
+        ys, xs = np.nonzero(gm)
+        pts = np.stack([xs, ys], 1).astype(np.float32)
+        cy = np.empty(len(pts), np.float32)
+        for i in range(0, len(pts), 200_000):
+            cy[i:i + 200_000] = cmap.points_to_canon(pts[i:i + 200_000])[:, 1]
+        removed = np.zeros_like(gm); removed[ys, xs] = cy >= canon_y   # works for pixels outside the raster too
     out = image.copy()
     if background_fill is None:
         bg = image[~garment_mask.astype(bool)]

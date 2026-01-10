@@ -2,52 +2,357 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Garment record",
   "type": "object",
-  "required": ["garment_id", "acquisition_source", "garment_style", "fiber_composition",
-               "elastane_percentage", "dataset_split", "protocol_version"],
+  "required": [
+    "garment_id",
+    "acquisition_source",
+    "garment_style",
+    "fiber_composition",
+    "elastane_percentage",
+    "dataset_split",
+    "protocol_version"
+  ],
   "properties": {
-    "garment_id": {"type": "string", "pattern": "^DENIM_[0-9]{4}$"},
-    "protocol_version": {"type": "string"},
-    "acquisition_source": {"type": "string"},
-    "acquisition_price_usd": {"type": ["number", "null"]},
-    "brand_optional": {"type": ["string", "null"]},
-    "garment_style": {"type": "string", "enum": ["straight", "relaxed", "skinny", "wide", "bootcut", "other"]},
-    "wash_shade": {"type": "string", "enum": ["light", "medium", "dark", "black", "other"]},
-    "fiber_composition": {"type": "string"},
-    "elastane_percentage": {"type": "number", "minimum": 0, "maximum": 100},
-    "mass_grams": {"type": ["number", "null"]},
-    "fabric_thickness_mm": {"type": ["number", "null"]},
-    "waist_cm": {"type": ["number", "null"]},
-    "front_rise_cm": {"type": ["number", "null"]},
-    "leg_opening_cm": {"type": ["number", "null"]},
-    "original_inseam_cm": {"type": ["number", "null"]},
-    "target_inseam_cm": {"type": ["number", "null"]},
-    "cut_path_coordinates": {"type": ["array", "null"]},
-    "cut_tool": {"type": ["string", "null"]},
-    "cut_operator": {"type": ["string", "null"]},
-    "cut_legs_together": {"type": "boolean", "default": false},
+    "garment_id": {
+      "type": "string",
+      "pattern": "^DENIM_[0-9]{4}$"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "acquisition_source": {
+      "type": "string"
+    },
+    "acquisition_price_usd": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "brand_optional": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "garment_style": {
+      "type": "string",
+      "enum": [
+        "straight",
+        "relaxed",
+        "skinny",
+        "wide",
+        "bootcut",
+        "other"
+      ]
+    },
+    "wash_shade": {
+      "type": "string",
+      "enum": [
+        "light",
+        "medium",
+        "dark",
+        "black",
+        "other"
+      ]
+    },
+    "fiber_composition": {
+      "type": "string"
+    },
+    "elastane_percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "mass_grams": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "fabric_thickness_mm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "waist_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "front_rise_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "leg_opening_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "original_inseam_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "target_inseam_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "cut_path_coordinates": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "cut_tool": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cut_operator": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cut_legs_together": {
+      "type": "boolean",
+      "default": false
+    },
     "wash": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "properties": {
-        "machine": {"type": "string"}, "cycle": {"type": "string"},
-        "water_temperature_c": {"type": "number"},
-        "detergent_type": {"type": "string"}, "detergent_amount_ml": {"type": "number"},
-        "load_composition": {"type": "string"},
-        "dryer_method": {"type": "string"}, "dryer_setting": {"type": "string"},
-        "dryer_minutes": {"type": "number"}, "conditioning_hours": {"type": "number"}
+        "machine": {
+          "type": "string"
+        },
+        "cycle": {
+          "type": "string"
+        },
+        "water_temperature_c": {
+          "type": "number"
+        },
+        "detergent_type": {
+          "type": "string"
+        },
+        "detergent_amount_ml": {
+          "type": "number"
+        },
+        "load_composition": {
+          "type": "string"
+        },
+        "dryer_method": {
+          "type": "string"
+        },
+        "dryer_setting": {
+          "type": "string"
+        },
+        "dryer_minutes": {
+          "type": "number"
+        },
+        "conditioning_hours": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "machine",
+        "cycle",
+        "water_temperature_c",
+        "detergent_type",
+        "detergent_amount_ml",
+        "load_composition",
+        "dryer_method",
+        "dryer_setting"
+      ]
+    },
+    "capture_device": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "capture_calibration": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "before_image_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
-    "capture_device": {"type": ["string", "null"]},
-    "capture_calibration": {"type": ["string", "null"]},
-    "before_image_paths": {"type": "array", "items": {"type": "string"}},
-    "marked_image_paths": {"type": "array", "items": {"type": "string"}},
-    "immediate_after_image_paths": {"type": "array", "items": {"type": "string"}},
-    "post_wash_image_paths": {"type": "array", "items": {"type": "string"}},
-    "segmentation_masks": {"type": "array", "items": {"type": "string"}},
-    "landmarks": {"type": ["string", "null"]},
-    "existing_damage_annotations": {"type": "array"},
-    "fray_measurements": {"type": ["string", "null"]},
-    "quality_flags": {"type": "array", "items": {"type": "string"}},
-    "protocol_deviations": {"type": "array", "items": {"type": "string"}},
-    "dataset_split": {"type": "string", "enum": ["unassigned", "train", "val", "test_locked", "challenge"]}
-  }
+    "marked_image_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "immediate_after_image_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "post_wash_image_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "segmentation_masks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "landmarks": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "existing_damage_annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "location",
+          "note"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "size_mm": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "fray_measurements": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protocol_deviations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dataset_split": {
+      "type": "string",
+      "enum": [
+        "unassigned",
+        "train",
+        "val",
+        "test_locked",
+        "challenge"
+      ]
+    },
+    "measurement_convention": {
+      "type": "string",
+      "const": "waist_cm/leg_opening_cm/thigh_cm are full circumferences (flat x2); rise from crotch seam to top of waistband along fly; inseam crotch seam to hem along inside leg; each *_cm is the mean of two readings recorded in measurement_readings"
+    },
+    "measurement_readings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "measurements_source": {
+      "type": "string",
+      "enum": [
+        "measured",
+        "tag",
+        "web_size_chart",
+        "photo_estimate",
+        "mixed"
+      ]
+    },
+    "thigh_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "back_rise_cm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "offcut_wash": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "L": {
+          "type": "string"
+        },
+        "R": {
+          "type": "string"
+        }
+      }
+    },
+    "capture_mm_per_px": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "capture_board_corners": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "cut_path_frame": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "canonical_norm",
+        "image_px_front_overhead",
+        null
+      ]
+    }
+  },
+  "additionalProperties": false
 }

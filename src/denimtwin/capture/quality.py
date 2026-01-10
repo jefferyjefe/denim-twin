@@ -40,15 +40,27 @@ def check_image(path, board=None, spec=None, *, blur_min=80.0, clip_max=0.02,
             pad = int(2.5 * spec['square_mm'] / r.mm_per_px) + 2 * int(10 / r.mm_per_px)  # outer squares + paper margin
             m = cv2.dilate(m, np.ones((pad | 1, pad | 1), np.uint8))
             valid = m == 0
-    # blur: variance of Laplacian (whole frame)
-    r.blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
-    if r.blur_score < blur_min: r.fail(f"blurry ({r.blur_score:.0f} < {blur_min})")
-    # background estimate from the frame border (excluding board); foreground = pixels far from it
+    # background colour from the frame border (excluding board); foreground = Lab distance to it,
+    # thresholded per image with Otsu (a fixed grey delta misses light-wash denim on light backdrops)
     b = 8
-    border_px = np.concatenate([gray[:b][valid[:b]], gray[-b:][valid[-b:]], gray[:, :b][valid[:, :b]], gray[:, -b:][valid[:, -b:]]])
+    lab = cv2.cvtColor(img.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB)
+    bm = np.zeros_like(valid); bm[:b] = bm[-b:] = True; bm[:, :b] = bm[:, -b:] = True; bm &= valid
+    border_px = gray[bm]
+    bg_lab = np.median(lab[bm], axis=0) if bm.any() else np.median(lab[valid], axis=0)
     bg = float(np.median(border_px)) if border_px.size else float(np.median(gray[valid]))
     r.background_level = bg
-    fg = (np.abs(gray.astype(int) - bg) > 40) & valid
+    dist = np.linalg.norm(lab - bg_lab, axis=2)
+    d8 = np.clip(dist * 2.0, 0, 255).astype(np.uint8)          # 0..127 ΔE -> 0..255
+    t, _ = cv2.threshold(d8[valid], 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    fg = (dist > max(t / 2.0, 6.0)) & valid
+    fg = cv2.morphologyEx(fg.astype(np.uint8), cv2.MORPH_OPEN, np.ones((9, 9), np.uint8)).astype(bool)
+    # blur: variance of Laplacian on a fixed-size resample, foreground only (resolution-normalised)
+    s_ = 1500.0 / max(gray.shape)
+    g_small = cv2.resize(gray, None, fx=s_, fy=s_) if s_ < 1 else gray
+    f_small = cv2.resize(fg.astype(np.uint8), (g_small.shape[1], g_small.shape[0]), interpolation=cv2.INTER_NEAREST).astype(bool)
+    lap = cv2.Laplacian(g_small, cv2.CV_64F)
+    r.blur_score = float(lap[f_small].var()) if f_small.sum() > 1000 else float(lap.var())
+    if r.blur_score < blur_min: r.fail(f"blurry ({r.blur_score:.0f} < {blur_min})")
     r.foreground_fraction = float(fg.mean())
     if r.foreground_fraction < 0.05: r.fail(f"foreground too small ({r.foreground_fraction:.1%})")
     # cutout detection: near-uniform pure white/black background is a seller cutout, not a photo — informational

@@ -25,15 +25,16 @@ class CanonicalMap:
 
     @staticmethod
     def _warp(img, tps_inverse, out_size, border):
-        """Warp by sampling: for each output pixel, ask the *inverse* TPS where it came from."""
+        """Warp by sampling: for each output pixel, ask the *inverse* TPS where it came from.
+        Evaluated at every pixel centre (chunked) — exact, no grid/resize misalignment."""
         W, H = out_size
-        step = 8  # evaluate TPS on a coarse grid, interpolate — full-res applyTransformation is slow
-        gx, gy = np.meshgrid(np.arange(0, W + step, step), np.arange(0, H + step, step))
-        pts = np.stack([gx.ravel(), gy.ravel()], 1).astype(np.float32)[None]
-        _, mapped = tps_inverse.applyTransformation(pts)
-        mapped = mapped[0].reshape(gy.shape + (2,))
-        mx = cv2.resize(mapped[..., 0], (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32)
-        my = cv2.resize(mapped[..., 1], (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32)
+        gx, gy = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32))
+        pts = np.stack([gx.ravel(), gy.ravel()], 1)
+        out = np.empty_like(pts)
+        step = 200_000
+        for i in range(0, len(pts), step):
+            _, m = tps_inverse.applyTransformation(pts[i:i + step][None]); out[i:i + step] = m[0]
+        mx = out[:, 0].reshape(H, W); my = out[:, 1].reshape(H, W)
         return cv2.remap(img, mx, my, cv2.INTER_LINEAR, borderMode=border)
 
     def points_to_canon(self, pts):

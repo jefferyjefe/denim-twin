@@ -15,7 +15,7 @@ for rec_path in sorted(ROOT.glob("data/garments/DENIM_*/record.json")):
     oi, ti = rec.get("original_inseam_cm"), rec.get("target_inseam_cm")
     if oi is not None and ti is not None and ti >= oi:
         errs.append("target_inseam must be shorter than original_inseam")
-    for p in rec.get("before_image_paths", []) + rec.get("post_wash_image_paths", []):
+    for p in sum((rec.get(k, []) for k in ("before_image_paths", "marked_image_paths", "immediate_after_image_paths", "post_wash_image_paths")), []):
         if not (rec_path.parent / p).exists():
             errs.append(f"missing image: {p}")
     if errs:

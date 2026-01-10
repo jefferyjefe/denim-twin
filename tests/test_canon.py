@@ -38,4 +38,4 @@ def test_cut_preserves_everything_above_line():
     # cut is at the requested height: removed pixels' min y ≈ 35% down the inseam
     crotch_y, hem_y = lm["crotch"][1], lm["hem_left_inner"][1]
     expected = crotch_y + 0.35 * (hem_y - crotch_y)
-    assert abs(np.nonzero(removed)[0].min() - expected) < 8
+    assert abs(np.nonzero(removed)[0].min() - expected) < 1.5

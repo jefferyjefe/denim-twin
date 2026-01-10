@@ -46,5 +46,14 @@
   "protocol_deviations": [
     "printed denim: hem fray color/appearance differs from surface print \u2014 treat as its own stratum"
   ],
-  "dataset_split": "unassigned"
+  "dataset_split": "unassigned",
+  "measurement_convention": "waist_cm/leg_opening_cm/thigh_cm are full circumferences (flat x2); rise from crotch seam to top of waistband along fly; inseam crotch seam to hem along inside leg; each *_cm is the mean of two readings recorded in measurement_readings",
+  "measurement_readings": {},
+  "measurements_source": "web_size_chart",
+  "thigh_cm": 36.2,
+  "back_rise_cm": null,
+  "offcut_wash": null,
+  "capture_mm_per_px": null,
+  "capture_board_corners": null,
+  "cut_path_frame": null
 }
