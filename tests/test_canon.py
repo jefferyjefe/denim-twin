@@ -35,7 +35,14 @@ def test_cut_preserves_everything_above_line():
     assert removed.sum() > 0.2 * mask.sum()                      # something meaningful was cut
     assert I.changed_pixel_fraction_outside(out, img, keep) == 0  # byte-identical outside cut
     assert I.changed_pixel_fraction_outside(out, img, ~mask) == 0 # background untouched
-    # cut is at the requested height: removed pixels' min y ≈ 35% down the inseam
+    # cut is at the requested height along the inseam (≈35% crotch->hem), loosely
     crotch_y, hem_y = lm["crotch"][1], lm["hem_left_inner"][1]
     expected = crotch_y + 0.35 * (hem_y - crotch_y)
-    assert abs(np.nonzero(removed)[0].min() - expected) < 1.5
+    assert abs(np.nonzero(removed)[0].min() - expected) < 8
+    # and exactly where the canonical map says the cut line lands (line is tilted in image space)
+    from denimtwin.canon.landmarks import inseam_fraction_to_canonical_y
+    cy = inseam_fraction_to_canonical_y(0.35) * cm.H
+    for cx in (0.30 * cm.W, 0.70 * cm.W):                      # mid-left leg, mid-right leg
+        ix, iy = cm.points_to_image([[cx, cy]])[0]
+        col = removed[:, int(round(ix))]
+        assert col.any() and abs(np.nonzero(col)[0].min() - iy) <= 1.5
