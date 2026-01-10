@@ -1,0 +1,3 @@
+{"gate_0": {"passed": true, "date": "2026-08-28", "evidence": "charter + protocol v0.1"},
+ "gate_1": {"passed": false}, "gate_2": {"passed": false}, "gate_3": {"passed": false},
+ "gate_4": {"passed": false}, "gate_5": {"passed": false}, "gate_6": {"passed": false}, "gate_7": {"passed": false}}

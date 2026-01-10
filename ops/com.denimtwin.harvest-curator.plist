@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.denimtwin.harvest-curator</string>
+<key>ProgramArguments</key><array><string>/bin/sh</string><string>-c</string><string>cd /Users/jefferyhuang/denim-twin &amp;&amp; git pull -q --rebase; .venv/bin/python tools/harvest_images.py --download 40 &amp;&amp; .venv/bin/python tools/curate_harvest.py</string></array>
+<key>StartInterval</key><integer>3600</integer>
+<key>StandardOutPath</key><string>/Users/jefferyhuang/denim-twin/ops/harvest-curator.log</string>
+<key>StandardErrorPath</key><string>/Users/jefferyhuang/denim-twin/ops/harvest-curator.err</string>
+</dict></plist>

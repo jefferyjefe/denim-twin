@@ -9,3 +9,4 @@ pytest
 torch
 torchvision
 segment-anything
+open_clip_torch

@@ -9,3 +9,6 @@ data/external/images/
 experiments/**/outputs/
 .DS_Store
 models/
+ops/*.log
+ops/*.err
+data/.capture_qa_state.json
