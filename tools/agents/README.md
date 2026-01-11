@@ -19,3 +19,18 @@
 Rules: only the harvester and report-only agents write to `main`, and only under `reports/`, `notes/`, or
 `data/external/`. Anything touching `src/`, `tools/`, `tests/`, `docs/` goes to an `agent/*` branch.
 Local plists live in `ops/`; install with `cp ops/*.plist ~/Library/LaunchAgents/ && launchctl load ...`.
+
+## Routine IDs (manage at https://claude.ai/code/routines/<id>)
+| Routine | ID |
+|---|---|
+| image harvester | trig_01AQvsxTVdex78gcVMBXNL4m |
+| reviewer-on-push | trig_017oUcXhFVpZ1tqDs4Q59kJ8 |
+| data sentinel | trig_01WRD4vwwZjUcyWniTCSAmDm |
+| protocol-drift auditor | trig_01LavJrSp3MDGBNNmUzvYmjH |
+| null-baseline enforcer | trig_01PeumY4Tz7QW27oDvavdUfN |
+| reproducibility runner | trig_01Xbrw1EDu8zt7LaPSrhm4hG |
+| weekly scribe + scope | trig_01JJXahpEtP4n7ZAJwQpcK65 |
+| literature watcher | trig_01H3sUKwjhXtZx7kFRQgFFdp |
+| blinded judge | trig_01GzekSgMVrQ3A7bQtuCoYwh |
+| calibration auditor (disabled) | trig_01CqPLREYDdBE5nJu9He77s9 |
+| interview coder (disabled) | trig_019t2n8VSkP6pAaCsB2p6xmf |
