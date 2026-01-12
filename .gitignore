@@ -12,3 +12,4 @@ models/
 ops/*.log
 ops/*.err
 data/.capture_qa_state.json
+data/external/pair_images/

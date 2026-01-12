@@ -51,3 +51,16 @@ ranges; locked-test-set evaluation; baselines + ablations; demo; report.
 
 Build the smallest system that makes a falsifiable prediction, then compare it
 with reality. Every added layer must improve the measured prediction.
+
+## Amendment 2026-08-29 — online-only data variant (owner decision)
+
+No physical cutting/washing is performed by the project owner. Data comes from online sources:
+(1) **tutorial pairs** — DIY posts/videos showing the same garment before and after a cut-off
+and (often) after a wash; (2) **unpaired after-images** of frayed cut-offs for fray-appearance
+distributions; (3) **crowd-sourced pairs** submitted by customizers with a scale reference.
+
+Consequence for claims: without a controlled cut/wash and metric scale, the project claims a
+**plausible, distribution-matched prediction** validated on found pairs, not a per-garment
+physically validated prediction with calibrated intervals. Gate 7 is re-read as "beats baselines
+on held-out found pairs"; §6.4 calibration claims are deferred until crowd-sourced scaled pairs
+exist. Protocol §3–§6 apply only to contributors, not to the owner.
