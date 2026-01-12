@@ -51,4 +51,4 @@ unit = "mm" if a.mm_per_px else "px"; md += f"\n(hem_chamfer in {unit})\n"
 json.dump(dict(registration_residual_px=resid, rows=rows), open(f"{a.out}/metrics.json", "w"), indent=1)
 open(f"{a.out}/metrics.md", "w").write(md); print(md)
 cv2.imwrite(f"{a.out}/real_registered.png", real); cv2.imwrite(f"{a.out}/real_mask.png", rmask.astype(np.uint8) * 255)
-cv2.imwrite(f"{a.out}/orig.png", before); cv2.imwrite(f"{a.out}/pred.png", pred); cv2.imwrite(f"{a.out}/keep_mask.png", keep.astype(np.uint8) * 255); cv2.imwrite(f"{a.out}/real.png", real)
+cv2.imwrite(f"{a.out}/orig.png", before); cv2.imwrite(f"{a.out}/pred.png", pred); cv2.imwrite(f"{a.out}/keep_mask.png", keep.astype(np.uint8) * 255); cv2.imwrite(f"{a.out}/real.png", real); cv2.imwrite(f"{a.out}/removed_mask.png", removed.astype(np.uint8) * 255)
