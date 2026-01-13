@@ -10,6 +10,9 @@ A material-aware digital twin for a specific pair of denim jeans.
 
 Scope v1: denim only, straight cuts, raw hems, one standardized wash/dry cycle.
 
+**Data (online-only variant, see charter amendment):** found tutorial pairs (`data/external/pairs.jsonl`),
+CC-licensed unpaired images (`manifest.jsonl`), and crowd-sourced pairs — **[contribute yours](CONTRIBUTING_PAIRS.md)**.
+
 See `docs/CHARTER.md` for the full project charter, `protocol/PROTOCOL.md`
 for the physical experimental protocol, and `docs/PLAN.md` for the 12-month plan.
 

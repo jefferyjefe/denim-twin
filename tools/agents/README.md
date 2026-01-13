@@ -14,6 +14,7 @@
 | Interview coder | cloud routine (disabled, run on demand) | — | `discovery/CODED.md` (branch) | `tools/code_interviews.py` |
 | Capture-QA watcher | local launchd | every 5 min | `<garment>/qa_report.md`, macOS notification | `tools/capture_watch.py` |
 | Harvest curator | local launchd | hourly | `data/external/curated.jsonl` | `tools/curate_harvest.py` |
+| Tutorial-pair finder | cloud routine | daily 04:30 UTC | `data/external/pairs.jsonl` on main | `tools/tutorial_pairs.py` |
 | Image harvester | cloud routine | hourly :07 | `data/external/manifest.jsonl` on main | `tools/harvest_images.py` |
 
 Rules: only the harvester and report-only agents write to `main`, and only under `reports/`, `notes/`, or
@@ -24,6 +25,7 @@ Local plists live in `ops/`; install with `cp ops/*.plist ~/Library/LaunchAgents
 | Routine | ID |
 |---|---|
 | image harvester | trig_01AQvsxTVdex78gcVMBXNL4m |
+| tutorial-pair finder | trig_01XDext6pGACUVPjrRTwVncX |
 | reviewer-on-push | trig_017oUcXhFVpZ1tqDs4Q59kJ8 |
 | data sentinel | trig_01WRD4vwwZjUcyWniTCSAmDm |
 | protocol-drift auditor | trig_01LavJrSp3MDGBNNmUzvYmjH |
