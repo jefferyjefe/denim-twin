@@ -1,0 +1,63 @@
+name: Submit a before/after cut-off pair
+description: Contribute photos of YOUR jeans before and after you cut them into shorts (and after washing). Helps build an open research dataset.
+title: "[pair] "
+labels: ["pair-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! We're building a dataset to predict how a specific pair of jeans will look after being cut and washed.
+        **Please only submit photos you took yourself.** By submitting you agree they may be used for research and released under CC BY 4.0 with your GitHub username as attribution (or anonymously — tick below).
+        Best photos: jeans laid flat on a plain floor/sheet, shot from directly above, whole garment in frame, **a coin or ruler on the floor next to the hem**.
+  - type: textarea
+    id: before
+    attributes:
+      label: BEFORE photo(s) — jeans laid flat, before cutting
+      description: Drag and drop images here.
+    validations: { required: true }
+  - type: textarea
+    id: after_cut
+    attributes:
+      label: AFTER CUTTING photo(s) — before any wash
+    validations: { required: false }
+  - type: textarea
+    id: after_wash
+    attributes:
+      label: AFTER WASHING photo(s) — the frayed hem
+      description: Close-ups of the hem are gold. Include the coin/ruler if you can.
+    validations: { required: false }
+  - type: input
+    id: label
+    attributes:
+      label: Care label (fiber content, e.g. "99% cotton 1% elastane")
+  - type: dropdown
+    id: scale
+    attributes:
+      label: Scale reference in the photos
+      options: ["none", "coin (say which)", "ruler / tape", "other known object"]
+    validations: { required: true }
+  - type: input
+    id: scale_detail
+    attributes:
+      label: Which coin / object?
+  - type: input
+    id: cut
+    attributes:
+      label: How did you cut? (scissors/rotary, flat or worn, both legs together?)
+  - type: input
+    id: wash
+    attributes:
+      label: How was it washed and dried? (machine cycle, temperature, dryer or hang; how many washes)
+  - type: dropdown
+    id: anon
+    attributes:
+      label: Attribution
+      options: ["Credit my GitHub username", "Anonymous"]
+    validations: { required: true }
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Consent
+      options:
+        - label: I took these photos and agree to their release under CC BY 4.0 for research.
+          required: true
