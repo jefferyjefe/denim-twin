@@ -33,3 +33,17 @@ def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None
     out[removed] = background_fill
     keep = garment_mask.astype(bool) & ~removed
     return out, removed, keep
+
+def cut_mask_canon_angled(canon_size, inner_frac, outer_frac):
+    """Angled cut: per leg, a straight line from the inseam side at `inner_frac` (crotch->hem, 0..1)
+    to the outseam side at `outer_frac`; mirrored for the two legs. Returns removal mask (H, W)."""
+    from .landmarks import CANONICAL, inseam_fraction_to_canonical_y
+    W, H = canon_size
+    yi = inseam_fraction_to_canonical_y(inner_frac) * H; yo = inseam_fraction_to_canonical_y(outer_frac) * H
+    xi, xo = CANONICAL["knee_left_inner"][0] * W, CANONICAL["knee_left_outer"][0] * W
+    xs = np.arange(W, dtype=float)
+    xl = np.minimum(xs, W - 1 - xs)                       # distance-from-edge coordinate, mirrored
+    t = np.clip((xl - xo) / (xi - xo), -0.5, 1.5)          # 0 at outer edge, 1 at inner edge (extrapolate a bit)
+    ycut = yo + t * (yi - yo)
+    m = np.arange(H)[:, None] >= ycut[None, :]
+    return m
