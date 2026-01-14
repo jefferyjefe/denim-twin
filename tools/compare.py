@@ -14,7 +14,7 @@ from denimtwin.eval import identity as I, geometry as G
 
 p = argparse.ArgumentParser()
 for k in ("before", "before-lm", "pred", "keep", "removed", "after", "after-lm"): p.add_argument("--" + k, required=True)
-p.add_argument("--after-mask"); p.add_argument("--mm-per-px", type=float); p.add_argument("--out", required=True)
+p.add_argument("--after-mask"); p.add_argument("--pred-mask", help="predicted garment mask incl. fringe (default: keep)"); p.add_argument("--mm-per-px", type=float); p.add_argument("--out", required=True)
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
 before = cv2.imread(a.before); pred = cv2.imread(a.pred); after = cv2.imread(a.after)
 keep = cv2.imread(a.keep, 0) > 127; removed = cv2.imread(a.removed, 0) > 127
@@ -27,7 +27,7 @@ else:
         g = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY); amask = np.abs(g.astype(int) - np.median(g[:8])) > 40
 real, rmask, resid = warp_after_to_before(after, amask, lma, lmb, before.shape)
 garment_before = keep | removed
-pm = keep  # predicted post-cut garment silhouette in before frame
+pm = (cv2.imread(a.pred_mask, 0) > 127) if a.pred_mask else keep   # predicted post-cut silhouette incl. fringe
 bg = np.median(before[~garment_before], axis=0).astype(np.uint8) if (~garment_before).any() else np.zeros(3, np.uint8)
 systems = {"prediction": (pred, pm), "null:no-op": (before, garment_before),
            "null:crop-only": (np.where(keep[..., None], before, bg), keep)}
@@ -40,10 +40,14 @@ for name, (im, sil) in systems.items():
              dE_keep_vs_real=I.unchanged_color_delta_e(im, real, keep & rmask),
              feat_ret_keep_vs_real=I.feature_retention(im, real, keep & rmask),
              ssim_keep_vs_before=I.unchanged_ssim(im, before, keep))
-    # edge-region appearance: band within 15 mm (or 40 px) above the predicted cut, compared to real
+    # edge-region appearance: band within ±15 mm (or 40 px) of the cut edge, BOTH sides, where either the
+    # real or the predicted garment exists (so fringe pixels count). Also report plain SSIM there.
     band_px = int(15 / a.mm_per_px) if a.mm_per_px else 40
-    d = cv2.distanceTransform(keep.astype(np.uint8), cv2.DIST_L2, 3); band = keep & rmask & (d <= band_px)
+    d_in = cv2.distanceTransform(keep.astype(np.uint8), cv2.DIST_L2, 3); d_out = cv2.distanceTransform((~keep).astype(np.uint8), cv2.DIST_L2, 3)
+    band = ((keep & (d_in <= band_px)) | (~keep & (d_out <= band_px))) & garment_before & (rmask | sil)
     r["ssim_edge_band_vs_real"] = I.unchanged_ssim(im, real, band) if band.sum() > 500 else float("nan")
+    r["dE_edge_band_vs_real"] = I.unchanged_color_delta_e(im, real, band) if band.sum() > 500 else float("nan")
+    r["fringe_iou_vs_real"] = G.silhouette_iou(sil & ~keep & garment_before, rmask & ~keep & garment_before)
     rows.append(r)
 cols = list(rows[0]); md = f"registration residual: {resid:.2f} px\n\n| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
 for r in rows: md += "| " + " | ".join(r[c] if isinstance(r[c], str) else f"{r[c]:.4f}" for c in cols) + " |\n"

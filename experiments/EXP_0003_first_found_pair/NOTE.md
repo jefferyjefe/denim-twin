@@ -38,3 +38,24 @@ landmarks (14 before / 6 after, by eye) → SAM masks (0.988 / 0.959) → canoni
 - Per-leg hem estimator in image space (fabric edge + fringe tip per leg → depth + angle).
 - Registration residual on held-out landmarks; lighting normalisation (match kept-region colour stats before SSIM).
 - Pair finder: add a same-garment sanity check.
+
+## Update (same day) — raw edge v1 (density band) + fringe-aware metrics
+`compare.py` previously never scored the fringe zone (silhouette = keep; edge band on the fabric side only), which is
+why v0 presets tied crop-only. Fixed: predicted mask now includes fringe pixels; edge band spans ±15 mm both sides;
+new `fringe_iou_vs_real` (predicted fringe pixels vs real garment pixels below the fabric edge).
+
+| system | fringe IoU | edge-band ΔE | edge-band SSIM | sil IoU |
+|---|---|---|---|---|
+| null: crop-only | 0.000 | 27.5 | 0.164 | 0.782 |
+| v0 median / aggressive (threads) | 0.027 / 0.087 | 26.8 / 26.2 | 0.156 / 0.154 | 0.78 |
+| **v1 conservative 8 mm** | 0.121 | 26.6 | 0.156 | 0.782 |
+| **v1 median 20 mm** | 0.253 | **25.5** | 0.153 | 0.780 |
+| **v1 aggressive 35 mm** | **0.286** | 25.9 | 0.147 | 0.775 |
+| v1 hand-tuned (30 mm, indigo 0.65) | 0.286 | 27.1 | 0.147 | 0.776 |
+
+Reading: v1 is a measured improvement over v0 and crop-only on fringe coverage and edge colour, monotone in depth.
+It plateaus at fringe IoU ≈ 0.29 regardless of depth — the ceiling is **geometric** (the real hem/fringe is angled and
+hangs off-axis; my zone follows a flat cut), not appearance. Edge-band SSIM never beats crop-only: SSIM penalises any
+texture that isn't pixel-aligned, so it is the wrong metric for a stochastic fringe — keep ΔE + fringe IoU + a
+texture-statistics distance instead. Hand-tuning indigo up made ΔE worse: the pair's fringe reads blue in the
+photo mostly because of shadow/bundling, not thread colour. One pair; nothing here is a fitted parameter yet.
