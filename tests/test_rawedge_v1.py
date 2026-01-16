@@ -24,6 +24,6 @@ def test_fringe_confined_to_zone_and_ordered():
 
 def test_depth_parameter_controls_extent():
     mask, cut, removed, keep = _setup()
-    a = render_fringe(cut, removed, mask, 0.35, FringeParams(fringe_depth_mm=5, depth_jitter_mm=0))[1].sum()
-    b = render_fringe(cut, removed, mask, 0.35, FringeParams(fringe_depth_mm=25, depth_jitter_mm=0))[1].sum()
-    assert b > 2.5 * a
+    a = (render_fringe(cut, removed, mask, 0.35, FringeParams(fringe_depth_mm=5, depth_jitter_mm=0))[1] & removed).sum()
+    b = (render_fringe(cut, removed, mask, 0.35, FringeParams(fringe_depth_mm=25, depth_jitter_mm=0))[1] & removed).sum()
+    assert b > 2.5 * a, (a, b)   # fringe-zone pixels only (excludes the constant abraded band)
