@@ -59,3 +59,22 @@ hangs off-axis; my zone follows a flat cut), not appearance. Edge-band SSIM neve
 texture that isn't pixel-aligned, so it is the wrong metric for a stochastic fringe — keep ΔE + fringe IoU + a
 texture-statistics distance instead. Hand-tuning indigo up made ΔE worse: the pair's fringe reads blue in the
 photo mostly because of shadow/bundling, not thread colour. One pair; nothing here is a fitted parameter yet.
+
+## Update 2 — per-leg hem fit (image space) + colour-based fabric/fringe split
+`canon/hemfit.py`: per column, edge = last *fabric* row (Lab distance to the garment body colour, Otsu), tip = last
+garment row; RANSAC line per leg → image-space angled cut; fringe depth = median(tip − edge).
+Fitted on this pair: left +11°, right −20° (the tutorial's diagonal), depth 39 / 15 mm* (asymmetric → classifier noise).
+
+| system | sil IoU | chamfer (mm*) | edge-band ΔE | fringe IoU |
+|---|---|---|---|---|
+| null: crop-only (fitted cut) | 0.792 | 27.4 | 22.4 | 0.000 |
+| v1 conservative (½ depth) | 0.805 | 25.7 | 22.0 | 0.301 |
+| **v1 median (fitted depth)** | **0.810** | **25.0** | **21.8** | **0.457** |
+| v1 aggressive (1.5× depth) | 0.807 | 25.4 | 21.8 | 0.474 |
+| (previous flat cut, v1 median) | 0.780 | 29.9 | 25.5 | 0.253 |
+
+Fringe IoU 0.25 → 0.46 from geometry alone (angled cut + correct depth); appearance unchanged. This is the ceiling
+lift EXP_0003 predicted. Caveat: depth/angle were *estimated from the after-photo* — this is a fit of the cut input,
+which a user would supply; the fringe appearance is still the only genuinely predicted quantity, and depth is here
+taken from the same image (so depth is not a prediction on this pair either — it becomes one when fitted across
+pairs and applied to held-out garments).
