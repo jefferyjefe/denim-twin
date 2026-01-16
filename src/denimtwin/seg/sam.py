@@ -57,3 +57,31 @@ class SamSegmenter:
         if n > 1: m = (lab == (1 + np.argmax(stats[1:, cv2.CC_STAT_AREA]))).astype(np.uint8) * 255
         if s < 1: m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
         return m > 127, float(scores.max())
+
+
+def _border_frac(m, b=4):
+    return float(np.concatenate([m[:b].ravel(), m[-b:].ravel(), m[:, :b].ravel(), m[:, -b:].ravel()]).mean())
+
+def segment_garment_coarse(seg, image_bgr, max_side=1024):
+    """Find the garment with no landmarks: try several point-prompt sets, collect all SAM candidates, and choose
+    the one that looks like a flat-laid garment: area 5-70% of frame, minimal frame-border contact, highest score.
+    Returns (mask, score, info)."""
+    h, w = image_bgr.shape[:2]; s = min(1.0, max_side / max(h, w))
+    small = cv2.resize(image_bgr, None, fx=s, fy=s) if s < 1 else image_bgr
+    seg.predictor.set_image(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+    cands = []
+    prompt_sets = [np.array([[0.5, 0.4]]), np.array([[0.5, 0.35], [0.4, 0.6], [0.6, 0.6]]), np.array([[0.5, 0.5]]), np.array([[0.5, 0.3], [0.5, 0.7]])]
+    for pts in prompt_sets:
+        pc = pts * np.array([small.shape[1], small.shape[0]])
+        masks, scores, _ = seg.predictor.predict(point_coords=pc, point_labels=np.ones(len(pc)), multimask_output=True)
+        for m, sc in zip(masks, scores):
+            area = m.mean(); bf = _border_frac(m)
+            if not (0.05 <= area <= 0.70): continue
+            cands.append((float(sc) - 2.0 * bf - 0.3 * max(0, area - 0.5), m, float(sc), area, bf))
+    if not cands: return None, 0.0, {}
+    best = max(cands, key=lambda c: c[0]); m = best[1].astype(np.uint8) * 255
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(m)
+    if n > 1: m = (lab == (1 + np.argmax(stats[1:, cv2.CC_STAT_AREA]))).astype(np.uint8) * 255
+    if s < 1: m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
+    return m > 127, best[2], {"area": best[3], "border_frac": best[4]}

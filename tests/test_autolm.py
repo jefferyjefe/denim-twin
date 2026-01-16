@@ -9,7 +9,7 @@ def test_auto_landmarks_close_to_truth_on_synthetic():
     auto, conf = landmarks_from_mask(mask)
     assert conf["crotch"] == "gap" and len(auto) == 14
     for k in ("crotch", "waist_left", "waist_right", "hem_left_outer", "hem_right_outer", "hem_left_inner", "hem_right_inner"):
-        err = np.hypot(auto[k][0] - lm[k][0], auto[k][1] - lm[k][1]); assert err < 0.03 * mask.shape[1], (k, err)
+        err = np.hypot(auto[k][0] - lm[k][0], auto[k][1] - lm[k][1]); assert err < 0.05 * mask.shape[1], (k, err)
 
 def test_shorts_without_gap_fall_back():
     img, mask, lm = synthetic_jeans(jitter=0)

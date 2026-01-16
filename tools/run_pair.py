@@ -9,7 +9,7 @@ with null baselines, a panel.jpg, and NOTE.md."""
 import argparse, json, os, sys, subprocess
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
-from denimtwin.seg.sam import SamSegmenter
+from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.canon.register import warp_after_to_before, SURVIVING
 from denimtwin.canon.hemfit import estimate_hems, cut_mask_from_lines
@@ -23,8 +23,9 @@ bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and a
 seg = SamSegmenter()
 # masks: first pass with a coarse box (whole image minus margins), then refine with auto landmarks
 def coarse(img):
-    h, w = img.shape[:2]; box = np.array([w * 0.05, h * 0.05, w * 0.95, h * 0.95]); pos = np.array([[w / 2, h * 0.35], [w * 0.35, h * 0.6], [w * 0.65, h * 0.6]])
-    return seg.segment(img, box=box, pos=pos)[0]
+    m, sc, info = segment_garment_coarse(seg, img)
+    if m is None: print("coarse segmentation failed"); sys.exit(2)
+    print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
 bmask = coarse(bf); amask = coarse(af)
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto

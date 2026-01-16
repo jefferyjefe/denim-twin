@@ -40,9 +40,12 @@ def landmarks_from_mask(mask):
             if abs(gx - cx) < 0.5 * half:
                 crotch = (int(gx), int(y)); break
         if crotch: break
-    if crotch and crotch[1] <= top + 0.45 * h: out["crotch"] = crotch; conf["crotch"] = "gap"
-    elif crotch: out["crotch"] = (cx, top + int(0.30 * h)); conf["crotch"] = "prior_legs_touching"   # gap found too low: legs touch
-    else: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
+    wmax = xs.max() - xs.min(); shorts = h < 1.3 * wmax          # jeans are ~2x taller than wide; shorts ~1x
+    conf["garment_type"] = "shorts" if shorts else "jeans"
+    if crotch and (shorts or crotch[1] <= top + 0.45 * h): out["crotch"] = crotch; conf["crotch"] = "gap"
+    elif crotch: out["crotch"] = (cx, top + int(0.30 * h)); conf["crotch"] = "prior_legs_touching"   # jeans, gap too low: legs touch
+    elif shorts: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
+    else: out["crotch"] = (cx, top + int(0.30 * h)); conf["crotch"] = "prior_no_gap_jeans"
     cyx, cyy = out["crotch"]
     # per-leg hems and knees
     for side, sl in (("left", slice(0, cyx)), ("right", slice(cyx, W))):
