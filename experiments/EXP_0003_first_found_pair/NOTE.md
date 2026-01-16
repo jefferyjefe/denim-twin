@@ -78,3 +78,11 @@ lift EXP_0003 predicted. Caveat: depth/angle were *estimated from the after-phot
 which a user would supply; the fringe appearance is still the only genuinely predicted quantity, and depth is here
 taken from the same image (so depth is not a prediction on this pair either — it becomes one when fitted across
 pairs and applied to held-out garments).
+
+## Update 3 — hem-zone restriction (kept, despite a small regression here)
+Restricting fringe candidates to the bottom ~80 px of each column removes the false fringe on the distressed thigh,
+but on this pair it also drops real fringe on the left leg (angle 11° → −3°, fringe IoU 0.46 → 0.40; right leg
+unchanged at −21°). Kept the restriction because it is the right prior; the classifier (Lab distance + Otsu) is the
+weak link and is **not to be tuned further on one pair**. Needs ≥5 pairs with visible fringe to set thresholds,
+or a small learned fabric/fringe segmenter. Final numbers for this pair (v1 median, fitted cut): sil IoU 0.80,
+chamfer 26 mm*, edge-band ΔE 22.0, fringe IoU 0.40 — vs crop-only 0.78 / 29 / 22.8 / 0.00.
