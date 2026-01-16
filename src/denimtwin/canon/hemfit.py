@@ -22,7 +22,7 @@ def _fit_line_ransac(xs, ys, iters=300, tol=3.0, rng=None):
     if inl.sum() >= 2: m, b = np.polyfit(xs[inl], ys[inl], 1)
     return float(m), float(b)
 
-def fabric_vs_fringe(real_img, real_mask, lm_before, thresh_dE=None):
+def fabric_vs_fringe(real_img, real_mask, lm_before, thresh_dE=None, hem_zone_px=80):
     """Split the real garment mask into fabric (colour close to the body of the garment) and fringe
     (lighter / desaturated hanging threads). Fabric colour = median Lab of mask pixels above the crotch."""
     lab = cv2.cvtColor(real_img.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB)
@@ -31,7 +31,15 @@ def fabric_vs_fringe(real_img, real_mask, lm_before, thresh_dE=None):
     d = np.linalg.norm(lab - ref, axis=2)
     if thresh_dE is None:   # Otsu on the distance within the mask
         d8 = np.clip(d[real_mask] * 2, 0, 255).astype(np.uint8); t, _ = cv2.threshold(d8, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU); thresh_dE = max(t / 2, 8)
-    fabric = real_mask & (d <= thresh_dE)
+    fringe = real_mask & (d > thresh_dE)
+    # fringe can only exist at the bottom of the garment: keep candidate pixels within `hem_zone_px` of each
+    # column's lowest garment pixel, and require the pixel to be connected (through fringe/background) to the bottom
+    H, W = real_mask.shape; bottom = np.full(W, -1)
+    ys, xs = np.nonzero(real_mask); np.maximum.at(bottom, xs, ys)
+    zone = (np.arange(H)[:, None] >= (bottom - hem_zone_px)[None, :]) & (bottom[None, :] >= 0)
+    fringe &= zone
+    fringe = cv2.morphologyEx(fringe.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8)).astype(bool)
+    fabric = real_mask & ~fringe
     fabric = cv2.morphologyEx(fabric.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
     return fabric, real_mask & ~fabric, float(thresh_dE)
 
