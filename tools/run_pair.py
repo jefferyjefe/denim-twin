@@ -35,6 +35,8 @@ def split_collage(img):
     if y is not None: return img[:max(y - int(0.01 * h), 10)], f"collage split (stacked) at y={y}, kept top"
     return img, None
 bf, note_b = split_collage(bf); af, note_a = split_collage(af)
+cv2.imwrite(f"{O}/before_used.png", bf); cv2.imwrite(f"{O}/after_used.png", af)
+BEFORE_PATH, AFTER_PATH = f"{O}/before_used.png", f"{O}/after_used.png"
 seg = SamSegmenter()
 # masks: first pass with a coarse box (whole image minus margins), then refine with auto landmarks
 def coarse(img):
@@ -78,8 +80,8 @@ for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 
 cv2.imwrite(f"{O}/pred.png", res["median"][0]); json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
 rows = {}
 for k in res:
-    r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "compare.py"), "--before", a.before, "--before-lm", f"{O}/before_lm.json", "--pred", f"{O}/pred_{k}.png", "--pred-mask", f"{O}/pred_{k}_mask.png",
-                        "--keep", f"{O}/keep_mask.png", "--removed", f"{O}/removed_mask.png", "--after", a.after, "--after-lm", f"{O}/after_lm.json", "--after-mask", f"{O}/amask.png", "--out", f"{O}/cmp_{k}"] + (["--mm-per-px", str(mmpp)] if a.mm_per_px else []), capture_output=True, text=True)
+    r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "compare.py"), "--before", BEFORE_PATH, "--before-lm", f"{O}/before_lm.json", "--pred", f"{O}/pred_{k}.png", "--pred-mask", f"{O}/pred_{k}_mask.png",
+                        "--keep", f"{O}/keep_mask.png", "--removed", f"{O}/removed_mask.png", "--after", AFTER_PATH, "--after-lm", f"{O}/after_lm.json", "--after-mask", f"{O}/amask.png", "--out", f"{O}/cmp_{k}"] + (["--mm-per-px", str(mmpp)] if a.mm_per_px else []), capture_output=True, text=True)
     rows[k] = json.load(open(f"{O}/cmp_{k}/metrics.json"))["rows"]
 # panel
 y0 = int(np.nonzero(removed)[0].min()) if removed.any() else bf.shape[0] // 2; H = bf.shape[0]
