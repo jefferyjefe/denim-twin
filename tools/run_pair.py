@@ -48,8 +48,9 @@ def sane(mask, name):
     if (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2) or (ys.max() >= h - 3): FAIL(f"{name}: garment touches the frame edge (cropped photo)")
     if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")
     # a whole garment has ONE waistband run near the top; two runs = a cropped pair of legs
-    yt = ys.min() + int(0.04 * (ys.max() - ys.min())); row = np.nonzero(mask[yt])[0]
-    if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: top of garment is not a single waistband (legs-only crop?)")
+    top, hh = ys.min(), ys.max() - ys.min(); band = range(top, top + int(0.15 * hh))
+    widths = [(mask[y].sum(), y) for y in band]; yt = max(widths)[1]; row = np.nonzero(mask[yt])[0]
+    if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: widest top row is not a single waistband run (legs-only crop?)")
 sane(bmask, "before"); sane(amask, "after")
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
