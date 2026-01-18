@@ -1,0 +1,196 @@
+{
+ "before_auto": {
+  "waist_left": [
+   77,
+   146
+  ],
+  "waist_right": [
+   247,
+   146
+  ],
+  "waist_center": [
+   162,
+   145
+  ],
+  "hip_left": [
+   45,
+   170
+  ],
+  "hip_right": [
+   247,
+   170
+  ],
+  "crotch": [
+   146,
+   302
+  ],
+  "hem_left_outer": [
+   50,
+   302
+  ],
+  "hem_left_inner": [
+   68,
+   302
+  ],
+  "hem_right_outer": [
+   164,
+   280
+  ],
+  "hem_right_inner": [
+   146,
+   280
+  ]
+ },
+ "after_auto": {
+  "waist_left": [
+   81,
+   14
+  ],
+  "waist_right": [
+   183,
+   14
+  ],
+  "waist_center": [
+   132,
+   11
+  ],
+  "hip_left": [
+   62,
+   60
+  ],
+  "hip_right": [
+   424,
+   60
+  ],
+  "crotch": [
+   243,
+   262
+  ],
+  "hem_left_outer": [
+   179,
+   313
+  ],
+  "hem_left_inner": [
+   205,
+   313
+  ],
+  "knee_left_outer": [
+   121,
+   285
+  ],
+  "knee_left_inner": [
+   225,
+   285
+  ],
+  "hem_right_outer": [
+   343,
+   304
+  ],
+  "hem_right_inner": [
+   255,
+   304
+  ]
+ },
+ "before_used": {
+  "waist_left": [
+   77,
+   146
+  ],
+  "waist_right": [
+   247,
+   146
+  ],
+  "waist_center": [
+   162,
+   145
+  ],
+  "hip_left": [
+   45,
+   170
+  ],
+  "hip_right": [
+   247,
+   170
+  ],
+  "crotch": [
+   146,
+   302
+  ],
+  "hem_left_outer": [
+   50,
+   302
+  ],
+  "hem_left_inner": [
+   68,
+   302
+  ],
+  "hem_right_outer": [
+   164,
+   280
+  ],
+  "hem_right_inner": [
+   146,
+   280
+  ]
+ },
+ "after_used": {
+  "waist_left": [
+   81,
+   14
+  ],
+  "waist_right": [
+   183,
+   14
+  ],
+  "waist_center": [
+   132,
+   11
+  ],
+  "hip_left": [
+   62,
+   60
+  ],
+  "hip_right": [
+   424,
+   60
+  ],
+  "crotch": [
+   243,
+   262
+  ],
+  "hem_left_outer": [
+   179,
+   313
+  ],
+  "hem_left_inner": [
+   205,
+   313
+  ],
+  "knee_left_outer": [
+   121,
+   285
+  ],
+  "knee_left_inner": [
+   225,
+   285
+  ],
+  "hem_right_outer": [
+   343,
+   304
+  ],
+  "hem_right_inner": [
+   255,
+   304
+  ]
+ },
+ "conf": {
+  "before": {
+   "garment_type": "shorts",
+   "crotch": "no_gap_shorts"
+  },
+  "after": {
+   "garment_type": "shorts",
+   "crotch": "gap"
+  }
+ }
+}

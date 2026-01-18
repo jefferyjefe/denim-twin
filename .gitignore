@@ -13,3 +13,5 @@ ops/*.log
 ops/*.err
 data/.capture_qa_state.json
 data/external/pair_images/
+experiments/pairs/*/cmp_*/
+experiments/pairs/*/*.png
