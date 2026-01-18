@@ -19,7 +19,8 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     metrics = None
     if ok and (od / "cmp_median/metrics.json").exists():
         m = json.load(open(od / "cmp_median/metrics.json"))["rows"]; metrics = {x["system"]: x for x in m}
-    rows.append((pid, v["title"][:40], kind, ok, metrics, (r.stdout + r.stderr).strip().splitlines()[-1] if not ok else ""))
+    why = next((l for l in (r.stdout + r.stderr).splitlines() if l.startswith("REJECT") or "failed" in l), (r.stdout + r.stderr).strip().splitlines()[-1] if (r.stdout + r.stderr).strip() else "")
+    rows.append((pid, v["title"][:40], kind, ok, metrics, why if not ok else ""))
     print(pid, v["title"][:40], kind, "OK" if ok else "FAIL")
 md = "# Found-pair batch (auto pipeline)\n\n| page | title | after | status | sil IoU pred / crop / no-op | chamfer px pred / crop | edge ΔE pred / crop | fringe IoU pred / no-op |\n|---|---|---|---|---|---|---|---|\n"
 for pid, t, k, ok, m, err in rows:

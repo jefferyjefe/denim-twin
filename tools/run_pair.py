@@ -20,6 +20,21 @@ p.add_argument("--before", required=True); p.add_argument("--after", required=Tr
 p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--mm-per-px", type=float, default=None); p.add_argument("--seed", type=int, default=1)
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
+FAIL = lambda why: (print(f"REJECT: {why}"), open(f"{O}/NOTE.md", "w").write(f"# PAIR — rejected\n\n{why}\n"), sys.exit(3))
+
+def split_collage(img):
+    """Collage detection: a near-uniform bright gutter in the middle 35-65% of width (side-by-side -> keep LEFT panel)
+    or of height (stacked -> keep TOP panel). Tutorials put the front view first."""
+    g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32); h, w = g.shape
+    def gutter(std, mean, n):
+        lo, hi = int(0.35 * n), int(0.65 * n); cand = [i for i in range(lo, hi) if std[i] < 12 and mean[i] > 150]
+        return int(np.median(cand)) if len(cand) >= 3 else None
+    x = gutter(g.std(axis=0), g.mean(axis=0), w)
+    if x is not None: return img[:, :max(x - int(0.01 * w), 10)], f"collage split (side-by-side) at x={x}, kept left"
+    y = gutter(g.std(axis=1), g.mean(axis=1), h)
+    if y is not None: return img[:max(y - int(0.01 * h), 10)], f"collage split (stacked) at y={y}, kept top"
+    return img, None
+bf, note_b = split_collage(bf); af, note_a = split_collage(af)
 seg = SamSegmenter()
 # masks: first pass with a coarse box (whole image minus margins), then refine with auto landmarks
 def coarse(img):
@@ -27,6 +42,15 @@ def coarse(img):
     if m is None: print("coarse segmentation failed"); sys.exit(2)
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
 bmask = coarse(bf); amask = coarse(af)
+def sane(mask, name):
+    h, w = mask.shape; ys, xs = np.nonzero(mask)
+    if mask.mean() < 0.05: FAIL(f"{name}: garment too small ({mask.mean():.2f} of frame)")
+    if (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2) or (ys.max() >= h - 3): FAIL(f"{name}: garment touches the frame edge (cropped photo)")
+    if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")
+    # a whole garment has ONE waistband run near the top; two runs = a cropped pair of legs
+    yt = ys.min() + int(0.04 * (ys.max() - ys.min())); row = np.nonzero(mask[yt])[0]
+    if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: top of garment is not a single waistband (legs-only crop?)")
+sane(bmask, "before"); sane(amask, "after")
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
 lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
@@ -37,6 +61,12 @@ real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=[n 
 legs = estimate_hems(rmask, bmask, lmb, real_img=real)
 if not any(L and L["line"] for L in legs.values()): print("hem fit failed"); sys.exit(2)
 removed = cut_mask_from_lines(bmask, lmb, legs); keep = bmask & ~removed
+rf = removed.sum() / max(bmask.sum(), 1)
+if not (0.05 <= rf <= 0.75): FAIL(f"degenerate cut: removed fraction {rf:.2f}")
+ov = (rmask & bmask).sum() / max(rmask.sum(), 1)
+if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real garment lies inside the before garment")
+cb_ok = cb.get("garment_type") == "jeans"
+if not cb_ok: FAIL(f"before image is not full-length jeans (aspect says {cb.get('garment_type')})")
 bg = np.median(bf[~bmask], axis=0); cut = bf.copy(); cut[removed] = bg
 depth_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L]); depth_mm = depth_px * mmpp
 res = render_three(cut, removed, bmask, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
@@ -57,7 +87,7 @@ tiles = [crop(bf), crop(res["median"][0]), crop(real)]
 for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a.mm_per_px else 'px'})", "real registered")): cv2.putText(t, n, (10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
-md = f"# PAIR — auto pipeline\n\nbefore: {a.before}\nafter: {a.after}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
+md = f"# PAIR — auto pipeline\n\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
 md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (landmarks, not held-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:
