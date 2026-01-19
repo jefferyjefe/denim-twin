@@ -91,7 +91,7 @@ for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
 md = f"# PAIR — auto pipeline\n\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
-md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (landmarks, not held-out): {resid:.2f}px\n\n"
+md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:
     for r in rows[k]:

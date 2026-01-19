@@ -56,3 +56,17 @@ def feature_retention(pred, orig, keep_mask, ratio=0.75, max_shift_px=5.0):
 def diff_map(pred, orig, thresh=8):
     """Boolean map of pixels the system changed. Shown to users alongside the render."""
     return np.abs(pred.astype(int) - orig.astype(int)).max(axis=2) > thresh
+
+
+def match_lighting(src, ref, mask):
+    """Return `src` with per-channel Lab mean/std inside `mask` matched to `ref`'s. Use before comparing a
+    re-photographed garment to the original so SSIM/ΔE reflect the garment, not the lighting."""
+    m = np.asarray(mask, bool)
+    if m.sum() < 100: return src.copy()
+    ls = cv2.cvtColor(src.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB); lr = cv2.cvtColor(ref.astype(np.float32) / 255.0, cv2.COLOR_BGR2LAB)
+    out = ls.copy()
+    for c in range(3):
+        ms, ss = ls[..., c][m].mean(), ls[..., c][m].std() + 1e-6; mr, sr = lr[..., c][m].mean(), lr[..., c][m].std() + 1e-6
+        out[..., c] = (ls[..., c] - ms) * (sr / ss) + mr
+    out[..., 0] = np.clip(out[..., 0], 0, 100); out[..., 1:] = np.clip(out[..., 1:], -127, 127)
+    return np.clip(cv2.cvtColor(out, cv2.COLOR_LAB2BGR) * 255.0, 0, 255).astype(np.uint8)

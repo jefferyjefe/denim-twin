@@ -26,6 +26,9 @@ else:
     if amask is None:
         g = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY); amask = np.abs(g.astype(int) - np.median(g[:8])) > 40
 real, rmask, resid = warp_after_to_before(after, amask, lma, lmb, before.shape)
+p.add_argument  # (no-op; keeps linters quiet)
+real_raw = real.copy()
+real = I.match_lighting(real, before, keep & rmask)      # normalise lighting on the unchanged region before scoring
 garment_before = keep | removed
 pm = (cv2.imread(a.pred_mask, 0) > 127) if a.pred_mask else keep   # predicted post-cut silhouette incl. fringe
 bg = np.median(before[~garment_before], axis=0).astype(np.uint8) if (~garment_before).any() else np.zeros(3, np.uint8)
@@ -49,10 +52,10 @@ for name, (im, sil) in systems.items():
     r["dE_edge_band_vs_real"] = I.unchanged_color_delta_e(im, real, band) if band.sum() > 500 else float("nan")
     r["fringe_iou_vs_real"] = G.silhouette_iou(sil & ~keep & garment_before, rmask & ~keep & garment_before)
     rows.append(r)
-cols = list(rows[0]); md = f"registration residual: {resid:.2f} px\n\n| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
+cols = list(rows[0]); md = f"registration residual (leave-one-landmark-out): {resid:.2f} px; lighting matched on kept region\n\n| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
 for r in rows: md += "| " + " | ".join(r[c] if isinstance(r[c], str) else f"{r[c]:.4f}" for c in cols) + " |\n"
 unit = "mm" if a.mm_per_px else "px"; md += f"\n(hem_chamfer in {unit})\n"
 json.dump(dict(registration_residual_px=resid, rows=rows), open(f"{a.out}/metrics.json", "w"), indent=1)
 open(f"{a.out}/metrics.md", "w").write(md); print(md)
-cv2.imwrite(f"{a.out}/real_registered.png", real); cv2.imwrite(f"{a.out}/real_mask.png", rmask.astype(np.uint8) * 255)
+cv2.imwrite(f"{a.out}/real_registered.png", real); cv2.imwrite(f"{a.out}/real_registered_raw.png", real_raw); cv2.imwrite(f"{a.out}/real_mask.png", rmask.astype(np.uint8) * 255)
 cv2.imwrite(f"{a.out}/orig.png", before); cv2.imwrite(f"{a.out}/pred.png", pred); cv2.imwrite(f"{a.out}/keep_mask.png", keep.astype(np.uint8) * 255); cv2.imwrite(f"{a.out}/real.png", real); cv2.imwrite(f"{a.out}/removed_mask.png", removed.astype(np.uint8) * 255)

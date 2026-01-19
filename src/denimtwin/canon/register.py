@@ -31,9 +31,21 @@ def warp_after_to_before(after_img, after_mask, lm_after, lm_before, before_shap
     mx, my = out[:, 0].reshape(H, W), out[:, 1].reshape(H, W)
     warped = cv2.remap(after_img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     wmask = cv2.remap(after_mask.astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
-    # residual: map AFTER landmarks through the inverse and compare to BEFORE landmarks
-    t_a2b = _tps(a, b); _, back = t_a2b.applyTransformation(a[None]); resid = float(np.linalg.norm(back[0] - b, axis=1).mean())
+    # residual: LEAVE-ONE-OUT — fit the TPS without landmark i, map it, compare to its true position.
+    # (The in-sample residual is ~0 by construction and says nothing.)
+    resid = heldout_residual(a, b)
     return warped, wmask, resid
+
+def heldout_residual(a, b):
+    """Mean leave-one-landmark-out prediction error (px) of the after->before TPS. Needs >= 5 landmarks; else nan."""
+    a = np.asarray(a, np.float32); b = np.asarray(b, np.float32); n = len(a)
+    if n < 5: return float("nan")
+    errs = []
+    for i in range(n):
+        keep = np.arange(n) != i
+        t = _tps(a[keep], b[keep]); _, pred = t.applyTransformation(a[i:i + 1][None])
+        errs.append(float(np.linalg.norm(pred[0][0] - b[i])))
+    return float(np.mean(errs))
 
 def refine_ecc(before_gray, warped_gray, keep_mask, iters=50):
     """Optional affine ECC refinement restricted to the unchanged region. Returns 2x3 warp or None."""

@@ -20,3 +20,18 @@ def test_registration_recovers_relaid_after_photo():
     assert G.silhouette_iou(rmask, keep) > 0.97
     # the registered real photo should match the prediction (=cut) almost perfectly in the kept region
     assert I.unchanged_ssim(real, cut, keep & rmask) > 0.9
+
+def test_heldout_residual_is_nonzero_but_small_for_affine_relay():
+    from denimtwin.canon.register import heldout_residual
+    img, mask, lm = synthetic_jeans(jitter=3, seed=2)
+    M = cv2.getRotationMatrix2D((300, 450), 5, 1.02); M[:, 2] += (10, -8)
+    names = SURVIVING; b = np.array([lm[n] for n in names], np.float32); a = np.array([(M @ np.array([*lm[n], 1.0])) for n in names], np.float32)
+    r = heldout_residual(a, b)
+    assert 0 < r < 3.0, r          # affine is recoverable by TPS from the other 9 points, but not exactly
+
+def test_match_lighting_removes_global_shift():
+    from denimtwin.eval import identity as I
+    rng = np.random.default_rng(0); img = rng.integers(40, 200, (64, 64, 3), np.uint8); m = np.ones((64, 64), bool)
+    darker = np.clip(img.astype(int) * 0.7 - 10, 0, 255).astype(np.uint8)
+    assert I.unchanged_color_delta_e(darker, img, m) > 8
+    assert I.unchanged_color_delta_e(I.match_lighting(darker, img, m), img, m) < 3
