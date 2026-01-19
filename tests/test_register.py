@@ -35,3 +35,19 @@ def test_match_lighting_removes_global_shift():
     darker = np.clip(img.astype(int) * 0.7 - 10, 0, 255).astype(np.uint8)
     assert I.unchanged_color_delta_e(darker, img, m) > 8
     assert I.unchanged_color_delta_e(I.match_lighting(darker, img, m), img, m) < 3
+
+def test_feature_registration_adds_correspondences_on_textured_garment():
+    from denimtwin.canon.register_feat import warp_after_to_before_feat
+    rng = np.random.default_rng(3)
+    img, mask, lm = synthetic_jeans(jitter=2, seed=3)
+    tex = rng.integers(0, 60, img.shape, np.uint8); img = np.where(mask[..., None], np.clip(img.astype(int) + tex - 30, 0, 255).astype(np.uint8), img)  # denim-like texture
+    cm = CanonicalMap(lm); cut, removed, keep = apply_cut(img, mask, cm, cut_mask_canon((cm.W, cm.H), inseam_fraction=0.35))
+    M = cv2.getRotationMatrix2D((300, 450), 4, 1.03); M[:, 2] += (15, -10)
+    after = cv2.warpAffine(cut, M, (img.shape[1], img.shape[0]), borderValue=(180, 180, 180))
+    amask = cv2.warpAffine(keep.astype(np.uint8), M, (img.shape[1], img.shape[0])) > 0
+    lma = {n: tuple(M @ np.array([*lm[n], 1.0])) for n in SURVIVING[:6]}          # only 6 landmarks, like real shorts
+    lmb6 = {n: lm[n] for n in SURVIVING[:6]}
+    _, _, r0 = warp_after_to_before(after, amask, lma, lmb6, img.shape)
+    real, rmask, r1, nfeat = warp_after_to_before_feat(after, amask, lma, lmb6, img, mask)
+    assert nfeat >= 10 and r1 < r0, (nfeat, r0, r1)
+    assert G.silhouette_iou(rmask, keep) > 0.95
