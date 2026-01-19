@@ -19,6 +19,10 @@ def feature_correspondences(after_img, before_img, after_mask, before_mask, lm_a
     _, pred = coarse.applyTransformation(pa[None]); pred = pred[0]
     scale = max(before_img.shape[:2]); ok = np.linalg.norm(pred - pb, axis=1) < tol_frac * scale   # consistent with the coarse warp
     pa, pb = pa[ok], pb[ok]
+    # second pass: matches must agree with a locally-consistent (affine) mapping — kills residual mismatches
+    if len(pa) >= 6:
+        _, inl = cv2.estimateAffinePartial2D(pa, pb, method=cv2.RANSAC, ransacReprojThreshold=4.0)
+        if inl is not None and inl.sum() >= 4: pa, pb = pa[inl.ravel() > 0], pb[inl.ravel() > 0]
     # drop near-duplicates (ill-conditioned TPS) and points within min_sep of a landmark
     keep_i = []
     for i in range(len(pb)):
