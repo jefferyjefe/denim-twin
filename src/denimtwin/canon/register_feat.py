@@ -4,7 +4,7 @@ and the TPS is refit. Reduces the underdetermination when only ~6 landmarks surv
 import numpy as np, cv2
 from .register import _tps, heldout_residual, SURVIVING
 
-def feature_correspondences(after_img, before_img, after_mask, before_mask, lm_after, lm_before, max_pts=60, tol_frac=0.06):
+def feature_correspondences(after_img, before_img, after_mask, before_mask, lm_after, lm_before, max_pts=60, tol_frac=0.06, min_sep=12.0):
     names = [n for n in SURVIVING if n in lm_after and n in lm_before]
     a = np.array([lm_after[n] for n in names], np.float32); b = np.array([lm_before[n] for n in names], np.float32)
     coarse = _tps(a, b)                                      # after -> before
@@ -19,6 +19,11 @@ def feature_correspondences(after_img, before_img, after_mask, before_mask, lm_a
     _, pred = coarse.applyTransformation(pa[None]); pred = pred[0]
     scale = max(before_img.shape[:2]); ok = np.linalg.norm(pred - pb, axis=1) < tol_frac * scale   # consistent with the coarse warp
     pa, pb = pa[ok], pb[ok]
+    # drop near-duplicates (ill-conditioned TPS) and points within min_sep of a landmark
+    keep_i = []
+    for i in range(len(pb)):
+        if all(np.linalg.norm(pb[i] - pb[j]) >= min_sep for j in keep_i) and np.min(np.linalg.norm(b - pb[i], axis=1)) >= min_sep: keep_i.append(i)
+    pa, pb = pa[keep_i], pb[keep_i]
     if len(pa) > max_pts:                                    # spread them out: greedy farthest-point subsample
         sel = [int(np.argmin(pb[:, 1]))]
         d = np.linalg.norm(pb - pb[sel[0]], axis=1)
@@ -40,4 +45,9 @@ def warp_after_to_before_feat(after_img, after_mask, lm_after, lm_before, before
     mx, my = out[:, 0].reshape(H, W), out[:, 1].reshape(H, W)
     warped = cv2.remap(after_img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     wmask = cv2.remap(after_mask.astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
-    return warped, wmask, heldout_residual(A, B), len(fa)
+    # held-out residual over the LANDMARKS only (features stay in the fit): how well does the augmented warp predict each landmark?
+    errs = []
+    for i in range(len(a)):
+        keep = np.ones(len(A), bool); keep[i] = False
+        t = _tps(A[keep], B[keep]); _, pred = t.applyTransformation(a[i:i + 1][None]); errs.append(float(np.linalg.norm(pred[0][0] - b[i])))
+    return warped, wmask, float(np.mean(errs)), len(fa)
