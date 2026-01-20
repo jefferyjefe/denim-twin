@@ -34,11 +34,14 @@ pm = (cv2.imread(a.pred_mask, 0) > 127) if a.pred_mask else keep   # predicted p
 bg = np.median(before[~garment_before], axis=0).astype(np.uint8) if (~garment_before).any() else np.zeros(3, np.uint8)
 systems = {"prediction": (pred, pm), "null:no-op": (before, garment_before),
            "null:crop-only": (np.where(keep[..., None], before, bg), keep)}
+band_px0 = int(15 / a.mm_per_px) if a.mm_per_px else 40
+_dk = cv2.distanceTransform(keep.astype(np.uint8), cv2.DIST_L2, 3)
 rows = []
 for name, (im, sil) in systems.items():
     r = dict(system=name,
              sil_iou_vs_real=G.silhouette_iou(sil, rmask),
-             hem_chamfer=G.boundary_chamfer(G.mask_boundary(sil), G.mask_boundary(rmask), a.mm_per_px),
+             sil_chamfer=G.boundary_chamfer(G.mask_boundary(sil), G.mask_boundary(rmask), a.mm_per_px),
+             hem_chamfer=G.hem_chamfer(sil, rmask, keep, garment_before, band_px0, a.mm_per_px),
              ssim_keep_vs_real=I.unchanged_ssim(im, real, keep & rmask),
              dE_keep_vs_real=I.unchanged_color_delta_e(im, real, keep & rmask),
              feat_ret_keep_vs_real=I.feature_retention(im, real, keep & rmask),
@@ -50,7 +53,8 @@ for name, (im, sil) in systems.items():
     band = ((keep & (d_in <= band_px)) | (~keep & (d_out <= band_px))) & garment_before & (rmask | sil)
     r["ssim_edge_band_vs_real"] = I.unchanged_ssim(im, real, band) if band.sum() > 500 else float("nan")
     r["dE_edge_band_vs_real"] = I.unchanged_color_delta_e(im, real, band) if band.sum() > 500 else float("nan")
-    r["fringe_iou_vs_real"] = G.silhouette_iou(sil & ~keep & garment_before, rmask & ~keep & garment_before)
+    r["fringe_iou_vs_real"] = G.fringe_iou(sil, rmask, keep, garment_before)
+    r["fringe_profile_dist"] = G.fringe_profile_distance(im, real, keep, garment_before, removed, bg)
     rows.append(r)
 cols = list(rows[0]); md = f"registration residual (leave-one-landmark-out): {resid:.2f} px; lighting matched on kept region\n\n| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
 for r in rows: md += "| " + " | ".join(r[c] if isinstance(r[c], str) else f"{r[c]:.4f}" for c in cols) + " |\n"

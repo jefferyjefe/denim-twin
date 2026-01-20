@@ -30,7 +30,7 @@ def warp_after_to_before(after_img, after_mask, lm_after, lm_before, before_shap
         _, m = t_b2a.applyTransformation(pts[i:i + 200_000][None]); out[i:i + 200_000] = m[0]
     mx, my = out[:, 0].reshape(H, W), out[:, 1].reshape(H, W)
     warped = cv2.remap(after_img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    wmask = cv2.remap(after_mask.astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
+    wmask = cv2.remap((np.asarray(after_mask) > 0).astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
     # residual: LEAVE-ONE-OUT — fit the TPS without landmark i, map it, compare to its true position.
     # (The in-sample residual is ~0 by construction and says nothing.)
     resid = heldout_residual(a, b)

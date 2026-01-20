@@ -32,7 +32,7 @@ def render_fringe(cut_img, removed, garment, mm_per_px, p=PRESETS["median"], bac
     if not kept.any() or not removed.any(): return cut_img.copy(), changed
     # distance from every pixel to the kept fabric; direction handled implicitly (band grows into `removed`)
     d_out = cv2.distanceTransform((~kept).astype(np.uint8), cv2.DIST_L2, 5)       # in removed region: distance to fabric
-    d_in = cv2.distanceTransform(kept.astype(np.uint8), cv2.DIST_L2, 5)           # inside fabric: distance to edge
+    d_in = cv2.distanceTransform((~removed).astype(np.uint8), cv2.DIST_L2, 5)     # inside fabric: distance to the CUT (not the outline)
     # local depth varies slowly along the hem: low-frequency noise field
     noise = cv2.resize(rng.normal(0, 1, (max(H // 40, 2), max(W // 40, 2))).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
     depth = px(p.fringe_depth_mm) + noise * px(p.depth_jitter_mm)
@@ -57,7 +57,7 @@ def render_fringe(cut_img, removed, garment, mm_per_px, p=PRESETS["median"], bac
     col += rng.normal(0, 6, col.shape).astype(np.float32)
     a = cov[..., None]
     out[zone] = (out[zone] * (1 - a[zone]) + col[zone] * a[zone])
-    changed |= zone & (cov > 0.02)
+    changed |= zone & (cov > 0.5)      # 'predicted fringe pixel' = mostly thread, not faint haze
     # abraded strip on the fabric side
     band = kept & (d_in <= px(p.edge_band_mm))
     w = (1 - d_in[band] / px(p.edge_band_mm))[:, None] * 0.5

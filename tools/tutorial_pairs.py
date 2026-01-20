@@ -21,7 +21,7 @@ def load():
 def validate(recs):
     errs = []; seen = set()
     for i, r in enumerate(recs):
-        for k in ("page_url", "source_type", "images", "found_at"):
+        for k in ("page_url", "source_type", "images", "found_at", "license_or_terms"):
             if k not in r: errs.append(f"#{i}: missing {k}")
         if r.get("page_url") in seen: errs.append(f"#{i}: duplicate page {r.get('page_url')}")
         seen.add(r.get("page_url"))
@@ -31,9 +31,13 @@ def validate(recs):
         if "before" not in roles or not ({"after_cut", "after_wash"} & roles): errs.append(f"#{i}: not a pair (needs before + after_*)")
     return errs
 
-def fetch(recs, limit):
+def fetch(recs, limit, research_use=False):
+    """Download images for internal research evaluation. Records whose license_or_terms is not an open licence
+    (CC/public domain) are skipped unless research_use=True (owner acknowledges research-only, no redistribution)."""
     IMG.mkdir(parents=True, exist_ok=True); n = 0
     for r in recs:
+        lic = str(r.get("license_or_terms", "")).lower()
+        if not research_use and not any(k in lic for k in ("cc ", "cc-", "creative commons", "public domain", "cc0")): continue
         pid = hashlib.sha1(r["page_url"].encode()).hexdigest()[:10]
         for im in r["images"]:
             out = IMG / f"{pid}_{im['role']}_{hashlib.sha1(im['url'].encode()).hexdigest()[:8]}{os.path.splitext(urllib.parse.urlparse(im['url']).path)[1] or '.jpg'}"
@@ -46,11 +50,14 @@ def fetch(recs, limit):
     print(f"fetched {n}")
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(); ap.add_argument("--fetch", type=int, default=0); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument("--fetch", type=int, default=0)
+    ap.add_argument("--research-use", action="store_true", help="acknowledge: fetched images are for internal research evaluation only, never redistributed")
+    a = ap.parse_args()
+
     recs = load(); errs = validate(recs)
     print(f"{len(recs)} pair pages; {sum(len(r['images']) for r in recs)} images; "
           f"{sum(1 for r in recs if any(i['role']=='after_wash' for i in r['images']))} with after-wash; "
           f"{sum(1 for r in recs if r.get('scale_ref','none')!='none')} with scale ref")
     for e in errs: print("ERR", e)
-    if a.fetch: fetch(recs, a.fetch)
+    if a.fetch: fetch(recs, a.fetch, research_use=a.research_use)
     sys.exit(1 if errs else 0)

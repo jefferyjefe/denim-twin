@@ -70,3 +70,13 @@ def match_lighting(src, ref, mask):
         out[..., c] = (ls[..., c] - ms) * (sr / ss) + mr
     out[..., 0] = np.clip(out[..., 0], 0, 100); out[..., 1:] = np.clip(out[..., 1:], -127, 127)
     return np.clip(cv2.cvtColor(out, cv2.COLOR_LAB2BGR) * 255.0, 0, 255).astype(np.uint8)
+
+
+def cut_region_similarity(pred, real, keep, removed, real_mask):
+    """Similarity over the region that actually changed (removed fabric ∪ real garment below the cut):
+    0.5*SSIM + 0.5*max(0, 1 - ΔE/25). SSIM alone is blind to a flat colour change (white vs grey scores 0.94)."""
+    zone = np.asarray(removed, bool) | (np.asarray(real_mask, bool) & ~np.asarray(keep, bool))
+    if not zone.any(): return float("nan")
+    return 0.5 * unchanged_ssim(pred, real, zone) + 0.5 * max(0.0, 1.0 - unchanged_color_delta_e(pred, real, zone) / 25.0)
+
+cut_region_ssim = cut_region_similarity   # backwards-compatible alias

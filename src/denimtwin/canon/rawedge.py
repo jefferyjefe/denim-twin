@@ -64,7 +64,7 @@ def render_raw_edge(cut_img, removed, garment, mm_per_px, params=PRESETS["median
 
     # 2. abraded band above the edge: lighten + desaturate garment pixels within edge_band_mm
     kept = garment & ~removed_now
-    d_in = cv2.distanceTransform(kept.astype(np.uint8), cv2.DIST_L2, 3)
+    d_in = cv2.distanceTransform((~removed_now).astype(np.uint8), cv2.DIST_L2, 3)   # distance to the cut, not the outline
     band = kept & (d_in <= px(params.edge_band_mm))
     w = (1.0 - d_in[band] / max(px(params.edge_band_mm), 1e-6))[:, None] * 0.45
     out[band] = np.clip(out[band] * (1 - w) + np.array(params.weft_color) * w, 0, 255).astype(np.uint8)

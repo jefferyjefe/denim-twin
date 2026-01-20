@@ -29,10 +29,13 @@ def split_collage(img):
     def gutter(std, mean, n):
         lo, hi = int(0.35 * n), int(0.65 * n); cand = [i for i in range(lo, hi) if std[i] < 12 and mean[i] > 150]
         return int(np.median(cand)) if len(cand) >= 3 else None
+    dark = (g < 120)
     x = gutter(g.std(axis=0), g.mean(axis=0), w)
-    if x is not None: return img[:, :max(x - int(0.01 * w), 10)], f"collage split (side-by-side) at x={x}, kept left"
+    if x is not None and dark[:, :x].mean() > 0.03 and dark[:, x:].mean() > 0.03:      # a garment on BOTH sides
+        return img[:, :max(x - int(0.01 * w), 10)], f"collage split (side-by-side) at x={x}, kept left"
     y = gutter(g.std(axis=1), g.mean(axis=1), h)
-    if y is not None: return img[:max(y - int(0.01 * h), 10)], f"collage split (stacked) at y={y}, kept top"
+    if y is not None and dark[:y].mean() > 0.03 and dark[y:].mean() > 0.03:
+        return img[:max(y - int(0.01 * h), 10)], f"collage split (stacked) at y={y}, kept top"
     return img, None
 bf, note_b = split_collage(bf); af, note_a = split_collage(af)
 cv2.imwrite(f"{O}/before_used.png", bf); cv2.imwrite(f"{O}/after_used.png", af)
@@ -60,9 +63,11 @@ lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
 if not a.before_lm and len(lmb) >= 14: bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts
 json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma, "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
 mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.0 placeholder; mm values are px)"
-real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=[n for n in SURVIVING if n in lma and n in lmb])
+use = [n for n in SURVIVING if n in lma and n in lmb]
+if not a.after_lm: use = [n for n in use if not n.startswith("knee")]     # auto knees on a cut garment are meaningless
+real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=use)
 legs = estimate_hems(rmask, bmask, lmb, real_img=real)
-if not any(L and L["line"] for L in legs.values()): print("hem fit failed"); sys.exit(2)
+if not all(legs.get(s) and legs[s]["line"] for s in ("left", "right")): FAIL("hem fit failed on at least one leg (refusing to cut one leg only)")
 removed = cut_mask_from_lines(bmask, lmb, legs); keep = bmask & ~removed
 rf = removed.sum() / max(bmask.sum(), 1)
 if not (0.05 <= rf <= 0.75): FAIL(f"degenerate cut: removed fraction {rf:.2f}")

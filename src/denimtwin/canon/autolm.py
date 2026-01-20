@@ -16,9 +16,21 @@ def _row_extent(mask, y):
     xs = np.nonzero(mask[y])[0]; return (int(xs.min()), int(xs.max())) if len(xs) else None
 
 def landmarks_from_mask(mask):
-    m = mask.astype(bool); ys, xs = np.nonzero(m)
-    if len(ys) == 0: return {}, {}
-    top, bot = ys.min(), ys.max(); h = bot - top; out = {}; conf = {}; H, W = m.shape
+    m0 = mask.astype(bool)
+    if not m0.any(): return {}, {}
+    # remove thin protrusions (hanger hooks, loose threads) before measuring
+    k = max(int(0.03 * m0.shape[1]), 3)
+    m = cv2.morphologyEx(m0.astype(np.uint8), cv2.MORPH_OPEN, np.ones((k, k), np.uint8)).astype(bool)
+    if m.sum() < 0.5 * m0.sum(): m = m0
+    ys, xs = np.nonzero(m); H, W = m.shape
+    widths = m.sum(axis=1); bot = int(ys.max()); y0 = int(ys.min())
+    n30 = max(int(0.30 * (bot - y0)), 3); top30 = widths[y0: y0 + n30].astype(int); wref = top30.max()
+    # garment top = a horizontal edge: the LAST row in the top 30% whose width jumps by >= 30% of the reference width
+    # relative to the row above (a hanger hook/triangle above the waistband narrows gradually and has no such jump).
+    prev = np.concatenate([[0], top30[:-1]]); jumps = np.nonzero(top30 - prev >= 0.3 * wref)[0]
+    if len(jumps): top = int(y0 + jumps.max())
+    else: top = int(y0 + np.nonzero(top30 >= 0.5 * wref)[0].min())      # tilted garment: no edge; take the first half-width row
+    h = bot - top; out = {}; conf = {}
     # waist: extents at 3% below the top edge; hips: extents at 18%
     def ext_at(frac):
         y = min(top + int(frac * h), bot); e = _row_extent(m, y)
@@ -26,12 +38,15 @@ def landmarks_from_mask(mask):
             if e: break
             e = _row_extent(m, min(y + dy, bot))
         return e, y
-    e, y = ext_at(0.03); out["waist_left"] = (e[0], y); out["waist_right"] = (e[1], y); out["waist_center"] = ((e[0] + e[1]) // 2, top + int(0.02 * h))
-    e, y = ext_at(0.18); out["hip_left"] = (e[0], y); out["hip_right"] = (e[1], y)
+    e, y = ext_at(0.02)                                           # `top` is already the first full-width row (tilt/hanger-robust)
+    out["waist_left"] = (e[0], y); out["waist_right"] = (e[1], y); out["waist_center"] = ((e[0] + e[1]) // 2, top + int(0.02 * h))
+    ww = out["waist_right"][0] - out["waist_left"][0]
+    yh = min(out["waist_left"][1] + int(0.45 * ww), bot); eh = _row_extent(m, yh) or e   # hips at a waist-width-relative offset: invariant to cutting
+    out["hip_left"] = (eh[0], yh); out["hip_right"] = (eh[1], yh)
     # crotch: first row below the hips where the mask splits into two runs with a gap near the centre
     cx = (out["hip_left"][0] + out["hip_right"][0]) // 2; half = (out["hip_right"][0] - out["hip_left"][0]) // 2
     crotch = None
-    for y in range(top + int(0.2 * h), bot):
+    for y in range(yh, bot):
         row = m[y]; xs_ = np.nonzero(row)[0]
         if len(xs_) < 2: continue
         d = np.diff(xs_); gaps = np.nonzero(d > 3)[0]
@@ -42,10 +57,12 @@ def landmarks_from_mask(mask):
         if crotch: break
     wmax = xs.max() - xs.min(); shorts = h < 1.3 * wmax          # jeans are ~2x taller than wide; shorts ~1x
     conf["garment_type"] = "shorts" if shorts else "jeans"
-    if crotch and (shorts or crotch[1] <= top + 0.45 * h): out["crotch"] = crotch; conf["crotch"] = "gap"
-    elif crotch: out["crotch"] = (cx, top + int(0.30 * h)); conf["crotch"] = "prior_legs_touching"   # jeans, gap too low: legs touch
+    # crotch depth scales with waist width (rise ≈ 1.1 × waist width), which is invariant to cutting the legs
+    wy = out["waist_left"][1]; crotch_prior = (cx, min(wy + int(1.1 * ww), bot)); crotch_max = wy + 1.7 * ww
+    if crotch and (shorts or crotch[1] <= crotch_max): out["crotch"] = crotch; conf["crotch"] = "gap"
+    elif crotch: out["crotch"] = crotch_prior; conf["crotch"] = "prior_legs_touching"   # jeans, gap too low: legs touch
     elif shorts: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
-    else: out["crotch"] = (cx, top + int(0.30 * h)); conf["crotch"] = "prior_no_gap_jeans"
+    else: out["crotch"] = crotch_prior; conf["crotch"] = "prior_no_gap_jeans"
     cyx, cyy = out["crotch"]
     # per-leg hems and knees
     for side, sl in (("left", slice(0, cyx)), ("right", slice(cyx, W))):
@@ -57,7 +74,7 @@ def landmarks_from_mask(mask):
         outer, inner = ((e[0] + off, e[1] + off) if side == "left" else (e[1] + off, e[0] + off))
         out[f"hem_{side}_outer"] = (outer, int(yb)); out[f"hem_{side}_inner"] = (inner, int(yb))
         yk = int(cyy + 0.47 * (yb - cyy)); ek = _row_extent(sub, yk)
-        if ek and yb - cyy > 0.15 * h:
+        if ek and not shorts and (yb - cyy) >= 0.55 * h:           # knees only on full-length jeans (leg >= 55% of garment height)
             ok, ik = ((ek[0] + off, ek[1] + off) if side == "left" else (ek[1] + off, ek[0] + off))
             out[f"knee_{side}_outer"] = (ok, yk); out[f"knee_{side}_inner"] = (ik, yk)
     return {k: (int(v[0]), int(v[1])) for k, v in out.items()}, conf

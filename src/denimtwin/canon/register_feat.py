@@ -48,7 +48,7 @@ def warp_after_to_before_feat(after_img, after_mask, lm_after, lm_before, before
         _, mm = t_b2a.applyTransformation(pts[i:i + 200_000][None]); out[i:i + 200_000] = mm[0]
     mx, my = out[:, 0].reshape(H, W), out[:, 1].reshape(H, W)
     warped = cv2.remap(after_img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    wmask = cv2.remap(after_mask.astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
+    wmask = cv2.remap((np.asarray(after_mask) > 0).astype(np.uint8) * 255, mx, my, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT) > 127
     # held-out residual over the LANDMARKS only (features stay in the fit): how well does the augmented warp predict each landmark?
     errs = []
     for i in range(len(a)):

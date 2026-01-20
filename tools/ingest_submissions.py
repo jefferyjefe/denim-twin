@@ -9,7 +9,8 @@ issues = json.loads(subprocess.run(["gh", "issue", "list", "-R", "jefferyjefe/de
                                     "number,url,title,body,author,createdAt", "-L", "200"], capture_output=True, text=True, check=True).stdout)
 IMG = re.compile(r"(https://(?:github\.com/user-attachments/assets|user-images\.githubusercontent\.com)/[^\s)\"]+)")
 def section(body, heading):
-    m = re.search(rf"### {re.escape(heading)}[^\n]*\n(.*?)(?=\n### |\Z)", body, re.S); return m.group(1) if m else ""
+    m = re.search(rf"### {re.escape(heading)}[^\n]*\n(.*?)(?=\n### |\Z)", body, re.S); s = m.group(1) if m else ""
+    return "" if s.strip() == "_No response_" else s
 new = 0
 with P.open("a") as f:
     for it in issues:

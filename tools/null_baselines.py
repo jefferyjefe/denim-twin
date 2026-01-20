@@ -25,7 +25,7 @@ for name, (im, sil) in systems.items():
                feat_ret=I.feature_retention(im, orig, keep), changed_out=I.changed_pixel_fraction_outside(im, orig, keep))
     if real is not None:
         if rmask is not None: row["sil_iou_vs_real"] = G.silhouette_iou(sil, rmask)
-        row["ssim_vs_real_cut"] = I.unchanged_ssim(im, real, ~keep) if (~keep).any() else float("nan")
+        row["ssim_vs_real_cut"] = I.cut_region_similarity(im, real, keep, removed, rmask if rmask is not None else ~keep)
     rows.append(row)
 cols = list(rows[0]); md = "| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
 for r in rows: md += "| " + " | ".join(r[c] if isinstance(r[c], str) else f"{r[c]:.4f}" for c in cols) + " |\n"
