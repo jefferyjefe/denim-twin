@@ -60,7 +60,9 @@ sane(bmask, "before"); sane(amask, "after")
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
 lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
-if not a.before_lm and len(lmb) >= 14: bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts
+if not a.before_lm and len(lmb) >= 14:
+    bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts
+    sane(bmask, "before (refined)"); lmb_auto, cb = landmarks_from_mask(bmask); lmb = lmb_auto   # landmarks from the mask actually used
 json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma, "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
 mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.0 placeholder; mm values are px)"
 use = [n for n in SURVIVING if n in lma and n in lmb]
@@ -70,7 +72,7 @@ legs = estimate_hems(rmask, bmask, lmb, real_img=real)
 if not all(legs.get(s) and legs[s]["line"] for s in ("left", "right")): FAIL("hem fit failed on at least one leg (refusing to cut one leg only)")
 removed = cut_mask_from_lines(bmask, lmb, legs); keep = bmask & ~removed
 rf = removed.sum() / max(bmask.sum(), 1)
-if not (0.05 <= rf <= 0.75): FAIL(f"degenerate cut: removed fraction {rf:.2f}")
+if not (0.01 <= rf <= 0.75): FAIL(f"degenerate cut: removed fraction {rf:.2f}")   # 1%: a small hem trim is a valid cut
 ov = (rmask & bmask).sum() / max(rmask.sum(), 1)
 if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real garment lies inside the before garment")
 cb_ok = cb.get("garment_type") == "jeans"

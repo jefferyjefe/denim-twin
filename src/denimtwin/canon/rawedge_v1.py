@@ -45,8 +45,15 @@ def render_fringe(cut_img, removed, garment, mm_per_px, p=PRESETS["median"], bac
     tex = cv2.resize(rng.random((max(H // int(px(p.clump_mm) * 2), 2), max(W // int(px(p.clump_mm)), 2))).astype(np.float32), (W, H), interpolation=cv2.INTER_LINEAR)
     tex = cv2.GaussianBlur(tex, (0, 0), max(px(0.6), 0.6)); tex = (tex - tex.min()) / (tex.max() - tex.min() + 1e-6)
     cov *= np.clip(0.55 + 0.9 * tex, 0, 1.2)
-    # vertical streakiness: thin strokes along the hanging direction (approx image-down)
-    streak = cv2.resize(rng.random((max(H // 2, 2), max(W // max(int(px(0.7)), 1), 2))).astype(np.float32), (W, H), interpolation=cv2.INTER_NEAREST)
+    # streakiness along the local hanging direction: threads run away from the cut, i.e. along the gradient of d_out.
+    # Build a 1-D random field indexed by position ALONG the edge (perpendicular to the gradient), so it is constant
+    # along each thread and varies across threads, whatever the cut's orientation.
+    gy = cv2.Sobel(d_out, cv2.CV_32F, 0, 1, ksize=5); gx = cv2.Sobel(d_out, cv2.CV_32F, 1, 0, ksize=5)
+    nrm = np.sqrt(gx ** 2 + gy ** 2) + 1e-6; tx, ty = -gy / nrm, gx / nrm                     # tangent to the edge
+    along = (np.arange(W)[None, :] * tx + np.arange(H)[:, None] * ty)                        # coordinate along the edge
+    period = max(px(0.7), 1.0); phase = rng.random(4096).astype(np.float32)
+    idx = ((along / period).astype(np.int64) % 4096)
+    streak = phase[idx]
     cov *= np.clip(0.6 + 0.8 * streak, 0, 1.2)
     cov = np.clip(cov, 0, 1)
     # per-pixel thread colour: weft or indigo, blended with background by coverage
