@@ -23,3 +23,10 @@ Units px; no scale reference.
   raise precision; volume will stay low (small blogs are the only productive source).
 - Crowd-sourced pairs with a coin in frame (CONTRIBUTING_PAIRS.md) are the realistic path to tens of usable, scaled pairs.
 - Pipeline is now one command per pair and refuses bad inputs with a reason, which is what a routine needs.
+
+## Update after review 2 (cut-invariant landmarks, stricter metrics)
+Same usable pair, fully automatic: sil IoU 0.81 (crop-only 0.82, no-op 0.35); hem profile error 16 px (crop 16);
+edge ΔE 21.1 (crop 21.3); **fringe IoU 0.07** (no-op 0.00) — the earlier 0.35 was inflated by counting faint
+haze as fringe (review finding #2). The honest statement today: the pipeline reproduces the *cut* of a found pair
+automatically; its fringe prediction is barely distinguishable from crop-only at this resolution and with an
+unfitted appearance model. b630a78c19 still passes gates but is a legs-only crop (known false positive).

@@ -1,1 +1,1 @@
-{"landmarks": {"waist_left": [344, 140], "waist_right": [680, 140], "waist_center": [512, 137], "hip_left": [345, 184], "hip_right": [680, 184], "crotch": [493, 411], "hem_left_outer": [452, 421], "hem_left_inner": [483, 421], "hem_right_outer": [528, 422], "hem_right_inner": [497, 422]}}
+{"landmarks": {"waist_left": [347, 141], "waist_right": [681, 141], "waist_center": [514, 141], "hip_left": [344, 291], "hip_right": [694, 291], "crotch": [494, 412], "hem_left_outer": [452, 416], "hem_left_inner": [493, 416], "hem_right_outer": [543, 416], "hem_right_inner": [494, 416]}}

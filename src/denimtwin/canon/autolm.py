@@ -58,7 +58,7 @@ def landmarks_from_mask(mask):
     wmax = xs.max() - xs.min(); shorts = h < 1.3 * wmax          # jeans are ~2x taller than wide; shorts ~1x
     conf["garment_type"] = "shorts" if shorts else "jeans"
     # crotch depth scales with waist width (rise ≈ 1.1 × waist width), which is invariant to cutting the legs
-    wy = out["waist_left"][1]; crotch_prior = (cx, min(wy + int(1.1 * ww), bot)); crotch_max = wy + 1.7 * ww
+    wy = out["waist_left"][1]; crotch_prior = (cx, min(wy + int(0.8 * ww), bot)); crotch_max = wy + 1.5 * ww
     if crotch and (shorts or crotch[1] <= crotch_max): out["crotch"] = crotch; conf["crotch"] = "gap"
     elif crotch: out["crotch"] = crotch_prior; conf["crotch"] = "prior_legs_touching"   # jeans, gap too low: legs touch
     elif shorts: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
