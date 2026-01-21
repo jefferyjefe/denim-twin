@@ -61,8 +61,8 @@ lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(am
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
 lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
 if not a.before_lm and len(lmb) >= 14:
-    bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts
-    sane(bmask, "before (refined)"); lmb_auto, cb = landmarks_from_mask(bmask); lmb = lmb_auto   # landmarks from the mask actually used
+    bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts (landmarks stay from the coarse mask:
+    sane(bmask, "before (refined)")                    #  recomputing them on the refined mask regressed pair1 — see EXP_0004)
 json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma, "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
 mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.0 placeholder; mm values are px)"
 use = [n for n in SURVIVING if n in lma and n in lmb]

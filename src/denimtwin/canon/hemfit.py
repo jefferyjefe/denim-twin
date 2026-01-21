@@ -43,12 +43,19 @@ def fabric_vs_fringe(real_img, real_mask, lm_before, thresh_dE=None, hem_zone_px
     fabric = cv2.morphologyEx(fabric.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
     return fabric, real_mask & ~fabric, float(thresh_dE)
 
-def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.8, real_img=None):
-    H, W = real_mask.shape; cx = int(lm_before["crotch"][0]); cy = int(lm_before["crotch"][1])
+def _split_x(lm_before, real_mask):
+    """Column that separates the legs: midpoint of the hips if available (robust to a mis-placed crotch x)."""
+    if "hip_left" in lm_before and "hip_right" in lm_before: return int((lm_before["hip_left"][0] + lm_before["hip_right"][0]) / 2)
+    return int(lm_before["crotch"][0])
+
+def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, real_img=None, min_pts=6):
+    H, W = real_mask.shape; cx = _split_x(lm_before, real_mask); cy = int(lm_before["crotch"][1])
+    cy = min(cy, int(np.nonzero(real_mask.any(axis=1))[0].max()) - 2) if real_mask.any() else cy   # never scan from below the real garment
     k = np.ones((1, 2 * w + 1), np.float32) / (2 * w + 1)
     base = real_mask
     if real_img is not None:
         base, _, _ = fabric_vs_fringe(real_img, real_mask, lm_before)   # edge = end of FABRIC, tip = end of mask
+        if base[cy:].sum() < 0.3 * real_mask[cy:].sum(): base = real_mask   # colour split failed (lighting): fall back to the mask
     solid = cv2.filter2D(base.astype(np.float32), -1, k) >= solid_frac
     legs = {}
     for name, cols in (("left", range(0, cx)), ("right", range(cx, W))):
@@ -59,7 +66,7 @@ def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.8, rea
             s = np.nonzero(solid[cy:, x] & base[cy:, x])[0]; t = np.nonzero(real_mask[cy:, x])[0]
             if len(s) == 0 or len(t) == 0: continue
             ex.append(x); ey.append(cy + s.max()); tips.append(cy + t.max())
-        if len(ex) < 10: legs[name] = None; continue
+        if len(ex) < min_pts: legs[name] = None; continue
         ex, ey, tips = map(np.array, (ex, ey, tips))
         line = _fit_line_ransac(ex.astype(float), ey.astype(float))
         depth = np.median(np.clip(tips - ey, 0, None))
@@ -69,7 +76,7 @@ def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.8, rea
 
 def cut_mask_from_lines(garment_before, lm_before, legs):
     """Removal mask: garment pixels below each leg's fitted line (split at crotch x)."""
-    H, W = garment_before.shape; cx = int(lm_before["crotch"][0]); rem = np.zeros_like(garment_before)
+    H, W = garment_before.shape; cx = _split_x(lm_before, garment_before); rem = np.zeros_like(garment_before)
     ys = np.arange(H)[:, None]
     for name, cols in (("left", slice(0, cx)), ("right", slice(cx, W))):
         L = legs.get(name)
