@@ -32,3 +32,10 @@ Caveats: registration residual is not held-out; hanger merges into the waist mas
 - Lighting normalisation (Lab mean/std matched on the kept region) cut edge-band ΔE 22.7 → 16.5 and is now default.
 Implication: kept-region SSIM/ΔE on found pairs measure registration error more than garment change; silhouette,
 hem chamfer and fringe IoU remain the informative metrics at this resolution.
+
+## Stop-tuning note (2026-08-29, after review 2)
+Across the day this pair's automatic result moved between sil IoU 0.80–0.88, hem error 10–27 px, angles from the
+true diagonal (±17–20°) to near-flat, depending on small heuristic choices (leg-split column, solid threshold,
+crotch prior). That variance is a property of tuning on ONE low-res pair, not progress. Current code keeps the
+principled versions (cut-invariant landmarks, hip-midpoint split, mask fallback) and accepts the flatter fit here.
+Rule from now on: hemfit/autolm thresholds change only against ≥5 pairs, with numbers reported for all of them.
