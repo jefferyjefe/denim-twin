@@ -90,3 +90,18 @@ def fringe_profile_distance(pred_img, real_img, keep, garment_before, removed, b
         if b.sum() < 20: continue
         out.append(abs(cp[b].mean() - cr[b].mean()))
     return float(np.mean(out)) if out else float("nan")
+
+
+def fringe_profile_distance_masks(pred_sil, real_sil, keep, garment_before, n_bins=10):
+    """Mask-based coverage profile: per distance-from-cut bin (below the cut, inside the original garment),
+    |fraction predicted-garment − fraction real-garment|, averaged. 0 = same fringe extent profile."""
+    import cv2
+    d = cv2.distanceTransform((~np.asarray(keep, bool)).astype(np.uint8), cv2.DIST_L2, 3)
+    zone = ~np.asarray(keep, bool) & np.asarray(garment_before, bool)
+    if not zone.any(): return float("nan")
+    dmax = max(float(d[zone].max()), 1.0); edges = np.linspace(0, dmax, n_bins + 1); out = []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        b = zone & (d >= lo) & (d < hi)
+        if b.sum() < 20: continue
+        out.append(abs(np.asarray(pred_sil, bool)[b].mean() - np.asarray(real_sil, bool)[b].mean()))
+    return float(np.mean(out)) if out else float("nan")

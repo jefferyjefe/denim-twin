@@ -54,7 +54,7 @@ for name, (im, sil) in systems.items():
     r["ssim_edge_band_vs_real"] = I.unchanged_ssim(im, real, band) if band.sum() > 500 else float("nan")
     r["dE_edge_band_vs_real"] = I.unchanged_color_delta_e(im, real, band) if band.sum() > 500 else float("nan")
     r["fringe_iou_vs_real"] = G.fringe_iou(sil, rmask, keep, garment_before)
-    r["fringe_profile_dist"] = G.fringe_profile_distance(im, real, keep, garment_before, removed, bg)
+    r["fringe_profile_dist"] = G.fringe_profile_distance_masks(sil, rmask, keep, garment_before)
     rows.append(r)
 cols = list(rows[0]); md = f"registration residual (leave-one-landmark-out): {resid:.2f} px; lighting matched on kept region\n\n| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
 for r in rows: md += "| " + " | ".join(r[c] if isinstance(r[c], str) else f"{r[c]:.4f}" for c in cols) + " |\n"
