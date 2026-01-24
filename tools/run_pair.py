@@ -60,7 +60,7 @@ sane(bmask, "before"); sane(amask, "after")
 try:
     from denimtwin.seg.clipgate import whole_garment_probability
     pw = whole_garment_probability(bf)
-    if pw is not None and pw < 0.35: FAIL(f"before image does not look like a whole garment with waistband/pockets (CLIP p={pw:.2f})")
+    print(f"clip whole-garment p={pw}")   # informational only: CLIP scores a hanging whole pair 0.27 and a legs-only crop 0.36 (EXP_0005) — not a usable gate
 except SystemExit: raise
 except Exception as e: print("clip gate skipped:", e)
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
