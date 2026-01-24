@@ -57,6 +57,12 @@ def sane(mask, name):
     widths = [(mask[y].sum(), y) for y in band]; yt = max(widths)[1]; row = np.nonzero(mask[yt])[0]
     if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: widest top row is not a single waistband run (legs-only crop?)")
 sane(bmask, "before"); sane(amask, "after")
+try:
+    from denimtwin.seg.clipgate import whole_garment_probability
+    pw = whole_garment_probability(bf)
+    if pw is not None and pw < 0.35: FAIL(f"before image does not look like a whole garment with waistband/pockets (CLIP p={pw:.2f})")
+except SystemExit: raise
+except Exception as e: print("clip gate skipped:", e)
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
 lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
