@@ -18,6 +18,7 @@ from denimtwin.canon.rawedge_v1 import render_three
 p = argparse.ArgumentParser()
 p.add_argument("--before", required=True); p.add_argument("--after", required=True); p.add_argument("--out", required=True)
 p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--mm-per-px", type=float, default=None); p.add_argument("--seed", type=int, default=1)
+p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth from the prior (depth_rel_mean * waist width) instead of reading it off the after-photo")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
 FAIL = lambda why: (print(f"REJECT: {why}"), open(f"{O}/NOTE.md", "w").write(f"# PAIR — rejected\n\n{why}\n"), sys.exit(3))
@@ -84,7 +85,13 @@ if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real ga
 cb_ok = cb.get("garment_type") == "jeans"
 if not cb_ok: FAIL(f"before image is not full-length jeans (aspect says {cb.get('garment_type')})")
 bg = np.median(bf[~bmask], axis=0); cut = bf.copy(); cut[removed] = bg
-depth_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L]); depth_mm = depth_px * mmpp
+depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
+if a.prior:
+    pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
+    depth_px = pr.get("depth_rel_mean_after_wash", pr["depth_rel_mean"]) * ww; depth_source = f"prior (n={pr['n']}{', INSUFFICIENT' if pr.get('insufficient') else ''})"
+else:
+    depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
+depth_mm = depth_px * mmpp
 res = render_three(cut, removed, bmask, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
 for k, (im, ch) in res.items():
     cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep | (ch & removed)).astype(np.uint8) * 255))
@@ -104,6 +111,7 @@ for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
 md = f"# PAIR — auto pipeline\n\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
+md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px\n"
 md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:
