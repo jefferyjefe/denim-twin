@@ -21,6 +21,12 @@ Rules: only the harvester and report-only agents write to `main`, and only under
 `data/external/`. Anything touching `src/`, `tools/`, `tests/`, `docs/` goes to an `agent/*` branch.
 Local plists live in `ops/`; install with `cp ops/*.plist ~/Library/LaunchAgents/ && launchctl load ...`.
 
+## Status 2026-08-29: cloud routines UNVERIFIED
+Every cloud run (including a no-tool smoke test) stalls after "Claude Code process started" with no transcript
+events. Until a run is seen completing in https://claude.ai/code/routines, treat the cloud fleet as not running.
+Local launchd jobs (ops/*.plist) are the working automation: capture-QA (5 min), harvest curator (hourly),
+**pairs-daily (03:30 local)** = ingest submissions → fetch/validate pairs → batch → report → fringe prior → commit.
+
 ## Routine IDs (manage at https://claude.ai/code/routines/<id>)
 | Routine | ID |
 |---|---|

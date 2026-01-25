@@ -8,3 +8,5 @@
 - **Gate 5** — Procedural fray beats global-average fray depth; threads align with observed weave.
 - **Gate 6** — Learned residual improves real-outcome similarity without degrading unchanged-region identity.
 - **Gate 7** — Full system beats generative + procedural baselines on physical matching AND identity.
+
+**Tuning rule (2026-08-29):** heuristic thresholds in `canon/autolm.py` and `canon/hemfit.py` change only when evaluated on ≥5 usable pairs with `tools/report_pairs.py` output attached to the commit.
