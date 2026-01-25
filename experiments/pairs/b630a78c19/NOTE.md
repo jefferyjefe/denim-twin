@@ -4,6 +4,7 @@ before: /Users/jefferyhuang/denim-twin/data/external/pair_images/b630a78c19_befo
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/b630a78c19_after_cut_c7a4d702.jpg 
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
+fringe depth used: 13.5 px from measured from after-photo (NOT a prediction); measured on after-photo: 13.5 px
 hem fit: left: angle -5.5°, depth 18, right: angle -8.5°, depth 9
 registration residual (leave-one-landmark-out): 11.02px
 
