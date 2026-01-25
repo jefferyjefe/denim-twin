@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.denimtwin.pairs-daily</string>
+<key>ProgramArguments</key><array><string>/bin/sh</string><string>-c</string><string>cd /Users/jefferyhuang/denim-twin &amp;&amp; git pull -q --rebase &amp;&amp; .venv/bin/python tools/ingest_submissions.py; .venv/bin/python tools/tutorial_pairs.py --fetch 200 --research-use; .venv/bin/python tools/validate_pairs.py &amp;&amp; .venv/bin/python tools/run_pairs_batch.py &amp;&amp; .venv/bin/python tools/report_pairs.py > experiments/pairs/REPORT.md; .venv/bin/python tools/fit_fringe.py; git add data/external/pairs.jsonl data/external/pairs_validation.jsonl experiments/pairs/SUMMARY.md experiments/pairs/REPORT.md experiments/pairs/*/NOTE.md data/priors 2>/dev/null; git commit -qm "pairs-daily: batch, report, prior" &amp;&amp; git push -q</string></array>
+<key>StartCalendarInterval</key><dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>30</integer></dict>
+<key>StandardOutPath</key><string>/Users/jefferyhuang/denim-twin/ops/pairs-daily.log</string>
+<key>StandardErrorPath</key><string>/Users/jefferyhuang/denim-twin/ops/pairs-daily.err</string>
+</dict></plist>
