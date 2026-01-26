@@ -9,7 +9,7 @@ Usage:
   harvest_images.py                  # update manifest only
   harvest_images.py --download N     # also download up to N not-yet-downloaded images into data/external/images/
 """
-import argparse, json, os, re, sys, time, hashlib, urllib.parse, urllib.request
+import argparse, json, os, re, sys, time, hashlib, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -113,7 +113,11 @@ def main():
                     if int(resp.headers.get("Content-Length") or 0) > 25_000_000: continue   # skip huge scans
                     data = resp.read(25_000_000)
                 with open(out, "wb") as f: f.write(data)
-                got += 1; time.sleep(0.3)
+                got += 1; time.sleep(2.0 if r["source"] == "commons" else 0.5)     # Commons asks bots to stay slow
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    wait = int(e.headers.get("Retry-After") or 60); print(f"429 from {r['source']}, sleeping {wait}s", file=sys.stderr); time.sleep(min(wait, 300))
+                else: print(f"warn download {r['url']}: {e}", file=sys.stderr)
             except Exception as e:
                 print(f"warn download {r['url']}: {e}", file=sys.stderr)
             if got >= a.download: break
