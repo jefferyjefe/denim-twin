@@ -36,3 +36,14 @@ for the physical experimental protocol, and `docs/PLAN.md` for the 12-month plan
 Download the SAM ViT-B checkpoint (375 MB, not in git):
 
     mkdir -p models && curl -L -o models/sam_vit_b_01ec64.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
+
+
+## Status (2026-08-29, honest)
+- Pipeline (`tools/run_pair.py`): phone/found photo → SAM mask → mask-derived landmarks → canonical warp → cut →
+  fringe render → register real after-photo → score vs null baselines. One command per pair; bad inputs rejected with a reason.
+- On the one usable found pair: the **cut** is reproduced automatically (silhouette IoU ~0.8 vs 0.35 no-op); the
+  **fringe** prediction is not yet better than crop-only (fringe IoU 0.07). Fringe appearance parameters are guesses
+  until ≥5 pairs exist (`docs/GATES.md` tuning rule).
+- Data: 14 found tutorial pages → 1 usable (EXP_0005). Contributions via the issue form are the lever.
+- Automation: local launchd jobs work (`ops/`); cloud routines never executed in this environment (`tools/agents/README.md`).
+- Tests: 44 (`pytest -q tests`), fresh-clone verified without ML deps (`reports/repro/`).
