@@ -9,7 +9,7 @@ with null baselines, a panel.jpg, and NOTE.md."""
 import argparse, json, os, sys, subprocess
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
-from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
+from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_fringe
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.canon.register import warp_after_to_before, SURVIVING
 from denimtwin.canon.hemfit import estimate_hems, cut_mask_from_lines
@@ -75,7 +75,11 @@ mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.
 use = [n for n in SURVIVING if n in lma and n in lmb]
 if not a.after_lm: use = [n for n in use if not n.startswith("knee")]     # auto knees on a cut garment are meaningless
 real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=use)
-legs = estimate_hems(rmask, bmask, lmb, real_img=real)
+fr_after = segment_fringe(seg, af, amask); fr_before = None
+if fr_after is not None and fr_after.sum() > 50:
+    _, fr_before, _ = warp_after_to_before(af, fr_after, lma, lmb, bf.shape, use=use); cv2.imwrite(f"{O}/fringe_mask.png", fr_before.astype(np.uint8) * 255)
+legs = estimate_hems(rmask, bmask, lmb, real_img=real, fringe_mask=fr_before)
+fringe_src = "SAM" if fr_before is not None else "colour split"
 if not all(legs.get(s) and legs[s]["line"] for s in ("left", "right")): FAIL("hem fit failed on at least one leg (refusing to cut one leg only)")
 removed = cut_mask_from_lines(bmask, lmb, legs); keep = bmask & ~removed
 rf = removed.sum() / max(bmask.sum(), 1)
@@ -111,7 +115,7 @@ for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
 md = f"# PAIR — auto pipeline\n\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
-md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px\n"
+md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px (fabric/fringe split: {fringe_src})\n"
 md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:

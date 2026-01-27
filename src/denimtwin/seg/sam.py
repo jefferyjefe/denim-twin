@@ -85,3 +85,27 @@ def segment_garment_coarse(seg, image_bgr, max_side=1024):
     if n > 1: m = (lab == (1 + np.argmax(stats[1:, cv2.CC_STAT_AREA]))).astype(np.uint8) * 255
     if s < 1: m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
     return m > 127, best[2], {"area": best[3], "border_frac": best[4]}
+
+def segment_fringe(seg, image_bgr, garment_mask, band_frac=0.15, max_side=1024):
+    """Fringe/loose-thread mask via SAM prompted on the hem band of a cut garment: positive points along the
+    bottom band of the garment, negatives on the body. Returns the SAM candidate whose area is < 50% of the garment
+    with the highest score, restricted to the garment mask and to the bottom 35% of the garment rows."""
+    h, w = image_bgr.shape[:2]; s = min(1.0, max_side / max(h, w))
+    small = cv2.resize(image_bgr, None, fx=s, fy=s) if s < 1 else image_bgr
+    seg.predictor.set_image(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+    am = garment_mask.astype(bool); rows = np.nonzero(am.any(axis=1))[0]
+    if len(rows) < 10: return None
+    yt, yb = rows.min(), rows.max(); band = max(int(band_frac * (yb - yt)), 4)
+    xs = np.nonzero(am[max(yb - band // 2, yt)])[0]
+    if len(xs) < 20: return None
+    cols = np.linspace(xs.min() + 5, xs.max() - 5, 7).astype(int)
+    pos = np.array([[x, yb - band // 3] for x in cols], float); neg = np.array([[x, yt + (yb - yt) // 2] for x in cols[::2]] + [[cols[3], yt + (yb - yt) // 6]], float)
+    pc = np.concatenate([pos, neg]) * s; pl = np.array([1] * len(pos) + [0] * len(neg))
+    masks, scores, _ = seg.predictor.predict(point_coords=pc, point_labels=pl, multimask_output=True)
+    cands = [(float(sc), m) for m, sc in zip(masks, scores) if 0.01 < m.mean() and m.sum() < 0.5 * (am.sum() * s * s)]
+    if not cands: return None
+    m = max(cands, key=lambda c: c[0])[1].astype(np.uint8) * 255
+    if s < 1: m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
+    fr = (m > 127) & am
+    fr[: yt + int(0.65 * (yb - yt))] = False        # fringe lives at the bottom; thigh distressing is not fringe
+    return fr
