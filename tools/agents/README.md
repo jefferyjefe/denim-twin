@@ -15,7 +15,7 @@
 | Capture-QA watcher | local launchd | every 5 min | `<garment>/qa_report.md`, macOS notification | `tools/capture_watch.py` |
 | Harvest curator | local launchd | hourly | `data/external/curated.jsonl` | `tools/curate_harvest.py` |
 | Tutorial-pair finder | cloud routine | daily 04:30 UTC | `data/external/pairs.jsonl` on main | `tools/tutorial_pairs.py` |
-| Image harvester | cloud routine | hourly :07 | `data/external/manifest.jsonl` on main | `tools/harvest_images.py` |
+| Image harvester | cloud routine (DISABLED — local curator does this) | — | `data/external/manifest.jsonl` on main | `tools/harvest_images.py` |
 
 Rules: only the harvester and report-only agents write to `main`, and only under `reports/`, `notes/`, or
 `data/external/`. Anything touching `src/`, `tools/`, `tests/`, `docs/` goes to an `agent/*` branch.
