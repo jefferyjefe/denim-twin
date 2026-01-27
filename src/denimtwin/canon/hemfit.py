@@ -48,12 +48,17 @@ def _split_x(lm_before, real_mask):
     if "hip_left" in lm_before and "hip_right" in lm_before: return int((lm_before["hip_left"][0] + lm_before["hip_right"][0]) / 2)
     return int(lm_before["crotch"][0])
 
-def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, real_img=None, min_pts=6):
-    H, W = real_mask.shape; cx = _split_x(lm_before, real_mask); cy = int(lm_before["crotch"][1])
-    cy = min(cy, int(np.nonzero(real_mask.any(axis=1))[0].max()) - 2) if real_mask.any() else cy   # never scan from below the real garment
+def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, real_img=None, min_pts=6, fringe_mask=None):
+    H, W = real_mask.shape; cx = _split_x(lm_before, real_mask)
+    # scan from the HIP row, not the crotch: the per-column 'last fabric row' is unaffected by starting higher, and the
+    # crotch estimate can be badly off when the legs touch (no gap) — starting there can miss the whole hem.
+    cy = int(lm_before["hip_left"][1]) if "hip_left" in lm_before else int(lm_before["crotch"][1])
+    cy = min(cy, int(np.nonzero(real_mask.any(axis=1))[0].max()) - 2) if real_mask.any() else cy
     k = np.ones((1, 2 * w + 1), np.float32) / (2 * w + 1)
     base = real_mask
-    if real_img is not None:
+    if fringe_mask is not None:                                   # SAM fringe mask (warped into the before frame): most reliable
+        base = real_mask & ~fringe_mask
+    elif real_img is not None:
         base, _, _ = fabric_vs_fringe(real_img, real_mask, lm_before)   # edge = end of FABRIC, tip = end of mask
         if base[cy:].sum() < 0.3 * real_mask[cy:].sum(): base = real_mask   # colour split failed (lighting): fall back to the mask
     solid = cv2.filter2D(base.astype(np.float32), -1, k) >= solid_frac
