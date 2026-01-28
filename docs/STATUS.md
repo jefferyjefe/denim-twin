@@ -10,7 +10,7 @@
 
 ## What the numbers say
 - Cut geometry is reproduced automatically on the one usable found pair (sil IoU ~0.8 vs 0.35 no-op).
-- Fringe prediction is NOT yet better than crop-only (fringe IoU 0.07); appearance parameters are guesses (EXP_0003/0004/0006).
+- Fringe: with SAM fringe segmentation (04:45 UTC) the prediction beats crop-only on pair1 for the first time (hem error 17.5 vs 22.7 px, fringe IoU 0.27 vs 0.00) — depth still *measured* on that pair; `--prior --exclude` makes it a held-out prediction once n ≥ 5 (EXP_0004).
 - Found tutorial pairs: 1/14 usable (EXP_0005). CC image harvest: no garments for the task (EXP_0007).
 - Registration on shorts is underdetermined (leave-one-out residual ~50–160 px on 512-px images).
 
