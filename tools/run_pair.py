@@ -19,6 +19,7 @@ p = argparse.ArgumentParser()
 p.add_argument("--before", required=True); p.add_argument("--after", required=True); p.add_argument("--out", required=True)
 p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--mm-per-px", type=float, default=None); p.add_argument("--seed", type=int, default=1)
 p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth from the prior (depth_rel_mean * waist width) instead of reading it off the after-photo")
+p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
 FAIL = lambda why: (print(f"REJECT: {why}"), open(f"{O}/NOTE.md", "w").write(f"# PAIR — rejected\n\n{why}\n"), sys.exit(3))
@@ -92,7 +93,9 @@ bg = np.median(bf[~bmask], axis=0); cut = bf.copy(); cut[removed] = bg
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
-    depth_px = pr.get("depth_rel_mean_after_wash", pr["depth_rel_mean"]) * ww; depth_source = f"prior (n={pr['n']}{', INSUFFICIENT' if pr.get('insufficient') else ''})"
+    rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude]
+    rel = np.mean([x["depth_rel"] for x in rows_]) if rows_ else pr["depth_rel_mean"]
+    depth_px = rel * ww; depth_source = f"prior (n={len(rows_)}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if len(rows_) < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
 depth_mm = depth_px * mmpp

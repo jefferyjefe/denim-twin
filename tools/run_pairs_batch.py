@@ -14,7 +14,9 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     before = pick(("before",)); after = pick(("after_wash",)) or pick(("after_cut",)); kind = "after_wash" if pick(("after_wash",)) else "after_cut"
     if not before or not after: continue
     od = OUT / pid
-    r = subprocess.run([sys.executable, str(ROOT / "tools/run_pair.py"), "--before", str(IMG / before), "--after", str(IMG / after), "--out", str(od)], capture_output=True, text=True)
+    cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", str(IMG / before), "--after", str(IMG / after), "--out", str(od)]
+    if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid]   # leave-one-out
+    r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0
     metrics = None
     if ok and (od / "cmp_median/metrics.json").exists():
