@@ -1,0 +1,1 @@
+b630a78c19  # legs-only crop passed the gates (EXP_0005); not a whole-garment pair
