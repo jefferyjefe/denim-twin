@@ -6,24 +6,24 @@
    "pair": "4bfef03bd7",
    "kind": "after_wash",
    "waist_px": 369,
-   "depth_px": 2.5,
-   "depth_rel": 0.006775067750677507,
-   "angle_l": 2.6,
-   "angle_r": -2.0
+   "depth_px": 23.0,
+   "depth_rel": 0.06233062330623306,
+   "angle_l": -10.4,
+   "angle_r": 4.5
   },
   {
    "pair": "b630a78c19",
    "kind": "after_cut",
    "waist_px": 408,
-   "depth_px": 13.5,
-   "depth_rel": 0.03308823529411765,
-   "angle_l": -5.5,
-   "angle_r": -8.5
+   "depth_px": 191.5,
+   "depth_rel": 0.4693627450980392,
+   "angle_l": 0.7,
+   "angle_r": -9.9
   }
  ],
- "depth_rel_mean": 0.019931651522397578,
- "depth_rel_sd": 0.013156583771720071,
- "depth_px_mean": 8.0,
- "depth_px_sd": 5.5,
- "depth_rel_mean_after_wash": 0.006775067750677507
+ "depth_rel_mean": 0.26584668420213614,
+ "depth_rel_sd": 0.20351606089590307,
+ "depth_px_mean": 107.25,
+ "depth_px_sd": 84.25,
+ "depth_rel_mean_after_wash": 0.06233062330623306
 }
