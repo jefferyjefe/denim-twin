@@ -8,9 +8,10 @@ import json, glob, re, statistics as st
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; OUT = ROOT / "data/priors"; OUT.mkdir(parents=True, exist_ok=True)
 rows = []
+EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
 for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
     txt = Path(note).read_text()
-    if "rejected" in txt[:80]: continue
+    if "rejected" in txt[:80] or Path(note).parent.name in EXCL: continue
     lm = Path(note).parent / "landmarks.json"
     if not lm.exists(): continue
     L = json.load(open(lm))["before_used"]; ww = abs(L["waist_right"][0] - L["waist_left"][0])
