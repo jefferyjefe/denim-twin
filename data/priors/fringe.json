@@ -1,5 +1,5 @@
 {
- "n": 1,
+ "n": 2,
  "insufficient": true,
  "pairs": [
   {
@@ -10,11 +10,20 @@
    "depth_rel": 0.06233062330623306,
    "angle_l": -10.4,
    "angle_r": 4.5
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "kind": "after_cut",
+   "waist_px": 585,
+   "depth_px": 4.0,
+   "depth_rel": 0.006837606837606838,
+   "angle_l": 13.6,
+   "angle_r": -14.4
   }
  ],
- "depth_rel_mean": 0.06233062330623306,
- "depth_rel_sd": null,
- "depth_px_mean": 23.0,
- "depth_px_sd": null,
+ "depth_rel_mean": 0.03458411507191995,
+ "depth_rel_sd": 0.027746508234313114,
+ "depth_px_mean": 13.5,
+ "depth_px_sd": 9.5,
  "depth_rel_mean_after_wash": 0.06233062330623306
 }

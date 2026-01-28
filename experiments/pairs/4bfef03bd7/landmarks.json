@@ -201,12 +201,12 @@
  },
  "conf": {
   "before": {
-   "garment_type": "jeans",
-   "crotch": "prior_legs_touching"
+   "crotch": "prior_legs_touching",
+   "garment_type": "jeans"
   },
   "after": {
-   "garment_type": "shorts",
-   "crotch": "gap"
+   "crotch": "gap",
+   "garment_type": "shorts"
   }
  }
 }
