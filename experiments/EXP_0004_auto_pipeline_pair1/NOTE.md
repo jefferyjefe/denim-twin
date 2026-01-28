@@ -39,3 +39,19 @@ true diagonal (±17–20°) to near-flat, depending on small heuristic choices (
 crotch prior). That variance is a property of tuning on ONE low-res pair, not progress. Current code keeps the
 principled versions (cut-invariant landmarks, hip-midpoint split, mask fallback) and accepts the flatter fit here.
 Rule from now on: hemfit/autolm thresholds change only against ≥5 pairs, with numbers reported for all of them.
+
+## Update — SAM fringe segmentation (2026-08-29 04:45 UTC)
+`seg.sam.segment_fringe` (SAM prompted on the hem band of the after-photo, restricted to the bottom 35% of the garment)
+replaces the colour split; the mask is warped into the before frame with the same TPS, and the fabric edge per column
+is where the fringe starts. Also: hem scan starts at the hip row; crotch prior 0.6× waist width.
+
+| system | sil IoU | hem error px | edge ΔE | fringe IoU |
+|---|---|---|---|---|
+| **prediction (v1 median, measured depth 24.5 px)** | **0.773** | **17.5** | 23.0 | **0.274** |
+| null: crop-only | 0.756 | 22.7 | 23.5 | 0.000 |
+| null: no-op | 0.285 | 505 | 20.5 | 0.038 |
+
+First time the prediction beats crop-only on a geometry metric (the fringe adds real garment area below the cut).
+Depth is still *measured* on this pair (not predicted) — `--prior` becomes meaningful at n ≥ 5. Angles −10°/+5° vs the
+true ≈ ±17–20°: partial. This change is principled (a segmentation model replacing a colour heuristic), so it does not
+violate the stop-tuning rule; it still needs confirmation on more pairs.
