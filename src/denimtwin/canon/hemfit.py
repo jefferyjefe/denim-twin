@@ -68,8 +68,13 @@ def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, rea
         for x in cols:
             col = garment_before[:, x]
             if col[cy:].sum() < 5: continue
-            s = np.nonzero(solid[cy:, x] & base[cy:, x])[0]; t = np.nonzero(real_mask[cy:, x])[0]
-            if len(s) == 0 or len(t) == 0: continue
+            t = np.nonzero(real_mask[cy:, x])[0]
+            if len(t) == 0: continue
+            if fringe_mask is not None and fringe_mask[cy:, x].any():
+                # with a fringe mask: fabric edge = where the fringe STARTS in this column (mask may be holey below)
+                f0 = np.nonzero(fringe_mask[cy:, x])[0].min(); ex.append(x); ey.append(cy + f0); tips.append(cy + t.max()); continue
+            s = np.nonzero(solid[cy:, x] & base[cy:, x])[0]
+            if len(s) == 0: continue
             ex.append(x); ey.append(cy + s.max()); tips.append(cy + t.max())
         if len(ex) < min_pts: legs[name] = None; continue
         ex, ey, tips = map(np.array, (ex, ey, tips))
