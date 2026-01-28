@@ -55,14 +55,19 @@ def landmarks_from_mask(mask):
             if abs(gx - cx) < 0.5 * half:
                 crotch = (int(gx), int(y)); break
         if crotch: break
-    wmax = xs.max() - xs.min(); shorts = h < 1.3 * wmax          # jeans are ~2x taller than wide; shorts ~1x
-    conf["garment_type"] = "shorts" if shorts else "jeans"
-    # crotch depth scales with waist width (rise ≈ 1.1 × waist width), which is invariant to cutting the legs
+    wmax = xs.max() - xs.min(); aspect_shorts = h < 1.3 * wmax          # bounding-box aspect (fails when legs are spread wide)
     wy = out["waist_left"][1]; crotch_prior = (cx, min(wy + int(0.6 * ww), bot)); crotch_max = wy + 1.5 * ww
-    if crotch and (shorts or crotch[1] <= crotch_max): out["crotch"] = crotch; conf["crotch"] = "gap"
-    elif crotch: out["crotch"] = crotch_prior; conf["crotch"] = "prior_legs_touching"   # jeans, gap too low: legs touch
-    elif shorts: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
-    else: out["crotch"] = crotch_prior; conf["crotch"] = "prior_no_gap_jeans"
+    if crotch and (crotch[1] <= crotch_max or aspect_shorts):               # plausible crotch gap (or clearly shorts)
+        leg_len = bot - crotch[1]
+        shorts = leg_len < 0.9 * ww                                          # legs shorter than the waist width -> shorts (spread-invariant)
+        out["crotch"] = crotch; conf["crotch"] = "gap"
+    elif crotch:                                                             # gap found far too low: legs touch, it is a hem/fringe gap
+        out["crotch"] = crotch_prior; conf["crotch"] = "prior_legs_touching"; shorts = aspect_shorts
+    else:
+        shorts = aspect_shorts
+        if shorts: out["crotch"] = (cx, int(bot)); conf["crotch"] = "no_gap_shorts"
+        else: out["crotch"] = crotch_prior; conf["crotch"] = "prior_no_gap_jeans"
+    conf["garment_type"] = "shorts" if shorts else "jeans"
     cyx, cyy = out["crotch"]
     # per-leg hems and knees
     for side, sl in (("left", slice(0, cyx)), ("right", slice(cyx, W))):

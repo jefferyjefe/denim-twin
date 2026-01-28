@@ -217,12 +217,12 @@
  },
  "conf": {
   "before": {
-   "garment_type": "jeans",
-   "crotch": "gap"
+   "crotch": "gap",
+   "garment_type": "jeans"
   },
   "after": {
-   "garment_type": "jeans",
-   "crotch": "gap"
+   "crotch": "gap",
+   "garment_type": "jeans"
   }
  }
 }
