@@ -1,5 +1,6 @@
 # PAIR — auto pipeline
 
+flags: none
 before: /Users/jefferyhuang/denim-twin/data/external/pair_images/4bfef03bd7_before_051879ca.jpeg collage split (side-by-side) at x=503, kept left
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/4bfef03bd7_after_wash_44ffba7e.jpeg collage split (stacked) at y=512, kept top
 scale: UNKNOWN (1.0 placeholder; mm values are px)

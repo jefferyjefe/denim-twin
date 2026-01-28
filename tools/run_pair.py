@@ -22,6 +22,7 @@ p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth fr
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
+FLAGS = []
 FAIL = lambda why: (print(f"REJECT: {why}"), open(f"{O}/NOTE.md", "w").write(f"# PAIR — rejected\n\n{why}\n"), sys.exit(3))
 
 def split_collage(img):
@@ -52,7 +53,10 @@ bmask = coarse(bf); amask = coarse(af)
 def sane(mask, name):
     h, w = mask.shape; ys, xs = np.nonzero(mask)
     if mask.mean() < 0.05: FAIL(f"{name}: garment too small ({mask.mean():.2f} of frame)")
-    if (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2) or (ys.max() >= h - 3): FAIL(f"{name}: garment touches the frame edge (cropped photo)")
+    if (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2): FAIL(f"{name}: garment touches the frame edge (cropped photo)")
+    if ys.max() >= h - 3:
+        if name.startswith("before"): FLAGS.append(f"{name}: legs reach the frame bottom — original hem unknown; cut expressed vs frame, not inseam")
+        else: FAIL(f"{name}: garment touches the frame bottom (cropped photo)")
     if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")
     # a whole garment has ONE waistband run near the top; two runs = a cropped pair of legs
     top, hh = ys.min(), ys.max() - ys.min(); band = range(top, top + int(0.15 * hh))
@@ -117,7 +121,7 @@ tiles = [crop(bf), crop(res["median"][0]), crop(real)]
 for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a.mm_per_px else 'px'})", "real registered")): cv2.putText(t, n, (10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
-md = f"# PAIR — auto pipeline\n\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
+md = f"# PAIR — auto pipeline\n\nflags: {'; '.join(FLAGS) or 'none'}\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
 md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px (fabric/fringe split: {fringe_src})\n"
 md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
