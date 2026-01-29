@@ -30,3 +30,10 @@ edge ΔE 21.1 (crop 21.3); **fringe IoU 0.07** (no-op 0.00) — the earlier 0.35
 haze as fringe (review finding #2). The honest statement today: the pipeline reproduces the *cut* of a found pair
 automatically; its fringe prediction is barely distinguishable from crop-only at this resolution and with an
 unfitted appearance model. b630a78c19 still passes gates but is a legs-only crop (known false positive).
+
+## Update 05:50 UTC — pair 15 (Create/Enjoy, 2011 Blogger post), found manually
+Whole jeans flat + whole shorts flat (cuffed hem: a cut-geometry pair, no fray). Needed two pipeline fixes to be
+accepted: before-photo legs reaching the frame bottom is now a flag, not a rejection; jeans/shorts decided by leg
+length vs waist width (spread-invariant) instead of bounding-box aspect.
+Result (auto, zero clicks): **sil IoU 0.94** (crop 0.94, no-op 0.42), **hem error 8 px** (crop 9), fringe IoU 0.11 (no fray expected).
+Funnel now: 15 found → 6 CLIP-usable → 3 pass gates → **2 genuinely usable** (+1 known legs-only false positive).
