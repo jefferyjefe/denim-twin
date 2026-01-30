@@ -50,7 +50,20 @@ def coarse(img):
     m, sc, info = segment_garment_coarse(seg, img)
     if m is None: print("coarse segmentation failed"); sys.exit(2)
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
+def upright(img, mask, name):
+    """Rotate image+mask so the garment's principal axis is vertical (flat-lays are often photographed at an angle)."""
+    ys, xs = np.nonzero(mask); pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
+    cov = pts.T @ pts / len(pts); w_, v_ = np.linalg.eigh(cov); major = v_[:, np.argmax(w_)]
+    ang = np.degrees(np.arctan2(major[0], major[1]))          # angle of the long axis from vertical
+    ang = (ang + 90) % 180 - 90
+    if abs(ang) < 8 or abs(ang) > 82: return img, mask, 0.0
+    h, w = img.shape[:2]; M = cv2.getRotationMatrix2D((w / 2, h / 2), -ang, 1.0)
+    cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h * sin + w * cos), int(h * cos + w * sin); M[0, 2] += nw / 2 - w / 2; M[1, 2] += nh / 2 - h / 2
+    bgc = tuple(int(c) for c in np.median(img[~mask], axis=0)) if (~mask).any() else (128, 128, 128)
+    FLAGS.append(f"{name}: rotated {ang:.1f}° to upright"); return cv2.warpAffine(img, M, (nw, nh), borderValue=bgc), cv2.warpAffine(mask.astype(np.uint8), M, (nw, nh)) > 0, ang
 bmask = coarse(bf); amask = coarse(af)
+bf, bmask, _ = upright(bf, bmask, "before"); af, amask, _ = upright(af, amask, "after")
+cv2.imwrite(f"{O}/before_used.png", bf); cv2.imwrite(f"{O}/after_used.png", af)
 CROPPED = set(x.strip() for x in a.cropped.split(",") if x.strip())
 def sane(mask, name):
     h, w = mask.shape; ys, xs = np.nonzero(mask)
