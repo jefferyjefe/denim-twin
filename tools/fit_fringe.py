@@ -17,6 +17,11 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
     L = json.load(open(lm))["before_used"]; ww = abs(L["waist_right"][0] - L["waist_left"][0])
     m = re.search(r"hem fit: left: angle ([-\d.]+)°, depth ([\d.]+), right: angle ([-\d.]+)°, depth ([\d.]+)", txt)
     if not m or ww <= 0: continue
+    # quality bar: only pairs whose cut geometry was reproduced (else the 'fringe depth' is registration garbage)
+    mp = Path(note).parent / "cmp_median/metrics.json"
+    if mp.exists():
+        pr_ = {x["system"]: x for x in json.load(open(mp))["rows"]}["prediction"]
+        if pr_["sil_iou_vs_real"] < 0.75 or pr_["hem_chamfer"] > 40: print(f"  skip {Path(note).parent.name}: sil IoU {pr_['sil_iou_vs_real']:.2f}, hem err {pr_['hem_chamfer']:.0f}"); continue
     al, dl, ar, dr = map(float, m.groups()); kind = "after_wash" if "after_wash" in txt else "after_cut"
     rows.append(dict(pair=Path(note).parent.name, kind=kind, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
 prior = {"n": len(rows), "insufficient": len(rows) < 5, "pairs": rows}
