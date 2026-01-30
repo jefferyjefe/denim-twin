@@ -20,6 +20,7 @@ p.add_argument("--before", required=True); p.add_argument("--after", required=Tr
 p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--mm-per-px", type=float, default=None); p.add_argument("--seed", type=int, default=1)
 p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth from the prior (depth_rel_mean * waist width) instead of reading it off the after-photo")
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
+p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
 FLAGS = []
@@ -50,11 +51,15 @@ def coarse(img):
     if m is None: print("coarse segmentation failed"); sys.exit(2)
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
 bmask = coarse(bf); amask = coarse(af)
+CROPPED = set(x.strip() for x in a.cropped.split(",") if x.strip())
 def sane(mask, name):
     h, w = mask.shape; ys, xs = np.nonzero(mask)
     if mask.mean() < 0.05: FAIL(f"{name}: garment too small ({mask.mean():.2f} of frame)")
-    if (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2): FAIL(f"{name}: garment touches the frame edge (cropped photo)")
-    if ys.max() >= h - 3:
+    manual = name.split()[0] in CROPPED
+    edge = (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2); bottom = ys.max() >= h - 3
+    if manual and (edge or bottom): FLAGS.append(f"{name}: touches the edge of a MANUAL crop (second object removed from frame)"); return
+    if edge: FAIL(f"{name}: garment touches the frame edge (cropped photo)")
+    if bottom:
         if name.startswith("before"): FLAGS.append(f"{name}: legs reach the frame bottom — original hem unknown; cut expressed vs frame, not inseam")
         else: FAIL(f"{name}: garment touches the frame bottom (cropped photo)")
     if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")

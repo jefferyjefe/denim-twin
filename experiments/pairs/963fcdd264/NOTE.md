@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-before: garment touches the frame edge (cropped photo)
+before: garment too small (0.05 of frame)

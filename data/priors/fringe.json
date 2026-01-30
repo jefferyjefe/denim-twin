@@ -1,7 +1,16 @@
 {
- "n": 2,
+ "n": 3,
  "insufficient": true,
  "pairs": [
+  {
+   "pair": "443d1d4658",
+   "kind": "after_cut",
+   "waist_px": 336,
+   "depth_px": 12.5,
+   "depth_rel": 0.03720238095238095,
+   "angle_l": 10.7,
+   "angle_r": -11.6
+  },
   {
    "pair": "4bfef03bd7",
    "kind": "after_wash",
@@ -21,9 +30,9 @@
    "angle_r": -14.4
   }
  ],
- "depth_rel_mean": 0.03458411507191995,
- "depth_rel_sd": 0.027746508234313114,
- "depth_px_mean": 13.5,
- "depth_px_sd": 9.5,
+ "depth_rel_mean": 0.03545687036540695,
+ "depth_rel_sd": 0.02268852609585932,
+ "depth_px_mean": 13.166666666666666,
+ "depth_px_sd": 7.771028817916512,
  "depth_rel_mean_after_wash": 0.06233062330623306
 }

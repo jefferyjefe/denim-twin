@@ -5,6 +5,7 @@ Writes experiments/pairs/<pageid>/ and a summary table experiments/pairs/SUMMARY
 import json, hashlib, subprocess, sys, os
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"; OUT = ROOT / "experiments/pairs"; OUT.mkdir(parents=True, exist_ok=True)
+RECS = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
 rows = []
 for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlines():
     v = json.loads(line)
@@ -13,8 +14,19 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     pick = lambda roles: next((t["file"] for t in v["images"] if t["role"] in roles and t.get("tag") == "whole_garment_flat"), None)
     before = pick(("before",)); after = pick(("after_wash",)) or pick(("after_cut",)); kind = "after_wash" if pick(("after_wash",)) else "after_cut"
     if not before or not after: continue
+    # manual crops recorded in pairs.jsonl (fractional boxes) -> cropped copies
+    rec = next((r for r in RECS if hashlib.sha1(r["page_url"].encode()).hexdigest()[:10] == pid), None)
+    def cropped(fname, role):
+        if not rec: return str(IMG / fname)
+        h8 = os.path.splitext(fname)[0].rsplit("_", 1)[-1]
+        im = next((i for i in rec["images"] if h8 == hashlib.sha1(i["url"].encode()).hexdigest()[:8] and i.get("crop")), None)
+        if not im: return str(IMG / fname)
+        import cv2; img = cv2.imread(str(IMG / fname)); h, w = img.shape[:2]; x0, y0, x1, y1 = im["crop"]
+        out = OUT / pid / f"cropped_{role}.png"; out.parent.mkdir(parents=True, exist_ok=True); cv2.imwrite(str(out), img[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]); return str(out)
+    before_p, after_p = cropped(before, "before"), cropped(after, kind)
     od = OUT / pid
-    cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", str(IMG / before), "--after", str(IMG / after), "--out", str(od)]
+    cropped = ",".join(k for k, p_ in (("before", before_p), ("after", after_p)) if "cropped_" in p_)
+    cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od)] + (["--cropped", cropped] if cropped else [])
     if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid]   # leave-one-out
     r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0
