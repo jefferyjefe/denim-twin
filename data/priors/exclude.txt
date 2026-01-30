@@ -1,1 +1,3 @@
 b630a78c19  # legs-only crop passed the gates (EXP_0005); not a whole-garment pair
+3082dfddc1  # before is a tiny dark collage tile; unusable at this resolution
+963fcdd264  # ruler lies across the leg and legs are cropped; coarse mask picks the ruler

@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-after: garment touches the frame edge (cropped photo)
+degenerate cut: removed fraction 0.81
