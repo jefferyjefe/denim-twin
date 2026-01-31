@@ -8,8 +8,8 @@
 | 4bfef03bd7 | DIY Denim Shorts | Thrifted Jeans Into S | after_wash | ok | 0.77 / 0.75 / 0.29 | 17 / 22 | 22.9 / 23.3 | 0.26 / 0.04 |
 | ee4bf13a3c | Magnolia Mamas: Fashion Fix: DIY Distres | after_wash | FAIL: REJECT: before image is not full-length jeans (aspect says s | | | | |
 | 8d9f0df4ad | This summer's DIY cut-off jeans shorts-- | after_cut | ok | 0.94 / 0.94 / 0.42 | 8 / 9 | 22.1 / 22.3 | 0.11 / 0.02 |
-| 963fcdd264 | DIY; Mom Jeans to High Waisted Shorts |  | after_cut | FAIL: REJECT: before: garment too small (0.05 of frame) | | | | |
-| d52a3ff876 | Under Peach Trees: D.I.Y. Jeans to Short | after_cut | FAIL: REJECT: before: garment too small (0.03 of frame) | | | | |
+| 963fcdd264 | DIY; Mom Jeans to High Waisted Shorts |  | after_cut | FAIL: REJECT: after: garment touches the frame edge (cropped photo | | | | |
+| d52a3ff876 | Under Peach Trees: D.I.Y. Jeans to Short | after_cut | FAIL: REJECT: degenerate cut: removed fraction 0.00 | | | | |
 | 443d1d4658 | Create Kids Couture: Upcycle Old Jeans i | after_cut | ok | 0.92 / 0.92 / 0.59 | 15 / 14 | 13.2 / 13.0 | 0.21 / 0.01 |
 | 3082dfddc1 | DIY style: perfectly distressed jean sho | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.88 | | | | |
 | 22a5857a0c | Comment transformer son jeans en short - | after_cut | FAIL: REJECT: before (refined): widest top row is not a single wai | | | | |

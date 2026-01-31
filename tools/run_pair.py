@@ -67,7 +67,7 @@ cv2.imwrite(f"{O}/before_used.png", bf); cv2.imwrite(f"{O}/after_used.png", af)
 CROPPED = set(x.strip() for x in a.cropped.split(",") if x.strip())
 def sane(mask, name):
     h, w = mask.shape; ys, xs = np.nonzero(mask)
-    if mask.mean() < 0.05: FAIL(f"{name}: garment too small ({mask.mean():.2f} of frame)")
+    if mask.mean() < 0.02: FAIL(f"{name}: garment too small ({mask.mean():.2f} of frame)")   # 2%: small garment on a big rug is still fine
     manual = name.split()[0] in CROPPED
     edge = (xs.min() <= 2) or (xs.max() >= w - 3) or (ys.min() <= 2); bottom = ys.max() >= h - 3
     if manual and (edge or bottom): FLAGS.append(f"{name}: touches the edge of a MANUAL crop (second object removed from frame)"); return

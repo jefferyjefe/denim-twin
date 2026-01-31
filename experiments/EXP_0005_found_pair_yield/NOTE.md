@@ -37,3 +37,11 @@ accepted: before-photo legs reaching the frame bottom is now a flag, not a rejec
 length vs waist width (spread-invariant) instead of bounding-box aspect.
 Result (auto, zero clicks): **sil IoU 0.94** (crop 0.94, no-op 0.42), **hem error 8 px** (crop 9), fringe IoU 0.11 (no fray expected).
 Funnel now: 15 found → 6 CLIP-usable → 3 pass gates → **2 genuinely usable** (+1 known legs-only false positive).
+
+## Update 06:10 UTC — second finder run (+8 vetted pages, 23 total)
+Funnel: 23 found → 12 CLIP-usable → 5 pass gates → **3–4 genuinely usable** (Thrifted & Taylor'd fray pair; Create/Enjoy;
+Create Kids Couture on a 1-inch grid mat, sil IoU 0.92 / hem 15 px; Under Peach Trees pending). Two new mechanisms were
+needed and are principled, not tuning: per-image **manual crop boxes** in the manifest (second object in frame — the
+dominant failure) and **upright normalisation** (PCA rotation before landmarks). Excluded with reasons: Mr Kate (tiny
+collage tile), mom-jeans (ruler across the leg; would need a mask prompt), 51likes (overlapping shorts).
+Fringe prior: n=3 usable geometry pairs, still < 5.

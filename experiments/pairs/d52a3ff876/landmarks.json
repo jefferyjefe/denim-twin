@@ -1,170 +1,202 @@
 {
  "before_auto": {
   "waist_left": [
-   591,
-   616
+   1043,
+   872
   ],
   "waist_right": [
-   718,
-   616
+   1219,
+   872
   ],
   "waist_center": [
-   654,
-   616
+   1131,
+   872
   ],
   "hip_left": [
-   584,
-   673
+   910,
+   951
   ],
   "hip_right": [
-   796,
-   673
+   1212,
+   951
   ],
   "crotch": [
-   690,
-   982
+   1061,
+   1285
   ],
   "hem_left_outer": [
-   578,
-   982
+   1049,
+   1236
   ],
   "hem_left_inner": [
-   636,
-   982
+   1060,
+   1236
   ],
   "hem_right_outer": [
-   721,
-   960
+   1170,
+   1285
   ],
   "hem_right_inner": [
-   690,
-   960
+   1101,
+   1285
   ]
  },
  "after_auto": {
   "waist_left": [
-   451,
-   59
+   242,
+   475
   ],
   "waist_right": [
-   1096,
-   59
+   736,
+   475
   ],
   "waist_center": [
-   773,
-   59
+   489,
+   475
   ],
   "hip_left": [
-   380,
-   349
+   217,
+   697
   ],
   "hip_right": [
-   1169,
-   349
+   783,
+   697
   ],
   "crotch": [
-   785,
-   491
+   500,
+   771
   ],
   "hem_left_outer": [
-   644,
-   640
+   317,
+   1364
   ],
   "hem_left_inner": [
-   730,
-   640
+   386,
+   1364
+  ],
+  "knee_left_outer": [
+   237,
+   1049
+  ],
+  "knee_left_inner": [
+   499,
+   1049
   ],
   "hem_right_outer": [
-   1244,
-   659
+   542,
+   1274
   ],
   "hem_right_inner": [
-   819,
-   659
+   500,
+   1274
+  ],
+  "knee_right_outer": [
+   852,
+   1007
+  ],
+  "knee_right_inner": [
+   500,
+   1007
   ]
  },
  "before_used": {
   "waist_left": [
-   591,
-   616
+   1043,
+   872
   ],
   "waist_right": [
-   718,
-   616
+   1219,
+   872
   ],
   "waist_center": [
-   654,
-   616
+   1131,
+   872
   ],
   "hip_left": [
-   584,
-   673
+   910,
+   951
   ],
   "hip_right": [
-   796,
-   673
+   1212,
+   951
   ],
   "crotch": [
-   690,
-   982
+   1061,
+   1285
   ],
   "hem_left_outer": [
-   578,
-   982
+   1049,
+   1236
   ],
   "hem_left_inner": [
-   636,
-   982
+   1060,
+   1236
   ],
   "hem_right_outer": [
-   721,
-   960
+   1170,
+   1285
   ],
   "hem_right_inner": [
-   690,
-   960
+   1101,
+   1285
   ]
  },
  "after_used": {
   "waist_left": [
-   451,
-   59
+   242,
+   475
   ],
   "waist_right": [
-   1096,
-   59
+   736,
+   475
   ],
   "waist_center": [
-   773,
-   59
+   489,
+   475
   ],
   "hip_left": [
-   380,
-   349
+   217,
+   697
   ],
   "hip_right": [
-   1169,
-   349
+   783,
+   697
   ],
   "crotch": [
-   785,
-   491
+   500,
+   771
   ],
   "hem_left_outer": [
-   644,
-   640
+   317,
+   1364
   ],
   "hem_left_inner": [
-   730,
-   640
+   386,
+   1364
+  ],
+  "knee_left_outer": [
+   237,
+   1049
+  ],
+  "knee_left_inner": [
+   499,
+   1049
   ],
   "hem_right_outer": [
-   1244,
-   659
+   542,
+   1274
   ],
   "hem_right_inner": [
-   819,
-   659
+   500,
+   1274
+  ],
+  "knee_right_outer": [
+   852,
+   1007
+  ],
+  "knee_right_inner": [
+   500,
+   1007
   ]
  },
  "conf": {
@@ -173,8 +205,8 @@
    "garment_type": "shorts"
   },
   "after": {
-   "crotch": "gap",
-   "garment_type": "shorts"
+   "crotch": "prior_no_gap_jeans",
+   "garment_type": "jeans"
   }
  }
 }
