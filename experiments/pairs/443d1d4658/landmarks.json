@@ -21,19 +21,19 @@
    215
   ],
   "crotch": [
-   291,
-   289
+   292,
+   290
   ],
   "hem_left_outer": [
-   97,
-   728
+   86,
+   727
   ],
   "hem_left_inner": [
    170,
-   728
+   727
   ],
   "knee_left_outer": [
-   72,
+   73,
    495
   ],
   "knee_left_inner": [
@@ -45,7 +45,7 @@
    728
   ],
   "hem_right_inner": [
-   375,
+   374,
    728
   ],
   "knee_right_outer": [
@@ -53,37 +53,37 @@
    495
   ],
   "knee_right_inner": [
-   342,
+   343,
    495
   ]
  },
  "after_auto": {
   "waist_left": [
-   136,
-   54
+   137,
+   53
   ],
   "waist_right": [
    494,
-   54
+   53
   ],
   "waist_center": [
    315,
-   54
+   53
   ],
   "hip_left": [
    100,
-   215
+   213
   ],
   "hip_right": [
-   510,
-   215
+   509,
+   213
   ],
   "crotch": [
    294,
-   290
+   293
   ],
   "hem_left_outer": [
-   159,
+   158,
    459
   ],
   "hem_left_inner": [
@@ -91,11 +91,11 @@
    459
   ],
   "hem_right_outer": [
-   455,
+   456,
    459
   ],
   "hem_right_inner": [
-   364,
+   363,
    459
   ]
  },
@@ -121,19 +121,19 @@
    215
   ],
   "crotch": [
-   291,
-   289
+   292,
+   290
   ],
   "hem_left_outer": [
-   97,
-   728
+   86,
+   727
   ],
   "hem_left_inner": [
    170,
-   728
+   727
   ],
   "knee_left_outer": [
-   72,
+   73,
    495
   ],
   "knee_left_inner": [
@@ -145,7 +145,7 @@
    728
   ],
   "hem_right_inner": [
-   375,
+   374,
    728
   ],
   "knee_right_outer": [
@@ -153,37 +153,37 @@
    495
   ],
   "knee_right_inner": [
-   342,
+   343,
    495
   ]
  },
  "after_used": {
   "waist_left": [
-   136,
-   54
+   137,
+   53
   ],
   "waist_right": [
    494,
-   54
+   53
   ],
   "waist_center": [
    315,
-   54
+   53
   ],
   "hip_left": [
    100,
-   215
+   213
   ],
   "hip_right": [
-   510,
-   215
+   509,
+   213
   ],
   "crotch": [
    294,
-   290
+   293
   ],
   "hem_left_outer": [
-   159,
+   158,
    459
   ],
   "hem_left_inner": [
@@ -191,11 +191,11 @@
    459
   ],
   "hem_right_outer": [
-   455,
+   456,
    459
   ],
   "hem_right_inner": [
-   364,
+   363,
    459
   ]
  },
