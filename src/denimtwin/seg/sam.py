@@ -70,14 +70,18 @@ def segment_garment_coarse(seg, image_bgr, max_side=1024):
     small = cv2.resize(image_bgr, None, fx=s, fy=s) if s < 1 else image_bgr
     seg.predictor.set_image(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
     cands = []
-    prompt_sets = [np.array([[0.5, 0.4]]), np.array([[0.5, 0.35], [0.4, 0.6], [0.6, 0.6]]), np.array([[0.5, 0.5]]), np.array([[0.5, 0.3], [0.5, 0.7]])]
+    hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
+    denimish = ((hsv[..., 0] >= 95) & (hsv[..., 0] <= 135) & (hsv[..., 1] >= 40)) | (hsv[..., 2] < 60)   # blue denim or black/dark denim
+    prompt_sets = [np.array([[0.5, 0.4]]), np.array([[0.5, 0.35], [0.4, 0.6], [0.6, 0.6]]), np.array([[0.5, 0.5]]), np.array([[0.5, 0.3], [0.5, 0.7]]),
+                   np.array([[0.35, 0.5], [0.65, 0.5]]), np.array([[0.5, 0.25]])]
     for pts in prompt_sets:
         pc = pts * np.array([small.shape[1], small.shape[0]])
         masks, scores, _ = seg.predictor.predict(point_coords=pc, point_labels=np.ones(len(pc)), multimask_output=True)
         for m, sc in zip(masks, scores):
             area = m.mean(); bf = _border_frac(m)
-            if not (0.05 <= area <= 0.70): continue
-            cands.append((float(sc) - 2.0 * bf - 0.3 * max(0, area - 0.5), m, float(sc), area, bf))
+            if not (0.03 <= area <= 0.70): continue
+            dn = float(denimish[m].mean())                     # soft prior: a garment mask should be mostly denim-coloured
+            cands.append((float(sc) - 2.0 * bf - 0.3 * max(0, area - 0.5) + 0.8 * dn, m, float(sc), area, bf))
     if not cands: return None, 0.0, {}
     best = max(cands, key=lambda c: c[0]); m = best[1].astype(np.uint8) * 255
     m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
