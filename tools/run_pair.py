@@ -56,7 +56,9 @@ def upright(img, mask, name):
     cov = pts.T @ pts / len(pts); w_, v_ = np.linalg.eigh(cov); major = v_[:, np.argmax(w_)]
     ang = np.degrees(np.arctan2(major[0], major[1]))          # angle of the long axis from vertical
     ang = (ang + 90) % 180 - 90
-    if abs(ang) < 8 or abs(ang) > 30: return img, mask, 0.0      # only correct modest tilts; wide shorts have a horizontal major axis and must NOT be rotated
+    elong = float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))     # major/minor extent ratio: jeans ≈ 2–3, shorts ≈ 1
+    cap = 80 if elong > 1.8 else 30                                # elongated garment: any tilt is a tilt; squat garment: only modest tilts
+    if abs(ang) < 8 or abs(ang) > cap: return img, mask, 0.0
     h, w = img.shape[:2]; M = cv2.getRotationMatrix2D((w / 2, h / 2), -ang, 1.0)
     cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h * sin + w * cos), int(h * cos + w * sin); M[0, 2] += nw / 2 - w / 2; M[1, 2] += nh / 2 - h / 2
     bgc = tuple(int(c) for c in np.median(img[~mask], axis=0)) if (~mask).any() else (128, 128, 128)
