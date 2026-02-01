@@ -45,3 +45,10 @@ needed and are principled, not tuning: per-image **manual crop boxes** in the ma
 dominant failure) and **upright normalisation** (PCA rotation before landmarks). Excluded with reasons: Mr Kate (tiny
 collage tile), mom-jeans (ruler across the leg; would need a mask prompt), 51likes (overlapping shorts).
 Fringe prior: n=3 usable geometry pairs, still < 5.
+
+## Close-out 06:20 UTC
+Final for today: **3 usable pairs** of 23 found (13%): 4bfef03bd7 (fray), 8d9f0df4ad (cut), 443d1d4658 (cut, grid mat).
+Excluded with reasons in data/priors/exclude.txt: b630 (legs crop), 3082 (collage tile), 963f (ruler across leg),
+f9c0 (overlapping shorts), d52a (diagonal on patterned rug). Rule reminder: today's pipeline changes were principled
+(crop boxes, upright normalisation, denim-colour prior, crop-aware gates) but they were each triggered by one image;
+they stand only if the next batch of pairs does not regress. `tools/report_pairs.py` is the arbiter.
