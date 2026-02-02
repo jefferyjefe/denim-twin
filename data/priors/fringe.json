@@ -6,8 +6,8 @@
    "pair": "443d1d4658",
    "kind": "after_cut",
    "waist_px": 336,
-   "depth_px": 8.0,
-   "depth_rel": 0.023809523809523808,
+   "depth_px": 7.5,
+   "depth_rel": 0.022321428571428572,
    "angle_l": 11.4,
    "angle_r": -11.3
   },
@@ -30,9 +30,9 @@
    "angle_r": -14.8
   }
  ],
- "depth_rel_mean": 0.0309848190556214,
- "depth_rel_sd": 0.023225401406819147,
- "depth_px_mean": 11.666666666666666,
- "depth_px_sd": 8.178562764256865,
+ "depth_rel_mean": 0.030488787309589652,
+ "depth_rel_sd": 0.023388666356858604,
+ "depth_px_mean": 11.5,
+ "depth_px_sd": 8.256310717667224,
  "depth_rel_mean_after_wash": 0.06233062330623306
 }

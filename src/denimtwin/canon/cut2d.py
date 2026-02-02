@@ -28,9 +28,14 @@ def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None
         removed = np.zeros_like(gm); removed[ys, xs] = cy >= canon_y   # works for pixels outside the raster too
     out = image.copy()
     if background_fill is None:
-        bg = image[~garment_mask.astype(bool)]
-        background_fill = np.median(bg, axis=0) if len(bg) else np.array([0, 0, 0])
-    out[removed] = background_fill
+        # inpaint the removed region from the surrounding background (Telea) instead of a flat median colour, so the
+        # cut-away area looks like the floor/backdrop. Metrics never read these pixels (they use masks).
+        m = cv2.dilate(removed.astype(np.uint8), np.ones((5, 5), np.uint8))
+        src = image.copy(); src[gm & ~removed] = 0        # keep fabric out of the inpainting source? no: Telea uses the mask border only
+        out = cv2.inpaint(image, m, 7, cv2.INPAINT_TELEA)
+        out[~removed] = image[~removed]
+    else:
+        out[removed] = background_fill
     keep = garment_mask.astype(bool) & ~removed
     return out, removed, keep
 
