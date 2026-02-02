@@ -5,8 +5,9 @@ import json, hashlib, random, shutil, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; out = ROOT / "reports/judge"; out.mkdir(parents=True, exist_ok=True)
 key = {}; random.seed(int(sys.argv[1]) if len(sys.argv) > 1 else 0)
-for d in sorted(ROOT.glob("experiments/*")):
+for d in sorted(list(ROOT.glob("experiments/EXP_*")) + list(ROOT.glob("experiments/pairs/*"))):
     if not (d / "pred.png").exists() or not (d / "orig.png").exists(): continue
+    if (d / "NOTE.md").exists() and "rejected" in (d / "NOTE.md").read_text()[:80]: continue
     h = hashlib.sha1(d.name.encode()).hexdigest()[:8]; dd = out / h; dd.mkdir(exist_ok=True)
     shutil.copy(d / "orig.png", dd / "original.png")
     cands = [("prediction", d / "pred.png")] + ([("real", d / "real.png")] if (d / "real.png").exists() else [])

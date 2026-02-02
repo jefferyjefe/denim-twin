@@ -10,7 +10,7 @@
 | 8d9f0df4ad | This summer's DIY cut-off jeans shorts-- | after_cut | ok | 0.94 / 0.94 / 0.42 | 8 / 9 | 21.4 / 21.5 | 0.11 / 0.02 |
 | 963fcdd264 | DIY; Mom Jeans to High Waisted Shorts |  | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
 | d52a3ff876 | Under Peach Trees: D.I.Y. Jeans to Short | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
-| 443d1d4658 | Create Kids Couture: Upcycle Old Jeans i | after_cut | ok | 0.92 / 0.92 / 0.59 | 14 / 14 | 13.2 / 13.0 | 0.14 / 0.00 |
+| 443d1d4658 | Create Kids Couture: Upcycle Old Jeans i | after_cut | ok | 0.92 / 0.92 / 0.59 | 14 / 13 | 18.7 / 18.3 | 0.14 / 0.00 |
 | 3082dfddc1 | DIY style: perfectly distressed jean sho | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.88 | | | | |
 | 22a5857a0c | Comment transformer son jeans en short - | after_cut | FAIL: REJECT: after: garment touches the frame edge (cropped photo | | | | |
 | f9c0e56308 | 7 Easy Steps to: DIY Denim Shorts - 51li | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.76 | | | | |
