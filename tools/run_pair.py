@@ -79,8 +79,10 @@ def sane(mask, name):
         else: FAIL(f"{name}: garment touches the frame bottom (cropped photo)")
     if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")
     # a whole garment has ONE waistband run near the top; two runs = a cropped pair of legs
-    top, hh = ys.min(), ys.max() - ys.min(); band = range(top, top + int(0.15 * hh))
-    widths = [(mask[y].sum(), y) for y in band]; yt = max(widths)[1]; row = np.nonzero(mask[yt])[0]
+    k = max(int(0.03 * w), 3); mo = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_OPEN, np.ones((k, k), np.uint8)).astype(bool)   # drop hanger hooks/clips
+    if mo.sum() < 0.5 * mask.sum(): mo = mask
+    ys2 = np.nonzero(mo)[0]; top, hh = ys2.min(), ys2.max() - ys2.min(); band = range(top, top + int(0.15 * hh))
+    widths = [(mo[y].sum(), y) for y in band]; yt = max(widths)[1]; row = np.nonzero(mo[yt])[0]
     if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: widest top row is not a single waistband run (legs-only crop?)")
 sane(bmask, "before"); sane(amask, "after")
 try:
@@ -113,7 +115,8 @@ ov = (rmask & bmask).sum() / max(rmask.sum(), 1)
 if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real garment lies inside the before garment")
 cb_ok = cb.get("garment_type") == "jeans"
 if not cb_ok: FAIL(f"before image is not full-length jeans (aspect says {cb.get('garment_type')})")
-bg = np.median(bf[~bmask], axis=0); cut = bf.copy(); cut[removed] = bg
+bg = np.median(bf[~bmask], axis=0)
+cut = cv2.inpaint(bf, cv2.dilate(removed.astype(np.uint8), np.ones((5, 5), np.uint8)), 7, cv2.INPAINT_TELEA); cut[~removed] = bf[~removed]   # background inpainting, not a flat fill
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
