@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-before image is not full-length jeans (aspect says shorts)
+before: widest top row is not a single waistband run (legs-only crop?)
