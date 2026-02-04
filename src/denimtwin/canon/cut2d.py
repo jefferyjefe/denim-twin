@@ -30,7 +30,7 @@ def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None
     if background_fill is None:
         # inpaint the removed region from the surrounding background (Telea) instead of a flat median colour, so the
         # cut-away area looks like the floor/backdrop. Metrics never read these pixels (they use masks).
-        out = background_fill(image, gm, removed)
+        out = backdrop_fill(image, gm, removed)
     else:
         out[removed] = background_fill
     keep = garment_mask.astype(bool) & ~removed
@@ -50,7 +50,7 @@ def cut_mask_canon_angled(canon_size, inner_frac, outer_frac):
     m = np.arange(H)[:, None] >= ycut[None, :]
     return m
 
-def background_fill(image, garment_mask, removed):
+def backdrop_fill(image, garment_mask, removed):
     """Fill `removed` with background texture only: inpaint the WHOLE garment from the surrounding backdrop
     (so no fabric colour can bleed in), then composite the kept garment back. Metrics never read these pixels."""
     gm = garment_mask.astype(np.uint8)

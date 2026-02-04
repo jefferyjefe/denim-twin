@@ -13,7 +13,7 @@ from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_frin
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.canon.register import warp_after_to_before, SURVIVING
 from denimtwin.canon.hemfit import estimate_hems, cut_mask_from_lines
-from denimtwin.canon.cut2d import background_fill
+from denimtwin.canon.cut2d import backdrop_fill
 from denimtwin.canon.rawedge_v1 import render_three
 
 p = argparse.ArgumentParser()
@@ -117,7 +117,7 @@ if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real ga
 cb_ok = cb.get("garment_type") == "jeans"
 if not cb_ok: FAIL(f"before image is not full-length jeans (aspect says {cb.get('garment_type')})")
 bg = np.median(bf[~bmask], axis=0)
-cut = background_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric bleed
+cut = backdrop_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric bleed
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
