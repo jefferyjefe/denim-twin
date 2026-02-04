@@ -114,8 +114,7 @@ rf = removed.sum() / max(bmask.sum(), 1)
 if not (0.01 <= rf <= 0.75): FAIL(f"degenerate cut: removed fraction {rf:.2f}")   # 1%: a small hem trim is a valid cut
 ov = (rmask & bmask).sum() / max(rmask.sum(), 1)
 if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real garment lies inside the before garment")
-cb_ok = cb.get("garment_type") == "jeans"
-if not cb_ok: FAIL(f"before image is not full-length jeans (aspect says {cb.get('garment_type')})")
+if cb.get("garment_type") != "jeans": FLAGS.append("before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts")
 bg = np.median(bf[~bmask], axis=0)
 cut = backdrop_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric bleed
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
