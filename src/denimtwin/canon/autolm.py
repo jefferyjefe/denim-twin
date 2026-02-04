@@ -59,7 +59,7 @@ def landmarks_from_mask(mask):
     wy = out["waist_left"][1]; crotch_prior = (cx, min(wy + int(0.6 * ww), bot)); crotch_max = wy + 1.5 * ww
     if crotch and (crotch[1] <= crotch_max or aspect_shorts):               # plausible crotch gap (or clearly shorts)
         leg_len = bot - crotch[1]
-        shorts = leg_len < 0.9 * ww                                          # legs shorter than the waist width -> shorts (spread-invariant)
+        shorts = leg_len < 0.6 * ww                                          # shorts: legs well under the waist width (toddler jeans still have legs ~1.5x)
         out["crotch"] = crotch; conf["crotch"] = "gap"
     elif crotch:                                                             # gap found far too low: legs touch, it is a hem/fringe gap
         out["crotch"] = crotch_prior; conf["crotch"] = "prior_legs_touching"; shorts = aspect_shorts
