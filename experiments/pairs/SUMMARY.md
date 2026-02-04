@@ -14,3 +14,8 @@
 | 3082dfddc1 | DIY style: perfectly distressed jean sho | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.88 | | | | |
 | 22a5857a0c | Comment transformer son jeans en short - | after_cut | FAIL: REJECT: after: garment touches the frame edge (cropped photo | | | | |
 | f9c0e56308 | 7 Easy Steps to: DIY Denim Shorts - 51li | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.76 | | | | |
+| 2691c1a8d0 | Jeans Upcycling: Shorts aus alter Jeans  | after_cut | ok | 0.70 / 0.69 / 0.58 | 24 / 27 | 15.5 / 15.1 | 0.39 / 0.10 |
+| 5cd6cff343 | Transformer un jean en short façon BD -  | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| 26b1041d00 | Upcycle Jeans Into Shorts - Sewing Novic | after_cut | FAIL: REJECT: before image is not full-length jeans (aspect says s | | | | |
+| f542c57cec | DIY High Waisted Denim Shorts, Step-by-S | after_wash | FAIL: REJECT: before image is not full-length jeans (aspect says s | | | | |
+| 2e2063b93f | DIY: Cutoff Shorts - The Fitnessista | after_cut | FAIL: REJECT: after: widest top row is not a single waistband run  | | | | |
