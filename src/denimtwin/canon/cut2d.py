@@ -30,10 +30,7 @@ def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None
     if background_fill is None:
         # inpaint the removed region from the surrounding background (Telea) instead of a flat median colour, so the
         # cut-away area looks like the floor/backdrop. Metrics never read these pixels (they use masks).
-        m = cv2.dilate(removed.astype(np.uint8), np.ones((5, 5), np.uint8))
-        src = image.copy(); src[gm & ~removed] = 0        # keep fabric out of the inpainting source? no: Telea uses the mask border only
-        out = cv2.inpaint(image, m, 7, cv2.INPAINT_TELEA)
-        out[~removed] = image[~removed]
+        out = background_fill(image, gm, removed)
     else:
         out[removed] = background_fill
     keep = garment_mask.astype(bool) & ~removed
@@ -52,3 +49,13 @@ def cut_mask_canon_angled(canon_size, inner_frac, outer_frac):
     ycut = yo + t * (yi - yo)
     m = np.arange(H)[:, None] >= ycut[None, :]
     return m
+
+def background_fill(image, garment_mask, removed):
+    """Fill `removed` with background texture only: inpaint the WHOLE garment from the surrounding backdrop
+    (so no fabric colour can bleed in), then composite the kept garment back. Metrics never read these pixels."""
+    gm = garment_mask.astype(np.uint8)
+    big = cv2.dilate(gm, np.ones((7, 7), np.uint8))
+    small = cv2.resize(image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA); msmall = cv2.resize(big, (small.shape[1], small.shape[0]), interpolation=cv2.INTER_NEAREST)
+    bg_small = cv2.inpaint(small, msmall, 9, cv2.INPAINT_TELEA)                     # half-res for speed on large garments
+    bg = cv2.resize(bg_small, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_LINEAR)
+    out = image.copy(); out[removed] = bg[removed]; return out
