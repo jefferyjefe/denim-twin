@@ -39,6 +39,14 @@
   "hem_right_inner": [
    547,
    374
+  ],
+  "knee_right_outer": [
+   571,
+   297
+  ],
+  "knee_right_inner": [
+   545,
+   297
   ]
  },
  "after_auto": {
@@ -139,6 +147,14 @@
   "hem_right_inner": [
    547,
    374
+  ],
+  "knee_right_outer": [
+   571,
+   297
+  ],
+  "knee_right_inner": [
+   545,
+   297
   ]
  },
  "after_used": {
@@ -202,7 +218,7 @@
  "conf": {
   "before": {
    "crotch": "gap",
-   "garment_type": "shorts"
+   "garment_type": "jeans"
   },
   "after": {
    "crotch": "prior_no_gap_jeans",
