@@ -3,3 +3,5 @@ b630a78c19  # legs-only crop passed the gates (EXP_0005); not a whole-garment pa
 963fcdd264  # ruler lies across the leg and legs are cropped; coarse mask picks the ruler
 f9c0e56308  # two overlapping shorts in the after photo; hem error 119 px even after cropping
 d52a3ff876  # jeans at ~45° on a patterned rug; coarse mask + waistband gate fail; needs a manual mask, not more heuristics
+5cd6cff343  # before is a back view cropped at the thighs
+2e2063b93f  # before crop is folded legs with scissors; no whole garment
