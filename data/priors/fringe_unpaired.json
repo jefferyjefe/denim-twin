@@ -1,7 +1,7 @@
 {
- "n": 9,
- "depth_rel_mean": 0.2484631669035848,
- "depth_rel_sd": 0.20843629477312417,
+ "n": 8,
+ "depth_rel_mean": 0.18074483899030913,
+ "depth_rel_sd": 0.08720351301847257,
  "samples": [
   {
    "pair": "c94c958696",
@@ -26,7 +26,7 @@
   {
    "pair": "4bfef03bd7",
    "file": "4bfef03bd7_after_wash_910ac4fa.jpg",
-   "status": "ok",
+   "status": "not_shorts",
    "waist_px": 143,
    "depth_px": 113.0,
    "depth_rel": 0.7902097902097902,
