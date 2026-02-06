@@ -52,3 +52,12 @@ Excluded with reasons in data/priors/exclude.txt: b630 (legs crop), 3082 (collag
 f9c0 (overlapping shorts), d52a (diagonal on patterned rug). Rule reminder: today's pipeline changes were principled
 (crop boxes, upright normalisation, denim-colour prior, crop-aware gates) but they were each triggered by one image;
 they stand only if the next batch of pairs does not regress. `tools/report_pairs.py` is the arbiter.
+
+## Update 06:35 UTC — third finder run (+6 pages, 29 total)
+Funnel: 29 found → 17 CLIP-usable → 6 pass gates → 4 meet the prior's quality bar (sil IoU ≥ 0.75, hem ≤ 40 px):
+4bfef03bd7 (fray), 8d9f0df4ad, 443d1d4658 (metric, grid mat), 26b1041d00 (Sewing Novice; a bermuda→shorter cut, flagged).
+Two more ran but fail the bar (Bastelfrau 0.70; niftythrifty after-wash on a rug, hem err 113). Pipeline changes this
+round: shorts threshold 0.6× waist width (toddler jeans have legs ≈1.5×), short 'before' garments allowed with a flag,
+grid-mat scale detector (Kids Couture is the first metric pair, ~0.95 mm/px), backdrop-only inpainting of the removed
+region, judge sets use the un-warped real photo. Fringe prior n=4 — one short of the threshold; only 2 of the 4 are
+real fray pairs, which is what the prior actually needs.
