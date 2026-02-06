@@ -122,6 +122,8 @@ if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
     rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude]
     rel = np.mean([x["depth_rel"] for x in rows_]) if rows_ else pr["depth_rel_mean"]
+    if pr.get("unpaired", {}).get("n"):                      # blend with the unpaired after-wash distribution
+        nu = pr["unpaired"]["n"]; rel = (rel * len(rows_) + pr["unpaired"]["depth_rel_mean"] * nu) / (len(rows_) + nu)
     depth_px = rel * ww; depth_source = f"prior (n={len(rows_)}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if len(rows_) < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"

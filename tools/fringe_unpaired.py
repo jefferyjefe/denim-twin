@@ -32,7 +32,12 @@ for r in recs:
             t = np.nonzero(m[:, x])[0]; fcol = np.nonzero(fr[:, x])[0]
             if len(t) and len(fcol): depths.append(t.max() - fcol.min())
         if len(depths) < 20: out.append(dict(pair=pid, file=f, status="too_few_columns")); continue
-        d = float(np.median(depths)); out.append(dict(pair=pid, file=f, status="ok", waist_px=ww, depth_px=d, depth_rel=d / ww, garment=conf.get("garment_type"), sam_score=round(sc, 3)))
+        d = float(np.median(depths)); rel = d / ww
+        bad = None
+        if conf.get("garment_type") != "shorts": bad = "not_shorts"
+        elif ww < 0.3 * m.shape[1]: bad = "waist_too_narrow_for_frame"      # close-ups / partial garments
+        elif rel > 0.5: bad = "depth_implausible"                            # worn shots, mis-segmentation
+        out.append(dict(pair=pid, file=f, status="ok" if bad is None else bad, waist_px=ww, depth_px=d, depth_rel=rel, garment=conf.get("garment_type"), sam_score=round(sc, 3)))
         print(f"{pid} {f[:40]:40s} waist {ww:4d}px depth {d:5.1f}px rel {d/ww:.3f}")
 ok = [o for o in out if o["status"] == "ok"]
 res = dict(n=len(ok), depth_rel_mean=st.mean([o["depth_rel"] for o in ok]) if ok else None, depth_rel_sd=st.pstdev([o["depth_rel"] for o in ok]) if len(ok) > 1 else None, samples=out)

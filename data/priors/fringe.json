@@ -1,6 +1,6 @@
 {
  "n": 4,
- "insufficient": true,
+ "insufficient": false,
  "pairs": [
   {
    "pair": "26b1041d00",
@@ -43,5 +43,12 @@
  "depth_rel_sd": 0.07061816295706239,
  "depth_px_mean": 19.875,
  "depth_px_sd": 16.172410921071727,
- "depth_rel_mean_after_wash": 0.06233062330623306
+ "depth_rel_mean_after_wash": 0.06233062330623306,
+ "unpaired": {
+  "n": 8,
+  "depth_rel_mean": 0.18074483899030913,
+  "depth_rel_sd": 0.08720351301847257
+ },
+ "depth_rel_mean_combined": 0.14367892212937391,
+ "n_combined": 12
 }

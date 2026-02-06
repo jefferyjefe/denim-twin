@@ -35,4 +35,10 @@ if rows:
         for i, r in enumerate(rows):
             others = [x["depth_rel"] for j, x in enumerate(rows) if j != i]; pred = st.mean(others) * r["waist_px"]
             print(f"  {r['pair']}: measured {r['depth_px']:.1f}, predicted {pred:.1f}, |err| {abs(pred - r['depth_px']):.1f}")
+up = OUT / "fringe_unpaired.json"
+if up.exists():
+    u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"]}
+    if u["n"] and rows:
+        w_p, w_u = len(rows), u["n"]; prior["depth_rel_mean_combined"] = (prior["depth_rel_mean"] * w_p + u["depth_rel_mean"] * w_u) / (w_p + w_u); prior["n_combined"] = w_p + w_u
+        prior["insufficient"] = prior["n_combined"] < 5
 (OUT / "fringe.json").write_text(json.dumps(prior, indent=1)); print(json.dumps({k: v for k, v in prior.items() if k != "pairs"}, indent=1))
