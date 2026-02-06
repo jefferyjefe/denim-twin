@@ -3,9 +3,9 @@
 prediction-minus-null deltas. This is the view the 'no threshold changes without >=5 pairs' rule needs."""
 import json, sys, glob, os, statistics as st
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]; preset = sys.argv[1] if len(sys.argv) > 1 else "median"
+ROOT = Path(__file__).resolve().parents[1]; preset = sys.argv[1] if len(sys.argv) > 1 else "median"; PAIRS = os.environ.get("PAIRS_OUT", "experiments/pairs")
 rows = []
-for f in sorted(glob.glob(str(ROOT / f"experiments/pairs/*/cmp_{preset}/metrics.json"))):
+for f in sorted(glob.glob(str(ROOT / f"{PAIRS}/*/cmp_{preset}/metrics.json"))):
     pid = f.split("/")[-3]; note = Path(f).parents[1] / "NOTE.md"
     if note.exists() and "rejected" in note.read_text()[:80]: continue                 # stale cmp dirs from before a rejection
     d = json.load(open(f)); r = {x["system"]: x for x in d["rows"]}

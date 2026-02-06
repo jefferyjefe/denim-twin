@@ -15,3 +15,5 @@ data/.capture_qa_state.json
 data/external/pair_images/
 experiments/pairs/*/cmp_*/
 experiments/pairs/*/*.png
+experiments/pairs_prior/*/cmp_*/
+experiments/pairs_prior/*/*.png
