@@ -1,0 +1,97 @@
+{
+ "n": 9,
+ "depth_rel_mean": 0.2484631669035848,
+ "depth_rel_sd": 0.20843629477312417,
+ "samples": [
+  {
+   "pair": "c94c958696",
+   "file": "c94c958696_after_wash_e10298f7.jpg",
+   "status": "ok",
+   "waist_px": 899,
+   "depth_px": 37.0,
+   "depth_rel": 0.041156840934371525,
+   "garment": "shorts",
+   "sam_score": 1.009
+  },
+  {
+   "pair": "4bfef03bd7",
+   "file": "4bfef03bd7_after_wash_44ffba7e.jpeg",
+   "status": "ok",
+   "waist_px": 335,
+   "depth_px": 67.0,
+   "depth_rel": 0.2,
+   "garment": "shorts",
+   "sam_score": 0.957
+  },
+  {
+   "pair": "4bfef03bd7",
+   "file": "4bfef03bd7_after_wash_910ac4fa.jpg",
+   "status": "ok",
+   "waist_px": 143,
+   "depth_px": 113.0,
+   "depth_rel": 0.7902097902097902,
+   "garment": "jeans",
+   "sam_score": 0.961
+  },
+  {
+   "pair": "ee4bf13a3c",
+   "file": "ee4bf13a3c_after_wash_7a3c514f.jpg",
+   "status": "ok",
+   "waist_px": 339,
+   "depth_px": 18.0,
+   "depth_rel": 0.05309734513274336,
+   "garment": "shorts",
+   "sam_score": 0.974
+  },
+  {
+   "pair": "3082dfddc1",
+   "file": "3082dfddc1_after_wash_83d499de.jpg",
+   "status": "ok",
+   "waist_px": 397,
+   "depth_px": 63.5,
+   "depth_rel": 0.15994962216624686,
+   "garment": "shorts",
+   "sam_score": 0.994
+  },
+  {
+   "pair": "3082dfddc1",
+   "file": "3082dfddc1_after_wash_c2f2a900.jpg",
+   "status": "ok",
+   "waist_px": 389,
+   "depth_px": 74.0,
+   "depth_rel": 0.19023136246786632,
+   "garment": "shorts",
+   "sam_score": 0.996
+  },
+  {
+   "pair": "f9c0e56308",
+   "file": "f9c0e56308_after_wash_a77d6342.jpg",
+   "status": "ok",
+   "waist_px": 911,
+   "depth_px": 260.0,
+   "depth_rel": 0.2854006586169045,
+   "garment": "shorts",
+   "sam_score": 0.953
+  },
+  {
+   "pair": "f542c57cec",
+   "file": "f542c57cec_after_wash_9c55600a.jpg",
+   "status": "ok",
+   "waist_px": 2801,
+   "depth_px": 793.0,
+   "depth_rel": 0.2831131738664763,
+   "garment": "shorts",
+   "sam_score": 0.986
+  },
+  {
+   "pair": "f542c57cec",
+   "file": "f542c57cec_after_wash_f1d0f228.jpg",
+   "status": "ok",
+   "waist_px": 2884,
+   "depth_px": 672.0,
+   "depth_rel": 0.23300970873786409,
+   "garment": "shorts",
+   "sam_score": 0.981
+  }
+ ]
+}
