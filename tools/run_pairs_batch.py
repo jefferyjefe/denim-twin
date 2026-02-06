@@ -4,7 +4,7 @@ Picks the first whole-garment 'before' and the first whole-garment 'after_wash' 
 Writes experiments/pairs/<pageid>/ and a summary table experiments/pairs/SUMMARY.md."""
 import json, hashlib, subprocess, sys, os
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"; OUT = ROOT / "experiments/pairs"; OUT.mkdir(parents=True, exist_ok=True)
+ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"; OUT = ROOT / os.environ.get("PAIRS_OUT", "experiments/pairs"); OUT.mkdir(parents=True, exist_ok=True)
 RECS = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
 rows = []
 for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlines():
