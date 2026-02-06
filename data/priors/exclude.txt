@@ -5,3 +5,4 @@ f9c0e56308  # two overlapping shorts in the after photo; hem error 119 px even a
 d52a3ff876  # jeans at ~45° on a patterned rug; coarse mask + waistband gate fail; needs a manual mask, not more heuristics
 5cd6cff343  # before is a back view cropped at the thighs
 2e2063b93f  # before crop is folded legs with scissors; no whole garment
+f542c57cec  # before is a folded, text-overlaid graphic (one leg over the other); the after-wash photo is a good UNPAIRED fringe sample
