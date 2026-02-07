@@ -28,8 +28,9 @@ prior = {"n": len(rows), "insufficient": len(rows) < 5, "pairs": rows}
 if rows:
     for k in ("depth_rel", "depth_px"):
         v = [r[k] for r in rows]; prior[k + "_mean"] = st.mean(v); prior[k + "_sd"] = st.pstdev(v) if len(v) > 1 else None
-    washed = [r["depth_rel"] for r in rows if r["kind"] == "after_wash"]
-    if washed: prior["depth_rel_mean_after_wash"] = st.mean(washed)
+    for kind in ("after_wash", "after_cut"):
+        v = [r["depth_rel"] for r in rows if r["kind"] == kind]
+        if v: prior[f"depth_rel_mean_{kind}"] = st.mean(v); prior[f"n_{kind}"] = len(v)
     if len(rows) >= 2:
         print("leave-one-out depth prediction (px):")
         for i, r in enumerate(rows):
@@ -38,7 +39,9 @@ if rows:
 up = OUT / "fringe_unpaired.json"
 if up.exists():
     u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"]}
-    if u["n"] and rows:
-        w_p, w_u = len(rows), u["n"]; prior["depth_rel_mean_combined"] = (prior["depth_rel_mean"] * w_p + u["depth_rel_mean"] * w_u) / (w_p + w_u); prior["n_combined"] = w_p + w_u
-        prior["insufficient"] = prior["n_combined"] < 5
+    # unpaired samples are all AFTER-WASH: they only inform the after_wash prior
+    if u["n"]:
+        wp = prior.get("n_after_wash", 0); mp = prior.get("depth_rel_mean_after_wash", 0.0)
+        prior["depth_rel_mean_after_wash_combined"] = (mp * wp + u["depth_rel_mean"] * u["n"]) / (wp + u["n"]); prior["n_after_wash_combined"] = wp + u["n"]
+        prior["insufficient"] = prior["n_after_wash_combined"] < 5 or prior.get("n_after_cut", 0) < 3
 (OUT / "fringe.json").write_text(json.dumps(prior, indent=1)); print(json.dumps({k: v for k, v in prior.items() if k != "pairs"}, indent=1))
