@@ -1,4 +1,4 @@
-# pairs: 7 (preset median)
+# pairs: 8 (preset median)
 
 | pair | reg resid | sil_iou_vs_real pred / crop / no-op | hem_chamfer pred / crop / no-op | dE_edge_band_vs_real pred / crop / no-op | fringe_iou_vs_real pred / crop / no-op | fringe_profile_dist pred / crop / no-op |
 |---|---|---|---|---|---|---|
@@ -8,13 +8,14 @@
 | 4bfef03bd7 | 42.0 | 0.77 / 0.75 / 0.29 | 15.89 / 21.99 / 503.38 | 22.85 / 23.33 / 20.45 | 0.35 / 0.00 / 0.04 | 0.01 / 0.03 / 0.97 |
 | 8d9f0df4ad | 31.2 | 0.95 / 0.94 / 0.42 | 8.19 / 8.66 / 303.39 | 21.04 / 21.53 / 22.66 | 0.31 / 0.00 / 0.02 | 0.00 / 0.01 / 0.99 |
 | b630a78c19 | 698.7 | 0.47 / 0.46 / 0.54 | 333.07 / 367.66 / 296.25 | 18.17 / 17.42 / 16.36 | 0.18 / 0.00 / 0.58 | 0.57 / 0.63 / 0.37 |
+| e97924ad2d | 28.2 | 0.90 / 0.90 / 0.54 | 7.04 / 7.02 / 103.17 | 11.20 / 11.00 / 18.38 | 0.24 / 0.00 / 0.01 | 0.00 / 0.01 / 0.99 |
 | f542c57cec | 61.2 | 0.72 / 0.68 / 0.51 | 107.68 / 127.89 / 460.82 | 29.20 / 26.75 / 27.82 | 0.26 / 0.00 / 0.22 | 0.13 / 0.19 / 0.81 |
 
 ## Means and prediction − crop-only deltas
-- sil_iou_vs_real: pred 0.752, crop 0.733, Δ +0.019 (n=7)
-- hem_chamfer: pred 77.586, crop 87.586, Δ -10.000 (n=7)
-- dE_edge_band_vs_real: pred 22.474, crop 22.467, Δ +0.008 (n=7)
-- fringe_iou_vs_real: pred 0.267, crop 0.000, Δ +0.267 (n=7)
-- fringe_profile_dist: pred 0.159, crop 0.191, Δ -0.033 (n=7)
+- sil_iou_vs_real: pred 0.770, crop 0.753, Δ +0.017 (n=8)
+- hem_chamfer: pred 68.768, crop 77.515, Δ -8.748 (n=8)
+- dE_edge_band_vs_real: pred 21.065, crop 21.034, Δ +0.031 (n=8)
+- fringe_iou_vs_real: pred 0.263, crop 0.000, Δ +0.263 (n=8)
+- fringe_profile_dist: pred 0.139, crop 0.168, Δ -0.029 (n=8)
 
 Rule: heuristic thresholds (hemfit/autolm) change only with n >= 5 and this table attached.

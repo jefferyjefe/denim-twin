@@ -19,3 +19,5 @@
 | 26b1041d00 | Upcycle Jeans Into Shorts - Sewing Novic | after_cut | ok | 0.75 / 0.69 / 0.73 | 31 / 46 | 30.7 / 34.8 | 0.30 / 0.48 |
 | f542c57cec | DIY High Waisted Denim Shorts, Step-by-S | after_wash | ok | 0.72 / 0.68 / 0.51 | 108 / 128 | 29.2 / 26.8 | 0.26 / 0.22 |
 | 2e2063b93f | DIY: Cutoff Shorts - The Fitnessista | after_cut | FAIL: REJECT: after: widest top row is not a single waistband run  | | | | |
+| 964dc8a1f9 | Prudence and Austere: DIY Distressed Den | after_wash | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| e97924ad2d | Doodlecraft: How to Upcycle Jeans into B | after_cut | ok | 0.90 / 0.90 / 0.54 | 7 / 7 | 11.2 / 11.0 | 0.24 / 0.01 |
