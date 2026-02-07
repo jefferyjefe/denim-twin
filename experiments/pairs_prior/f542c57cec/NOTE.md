@@ -5,7 +5,7 @@ before: /Users/jefferyhuang/denim-twin/experiments/pairs_prior/f542c57cec/croppe
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/f542c57cec_after_wash_9c55600a.jpg 
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
-fringe depth used: 96.9 px from prior[after_wash] (n=9 after excluding self); measured on after-photo: 112.0 px (fabric/fringe split: SAM)
+fringe depth used: 96.9 px from prior[after_wash] (n=9 after excluding self); measured on after-photo: 163.6 px (fabric/fringe split: SAM; after-frame)
 hem fit: left: angle 1.9°, depth 4, right: angle -1.4°, depth 220
 registration residual (leave-one-landmark-out): 61.19px
 
