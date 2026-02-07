@@ -21,6 +21,7 @@ p.add_argument("--before", required=True); p.add_argument("--after", required=Tr
 p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--mm-per-px", type=float, default=None); p.add_argument("--seed", type=int, default=1)
 p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth from the prior (depth_rel_mean * waist width) instead of reading it off the after-photo")
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
+p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
@@ -120,11 +121,12 @@ cut = backdrop_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric 
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
-    rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude]
-    rel = np.mean([x["depth_rel"] for x in rows_]) if rows_ else pr["depth_rel_mean"]
-    if pr.get("unpaired", {}).get("n"):                      # blend with the unpaired after-wash distribution
+    rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude and x["kind"] == a.state]      # same STATE, leave-one-out
+    rel = np.mean([x["depth_rel"] for x in rows_]) if rows_ else 0.0
+    if a.state == "after_wash" and pr.get("unpaired", {}).get("n"):   # unpaired samples are after-wash only
         nu = pr["unpaired"]["n"]; rel = (rel * len(rows_) + pr["unpaired"]["depth_rel_mean"] * nu) / (len(rows_) + nu)
-    depth_px = rel * ww; depth_source = f"prior (n={len(rows_)}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if len(rows_) < 5 else ''})"
+    n_eff = len(rows_) + (pr.get("unpaired", {}).get("n", 0) if a.state == "after_wash" else 0)
+    depth_px = rel * ww; depth_source = f"prior[{a.state}] (n={n_eff}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if n_eff < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
 depth_mm = depth_px * mmpp

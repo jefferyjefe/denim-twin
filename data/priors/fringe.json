@@ -44,11 +44,14 @@
  "depth_px_mean": 19.875,
  "depth_px_sd": 16.172410921071727,
  "depth_rel_mean_after_wash": 0.06233062330623306,
+ "n_after_wash": 1,
+ "depth_rel_mean_after_cut": 0.07195257677459357,
+ "n_after_cut": 3,
  "unpaired": {
   "n": 8,
   "depth_rel_mean": 0.18074483899030913,
   "depth_rel_sd": 0.08720351301847257
  },
- "depth_rel_mean_combined": 0.14367892212937391,
- "n_combined": 12
+ "depth_rel_mean_after_wash_combined": 0.16758770391430067,
+ "n_after_wash_combined": 9
 }

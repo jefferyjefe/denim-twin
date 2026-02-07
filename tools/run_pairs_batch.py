@@ -31,7 +31,7 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
         h8 = os.path.splitext(before)[0].rsplit("_", 1)[-1]
         mmpp = next((i.get("mm_per_px") for i in rec["images"] if h8 == hashlib.sha1(i["url"].encode()).hexdigest()[:8] and i.get("mm_per_px")), None)
     cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od)] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else [])
-    if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid]   # leave-one-out
+    if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid, "--state", kind]   # leave-one-out, state-conditional
     r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0
     metrics = None
