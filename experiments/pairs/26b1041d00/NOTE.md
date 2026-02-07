@@ -5,7 +5,7 @@ before: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_befo
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_after_cut_38ff38d5.jpg 
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
-fringe depth used: 45.0 px from measured from after-photo (NOT a prediction); measured on after-photo: 45.0 px (fabric/fringe split: SAM)
+fringe depth used: 45.0 px from measured from after-photo (NOT a prediction); measured on after-photo: 45.0 px (fabric/fringe split: SAM; after-frame)
 hem fit: left: angle -5.4°, depth 64, right: angle -0.7°, depth 26
 registration residual (leave-one-landmark-out): 14.59px
 

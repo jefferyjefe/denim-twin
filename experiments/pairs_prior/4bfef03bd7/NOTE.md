@@ -5,7 +5,7 @@ before: /Users/jefferyhuang/denim-twin/data/external/pair_images/4bfef03bd7_befo
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/4bfef03bd7_after_wash_44ffba7e.jpeg collage split (stacked) at y=512, kept top
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: prior_legs_touching / gap)
-fringe depth used: 66.7 px from prior[after_wash] (n=8 after excluding self); measured on after-photo: 23.0 px (fabric/fringe split: SAM)
+fringe depth used: 66.7 px from prior[after_wash] (n=8 after excluding self); measured on after-photo: 36.5 px (fabric/fringe split: SAM; after-frame)
 hem fit: left: angle -10.4°, depth 31, right: angle 4.5°, depth 15
 registration residual (leave-one-landmark-out): 42.01px
 

@@ -119,6 +119,13 @@ if cb.get("garment_type") != "jeans": FLAGS.append("before garment is short (ber
 bg = np.median(bf[~bmask], axis=0)
 cut = backdrop_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric bleed
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
+depth_after_frame = None
+if fr_after is not None and fr_after.sum() > 50:                       # depth measured on the UN-WARPED after-photo, scaled by waist-width ratio
+    ds = [np.nonzero(amask[:, x])[0].max() - np.nonzero(fr_after[:, x])[0].min() for x in range(amask.shape[1]) if amask[:, x].any() and fr_after[:, x].any()]
+    if len(ds) >= 20:
+        wwb = abs(lmb["waist_right"][0] - lmb["waist_left"][0]); wwa = abs(lma["waist_right"][0] - lma["waist_left"][0])
+        depth_after_frame = float(np.median(ds)) * (wwb / max(wwa, 1))
+        depth_measured_px = depth_after_frame                             # prefer the un-warped measurement
 if a.prior:
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
     rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude and x["kind"] == a.state]      # same STATE, leave-one-out
@@ -149,7 +156,7 @@ for t, n in zip(tiles, ("before", f"pred median (depth {depth_mm:.0f} {'mm' if a
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
 md = f"# PAIR — auto pipeline\n\nflags: {'; '.join(FLAGS) or 'none'}\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
-md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px (fabric/fringe split: {fringe_src})\n"
+md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px (fabric/fringe split: {fringe_src}; {'after-frame' if depth_after_frame is not None else 'registered-frame'})\n"
 md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:

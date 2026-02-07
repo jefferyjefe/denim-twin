@@ -7,6 +7,8 @@ depth off the after-photo (which is circular)."""
 import json, glob, re, statistics as st
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; OUT = ROOT / "data/priors"; OUT.mkdir(parents=True, exist_ok=True)
+import hashlib as _h
+RECS = {_h.sha1(json.loads(l)["page_url"].encode()).hexdigest()[:10]: json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()}
 rows = []
 EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
 for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
@@ -23,7 +25,9 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
         pr_ = {x["system"]: x for x in json.load(open(mp))["rows"]}["prediction"]
         if pr_["sil_iou_vs_real"] < 0.75 or pr_["hem_chamfer"] > 40: print(f"  skip {Path(note).parent.name}: sil IoU {pr_['sil_iou_vs_real']:.2f}, hem err {pr_['hem_chamfer']:.0f}"); continue
     al, dl, ar, dr = map(float, m.groups()); kind = "after_wash" if "after_wash" in txt else "after_cut"
-    rows.append(dict(pair=Path(note).parent.name, kind=kind, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
+    finish = RECS.get(Path(note).parent.name, {}).get("hem_finish", "unknown")
+    if finish in ("cuffed", "hemmed", "serged"): dl = dr = 0.0            # finished hems have no fringe; a measured value is an artefact
+    rows.append(dict(pair=Path(note).parent.name, kind=kind, hem_finish=finish, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
 prior = {"n": len(rows), "insufficient": len(rows) < 5, "pairs": rows}
 if rows:
     for k in ("depth_rel", "depth_px"):
