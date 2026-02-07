@@ -24,3 +24,14 @@ after-wash samples (`tools/fringe_unpaired.py`, SAM fringe mask, depth / waist w
 - Correct next step is not more tuning: (1) measure depth in the *after-photo's own frame* (before warping), (2) treat
   cuffed/serged hems as depth 0 by rule (record hem_finish in the manifest), (3) get ≥5 real after-wash pairs.
 This is the first time the pipeline has produced a genuine held-out prediction end to end; the answer is "not yet".
+
+## Update 06:50 UTC — hem_finish rule + after-frame depth
+- `hem_finish` recorded per page (cuffed / raw / frayed); cuffed/hemmed/serged pairs contribute depth 0 to the
+  after_cut prior → the after_cut prior is now 0 and the LOO prediction on cut-only pairs equals crop-only (fringe IoU
+  0.01–0.04), which is the correct behaviour for a finished hem.
+- Depth now measured in the after-photo's own frame (SAM fringe mask on the un-warped image, scaled by waist-width
+  ratio): pair1 23 → 36.5 px (registered-frame measurement was under-reading, as suspected). Bastelfrau (raw cut, no
+  wash) reads 120 px — a false fringe: SAM's hem-band prompt grabs a strip of fabric when there is no fringe. Raw-cut
+  unwashed hems need the same rule as cuffed ones (depth ≈ 0–2 mm) rather than a measurement.
+- after_wash prior: 1 paired + 8 unpaired samples, mean 0.17 × waist width; predicts 67 px on pair1 vs 36.5 measured.
+  Still not evidence of predictiveness (n_paired = 1). Needs after-wash pairs.
