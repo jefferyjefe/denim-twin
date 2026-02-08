@@ -6,3 +6,4 @@ d52a3ff876  # jeans at ~45° on a patterned rug; coarse mask + waistband gate fa
 5cd6cff343  # before is a back view cropped at the thighs
 2e2063b93f  # before crop is folded legs with scissors; no whole garment
 f542c57cec  # before is a folded, text-overlaid graphic (one leg over the other); the after-wash photo is a good UNPAIRED fringe sample
+964dc8a1f9  # before folded lengthwise; after-wash shorts are cuffed + slashed (distressing sample, not a raw fringe hem)

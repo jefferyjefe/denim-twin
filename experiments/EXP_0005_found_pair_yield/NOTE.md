@@ -67,3 +67,5 @@ real fray pairs, which is what the prior actually needs.
 flat after one washer/dryer cycle) + 1 cut-only (Doodlecraft, sil IoU 0.90, hem 7 px). Finder's conclusion: search
 results are saturated by the same ~10 large sites; almost nobody photographs the washed result flat. Found-pair
 channel is effectively exhausted at **5 usable cut pairs + 2 fray sequences**. Next channel = contributions.
+Prudence & Austere on inspection: after-wash shorts are cuffed once and knife-slashed — a distressing sample, not a
+raw fringe hem; excluded from the fringe prior. Final fray pairs from the found channel: 1 (Thrifted & Taylor'd).
