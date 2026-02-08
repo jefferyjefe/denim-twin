@@ -61,3 +61,9 @@ round: shorts threshold 0.6× waist width (toddler jeans have legs ≈1.5×), sh
 grid-mat scale detector (Kids Couture is the first metric pair, ~0.95 mm/px), backdrop-only inpainting of the removed
 region, judge sets use the un-warped real photo. Fringe prior n=4 — one short of the threshold; only 2 of the 4 are
 real fray pairs, which is what the prior actually needs.
+
+## Update 06:55 UTC — fourth finder run (after-wash focus): +2 pages (31 total)
+~45 pages screened in 9 languages → 1 genuine fray-after-wash sequence (Prudence & Austere: flat before → flat cut →
+flat after one washer/dryer cycle) + 1 cut-only (Doodlecraft, sil IoU 0.90, hem 7 px). Finder's conclusion: search
+results are saturated by the same ~10 large sites; almost nobody photographs the washed result flat. Found-pair
+channel is effectively exhausted at **5 usable cut pairs + 2 fray sequences**. Next channel = contributions.
