@@ -27,7 +27,7 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
     al, dl, ar, dr = map(float, m.groups()); kind = "after_wash" if "after_wash" in txt else "after_cut"
     finish = RECS.get(Path(note).parent.name, {}).get("hem_finish", "unknown")
     if finish in ("cuffed", "hemmed", "serged"): dl = dr = 0.0            # finished hems have no fringe; a measured value is an artefact
-    if finish == "raw" and kind == "after_cut": dl = dr = min(dl, 0.01 * ww), min(dr, 0.01 * ww)   # unwashed raw cut: ~no fringe yet
+    if finish == "raw" and kind == "after_cut": dl, dr = min(dl, 0.01 * ww), min(dr, 0.01 * ww)   # unwashed raw cut: ~no fringe yet
     rows.append(dict(pair=Path(note).parent.name, kind=kind, hem_finish=finish, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
 prior = {"n": len(rows), "insufficient": len(rows) < 5, "pairs": rows}
 if rows:
