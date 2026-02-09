@@ -9,8 +9,8 @@ TRACK = {"sil_iou_vs_real": ("up", 0.03), "hem_chamfer": ("down", 5.0), "fringe_
 EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")}
 cur = {}
 for f in sorted(glob.glob(str(ROOT / "experiments/pairs/*/cmp_median/metrics.json"))):
-    pid = f.split("/")[-3]
-    if pid in EXCL: continue
+    pid = f.split("/")[-3]; note = Path(f).parents[1] / "NOTE.md"
+    if pid in EXCL or (note.exists() and "rejected" in note.read_text()[:80]): continue
     r = {x["system"]: x for x in json.load(open(f))["rows"]}
     if "prediction" in r: cur[pid] = {k: r["prediction"].get(k) for k in TRACK}
 if "--freeze" in sys.argv:

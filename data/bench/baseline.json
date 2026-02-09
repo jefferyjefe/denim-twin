@@ -19,16 +19,6 @@
   "hem_chamfer": 15.893129770992367,
   "fringe_iou_vs_real": 0.3522244578582607
  },
- "660bef67bf": {
-  "sil_iou_vs_real": 0.2690932428715504,
-  "hem_chamfer": 67.42939248308247,
-  "fringe_iou_vs_real": 0.17573595004460305
- },
- "85d48013a2": {
-  "sil_iou_vs_real": 0.23863684892311635,
-  "hem_chamfer": 40.62479505343627,
-  "fringe_iou_vs_real": 1.0
- },
  "8d9f0df4ad": {
   "sil_iou_vs_real": 0.9450830922013096,
   "hem_chamfer": 8.188741721854305,
