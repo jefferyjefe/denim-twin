@@ -143,7 +143,7 @@ for k, (im, ch) in res.items():
 for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 255), ("removed_mask", removed.astype(np.uint8) * 255), ("bmask", bmask.astype(np.uint8) * 255), ("amask", amask.astype(np.uint8) * 255), ("real", real), ("real_mask", rmask.astype(np.uint8) * 255)):
     cv2.imwrite(f"{O}/{n}.png", im)
 cv2.imwrite(f"{O}/pred.png", res["median"][0]); cv2.imwrite(f"{O}/diff.png", (np.any(res["median"][0] != bf, axis=2) & True).astype(np.uint8) * 255)   # plan §4.8: exactly which pixels changed
- json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
+json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
 rows = {}
 for k in res:
     r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "compare.py"), "--before", BEFORE_PATH, "--before-lm", f"{O}/before_lm.json", "--pred", f"{O}/pred_{k}.png", "--pred-mask", f"{O}/pred_{k}_mask.png",
