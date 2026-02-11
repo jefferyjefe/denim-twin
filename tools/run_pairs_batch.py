@@ -5,15 +5,7 @@ Writes experiments/pairs/<pageid>/ and a summary table experiments/pairs/SUMMARY
 import json, hashlib, subprocess, sys, os
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"; OUT = ROOT / os.environ.get("PAIRS_OUT", "experiments/pairs"); OUT.mkdir(parents=True, exist_ok=True)
-def coin_key(text):
-    """Map a contributor's free-text coin description to a scale_from_coin.py key."""
-    t = (text or "").lower()
-    table = [("quarter", "us_quarter"), ("penny", "us_penny"), ("nickel", "us_nickel"), ("dime", "us_dime"), ("2 euro", "eur_2"), ("2€", "eur_2"), ("1 euro", "eur_1"), ("1€", "eur_1"), ("50 cent", "eur_50c"),
-             ("£2", "gbp_2"), ("2 pound", "gbp_2"), ("£1", "gbp_1"), ("1 pound", "gbp_1"), ("10p", "gbp_10p"), ("loonie", "aud_1"), ("100 yen", "jpy_100"), ("1 yuan", "cny_1")]
-    if "cad" in t or "canad" in t: return "cad_quarter" if "quarter" in t else None
-    for k, v in table:
-        if k in t: return v
-    return None
+sys.path.insert(0, str(ROOT / "src")); from denimtwin.util.coins import coin_key
 
 RECS = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
 rows = []

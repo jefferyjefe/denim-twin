@@ -15,3 +15,6 @@ def test_grid_scale_on_synthetic(tmp_path):
     cv2.imwrite(str(tmp_path / "g.png"), img); cv2.imwrite(str(tmp_path / "m.png"), m)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/scale_from_grid.py"), str(tmp_path / "g.png"), "--mask", str(tmp_path / "m.png")], capture_output=True, text=True)
     d = json.loads(r.stdout); assert abs(d["px_per_cell"] - 30) <= 1.5, d
+def test_coin_key_mapping():
+    sys.path.insert(0, os.path.join(ROOT, "src")); from denimtwin.util.coins import coin_key
+    assert [coin_key(x) for x in ("US quarter", "a penny", "2 euro coin", "£1", "canadian quarter", "no idea")] == ["us_quarter", "us_penny", "eur_2", "gbp_1", "cad_quarter", None]

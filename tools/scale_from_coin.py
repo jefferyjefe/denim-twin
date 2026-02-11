@@ -5,7 +5,8 @@ metallic/bright), and convert its diameter to mm/px given the coin type.
 Usage: scale_from_coin.py IMAGE --coin us_quarter [--mask MASK.png] -> JSON {diameter_px, mm_per_px, confidence, center}"""
 import argparse, json, sys
 import numpy as np, cv2
-COINS_MM = {"us_quarter": 24.26, "us_penny": 19.05, "us_nickel": 21.21, "us_dime": 17.91, "eur_1": 23.25, "eur_2": 25.75, "eur_50c": 24.25, "gbp_1": 23.43, "gbp_2": 28.4, "gbp_10p": 24.5, "cad_quarter": 23.88, "aud_1": 25.0, "cny_1": 25.0, "jpy_100": 22.6}
+import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+from denimtwin.util.coins import COINS_MM
 p = argparse.ArgumentParser(); p.add_argument("image"); p.add_argument("--coin", required=True, choices=sorted(COINS_MM)); p.add_argument("--mask"); p.add_argument("--out")
 a = p.parse_args()
 img = cv2.imread(a.image); g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY); H, W = g.shape
