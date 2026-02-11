@@ -142,7 +142,8 @@ for k, (im, ch) in res.items():
     cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep | (ch & removed)).astype(np.uint8) * 255))
 for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 255), ("removed_mask", removed.astype(np.uint8) * 255), ("bmask", bmask.astype(np.uint8) * 255), ("amask", amask.astype(np.uint8) * 255), ("real", real), ("real_mask", rmask.astype(np.uint8) * 255)):
     cv2.imwrite(f"{O}/{n}.png", im)
-cv2.imwrite(f"{O}/pred.png", res["median"][0]); json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
+cv2.imwrite(f"{O}/pred.png", res["median"][0]); cv2.imwrite(f"{O}/diff.png", (np.any(res["median"][0] != bf, axis=2) & True).astype(np.uint8) * 255)   # plan §4.8: exactly which pixels changed
+ json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
 rows = {}
 for k in res:
     r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "compare.py"), "--before", BEFORE_PATH, "--before-lm", f"{O}/before_lm.json", "--pred", f"{O}/pred_{k}.png", "--pred-mask", f"{O}/pred_{k}_mask.png",
@@ -164,4 +165,8 @@ for k in res:
         if r["system"] == "prediction": md += row(f"pred {k}", r) + "\n"
 for r in rows["median"]:
     if r["system"] != "prediction": md += row(r["system"], r) + "\n"
+from denimtwin.modification import CutModification, WashProtocol
+mod = CutModification(cut_path_canonical=[[0.0, 0.0]], edge_treatment="raw" if a.state == "after_cut" else "hand_frayed", wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed)
+mod.cut_path_canonical = None; mod.inseam_fraction = float(np.clip((np.mean([np.nonzero(removed[:, x])[0].min() for x in range(removed.shape[1]) if removed[:, x].any()]) - lmb["crotch"][1]) / max(np.mean([lmb.get("hem_left_inner", (0, bf.shape[0]))[1], lmb.get("hem_right_inner", (0, bf.shape[0]))[1]]) - lmb["crotch"][1], 1), 0, 1))
+open(f"{O}/modification.json", "w").write(mod.to_json())
 open(f"{O}/NOTE.md", "w").write(md); print(md)
