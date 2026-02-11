@@ -5,6 +5,16 @@ Writes experiments/pairs/<pageid>/ and a summary table experiments/pairs/SUMMARY
 import json, hashlib, subprocess, sys, os
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"; OUT = ROOT / os.environ.get("PAIRS_OUT", "experiments/pairs"); OUT.mkdir(parents=True, exist_ok=True)
+def coin_key(text):
+    """Map a contributor's free-text coin description to a scale_from_coin.py key."""
+    t = (text or "").lower()
+    table = [("quarter", "us_quarter"), ("penny", "us_penny"), ("nickel", "us_nickel"), ("dime", "us_dime"), ("2 euro", "eur_2"), ("2€", "eur_2"), ("1 euro", "eur_1"), ("1€", "eur_1"), ("50 cent", "eur_50c"),
+             ("£2", "gbp_2"), ("2 pound", "gbp_2"), ("£1", "gbp_1"), ("1 pound", "gbp_1"), ("10p", "gbp_10p"), ("loonie", "aud_1"), ("100 yen", "jpy_100"), ("1 yuan", "cny_1")]
+    if "cad" in t or "canad" in t: return "cad_quarter" if "quarter" in t else None
+    for k, v in table:
+        if k in t: return v
+    return None
+
 RECS = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
 rows = []
 for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlines():
@@ -30,6 +40,13 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     if rec:
         h8 = os.path.splitext(before)[0].rsplit("_", 1)[-1]
         mmpp = next((i.get("mm_per_px") for i in rec["images"] if h8 == hashlib.sha1(i["url"].encode()).hexdigest()[:8] and i.get("mm_per_px")), None)
+        if mmpp is None and str(rec.get("scale_ref", "")).startswith("coin"):
+            coin = coin_key(rec.get("scale_detail", ""))
+            if coin:
+                r_ = subprocess.run([sys.executable, str(ROOT / "tools/scale_from_coin.py"), before_p, "--coin", coin], capture_output=True, text=True)
+                if r_.returncode == 0:
+                    d_ = json.loads(r_.stdout)
+                    if d_.get("confidence", 0) > 0.3: mmpp = d_["mm_per_px"]; print(f"  coin scale ({coin}): {mmpp:.4f} mm/px, conf {d_['confidence']:.2f}")
     cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od)] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else [])
     if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid, "--state", kind]   # leave-one-out, state-conditional
     r = subprocess.run(cmd, capture_output=True, text=True)
