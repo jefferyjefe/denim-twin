@@ -1,0 +1,8 @@
+{"garment_id": "2691c1a8d0", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.5400763358778625, "nominal": 0.8, "lo": 0.0, "hi": 9.360274598134279, "real": 120.24908424908426, "source": "prior sd"}
+{"garment_id": "26b1041d00", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.6132315521628499, "nominal": 0.8, "lo": 0.0, "hi": 8.12442512532114, "real": 45.0, "source": "prior sd"}
+{"garment_id": "443d1d4658", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.8549618320610686, "nominal": 0.8, "lo": 0.0, "hi": 11.32699934484607, "real": 7.75, "source": "prior sd"}
+{"garment_id": "4bfef03bd7", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 66.69484558742407, "nominal": 0.8, "lo": 25.506882318539105, "hi": 107.88280885630903, "real": 36.458083832335326, "source": "prior sd"}
+{"garment_id": "8d9f0df4ad", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 1.4936386768447836, "nominal": 0.8, "lo": 0.0, "hi": 19.788537545906678, "real": 21.193654266958422, "source": "prior sd"}
+{"garment_id": "b630a78c19", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.7786259541984732, "nominal": 0.8, "lo": 0.0, "hi": 13.494671505437404, "real": 307.20710059171597, "source": "prior sd"}
+{"garment_id": "e97924ad2d", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.0, "nominal": 0.8, "lo": 0.0, "hi": 4.082847958853677, "real": 1.0, "source": "prior sd"}
+{"garment_id": "f542c57cec", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 96.86569286246579, "nominal": 0.8, "lo": 32.349045790879046, "hi": 161.38233993405254, "real": 163.63941449482328, "source": "prior sd"}

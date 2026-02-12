@@ -169,4 +169,13 @@ from denimtwin.modification import CutModification, WashProtocol
 mod = CutModification(cut_path_canonical=[[0.0, 0.0]], edge_treatment="raw" if a.state == "after_cut" else "hand_frayed", wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed)
 mod.cut_path_canonical = None; mod.inseam_fraction = float(np.clip((np.mean([np.nonzero(removed[:, x])[0].min() for x in range(removed.shape[1]) if removed[:, x].any()]) - lmb["crotch"][1]) / max(np.mean([lmb.get("hem_left_inner", (0, bf.shape[0]))[1], lmb.get("hem_right_inner", (0, bf.shape[0]))[1]]) - lmb["crotch"][1], 1), 0, 1))
 open(f"{O}/modification.json", "w").write(mod.to_json())
+# plan §4.9: never imply certainty — emit a prediction interval for fringe depth (from the prior's spread when available)
+interval = {"garment_id": os.path.basename(O), "stratum": a.state, "metric": "fringe_depth_px", "median": float(depth_px), "nominal": 0.8}
+if a.prior:
+    sd_rel = (pr.get("unpaired", {}).get("depth_rel_sd") if a.state == "after_wash" else None) or pr.get("depth_rel_sd") or 0.0
+    ww_ = abs(lmb["waist_right"][0] - lmb["waist_left"][0]); half = 1.28 * sd_rel * ww_          # ~80% interval under a normal assumption
+    interval.update(lo=max(0.0, float(depth_px - half)), hi=float(depth_px + half), real=float(depth_measured_px), source="prior sd")
+else:
+    interval.update(lo=float(res["conservative"][1].sum() and depth_mm * 0.5), hi=float(depth_mm * 1.5), real=float(depth_measured_px), source="preset spread (not calibrated)")
+open(f"{O}/intervals.jsonl", "w").write(json.dumps(interval) + "\n")
 open(f"{O}/NOTE.md", "w").write(md); print(md)
