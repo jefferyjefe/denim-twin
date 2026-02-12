@@ -1,3 +1,30 @@
-{"gate_0": {"passed": true, "date": "2026-08-28", "evidence": "charter + protocol v0.1"},
- "gate_1": {"passed": false}, "gate_2": {"passed": false}, "gate_3": {"passed": false},
- "gate_4": {"passed": false}, "gate_5": {"passed": false}, "gate_6": {"passed": false}, "gate_7": {"passed": false}}
+{
+ "gate_0": {
+  "passed": true,
+  "date": "2026-08-28",
+  "evidence": "charter + protocol v0.1"
+ },
+ "gate_1": {
+  "passed": false
+ },
+ "gate_2": {
+  "passed": true,
+  "date": "2026-08-29",
+  "evidence": "2D baseline preserves everything outside the cut by construction: changed_pixel_fraction_outside == 0.0 on every real pair (EXP_0003/0004, experiments/pairs/*/cmp_median/metrics.json); logos/pockets/seams untouched (judge report 2026-08-29: 5/5 same-garment for the prediction). Cut geometry reproduced automatically on 5 found pairs (sil IoU 0.75\u20130.95). Caveat: passes because the renderer copies pixels; must be re-checked when any renderer alters kept pixels (Phase 6)."
+ },
+ "gate_3": {
+  "passed": false
+ },
+ "gate_4": {
+  "passed": false
+ },
+ "gate_5": {
+  "passed": false
+ },
+ "gate_6": {
+  "passed": false
+ },
+ "gate_7": {
+  "passed": false
+ }
+}
