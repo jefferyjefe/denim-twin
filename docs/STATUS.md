@@ -1,5 +1,8 @@
 # Status — 2026-08-29 (end of first autonomous hour)
 
+## Gates
+gate_0 ✔, **gate_2 ✔ (2026-08-29, by construction: nothing outside the cut changes; must be re-checked once a renderer alters kept pixels)**. Phase 3 started (EXP_0010: template v0 not yet better than heuristics).
+
 ## What exists and works
 - One-command pair pipeline `tools/run_pair.py`: coarse SAM garment pick → mask landmarks (cut-invariant) → registration
   (landmarks + optional SIFT) → per-leg hem fit → fringe render (v1 density band) → scoring vs null baselines → rejection with reason.
