@@ -31,14 +31,29 @@ def init_from_mask(mask):
     hem = row(0.98); legw = (hem[1] - hem[0]) / 2
     return np.array([cx, top, w0[1] - w0[0], wh[1] - wh[0], 0.16 * h, 0.28 * h, 0.22 * (wh[1] - wh[0]) * 1.0, legw * 0.9, 0.70 * h, legw * 0.85, 0.06 * (hem[1] - hem[0])], float)
 
+def gap_mask(m):
+    """Background enclosed between the legs (bounded left/right by garment on the same row)."""
+    H, W = m.shape; g = np.zeros_like(m)
+    first = np.argmax(m, axis=1); last = W - 1 - np.argmax(m[:, ::-1], axis=1); has = m.any(axis=1)
+    for y in np.nonzero(has)[0]:
+        row = m[y, first[y]:last[y] + 1]
+        if not row.all(): g[y, first[y]:last[y] + 1] = ~row
+    return g
+
 def fit(mask, iters=400):
-    H, W = mask.shape; m = mask.astype(bool); p0 = init_from_mask(m)
+    H, W = mask.shape; m = mask.astype(bool); p0 = init_from_mask(m); gm = gap_mask(m)
+    ys = np.nonzero(m)[0]; h = ys.max() - ys.min()
     scale = np.maximum(np.abs(p0), 1.0)
     def loss(q):
         p = q * scale
-        if p[2] <= 0 or p[6] <= 0 or p[8] <= 0 or p[9] <= 0 or p[5] <= 0: return 1.0
+        if p[2] <= 0 or p[6] <= 0 or p[8] <= 0 or p[9] <= 0 or p[5] <= 0: return 2.0
+        pen = 0.0                                              # soft plausibility bounds (fractions of garment height)
+        pen += max(0, 0.08 * h - p[4]) + max(0, p[4] - 0.25 * h)   # hip_dy
+        pen += max(0, 0.18 * h - p[5]) + max(0, p[5] - 0.45 * h)   # rise
         r = render(p, H, W); inter = (r & m).sum(); union = (r | m).sum()
-        return 1.0 - inter / max(union, 1)
+        gr = gap_mask(r); gi = (gr & gm).sum(); gu = (gr | gm).sum()
+        gap_term = 1.0 - gi / gu if gu else 0.0                # the between-leg gap pins the crotch height
+        return (1.0 - inter / max(union, 1)) + 0.5 * gap_term + pen / h
     res = minimize(loss, p0 / scale, method="Nelder-Mead", options={"maxiter": iters, "xatol": 1e-3, "fatol": 1e-4})
     p = res.x * scale; return dict(zip(NAMES, map(float, p))), 1.0 - float(res.fun), p
 
