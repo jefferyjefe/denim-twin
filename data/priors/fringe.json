@@ -1,5 +1,5 @@
 {
- "n": 5,
+ "n": 6,
  "insufficient": false,
  "pairs": [
   {
@@ -11,6 +11,16 @@
    "depth_rel": 0.0,
    "angle_l": -5.4,
    "angle_r": -0.7
+  },
+  {
+   "pair": "2b0123d732",
+   "kind": "after_cut",
+   "hem_finish": "cuffed",
+   "waist_px": 293,
+   "depth_px": 0.0,
+   "depth_rel": 0.0,
+   "angle_l": -20.0,
+   "angle_r": 54.9
   },
   {
    "pair": "443d1d4658",
@@ -53,14 +63,14 @@
    "angle_r": -22.0
   }
  ],
- "depth_rel_mean": 0.01399284221849852,
- "depth_rel_sd": 0.024349045556140723,
- "depth_px_mean": 4.8,
- "depth_px_sd": 9.10823802938856,
+ "depth_rel_mean": 0.011660701848748766,
+ "depth_rel_sd": 0.022831069688042716,
+ "depth_px_mean": 4.0,
+ "depth_px_sd": 8.504900548115382,
  "depth_rel_mean_after_wash": 0.06233062330623306,
  "n_after_wash": 1,
- "depth_rel_mean_after_cut": 0.0019083969465648854,
- "n_after_cut": 4,
+ "depth_rel_mean_after_cut": 0.0015267175572519084,
+ "n_after_cut": 5,
  "unpaired": {
   "n": 8,
   "depth_rel_mean": 0.18074483899030913,
