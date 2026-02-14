@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]; P = ROOT / "data/external/pairs.json
 existing = {json.loads(l)["page_url"] for l in P.read_text().splitlines() if l.strip()} if P.exists() else set()
 issues = json.loads(subprocess.run(["gh", "issue", "list", "-R", "jefferyjefe/denim-twin", "-l", "pair-submission", "-s", "all", "--json",
                                     "number,url,title,body,author,createdAt", "-L", "200"], capture_output=True, text=True, check=True).stdout)
-IMG = re.compile(r"(https://(?:github\.com/user-attachments/assets|user-images\.githubusercontent\.com)/[^\s)\"]+)")
+IMG = re.compile(r"(https://(?:github\.com/user-attachments/assets|user-images\.githubusercontent\.com)/[^\s)\"]+|https?://[^\s)\"]+\.(?:jpe?g|png|webp)(?:\?[^\s)\"]*)?)", re.I)   # GitHub attachments or pasted image links
 def section(body, heading):
     m = re.search(rf"### {re.escape(heading)}[^\n]*\n(.*?)(?=\n### |\Z)", body, re.S); s = m.group(1) if m else ""
     return "" if s.strip() == "_No response_" else s
