@@ -1,0 +1,20 @@
+| pair | metric | baseline | current | status |
+|---|---|---|---|---|
+| 2691c1a8d0 | sil_iou_vs_real | 0.686 | 0.686 | ok |
+| 2691c1a8d0 | hem_chamfer | 33.428 | 33.428 | ok |
+| 2691c1a8d0 | fringe_iou_vs_real | 0.326 | 0.326 | ok |
+| 26b1041d00 | sil_iou_vs_real | 0.751 | 0.751 | ok |
+| 26b1041d00 | hem_chamfer | 30.816 | 30.816 | ok |
+| 26b1041d00 | fringe_iou_vs_real | 0.296 | 0.296 | ok |
+| 443d1d4658 | sil_iou_vs_real | 0.917 | 0.917 | ok |
+| 443d1d4658 | hem_chamfer | 14.021 | 14.021 | ok |
+| 443d1d4658 | fringe_iou_vs_real | 0.142 | 0.142 | ok |
+| 4bfef03bd7 | sil_iou_vs_real | 0.772 | 0.772 | ok |
+| 4bfef03bd7 | hem_chamfer | 15.893 | 15.893 | ok |
+| 4bfef03bd7 | fringe_iou_vs_real | 0.352 | 0.352 | ok |
+| 8d9f0df4ad | sil_iou_vs_real | 0.945 | 0.945 | ok |
+| 8d9f0df4ad | hem_chamfer | 8.189 | 8.189 | ok |
+| 8d9f0df4ad | fringe_iou_vs_real | 0.311 | 0.311 | ok |
+| e97924ad2d | sil_iou_vs_real | 0.896 | 0.896 | ok |
+| e97924ad2d | hem_chamfer | 7.042 | 7.042 | ok |
+| e97924ad2d | fringe_iou_vs_real | 0.236 | 0.236 | ok |
