@@ -69,3 +69,8 @@ results are saturated by the same ~10 large sites; almost nobody photographs the
 channel is effectively exhausted at **5 usable cut pairs + 2 fray sequences**. Next channel = contributions.
 Prudence & Austere on inspection: after-wash shorts are cuffed once and knife-slashed — a distressing sample, not a
 raw fringe hem; excluded from the fringe prior. Final fray pairs from the found channel: 1 (Thrifted & Taylor'd).
+
+## Update 07:35 UTC — Wayback channel (1 run): +1 cut pair (Adventures in Dressmaking 2010, cuffed), 32 pages total
+Verdict from the run: not worth continuing — wildcard CDX queries time out, archived Blogger images are 640 px inline
+sizes, CDN step images were never archived, ~1 usable pair per 50 calls. The found-pair channel is closed at
+**6 cut pairs + 1 fray pair**. Everything downstream now waits on contributed after-wash pairs.
