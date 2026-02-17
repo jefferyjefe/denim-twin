@@ -23,3 +23,4 @@
 | 964dc8a1f9 | Prudence and Austere: DIY Distressed Den | after_wash | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
 | e97924ad2d | Doodlecraft: How to Upcycle Jeans into B | after_cut | ok | 0.90 / 0.90 / 0.54 | 7 / 7 | 11.2 / 11.0 | 0.24 / 0.01 |
 | 2b0123d732 | Adventures in Dressmaking: "We need to l | after_cut | ok | 0.85 / 0.85 / 0.66 | 11 / 11 | 15.8 / 15.5 | 0.32 / 0.02 |
+| 4c30342e20 | [pair] TEST submission (pipeline dry run | after_wash | ok | 0.86 / 0.85 / 0.28 | 44 / 47 | 22.2 / 23.6 | 0.24 / 0.04 |
