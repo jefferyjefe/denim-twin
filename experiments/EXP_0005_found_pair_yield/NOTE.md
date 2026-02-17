@@ -74,3 +74,9 @@ raw fringe hem; excluded from the fringe prior. Final fray pairs from the found 
 Verdict from the run: not worth continuing — wildcard CDX queries time out, archived Blogger images are 640 px inline
 sizes, CDN step images were never archived, ~1 usable pair per 50 calls. The found-pair channel is closed at
 **6 cut pairs + 1 fray pair**. Everything downstream now waits on contributed after-wash pairs.
+
+## Contributor loop verified 07:50 UTC
+A test issue (#1, closed) through the GitHub form → `ingest_submissions.py` (form parsing, `_No response_`, consent box,
+pasted links) → fetch → CLIP validation → batch: end to end OK. Coin scale did not trigger (no coin in the test photos —
+correct). The record is excluded from priors (two different garments). The channel is live: a real contributor pair
+with a coin in frame would be scored and enter the prior automatically on the next daily run.
