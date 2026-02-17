@@ -18,3 +18,5 @@ experiments/pairs/*/*.png
 experiments/pairs_prior/*/cmp_*/
 experiments/pairs_prior/*/*.png
 experiments/pairs/GALLERY.html
+experiments/pairs_v1/*/cmp_*/
+experiments/pairs_v1/*/*.png

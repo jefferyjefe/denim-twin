@@ -22,6 +22,7 @@ p.add_argument("--before-lm"); p.add_argument("--after-lm"); p.add_argument("--m
 p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth from the prior (depth_rel_mean * waist width) instead of reading it off the after-photo")
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
+p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
@@ -94,6 +95,10 @@ try:
 except SystemExit: raise
 except Exception as e: print("clip gate skipped:", e)
 lmb_auto, cb = landmarks_from_mask(bmask); lma_auto, ca = landmarks_from_mask(amask)
+if a.refine_landmarks and len(lmb_auto) >= 14:
+    from denimtwin.canon.template_v1 import fit as _v1fit
+    try: lmb_auto, _r, _ = _v1fit(bmask, lmb_auto); print(f"template_v1 refine (before): boundary resid {_r:.2f}px")
+    except Exception as e: print("template_v1 refine skipped:", e)
 lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
 lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
 if not a.before_lm and len(lmb) >= 14:

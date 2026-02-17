@@ -40,6 +40,7 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
                     d_ = json.loads(r_.stdout)
                     if d_.get("confidence", 0) > 0.3: mmpp = d_["mm_per_px"]; print(f"  coin scale ({coin}): {mmpp:.4f} mm/px, conf {d_['confidence']:.2f}")
     cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od)] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else [])
+    if os.environ.get("PAIRS_REFINE"): cmd += ["--refine-landmarks"]
     if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid, "--state", kind]   # leave-one-out, state-conditional
     r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0
