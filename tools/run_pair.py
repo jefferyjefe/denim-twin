@@ -23,6 +23,7 @@ p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth fr
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
+p.add_argument("--coin", help="coin type in the BEFORE photo (see util/coins.py); metric scale is recovered with the garment masked out")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
@@ -66,8 +67,25 @@ def upright(img, mask, name):
     cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h * sin + w * cos), int(h * cos + w * sin); M[0, 2] += nw / 2 - w / 2; M[1, 2] += nh / 2 - h / 2
     bgc = tuple(int(c) for c in np.median(img[~mask], axis=0)) if (~mask).any() else (128, 128, 128)
     FLAGS.append(f"{name}: rotated {ang:.1f}° to upright"); return cv2.warpAffine(img, M, (nw, nh), borderValue=bgc), cv2.warpAffine(mask.astype(np.uint8), M, (nw, nh)) > 0, ang
+bf_pre_rot, af_pre_rot = bf, af
 bmask = coarse(bf); amask = coarse(af)
-bf, bmask, _ = upright(bf, bmask, "before"); af, amask, _ = upright(af, amask, "after")
+bf, bmask, rot_b = upright(bf, bmask, "before"); af, amask, rot_a = upright(af, amask, "after")
+def _xform(lm, note, rot, shape_before, shape_after):
+    """Manual landmarks were clicked on the ORIGINAL photo: apply the collage crop (left/top panel: offset 0) and the upright rotation."""
+    if not lm: return lm
+    if rot:
+        h0, w0 = shape_before[:2]; M = cv2.getRotationMatrix2D((w0 / 2, h0 / 2), -rot, 1.0)
+        cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h0 * sin + w0 * cos), int(h0 * cos + w0 * sin); M[0, 2] += nw / 2 - w0 / 2; M[1, 2] += nh / 2 - h0 / 2
+        lm = {k: tuple(float(v) for v in (M @ np.array([x, y, 1.0]))) for k, (x, y) in lm.items()}
+    return lm
+def _snap(lm, mask, r=8):
+    if not lm: return lm
+    ys, xs = np.nonzero(mask); pts = np.stack([xs, ys], 1); out = {}
+    for k, (x, y) in lm.items():
+        if 0 <= int(y) < mask.shape[0] and 0 <= int(x) < mask.shape[1] and mask[int(y), int(x)]: out[k] = (x, y); continue
+        d = np.hypot(pts[:, 0] - x, pts[:, 1] - y); i = int(np.argmin(d)); out[k] = (float(pts[i, 0]), float(pts[i, 1])) if d[i] <= r else (x, y)
+    return out
+SHAPE_B0, SHAPE_A0 = bf_pre_rot.shape, af_pre_rot.shape
 cv2.imwrite(f"{O}/before_used.png", bf); cv2.imwrite(f"{O}/after_used.png", af)
 CROPPED = set(x.strip() for x in a.cropped.split(",") if x.strip())
 def sane(mask, name):
@@ -99,11 +117,19 @@ if a.refine_landmarks and len(lmb_auto) >= 14:
     from denimtwin.canon.template_v1 import fit as _v1fit
     try: lmb_auto, _r, _ = _v1fit(bmask, lmb_auto); print(f"template_v1 refine (before): boundary resid {_r:.2f}px")
     except Exception as e: print("template_v1 refine skipped:", e)
-lmb = json.load(open(a.before_lm))["landmarks"] if a.before_lm else lmb_auto
-lma = json.load(open(a.after_lm))["landmarks"] if a.after_lm else lma_auto
+lmb = _snap(_xform(json.load(open(a.before_lm))["landmarks"], note_b, rot_b, SHAPE_B0, bf.shape), bmask) if a.before_lm else lmb_auto
+lma = _snap(_xform(json.load(open(a.after_lm))["landmarks"], note_a, rot_a, SHAPE_A0, af.shape), amask) if a.after_lm else lma_auto
+if (a.before_lm and note_b) or (a.after_lm and note_a): FLAGS.append("manual landmarks + collage split: landmarks assumed to be in the kept (left/top) panel's frame")
 if not a.before_lm and len(lmb) >= 14:
     bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts (landmarks stay from the coarse mask:
     sane(bmask, "before (refined)")                    #  recomputing them on the refined mask regressed pair1 — see EXP_0004)
+if a.coin and a.mm_per_px is None:
+    cv2.imwrite(f"{O}/bmask.png", bmask.astype(np.uint8) * 255)
+    r_ = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "scale_from_coin.py"), BEFORE_PATH, "--coin", a.coin, "--mask", f"{O}/bmask.png"], capture_output=True, text=True)
+    try: d_ = json.loads(r_.stdout)
+    except Exception: d_ = {}
+    if r_.returncode == 0 and d_.get("accepted"): a.mm_per_px = d_["mm_per_px"]; FLAGS.append(f"scale from coin ({a.coin}): {a.mm_per_px:.4f} mm/px, edge support {d_['edge_support']:.2f}")
+    else: FLAGS.append(f"coin scale rejected: {d_.get('reject_reason') or d_.get('error') or 'no result'}")
 json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma, "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
 mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.0 placeholder; mm values are px)"
 use = [n for n in SURVIVING if n in lma and n in lmb]
@@ -132,12 +158,9 @@ if fr_after is not None and fr_after.sum() > 50:                       # depth m
         depth_after_frame = float(np.median(ds)) * (wwb / max(wwa, 1))
         depth_measured_px = depth_after_frame                             # prefer the un-warped measurement
 if a.prior:
+    from denimtwin.prior import predict_depth_rel
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
-    rows_ = [x for x in pr.get("pairs", []) if x["pair"] != a.exclude and x["kind"] == a.state]      # same STATE, leave-one-out
-    rel = np.mean([x["depth_rel"] for x in rows_]) if rows_ else 0.0
-    if a.state == "after_wash" and pr.get("unpaired", {}).get("n"):   # unpaired samples are after-wash only
-        nu = pr["unpaired"]["n"]; rel = (rel * len(rows_) + pr["unpaired"]["depth_rel_mean"] * nu) / (len(rows_) + nu)
-    n_eff = len(rows_) + (pr.get("unpaired", {}).get("n", 0) if a.state == "after_wash" else 0)
+    rel, n_eff, sd_rel_prior = predict_depth_rel(pr, a.state, a.exclude)
     depth_px = rel * ww; depth_source = f"prior[{a.state}] (n={n_eff}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if n_eff < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
@@ -163,7 +186,7 @@ cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 def row(name, r): return f"| {name} | {r['sil_iou_vs_real']:.3f} | {r['hem_chamfer']:.1f} | {r['dE_edge_band_vs_real']:.1f} | {r['fringe_iou_vs_real']:.3f} |"
 md = f"# PAIR — auto pipeline\n\nflags: {'; '.join(FLAGS) or 'none'}\nbefore: {a.before} {note_b or ''}\nafter: {a.after} {note_a or ''}\nscale: {scale_note}\nlandmarks: {'manual' if a.before_lm else 'auto'} / {'manual' if a.after_lm else 'auto'} (crotch: {cb.get('crotch')} / {ca.get('crotch')})\n"
 md += f"fringe depth used: {depth_px:.1f} px from {depth_source}; measured on after-photo: {depth_measured_px:.1f} px (fabric/fringe split: {fringe_src}; {'after-frame' if depth_after_frame is not None else 'registered-frame'})\n"
-md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']*mmpp:.0f}" for k, L in legs.items() if L) + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
+md += f"hem fit: " + ", ".join(f"{k}: angle {L['angle_deg']:.1f}°, depth {L['fringe_depth_px']:.0f} px" for k, L in legs.items() if L) + (f" (mm_per_px {mmpp:.4f})" if a.mm_per_px else "") + f"\nregistration residual (leave-one-landmark-out): {resid:.2f}px\n\n"
 md += "| system | sil IoU | chamfer | edge ΔE | fringe IoU |\n|---|---|---|---|---|\n"
 for k in res:
     for r in rows[k]:
@@ -177,10 +200,9 @@ open(f"{O}/modification.json", "w").write(mod.to_json())
 # plan §4.9: never imply certainty — emit a prediction interval for fringe depth (from the prior's spread when available)
 interval = {"garment_id": os.path.basename(O), "stratum": a.state, "metric": "fringe_depth_px", "median": float(depth_px), "nominal": 0.8}
 if a.prior:
-    sd_rel = (pr.get("unpaired", {}).get("depth_rel_sd") if a.state == "after_wash" else None) or pr.get("depth_rel_sd") or 0.0
-    ww_ = abs(lmb["waist_right"][0] - lmb["waist_left"][0]); half = 1.28 * sd_rel * ww_          # ~80% interval under a normal assumption
-    interval.update(lo=max(0.0, float(depth_px - half)), hi=float(depth_px + half), real=float(depth_measured_px), source="prior sd")
+    ww_ = abs(lmb["waist_right"][0] - lmb["waist_left"][0]); half = 1.28 * sd_rel_prior * ww_    # ~80% interval under a normal assumption; sd is LOO, per state
+    interval.update(lo=max(0.0, float(depth_px - half)), hi=float(depth_px + half), real=float(depth_measured_px), source=f"prior sd (LOO, n={n_eff})")
 else:
-    interval.update(lo=float(res["conservative"][1].sum() and depth_mm * 0.5), hi=float(depth_mm * 1.5), real=float(depth_measured_px), source="preset spread (not calibrated)")
+    interval.update(lo=float(depth_px * 0.5), hi=float(depth_px * 1.5), real=None, source="preset spread (not calibrated; real omitted because median IS the measurement)")
 open(f"{O}/intervals.jsonl", "w").write(json.dumps(interval) + "\n")
 open(f"{O}/NOTE.md", "w").write(md); print(md)

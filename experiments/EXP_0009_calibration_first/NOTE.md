@@ -15,3 +15,8 @@ The machinery (intervals → audit → per-stratum coverage) works end to end; t
 too narrow, and — more importantly — half the "real" depths are measurement artefacts on finished hems. Calibration
 cannot be claimed or refuted with n=2 real fray pairs. Keep the interval output (never imply certainty) but label it
 "uncalibrated" in every report until n ≥ 10 after-wash pairs. Charter claim on calibration stays deferred.
+
+## Correction after review 3
+Intervals now use the leave-one-out, per-state sd and px units in both branches; non-prior runs no longer report a
+"real" equal to their own median. Re-audit on 10 LOO runs: **coverage 0.00** (nominal 0.80) — with n=2–4 the sd is
+near zero and every interval is a point. Same conclusion, stronger: calibration needs ≥10 after-wash pairs.

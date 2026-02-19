@@ -17,7 +17,8 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
     lm = Path(note).parent / "landmarks.json"
     if not lm.exists(): continue
     L = json.load(open(lm))["before_used"]; ww = abs(L["waist_right"][0] - L["waist_left"][0])
-    m = re.search(r"hem fit: left: angle ([-\d.]+)°, depth ([\d.]+), right: angle ([-\d.]+)°, depth ([\d.]+)", txt)
+    m = re.search(r"hem fit: left: angle ([-\d.]+)°, depth ([\d.]+) ?px, right: angle ([-\d.]+)°, depth ([\d.]+) ?px", txt) or re.search(r"hem fit: left: angle ([-\d.]+)°, depth ([\d.]+), right: angle ([-\d.]+)°, depth ([\d.]+)", txt)
+    if m and " px" not in (m.group(0)) and "scale: given" in txt: print(f"  skip {Path(note).parent.name}: depth in NOTE is in mm (old run) — rerun the batch"); continue
     if not m or ww <= 0: continue
     # quality bar: only pairs whose cut geometry was reproduced (else the 'fringe depth' is registration garbage)
     mp = Path(note).parent / "cmp_median/metrics.json"
@@ -43,7 +44,8 @@ if rows:
             print(f"  {r['pair']}: measured {r['depth_px']:.1f}, predicted {pred:.1f}, |err| {abs(pred - r['depth_px']):.1f}")
 up = OUT / "fringe_unpaired.json"
 if up.exists():
-    u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"]}
+    u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"],
+                                                  "samples": [{"pair": s_["pair"], "depth_rel": s_["depth_rel"]} for s_ in u.get("samples", []) if s_.get("status") == "ok"]}
     # unpaired samples are all AFTER-WASH: they only inform the after_wash prior
     if u["n"]:
         wp = prior.get("n_after_wash", 0); mp = prior.get("depth_rel_mean_after_wash", 0.0)

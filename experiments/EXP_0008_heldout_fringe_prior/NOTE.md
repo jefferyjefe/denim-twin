@@ -35,3 +35,10 @@ This is the first time the pipeline has produced a genuine held-out prediction e
   unwashed hems need the same rule as cuffed ones (depth ≈ 0–2 mm) rather than a measurement.
 - after_wash prior: 1 paired + 8 unpaired samples, mean 0.17 × waist width; predicts 67 px on pair1 vs 36.5 measured.
   Still not evidence of predictiveness (n_paired = 1). Needs after-wash pairs.
+
+## Correction after review 3 (08:50 UTC) — the earlier "held-out" after_wash number was leaked
+`--exclude` dropped only the paired row; the pair's own after-wash photo was still in the unpaired pool. Fixed
+(`denimtwin/prior.py`: LOO applies to both pools; unpaired samples of pairs that already have a paired run are
+dropped; depths are px everywhere). Corrected LOO on pair1: **prior 17.4 px (n=2) vs measured 36.5 px** — under-
+predicts by 2×. Cut-only pairs with cuffed hems now predict ≈0 (correct by rule). Nothing here is predictive; the
+statement "not yet" stands, now on clean numbers.

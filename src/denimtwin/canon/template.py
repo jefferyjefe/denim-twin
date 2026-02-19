@@ -55,7 +55,8 @@ def fit(mask, iters=400):
         gap_term = 1.0 - gi / gu if gu else 0.0                # the between-leg gap pins the crotch height
         return (1.0 - inter / max(union, 1)) + 0.5 * gap_term + pen / h
     res = minimize(loss, p0 / scale, method="Nelder-Mead", options={"maxiter": iters, "xatol": 1e-3, "fatol": 1e-4})
-    p = res.x * scale; return dict(zip(NAMES, map(float, p))), 1.0 - float(res.fun), p
+    p = res.x * scale; r = render(p, H, W); iou = float((r & m).sum() / max((r | m).sum(), 1))   # a real IoU, not 1 - loss
+    return dict(zip(NAMES, map(float, p))), iou, p
 
 def landmarks_from_params(p):
     cx, top, waist_w, hip_w, hip_dy, rise, thigh_w, knee_w, leg_len, hem_w, spread = p

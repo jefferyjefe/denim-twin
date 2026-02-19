@@ -60,7 +60,8 @@ def hem_chamfer(pred_sil, real_sil, keep, garment_before, band_px=40, mm_per_px=
     """Hem profile error: per column, |lowest predicted garment pixel - lowest real garment pixel|, averaged over
     columns where both exist below the waist. A 40 px hem error reads as ~40, not averaged away over the outline."""
     p = np.asarray(pred_sil, bool); r = np.asarray(real_sil, bool)
-    cols = np.nonzero(p.any(axis=0) & r.any(axis=0))[0]
+    below = ~np.asarray(keep, bool) & np.asarray(garment_before, bool)   # columns where the hem lives: garment below the cut
+    cols = np.nonzero(p.any(axis=0) & r.any(axis=0) & below.any(axis=0))[0]
     if len(cols) == 0: return float("nan")
     H = p.shape[0]; idx = np.arange(H)[:, None]
     bp = np.where(p[:, cols], idx, -1).max(axis=0); br = np.where(r[:, cols], idx, -1).max(axis=0)
