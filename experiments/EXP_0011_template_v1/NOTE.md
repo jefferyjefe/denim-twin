@@ -26,3 +26,11 @@ Synthetic: autolm 6.6 px → v1 3.9 px (boundary resid 0.9 px). Grailed: 92 → 
 | 2b0123d732 | Adventures in Dressmaking: "We need to l | after_cut | ok | 0.67 / 0.67 / 0.62 | 52 / 53 | 16.5 / 16.2 | 0.15 / 0.11 |
 | 4c30342e20 | [pair] TEST submission (pipeline dry run | after_wash | ok | 0.87 / 0.84 / 0.28 | 35 / 52 | 22.1 / 24.1 | 0.30 / 0.04 |
 ```
+
+## Verdict
+Mixed on the 7 real pairs: hem error better on Doodlecraft (7→5 px), Kids Couture (14→13), test pair (44→35); worse
+on Thrifted & Taylor'd (16→22) and clearly worse on Adventures in Dressmaking (11→52 — the fit slid the outline along
+a soft boundary on concrete). Boundary residual is small everywhere, i.e. v1 fits the *silhouette* well but silhouette
+fit does not pin landmark *semantics*. Not adopted as default (`--refine-landmarks` stays opt-in). Per the tuning rule,
+this A/B on 7 pairs is the evidence; a statistical shape model with a learned landmark prior is the next Phase 3 step,
+and it needs more pairs.
