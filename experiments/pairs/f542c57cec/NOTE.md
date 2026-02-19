@@ -6,7 +6,7 @@ after: /Users/jefferyhuang/denim-twin/data/external/pair_images/f542c57cec_after
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
 fringe depth used: 163.6 px from measured from after-photo (NOT a prediction); measured on after-photo: 163.6 px (fabric/fringe split: SAM; after-frame)
-hem fit: left: angle 1.9°, depth 4, right: angle -1.4°, depth 220
+hem fit: left: angle 1.9°, depth 4 px, right: angle -1.4°, depth 220 px
 registration residual (leave-one-landmark-out): 61.19px
 
 | system | sil IoU | chamfer | edge ΔE | fringe IoU |

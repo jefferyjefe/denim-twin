@@ -11,10 +11,14 @@ from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_frin
 from denimtwin.canon.autolm import landmarks_from_mask
 ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"
 recs = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
+EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
 val = {v["page_url"]: v for v in (json.loads(l) for l in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlines() if l.strip())}
 seg = SamSegmenter(); out = []
 for r in recs:
     pid = hashlib.sha1(r["page_url"].encode()).hexdigest()[:10]; v = val.get(r["page_url"])
+    if pid in EXCL: continue                                             # exclude.txt applies to the unpaired pool too
+    pn = ROOT / "experiments/pairs" / pid / "NOTE.md"
+    if pn.exists() and "rejected" not in pn.read_text()[:80]: out.append(dict(pair=pid, status="paired_elsewhere")); continue   # its after-photo is already a paired sample
     for im in r["images"]:
         if im["role"] != "after_wash": continue
         f = f"{pid}_{im['role']}_{hashlib.sha1(im['url'].encode()).hexdigest()[:8]}{os.path.splitext(urllib.parse.urlparse(im['url']).path)[1] or '.jpg'}"

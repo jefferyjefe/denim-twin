@@ -1,6 +1,6 @@
 {
  "n": 6,
- "insufficient": false,
+ "insufficient": true,
  "pairs": [
   {
    "pair": "26b1041d00",
@@ -72,10 +72,20 @@
  "depth_rel_mean_after_cut": 0.0015267175572519084,
  "n_after_cut": 5,
  "unpaired": {
-  "n": 8,
-  "depth_rel_mean": 0.18074483899030913,
-  "depth_rel_sd": 0.08720351301847257
+  "n": 2,
+  "depth_rel_mean": 0.04712709303355744,
+  "depth_rel_sd": 0.005970252099185919,
+  "samples": [
+   {
+    "pair": "c94c958696",
+    "depth_rel": 0.041156840934371525
+   },
+   {
+    "pair": "ee4bf13a3c",
+    "depth_rel": 0.05309734513274336
+   }
+  ]
  },
- "depth_rel_mean_after_wash_combined": 0.16758770391430067,
- "n_after_wash_combined": 9
+ "depth_rel_mean_after_wash_combined": 0.05219493645778265,
+ "n_after_wash_combined": 3
 }

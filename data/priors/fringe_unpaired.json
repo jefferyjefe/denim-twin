@@ -1,7 +1,7 @@
 {
- "n": 8,
- "depth_rel_mean": 0.18074483899030913,
- "depth_rel_sd": 0.08720351301847257,
+ "n": 2,
+ "depth_rel_mean": 0.04712709303355744,
+ "depth_rel_sd": 0.005970252099185919,
  "samples": [
   {
    "pair": "c94c958696",
@@ -15,23 +15,7 @@
   },
   {
    "pair": "4bfef03bd7",
-   "file": "4bfef03bd7_after_wash_44ffba7e.jpeg",
-   "status": "ok",
-   "waist_px": 335,
-   "depth_px": 67.0,
-   "depth_rel": 0.2,
-   "garment": "shorts",
-   "sam_score": 0.957
-  },
-  {
-   "pair": "4bfef03bd7",
-   "file": "4bfef03bd7_after_wash_910ac4fa.jpg",
-   "status": "not_shorts",
-   "waist_px": 143,
-   "depth_px": 113.0,
-   "depth_rel": 0.7902097902097902,
-   "garment": "jeans",
-   "sam_score": 0.961
+   "status": "paired_elsewhere"
   },
   {
    "pair": "ee4bf13a3c",
@@ -44,54 +28,28 @@
    "sam_score": 0.974
   },
   {
-   "pair": "3082dfddc1",
-   "file": "3082dfddc1_after_wash_83d499de.jpg",
-   "status": "ok",
-   "waist_px": 397,
-   "depth_px": 63.5,
-   "depth_rel": 0.15994962216624686,
-   "garment": "shorts",
-   "sam_score": 0.994
+   "pair": "8d9f0df4ad",
+   "status": "paired_elsewhere"
   },
   {
-   "pair": "3082dfddc1",
-   "file": "3082dfddc1_after_wash_c2f2a900.jpg",
-   "status": "ok",
-   "waist_px": 389,
-   "depth_px": 74.0,
-   "depth_rel": 0.19023136246786632,
-   "garment": "shorts",
-   "sam_score": 0.996
+   "pair": "443d1d4658",
+   "status": "paired_elsewhere"
   },
   {
-   "pair": "f9c0e56308",
-   "file": "f9c0e56308_after_wash_a77d6342.jpg",
-   "status": "ok",
-   "waist_px": 911,
-   "depth_px": 260.0,
-   "depth_rel": 0.2854006586169045,
-   "garment": "shorts",
-   "sam_score": 0.953
+   "pair": "2691c1a8d0",
+   "status": "paired_elsewhere"
   },
   {
-   "pair": "f542c57cec",
-   "file": "f542c57cec_after_wash_9c55600a.jpg",
-   "status": "ok",
-   "waist_px": 2801,
-   "depth_px": 793.0,
-   "depth_rel": 0.2831131738664763,
-   "garment": "shorts",
-   "sam_score": 0.986
+   "pair": "26b1041d00",
+   "status": "paired_elsewhere"
   },
   {
-   "pair": "f542c57cec",
-   "file": "f542c57cec_after_wash_f1d0f228.jpg",
-   "status": "ok",
-   "waist_px": 2884,
-   "depth_px": 672.0,
-   "depth_rel": 0.23300970873786409,
-   "garment": "shorts",
-   "sam_score": 0.981
+   "pair": "e97924ad2d",
+   "status": "paired_elsewhere"
+  },
+  {
+   "pair": "2b0123d732",
+   "status": "paired_elsewhere"
   }
  ]
 }

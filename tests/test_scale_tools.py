@@ -5,7 +5,7 @@ def test_coin_scale_on_synthetic(tmp_path):
     cv2.rectangle(img, (200, 100), (500, 800), (110, 70, 40), -1)                    # garment
     cv2.circle(img, (110, 760), 21, (150, 140, 120), -1); cv2.circle(img, (110, 760), 21, (90, 80, 60), 2)   # a 42 px coin on the backdrop
     p = tmp_path / "c.png"; cv2.imwrite(str(p), img)
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/scale_from_coin.py"), str(p), "--coin", "us_quarter"], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/scale_from_coin.py"), str(p), "--coin", "us_quarter", "--allow-unmasked"], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
     d = json.loads(r.stdout); assert abs(d["diameter_px"] - 42) <= 4 and abs(d["mm_per_px"] - 24.26 / 42) < 0.06
 def test_grid_scale_on_synthetic(tmp_path):

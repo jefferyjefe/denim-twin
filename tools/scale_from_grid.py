@@ -30,6 +30,7 @@ px_c, snr_c = dominant_period(col_profile, W); px_r, snr_r = dominant_period(row
 agree = abs(px_c - px_r) / max(px_c, px_r) < 0.15 if np.isfinite(px_c) and np.isfinite(px_r) else False
 cell = float(np.mean([px_c, px_r])) if agree else float(px_c if snr_c > snr_r else px_r)
 conf = min(snr_c, snr_r) if agree else 0.5 * max(snr_c, snr_r)
+accepted = bool(agree) and conf >= 6.0
 res = dict(px_per_cell=cell, px_per_cell_cols=float(px_c), px_per_cell_rows=float(px_r), snr_cols=snr_c, snr_rows=snr_r, axes_agree=bool(agree),
-           mm_per_px=a.pitch_mm / cell if cell else None, confidence=float(conf), note="periodicity of background rows/cols; verify visually")
+           mm_per_px=(a.pitch_mm / cell) if (cell and accepted) else None, confidence=float(conf), accepted=accepted, note="periodicity of background rows/cols; requires axes to agree and SNR >= 6; verify visually")
 print(json.dumps(res, indent=1))

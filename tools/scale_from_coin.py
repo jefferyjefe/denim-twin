@@ -7,7 +7,7 @@ import argparse, json, sys
 import numpy as np, cv2
 import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 from denimtwin.util.coins import COINS_MM
-p = argparse.ArgumentParser(); p.add_argument("image"); p.add_argument("--coin", required=True, choices=sorted(COINS_MM)); p.add_argument("--mask"); p.add_argument("--out")
+p = argparse.ArgumentParser(); p.add_argument("image"); p.add_argument("--coin", required=True, choices=sorted(COINS_MM)); p.add_argument("--mask"); p.add_argument("--out"); p.add_argument("--allow-unmasked", action="store_true")
 a = p.parse_args()
 img = cv2.imread(a.image); g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY); H, W = g.shape
 bg = np.ones((H, W), bool)
@@ -26,10 +26,19 @@ if circles is not None:
         if len(inside) < 20 or len(outside) < 20: continue
         contrast = abs(float(inside.mean()) - float(outside.mean())); uniform = 1.0 / (1.0 + float(inside.std()) / 25.0)
         # edge support: fraction of the circle perimeter that has strong gradient
-        edges = cv2.Canny(gb, 60, 140); per = np.zeros_like(g); cv2.circle(per, (x, y), r, 255, 2); support = float((edges[per > 0] > 0).mean())
+        gx = cv2.Sobel(gb, cv2.CV_32F, 1, 0, ksize=3); gy = cv2.Sobel(gb, cv2.CV_32F, 0, 1, ksize=3); mag = np.sqrt(gx ** 2 + gy ** 2)
+        per = np.zeros_like(g); cv2.circle(per, (x, y), r, 255, 2); thr = max(4.0 * float(np.median(mag)), 12.0)
+        support = float((mag[per > 0] > thr).mean())                     # fraction of the perimeter with a real edge
         cands.append((support * (0.5 + 0.5 * uniform) * min(contrast / 40.0, 1.0), x, y, r, contrast, support))
 if not cands: print(json.dumps({"error": "no coin-like circle found", "n_circles": 0 if circles is None else len(circles[0])})); sys.exit(1)
 s, x, y, r, contrast, support = max(cands)
-res = dict(center=[x, y], diameter_px=2 * r, mm_per_px=COINS_MM[a.coin] / (2 * r), coin=a.coin, confidence=float(s), edge_support=support, contrast=contrast, n_candidates=len(cands), note="verify visually; Hough radius is ±1–2 px")
+# acceptance: strong, nearly complete circular edge and a coin-sized object (a jeans button is small and dull; a plate is huge)
+reject = None
+if not a.mask and not a.allow_unmasked: reject = "no garment mask provided (buttons/rivets on the garment look like coins); pass --mask or --allow-unmasked"
+elif support < 0.5: reject = f"edge support {support:.2f} < 0.5 (not a clean circle)"
+elif s < 0.45: reject = f"confidence {s:.2f} < 0.45"
+res = dict(center=[x, y], diameter_px=2 * r, mm_per_px=COINS_MM[a.coin] / (2 * r), coin=a.coin, confidence=float(s), edge_support=support, contrast=contrast, n_candidates=len(cands),
+           accepted=reject is None, reject_reason=reject, note="verify visually; Hough radius is ±1–2 px")
 print(json.dumps(res, indent=1))
 if a.out: open(a.out, "w").write(json.dumps(res, indent=1))
+sys.exit(0 if reject is None else 1)

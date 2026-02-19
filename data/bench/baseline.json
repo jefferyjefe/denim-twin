@@ -1,7 +1,7 @@
 {
  "2691c1a8d0": {
   "sil_iou_vs_real": 0.686072795458632,
-  "hem_chamfer": 33.427536231884055,
+  "hem_chamfer": 32.38268156424581,
   "fringe_iou_vs_real": 0.32581676136363635
  },
  "26b1041d00": {
@@ -11,27 +11,27 @@
  },
  "2b0123d732": {
   "sil_iou_vs_real": 0.8471809767411614,
-  "hem_chamfer": 11.360103626943005,
+  "hem_chamfer": 4.262962962962963,
   "fringe_iou_vs_real": 0.3168516649848638
  },
  "443d1d4658": {
   "sil_iou_vs_real": 0.9166269718961024,
-  "hem_chamfer": 14.02067910447761,
+  "hem_chamfer": 9.695592715231788,
   "fringe_iou_vs_real": 0.14165497896213183
  },
  "4bfef03bd7": {
   "sil_iou_vs_real": 0.7718918203059226,
-  "hem_chamfer": 15.893129770992367,
+  "hem_chamfer": 14.599462365591398,
   "fringe_iou_vs_real": 0.3522244578582607
  },
  "8d9f0df4ad": {
   "sil_iou_vs_real": 0.9450830922013096,
-  "hem_chamfer": 8.188741721854305,
+  "hem_chamfer": 8.439205955334987,
   "fringe_iou_vs_real": 0.31119707715452394
  },
  "e97924ad2d": {
   "sil_iou_vs_real": 0.8963046227342981,
-  "hem_chamfer": 7.041666666666667,
+  "hem_chamfer": 1.3070866141732282,
   "fringe_iou_vs_real": 0.23645320197044334
  }
 }

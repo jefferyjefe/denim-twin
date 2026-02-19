@@ -6,13 +6,13 @@ after: /Users/jefferyhuang/denim-twin/data/external/pair_images/e97924ad2d_after
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
 fringe depth used: 1.0 px from measured from after-photo (NOT a prediction); measured on after-photo: 1.0 px (fabric/fringe split: colour split; registered-frame)
-hem fit: left: angle 23.4°, depth 1, right: angle -22.0°, depth 1
+hem fit: left: angle 23.4°, depth 1 px, right: angle -22.0°, depth 1 px
 registration residual (leave-one-landmark-out): 28.17px
 
 | system | sil IoU | chamfer | edge ΔE | fringe IoU |
 |---|---|---|---|---|
-| pred conservative | 0.897 | 7.0 | 11.2 | 0.205 |
-| pred median | 0.896 | 7.0 | 11.2 | 0.236 |
-| pred aggressive | 0.894 | 7.4 | 11.3 | 0.228 |
-| null:no-op | 0.544 | 103.2 | 18.4 | 0.007 |
-| null:crop-only | 0.897 | 7.0 | 11.0 | 0.000 |
+| pred conservative | 0.897 | 1.2 | 11.2 | 0.205 |
+| pred median | 0.896 | 1.3 | 11.2 | 0.236 |
+| pred aggressive | 0.894 | 1.8 | 11.3 | 0.228 |
+| null:no-op | 0.544 | 128.5 | 18.4 | 0.007 |
+| null:crop-only | 0.897 | 1.3 | 11.0 | 0.000 |

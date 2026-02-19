@@ -35,6 +35,11 @@ class CutModification:
         assert sum(given) == 1, "give exactly one of target_inseam_cm, inseam_fraction, cut_path_canonical"
         assert self.kind == "cut", "year-one modifications are cuts only (see docs/PLAN.md §14/§16)"
         assert self.edge_treatment in ("raw", "cuffed", "hemmed", "serged", "hand_frayed")
+        if self.inseam_fraction is not None: assert 0.0 <= self.inseam_fraction <= 1.0
+        if self.outer_fraction is not None: assert 0.0 <= self.outer_fraction <= 1.0
+        if self.target_inseam_cm is not None: assert 0.0 < self.target_inseam_cm < 120.0
+        if self.cut_path_canonical is not None: assert len(self.cut_path_canonical) >= 2 and all(0.0 <= x <= 1.0 and 0.0 <= y <= 1.0 for x, y in self.cut_path_canonical)
+        assert self.wash.cycles >= 0
         return self
 
     def to_json(self): return json.dumps(asdict(self), indent=1)

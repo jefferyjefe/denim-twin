@@ -32,16 +32,10 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     if rec:
         h8 = os.path.splitext(before)[0].rsplit("_", 1)[-1]
         mmpp = next((i.get("mm_per_px") for i in rec["images"] if h8 == hashlib.sha1(i["url"].encode()).hexdigest()[:8] and i.get("mm_per_px")), None)
-        if mmpp is None and str(rec.get("scale_ref", "")).startswith("coin"):
-            coin = coin_key(rec.get("scale_detail", ""))
-            if coin:
-                r_ = subprocess.run([sys.executable, str(ROOT / "tools/scale_from_coin.py"), before_p, "--coin", coin], capture_output=True, text=True)
-                if r_.returncode == 0:
-                    d_ = json.loads(r_.stdout)
-                    if d_.get("confidence", 0) > 0.3: mmpp = d_["mm_per_px"]; print(f"  coin scale ({coin}): {mmpp:.4f} mm/px, conf {d_['confidence']:.2f}")
-    cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od)] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else [])
+    coin = coin_key(rec.get("scale_detail", "")) if (rec and mmpp is None and str(rec.get("scale_ref", "")).startswith("coin")) else None   # detection happens inside run_pair with the garment masked
+    cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od), "--state", kind] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else []) + (["--coin", coin] if coin else [])
     if os.environ.get("PAIRS_REFINE"): cmd += ["--refine-landmarks"]
-    if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid, "--state", kind]   # leave-one-out, state-conditional
+    if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid]   # leave-one-out, state-conditional
     r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0
     metrics = None
