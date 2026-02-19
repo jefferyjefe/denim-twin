@@ -1,7 +1,7 @@
 # Status — 2026-08-29 (end of first autonomous hour)
 
 ## Gates
-gate_0 ✔, **gate_2 ✔ (2026-08-29, by construction: nothing outside the cut changes; must be re-checked once a renderer alters kept pixels)**. Phase 3 started (EXP_0010: template v0 not yet better than heuristics).
+gate_0 ✔, **gate_2 ✔ (2026-08-29, by construction: nothing outside the cut changes; must be re-checked once a renderer alters kept pixels)**. Phase 3 started: template v0 (EXP_0010) and v1 boundary-Chamfer refinement (EXP_0011, mixed A/B on 7 pairs, opt-in only).
 
 ## What exists and works
 - One-command pair pipeline `tools/run_pair.py`: coarse SAM garment pick → mask landmarks (cut-invariant) → registration
