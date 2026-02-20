@@ -14,7 +14,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §4.7 fraying (procedural base) | thread v0, density-band v1, SAM fringe split | `canon/rawedge.py`, `rawedge_v1.py`, `seg/sam.segment_fringe` | EXP_0004: beats crop-only on one fray pair; prior not predictive yet (EXP_0008) |
 | §4.7 learned residual | — | — | gated (Phase 6); not started, by design |
 | §4.8 identity-preserving render + diff map | pixel copy outside cut; diff.png | `run_pair.py` | changed_outside_cut = 0 on every pair (Gate 2 evidence) |
-| §4.9 uncertainty | conservative/median/aggressive; 80% intervals | `rawedge_v1.PRESETS`, `run_pair` intervals | EXP_0009: over-confident, n tiny — labelled uncalibrated |
+| §4.9 uncertainty | conservative/median/aggressive; 80% LOO intervals | `rawedge_v1.PRESETS`, `prior.py`, `run_pair` intervals | EXP_0009 (corrected): coverage 0/10, n tiny — uncalibrated |
 | §5 dataset program | garment records, schema, splits, sentinel | `data/garments`, `garment.schema.json`, `sentinel.py` | 2 owner garments registered; online-only amendment |
 | §5 (online variant) | found pairs, contributions, unpaired samples | `tutorial_pairs.py`, `validate_pairs.py`, issue form, `fringe_unpaired.py` | 31 pages → 5 cut pairs, 1 fray pair; channel exhausted (EXP_0005) |
 | §6.1 geometry metrics | silhouette IoU, hem profile error, chamfer | `eval/geometry.py` | reviewed twice; tests |
