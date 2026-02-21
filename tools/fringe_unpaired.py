@@ -18,7 +18,7 @@ for r in recs:
     pid = hashlib.sha1(r["page_url"].encode()).hexdigest()[:10]; v = val.get(r["page_url"])
     if pid in EXCL: continue                                             # exclude.txt applies to the unpaired pool too
     pn = ROOT / "experiments/pairs" / pid / "NOTE.md"
-    if pn.exists() and "rejected" not in pn.read_text()[:80]: out.append(dict(pair=pid, status="paired_elsewhere")); continue   # its after-photo is already a paired sample
+    if pn.exists() and not pn.read_text().splitlines()[0].startswith("# PAIR — rejected"): out.append(dict(pair=pid, status="paired_elsewhere")); continue   # its after-photo is already a paired sample
     for im in r["images"]:
         if im["role"] != "after_wash": continue
         f = f"{pid}_{im['role']}_{hashlib.sha1(im['url'].encode()).hexdigest()[:8]}{os.path.splitext(urllib.parse.urlparse(im['url']).path)[1] or '.jpg'}"

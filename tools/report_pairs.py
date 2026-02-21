@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]; preset = sys.argv[1] if len(sys.argv
 rows = []
 for f in sorted(glob.glob(str(ROOT / f"{PAIRS}/*/cmp_{preset}/metrics.json"))):
     pid = f.split("/")[-3]; note = Path(f).parents[1] / "NOTE.md"
-    if note.exists() and "rejected" in note.read_text()[:80]: continue                 # stale cmp dirs from before a rejection
+    if note.exists() and note.read_text().splitlines()[0].startswith("# PAIR — rejected"): continue                 # stale cmp dirs from before a rejection
     d = json.load(open(f)); r = {x["system"]: x for x in d["rows"]}
     if "prediction" not in r: continue
     rows.append((pid, d.get("registration_residual_px"), r))

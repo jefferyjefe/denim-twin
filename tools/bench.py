@@ -10,7 +10,7 @@ EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().spl
 cur = {}
 for f in sorted(glob.glob(str(ROOT / "experiments/pairs/*/cmp_median/metrics.json"))):
     pid = f.split("/")[-3]; note = Path(f).parents[1] / "NOTE.md"
-    if pid in EXCL or (note.exists() and "rejected" in note.read_text()[:80]): continue
+    if pid in EXCL or (note.exists() and note.read_text().splitlines()[0].startswith("# PAIR — rejected")): continue
     r = {x["system"]: x for x in json.load(open(f))["rows"]}
     if "prediction" in r: cur[pid] = {k: r["prediction"].get(k) for k in TRACK}
 if "--freeze" in sys.argv:
