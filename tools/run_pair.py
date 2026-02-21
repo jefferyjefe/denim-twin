@@ -137,6 +137,12 @@ if not a.after_lm: use = [n for n in use if not n.startswith("knee")]     # auto
 real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=use)
 fr_after = segment_fringe(seg, af, amask); fr_before = None
 if fr_after is not None and fr_after.sum() > 50:
+    # plausibility: a fringe is a thin band. Median column depth (tip - first fringe row) must be < 15% of garment height,
+    # otherwise SAM grabbed fabric (happens on clean hems and at high resolution) -> fall back to the mask/colour edge.
+    rows_a = np.nonzero(amask.any(axis=1))[0]; gh_ = rows_a.max() - rows_a.min()
+    dcols = [np.nonzero(amask[:, x])[0].max() - np.nonzero(fr_after[:, x])[0].min() for x in range(amask.shape[1]) if amask[:, x].any() and fr_after[:, x].any()]
+    if dcols and np.median(dcols) > 0.15 * gh_: FLAGS.append(f"SAM fringe mask rejected: median depth {np.median(dcols):.0f}px > 15% of garment height {gh_}px"); fr_after = None
+if fr_after is not None and fr_after.sum() > 50:
     _, fr_before, _ = warp_after_to_before(af, fr_after, lma, lmb, bf.shape, use=use); cv2.imwrite(f"{O}/fringe_mask.png", fr_before.astype(np.uint8) * 255)
 legs = estimate_hems(rmask, bmask, lmb, real_img=real, fringe_mask=fr_before)
 fringe_src = "SAM" if fr_before is not None else "colour split"
