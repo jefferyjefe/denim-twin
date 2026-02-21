@@ -1,13 +1,13 @@
 {
  "2691c1a8d0": {
-  "sil_iou_vs_real": 0.686072795458632,
-  "hem_chamfer": 32.38268156424581,
-  "fringe_iou_vs_real": 0.32581676136363635
+  "sil_iou_vs_real": 0.6168533278659115,
+  "hem_chamfer": 46.75,
+  "fringe_iou_vs_real": 0.039171309192200555
  },
  "26b1041d00": {
-  "sil_iou_vs_real": 0.7508903497074005,
-  "hem_chamfer": 30.816326530612244,
-  "fringe_iou_vs_real": 0.29603763875615674
+  "sil_iou_vs_real": 0.8875769940887158,
+  "hem_chamfer": 2.8303249097472922,
+  "fringe_iou_vs_real": 0.03278688524590164
  },
  "2b0123d732": {
   "sil_iou_vs_real": 0.8471809767411614,

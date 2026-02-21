@@ -14,3 +14,9 @@ with no fringe; the fabric edge then came from the fringe mask and the cut was w
 median column depth exceeds 15% of garment height is rejected (a fringe is a thin band) with fallback to the mask edge.
 Real pairs unchanged; bench 0 regressions. 38 s/pair is acceptable for the daily loop. Caveat: synthetic re-lay is affine;
 real contributor photos add drape and perspective.
+
+## Side effect on the 7 real pairs (bench A/B, attached in experiments/pairs/REPORT.md)
+The plausibility gate also fires on two low-res real pairs. Sewing Novice (cuffed): sil IoU 0.75 → 0.89, hem error
+31 → 3 px (the bogus "fringe" had been pulling the edge up). Bastelfrau (raw, unwashed): 0.69 → 0.62, hem 32 → 47 px
+(the SAM band was, by luck, a usable edge cue there). Others unchanged. Net: kept — it removes a catastrophic
+high-resolution failure and one real regression trades against one real improvement; baseline refrozen with this note.
