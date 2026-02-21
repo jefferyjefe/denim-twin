@@ -6,10 +6,11 @@ import json, os, subprocess, sys, glob, statistics as st
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; env = dict(os.environ, PAIRS_OUT="experiments/pairs_prior", PAIRS_USE_PRIOR="1")
 subprocess.run([sys.executable, str(ROOT / "tools/run_pairs_batch.py")], env=env, capture_output=True, text=True)
+EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")}
 rows = []
 for n in glob.glob(str(ROOT / "experiments/pairs_prior/*/NOTE.md")):
     t = Path(n).read_text()
-    if "rejected" in t[:80] or "after_wash" not in t: continue
+    if Path(n).parent.name in EXCL or "rejected" in t[:80] or "after_wash" not in t: continue
     import re; m = re.search(r"fringe depth used: ([\d.]+) px from prior\[after_wash\].*?measured on after-photo: ([\d.]+) px", t)
     if m: rows.append((Path(n).parent.name, float(m.group(1)), float(m.group(2))))
 n = len(rows); print(f"after-wash pairs with LOO prediction: {n}")
