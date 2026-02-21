@@ -19,7 +19,7 @@ for d in sorted(PAIRS.glob("*/")):
     pid = d.name; note = (d / "NOTE.md").read_text() if (d / "NOTE.md").exists() else ""
     if not note: continue
     title = html.escape(note.splitlines()[0][:80])
-    if pid in EXCL or "rejected" in note[:80] or not (d / "pred.png").exists():
+    if pid in EXCL or note.splitlines()[0].startswith("# PAIR — rejected") or not (d / "pred.png").exists():
         why = EXCL.get(pid) or (note.splitlines()[2] if len(note.splitlines()) > 2 else "rejected")
         rows_fail.append(f"<tr><td><b>{pid}</b></td><td>{thumb(d / 'before_used.png', 160) or thumb(d / 'cropped_before.png', 160)}</td><td>{thumb(d / 'after_used.png', 160)}</td><td>{html.escape(why)}</td></tr>"); continue
     m = {x["system"]: x for x in json.load(open(d / "cmp_median/metrics.json"))["rows"]} if (d / "cmp_median/metrics.json").exists() else {}

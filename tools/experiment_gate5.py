@@ -10,7 +10,7 @@ EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().spl
 rows = []
 for n in glob.glob(str(ROOT / "experiments/pairs_prior/*/NOTE.md")):
     t = Path(n).read_text()
-    if Path(n).parent.name in EXCL or "rejected" in t[:80] or "after_wash" not in t: continue
+    if Path(n).parent.name in EXCL or t.splitlines()[0].startswith("# PAIR — rejected") or "after_wash" not in t: continue
     import re; m = re.search(r"fringe depth used: ([\d.]+) px from prior\[after_wash\].*?measured on after-photo: ([\d.]+) px", t)
     if m: rows.append((Path(n).parent.name, float(m.group(1)), float(m.group(2))))
 n = len(rows); print(f"after-wash pairs with LOO prediction: {n}")
