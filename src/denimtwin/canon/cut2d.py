@@ -59,3 +59,35 @@ def backdrop_fill(image, garment_mask, removed):
     bg_small = cv2.inpaint(small, msmall, 9, cv2.INPAINT_TELEA)                     # half-res for speed on large garments
     bg = cv2.resize(bg_small, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_LINEAR)
     out = image.copy(); out[removed] = bg[removed]; return out
+
+
+def texture_backdrop_fill(image, garment_mask, removed, patch=48, seed=0):
+    """Backdrop fill for PRESENTATION renders: tile random background patches over `removed`, then blend.
+    `backdrop_fill` (diffusion inpaint) is what metrics see — it is deterministic and never invents texture;
+    on a patterned backdrop (carpet, wood) it produces a flat grey blob that reads as a rendering error to a viewer.
+    Never used in scoring: the evaluation masks exclude these pixels."""
+    gm = np.asarray(garment_mask, bool); rm = np.asarray(removed, bool)
+    base = backdrop_fill(image, gm, rm)
+    bgm = ~cv2.dilate(gm.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+    if not rm.any() or bgm.sum() < 4 * patch * patch: return base
+    ys, xs = np.nonzero(bgm); H, W = rm.shape; rng = np.random.default_rng(seed)
+    # candidate patch origins fully inside the background
+    ok = [(y, x) for y, x in zip(ys[::37], xs[::37]) if y + patch < H and x + patch < W and bgm[y:y + patch, x:x + patch].all()]
+    if len(ok) < 4: return base
+    y0, y1 = np.nonzero(rm.any(axis=1))[0][[0, -1]]; x0, x1 = np.nonzero(rm.any(axis=0))[0][[0, -1]]
+    out = base.copy()
+    step = patch // 2
+    for yy in range(y0 - step, y1 + 1, step):
+        for xx in range(x0 - step, x1 + 1, step):
+            sy, sx = ok[int(rng.integers(len(ok)))]
+            th, tw = min(patch, H - max(yy, 0)), min(patch, W - max(xx, 0))
+            if th < 4 or tw < 4: continue
+            dy, dx = max(yy, 0), max(xx, 0)
+            src = image[sy:sy + th, sx:sx + tw].astype(np.float32)
+            # cosine window so tiles cross-fade instead of showing seams
+            wy = np.hanning(max(th, 3))[:th][:, None]; wx = np.hanning(max(tw, 3))[:tw][None, :]
+            wgt = np.clip(wy * wx, 0.02, 1)[..., None]
+            dst = out[dy:dy + th, dx:dx + tw].astype(np.float32)
+            out[dy:dy + th, dx:dx + tw] = np.clip(dst * (1 - wgt) + src * wgt, 0, 255).astype(np.uint8)
+    res = image.copy(); res[rm] = out[rm]                      # only the removed region is touched
+    return res

@@ -38,12 +38,26 @@ Download the SAM ViT-B checkpoint (375 MB, not in git):
     mkdir -p models && curl -L -o models/sam_vit_b_01ec64.pth https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 
 
+## Predict on a new pair of jeans (the product path)
+One flat-lay photo plus a cut specification; no after-photo, no ground truth needed:
+
+    python tools/predict.py --image jeans.jpg --out out/ --inseam-fraction 0.35 --wash median
+    python tools/predict.py --image jeans.jpg --out out/ --target-inseam-cm 12 --coin us_quarter --angle-deg 6
+
+Writes three renders (conservative / median / aggressive), `diff.png` (exactly which pixels changed),
+`modification.json` (the cut as structured parameters) and `prediction.json` (interval + provenance).
+Put a coin in the frame if you want any answer in centimetres.
+
 ## Status (2026-08-29, honest)
-- Pipeline (`tools/run_pair.py`): phone/found photo → SAM mask → mask-derived landmarks → canonical warp → cut →
-  fringe render → register real after-photo → score vs null baselines. One command per pair; bad inputs rejected with a reason.
-- On the one usable found pair: the **cut** is reproduced automatically (silhouette IoU ~0.8 vs 0.35 no-op); the
-  **fringe** prediction is not yet better than crop-only (fringe IoU 0.07). Fringe appearance parameters are guesses
-  until ≥5 pairs exist (`docs/GATES.md` tuning rule).
-- Data: 14 found tutorial pages → 1 usable (EXP_0005). Contributions via the issue form are the lever.
+- Product path (`tools/predict.py`): one photo + a cut spec → three renders + an 80% fringe-depth interval, every
+  number labelled with where it came from. It runs end-to-end; its fringe prior has **n=3** and its intervals are
+  **not calibrated** (EXP_0009 coverage 0/10), and the outputs say so.
+- Evaluation path (`tools/run_pair.py`): before + after photo → mask → landmarks → canonical warp → cut → fringe →
+  register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
+- On 11 usable found pairs the **cut** is reproduced automatically (silhouette IoU 0.6–0.93 vs 0.3–0.7 crop-only,
+  hem error 1–50 px); the **fringe** is not yet predictive held out (EXP_0008), and wash shrinkage cannot even be
+  measured from found photos (EXP_0013). Appearance parameters stay frozen until ≥5 new pairs (`docs/GATES.md`).
+- Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
+  Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
 - Automation: local launchd jobs work (`ops/`); cloud routines never executed in this environment (`tools/agents/README.md`).
-- Tests: 44 (`pytest -q tests`), fresh-clone verified without ML deps (`reports/repro/`).
+- Tests: 86 + 1 xfail (`pytest -q tests`), CI green; fresh-clone verified without ML deps (`reports/repro/`).
