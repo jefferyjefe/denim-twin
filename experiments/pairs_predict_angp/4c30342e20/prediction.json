@@ -1,0 +1,29 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/4c30342e20/before_used.png",
+ "state": "after_wash",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.0,
+  "angle_deg": 9.2,
+  "removed_fraction_of_garment": 0.6808929321184467
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 35.54475172774998,
+  "lo": 27.98930821846343,
+  "hi": 43.10019523703653,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 3,
+  "source": "prior[after_wash] n=3 \u2014 INSUFFICIENT (<5 samples): treat as a placeholder"
+ },
+ "flags": [
+  "mask score 1.017, area 0.37 of frame",
+  "angled cut +9.2\u00b0: inner fraction 0.000, outer 0.000",
+  "fringe prior has only n=3 samples: the depth below is not yet evidence-backed"
+ ]
+}

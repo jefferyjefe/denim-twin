@@ -1,0 +1,29 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/26b1041d00/before_used.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.4277,
+  "angle_deg": 9.3,
+  "removed_fraction_of_garment": 0.1842669074151429
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray"
+ },
+ "flags": [
+  "mask score 1.004, area 0.44 of frame",
+  "landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut",
+  "angled cut +9.3\u00b0: inner fraction 0.428, outer 0.389"
+ ]
+}

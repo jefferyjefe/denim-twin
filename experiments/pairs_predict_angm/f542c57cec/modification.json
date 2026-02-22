@@ -1,0 +1,22 @@
+{
+ "kind": "cut",
+ "target_inseam_cm": null,
+ "inseam_fraction": 0.0,
+ "outer_fraction": 0.16110924478627023,
+ "cut_path_canonical": null,
+ "tool": "fabric_shears",
+ "garment_flat": true,
+ "legs_together": false,
+ "edge_treatment": "hand_frayed",
+ "wash": {
+  "cycles": 1,
+  "machine": null,
+  "cycle": null,
+  "water_temperature_c": null,
+  "detergent_type": null,
+  "detergent_amount_ml": null,
+  "dryer_method": null,
+  "dryer_setting": null
+ },
+ "seed": 1
+}

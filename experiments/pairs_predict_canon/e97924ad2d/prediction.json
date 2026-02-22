@@ -1,0 +1,28 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/e97924ad2d/before_used.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.3398,
+  "angle_deg": 0.0,
+  "removed_fraction_of_garment": 0.4019887591872028
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray"
+ },
+ "flags": [
+  "mask score 0.994, area 0.46 of frame",
+  "legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem"
+ ]
+}
