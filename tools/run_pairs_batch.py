@@ -35,6 +35,7 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     coin = coin_key(rec.get("scale_detail", "")) if (rec and mmpp is None and str(rec.get("scale_ref", "")).startswith("coin")) else None   # detection happens inside run_pair with the garment masked
     cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od), "--state", kind] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else []) + (["--coin", coin] if coin else [])
     if os.environ.get("PAIRS_REFINE"): cmd += ["--refine-landmarks"]
+    if os.environ.get("PAIRS_WASH"): cmd += ["--wash", os.environ["PAIRS_WASH"]]
     if os.environ.get("PAIRS_USE_PRIOR") and (ROOT / "data/priors/fringe.json").exists(): cmd += ["--prior", str(ROOT / "data/priors/fringe.json"), "--exclude", pid]   # leave-one-out, state-conditional
     r = subprocess.run(cmd, capture_output=True, text=True)
     ok = r.returncode == 0

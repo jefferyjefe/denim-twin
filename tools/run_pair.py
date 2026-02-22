@@ -24,6 +24,7 @@ p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-o
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
 p.add_argument("--coin", help="coin type in the BEFORE photo (see util/coins.py); metric scale is recovered with the garment masked out")
+p.add_argument("--wash", choices=["none", "conservative", "median", "aggressive"], default="none", help="procedural wash appearance v0 (shrink + hem roll + colour; canon/wash.py). Default none keeps the bench unchanged")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
@@ -155,6 +156,11 @@ if ov < 0.6: FAIL(f"registration failed: only {ov:.2f} of the registered real ga
 if cb.get("garment_type") != "jeans": FLAGS.append("before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts")
 bg = np.median(bf[~bmask], axis=0)
 cut = backdrop_fill(bf, bmask, removed)   # backdrop-only inpainting, no fabric bleed
+if a.wash != "none":                       # plan §4.7/4.8: the wash itself (shrinkage, hem roll, dye loss), before the fringe grows from the new edge
+    from denimtwin.canon.wash import apply_wash, PRESETS as WASH_PRESETS
+    cut, bmask_w, removed_w, wash_changed = apply_wash(cut, bmask, removed, mmpp, WASH_PRESETS[a.wash])
+    FLAGS.append(f"wash preset {a.wash}: shrink {WASH_PRESETS[a.wash].shrink_along_frac:.1%} along / {WASH_PRESETS[a.wash].shrink_across_frac:.1%} across (PRIOR, not measured); {wash_changed.sum()} px changed")
+    bmask, removed = bmask_w, removed_w; keep = bmask & ~removed
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 depth_after_frame = None
 if fr_after is not None and fr_after.sum() > 50:                       # depth measured on the UN-WARPED after-photo, scaled by waist-width ratio

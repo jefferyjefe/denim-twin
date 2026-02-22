@@ -11,6 +11,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §4.3 Representation B (parametric/mesh) | parametric template v0 | `canon/template.py` | EXP_0010: not yet better than heuristics; xfail |
 | §4.5 modification representation | structured parameters, no free text | `modification.py` | tested; every run writes `modification.json` |
 | §4.6 cutting | canonical cut, angled cut, image-space per-leg cut | `canon/cut2d.py`, `canon/hemfit.py` | tested; hem error 7–31 px on found pairs |
+| §4.7 wash appearance (shrink, hem roll, dye loss) | procedural wash v0, presets = interval | `canon/wash.py`, `run_pair.py --wash` | EXP_0013: priors only (shrinkage unmeasurable from found photos); ΔE vs real marginally better on 10/11 pairs; off by default |
 | §4.7 fraying (procedural base) | thread v0, density-band v1, SAM fringe split | `canon/rawedge.py`, `rawedge_v1.py`, `seg/sam.segment_fringe` | EXP_0004: beats crop-only on one fray pair; prior not predictive yet (EXP_0008) |
 | §4.7 learned residual | — | — | gated (Phase 6); not started, by design |
 | §4.8 identity-preserving render + diff map | pixel copy outside cut; diff.png | `run_pair.py` | changed_outside_cut = 0 on every pair (Gate 2 evidence) |
@@ -18,7 +19,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §5 dataset program | garment records, schema, splits, sentinel | `data/garments`, `garment.schema.json`, `sentinel.py` | 2 owner garments registered; online-only amendment |
 | §5 (online variant) | found pairs, contributions, unpaired samples | `tutorial_pairs.py`, `validate_pairs.py`, issue form, `fringe_unpaired.py` | 31 pages → 5 cut pairs, 1 fray pair; channel exhausted (EXP_0005) |
 | §6.1 geometry metrics | silhouette IoU, hem profile error, chamfer | `eval/geometry.py` | reviewed twice; tests |
-| §6.2 identity metrics | SSIM/ΔE/feature retention in kept region, lighting-normalised | `eval/identity.py` | tautological until a renderer alters pixels (judge report) |
+| §6.2 identity metrics | SSIM/ΔE/feature retention in kept region, lighting-normalised | `eval/identity.py` | tautological for the pixel-copy render; EXP_0013 shows they penalise legitimate shrinkage → needs alignment-aware version |
 | §6.3 fray metrics | fringe IoU (coverage>0.5), profile distance | `eval/geometry.py` | in use |
 | §6.4 uncertainty metrics | coverage / calibration audit | `eval/uncertainty.py`, `calibration_audit.py` | run once (EXP_0009) |
 | §6.5 human evaluation | blinded judge pre-screen; gallery | `judge_pairs.py`, `make_gallery.py`, `reports/judge/` | blinding broken by construction until renders alter pixels |
