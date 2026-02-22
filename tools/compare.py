@@ -46,6 +46,11 @@ for name, (im, sil) in systems.items():
              dE_keep_vs_real=I.unchanged_color_delta_e(im, real, keep & rmask),
              feat_ret_keep_vs_real=I.feature_retention(im, real, keep & rmask),
              ssim_keep_vs_before=I.unchanged_ssim(im, before, keep))
+    # §6.2 / EXP_0013: identity judged AFTER a bounded affine alignment, so a legitimate global shrink (wash) is not
+    # scored as identity loss. `ssim_keep_vs_before` above stays as the strict pixel-copy check for --wash none.
+    ali = I.aligned_identity(im, sil & keep, before, keep, ref_mask=garment_before)
+    r["ssim_keep_vs_before_aligned"] = ali["ssim"]; r["feat_ret_keep_vs_before_aligned"] = ali["feat_ret"]
+    r["align_scale"] = ali["align"]["scale"]
     # edge-region appearance: band within ±15 mm (or 40 px) of the cut edge, BOTH sides, where either the
     # real or the predicted garment exists (so fringe pixels count). Also report plain SSIM there.
     band_px = int(15 / a.mm_per_px) if a.mm_per_px else 40

@@ -31,3 +31,23 @@ penalised and a no-op is rewarded. Until that change, `ssim_keep_vs_before` is o
 **Decision:** wash v0 ships off-by-default as the interval-bearing placeholder the plan asks for; no parameter is tuned
 (tuning rule, docs/GATES.md). Next: alignment-aware identity metrics; measurement of real shrinkage the moment a
 coin-scaled contributed pair arrives (`tools/experiment_gate5.py` will pick it up).
+
+## Part C — alignment-aware identity metrics (fix for the finding above)
+`eval/identity.align_to_reference` estimates a **bounded affine** map from the prediction to the reference — initialised
+from the two masks' second central moments (which recover anisotropic shrink directly), refined by ECC on masked
+intensity, with every axis scale clipped to ±15% — and `aligned_identity` reports SSIM / ΔE / location-checked feature
+retention after that map. Bounded on purpose: alignment must not be able to drag arbitrary content into place.
+
+Synthetic check (`tests/test_aligned_identity.py`): a 2%/1% shrink scores naive SSIM 0.82 → **aligned 0.98** with the
+recovered axis scales 1.0204 / 1.0102 (exactly 1/0.98 and 1/0.99); a blurred garment still scores 0.78 / feature
+retention 0.06, and a 2× rescale is refused rather than "aligned".
+
+On the 11 real pairs (`ssim_keep_vs_before` → `ssim_keep_vs_before_aligned`, median preset):
+
+| run | naive | aligned | recovered scale |
+|---|---|---|---|
+| `--wash none` | 0.993 | 0.992 | 1.000 |
+| `--wash median` | 0.522 | **0.935** | 1.015 (= 1/0.985, the applied shrink) |
+
+Null baselines score 1.00 aligned, as they must (they change nothing). Both metrics are now reported for every system;
+the strict pixel-copy check `ssim_keep_vs_before` remains the Gate 2 evidence for `--wash none`.

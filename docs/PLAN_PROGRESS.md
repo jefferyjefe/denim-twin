@@ -19,7 +19,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §5 dataset program | garment records, schema, splits, sentinel | `data/garments`, `garment.schema.json`, `sentinel.py` | 2 owner garments registered; online-only amendment |
 | §5 (online variant) | found pairs, contributions, unpaired samples | `tutorial_pairs.py`, `validate_pairs.py`, issue form, `fringe_unpaired.py` | 31 pages → 5 cut pairs, 1 fray pair; channel exhausted (EXP_0005) |
 | §6.1 geometry metrics | silhouette IoU, hem profile error, chamfer | `eval/geometry.py` | reviewed twice; tests |
-| §6.2 identity metrics | SSIM/ΔE/feature retention in kept region, lighting-normalised | `eval/identity.py` | tautological for the pixel-copy render; EXP_0013 shows they penalise legitimate shrinkage → needs alignment-aware version |
+| §6.2 identity metrics | SSIM/ΔE/feature retention in kept region, lighting-normalised | `eval/identity.py` | strict version = Gate 2 evidence; alignment-aware version (`aligned_identity`) added for renders that legitimately move pixels (EXP_0013 Part C) |
 | §6.3 fray metrics | fringe IoU (coverage>0.5), profile distance | `eval/geometry.py` | in use |
 | §6.4 uncertainty metrics | coverage / calibration audit | `eval/uncertainty.py`, `calibration_audit.py` | run once (EXP_0009) |
 | §6.5 human evaluation | blinded judge pre-screen; gallery | `judge_pairs.py`, `make_gallery.py`, `reports/judge/` | blinding broken by construction until renders alter pixels |
