@@ -60,3 +60,14 @@ def test_presets_are_ordered_intervals():
     for f in ("shrink_along_frac", "shrink_across_frac", "hem_roll_mm", "roll_strength", "lightness_shift"):
         assert getattr(c, f) <= getattr(m, f) <= getattr(a, f), f
     assert c.chroma_scale >= m.chroma_scale >= a.chroma_scale
+
+def test_texture_backdrop_touches_only_the_removed_region_and_matches_background_statistics():
+    from denimtwin.canon.cut2d import texture_backdrop_fill, backdrop_fill
+    img, mask, cut, removed, keep = _cut()
+    rng = np.random.default_rng(1)                                  # patterned backdrop, like a carpet
+    bg = np.clip(180 + cv2.GaussianBlur(rng.normal(0, 60, img.shape).astype(np.float32), (0, 0), 2.0), 0, 255).astype(np.uint8)
+    scene = np.where(mask[..., None], img, bg)
+    flat = backdrop_fill(scene, mask, removed); tex = texture_backdrop_fill(scene, mask, removed, seed=0)
+    assert np.array_equal(tex[~removed], scene[~removed])           # nothing outside the cut is touched
+    bstd = float(bg[~mask].std())
+    assert abs(tex[removed].std() - bstd) < abs(flat[removed].std() - bstd)   # texture, not a flat blob
