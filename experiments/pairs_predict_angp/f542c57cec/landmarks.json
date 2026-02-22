@@ -1,0 +1,48 @@
+{
+ "landmarks": {
+  "waist_left": [
+   234,
+   394
+  ],
+  "waist_right": [
+   1242,
+   394
+  ],
+  "waist_center": [
+   738,
+   394
+  ],
+  "hip_left": [
+   254,
+   847
+  ],
+  "hip_right": [
+   1515,
+   847
+  ],
+  "crotch": [
+   1066,
+   1265
+  ],
+  "hem_left_outer": [
+   340,
+   1570
+  ],
+  "hem_left_inner": [
+   823,
+   1570
+  ],
+  "hem_right_outer": [
+   1270,
+   1381
+  ],
+  "hem_right_inner": [
+   1144,
+   1381
+  ]
+ },
+ "conf": {
+  "crotch": "gap",
+  "garment_type": "shorts"
+ }
+}

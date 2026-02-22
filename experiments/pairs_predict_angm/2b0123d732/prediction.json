@@ -1,0 +1,29 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/2b0123d732/before_used.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.4612,
+  "angle_deg": -37.45,
+  "removed_fraction_of_garment": 0.4087459098422408
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray"
+ },
+ "flags": [
+  "mask score 0.955, area 0.36 of frame",
+  "rotated 24.3\u00b0 to upright",
+  "angled cut -37.5\u00b0: inner fraction 0.461, outer 0.641"
+ ]
+}

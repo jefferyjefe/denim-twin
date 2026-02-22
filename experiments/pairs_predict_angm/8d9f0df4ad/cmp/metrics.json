@@ -1,0 +1,56 @@
+{
+ "registration_residual_px": 31.217995484670002,
+ "rows": [
+  {
+   "system": "prediction",
+   "sil_iou_vs_real": 0.9013944027770384,
+   "sil_chamfer": 13.800753595427661,
+   "hem_chamfer": 26.986062717770036,
+   "ssim_keep_vs_real": 0.09206494529380607,
+   "dE_keep_vs_real": 14.611785741860242,
+   "feat_ret_keep_vs_real": 0.0,
+   "ssim_keep_vs_before": 0.9984976025140466,
+   "ssim_keep_vs_before_aligned": 0.9984976025140466,
+   "feat_ret_keep_vs_before_aligned": 0.982,
+   "align_scale": 0.9999975562095642,
+   "ssim_edge_band_vs_real": 0.11459085166720927,
+   "dE_edge_band_vs_real": 23.8782380134975,
+   "fringe_iou_vs_real": 0.014078245406046236,
+   "fringe_profile_dist": 0.01137823615339939
+  },
+  {
+   "system": "null:no-op",
+   "sil_iou_vs_real": 0.4207440311792306,
+   "sil_chamfer": 113.97232505554585,
+   "hem_chamfer": 324.79210220673633,
+   "ssim_keep_vs_real": 0.09214608251319496,
+   "dE_keep_vs_real": 14.61261032551173,
+   "feat_ret_keep_vs_real": 0.0,
+   "ssim_keep_vs_before": 1.0,
+   "ssim_keep_vs_before_aligned": 1.0,
+   "feat_ret_keep_vs_before_aligned": 1.0,
+   "align_scale": 1.0,
+   "ssim_edge_band_vs_real": 0.14556195825258825,
+   "dE_edge_band_vs_real": 24.841582251866278,
+   "fringe_iou_vs_real": 0.01547139628537681,
+   "fringe_profile_dist": 0.9882891286365476
+  },
+  {
+   "system": "null:crop-only",
+   "sil_iou_vs_real": 0.9013656248160904,
+   "sil_chamfer": 13.812121790876486,
+   "hem_chamfer": 26.99767711962834,
+   "ssim_keep_vs_real": 0.09214608251319496,
+   "dE_keep_vs_real": 14.61261032551173,
+   "feat_ret_keep_vs_real": 0.0,
+   "ssim_keep_vs_before": 1.0,
+   "ssim_keep_vs_before_aligned": 1.0,
+   "feat_ret_keep_vs_before_aligned": 0.8835,
+   "align_scale": 1.000004768371582,
+   "ssim_edge_band_vs_real": 0.11474822607556147,
+   "dE_edge_band_vs_real": 24.15770979564934,
+   "fringe_iou_vs_real": 0.0,
+   "fringe_profile_dist": 0.011710871363452367
+  }
+ ]
+}

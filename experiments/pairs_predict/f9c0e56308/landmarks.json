@@ -1,0 +1,48 @@
+{
+ "landmarks": {
+  "waist_left": [
+   575,
+   293
+  ],
+  "waist_right": [
+   1293,
+   293
+  ],
+  "waist_center": [
+   934,
+   293
+  ],
+  "hip_left": [
+   469,
+   616
+  ],
+  "hip_right": [
+   1395,
+   616
+  ],
+  "crotch": [
+   874,
+   1119
+  ],
+  "hem_left_outer": [
+   269,
+   2010
+  ],
+  "hem_left_inner": [
+   545,
+   2010
+  ],
+  "hem_right_outer": [
+   1497,
+   2118
+  ],
+  "hem_right_inner": [
+   1077,
+   2118
+  ]
+ },
+ "conf": {
+  "crotch": "gap",
+  "garment_type": "jeans"
+ }
+}

@@ -24,7 +24,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §6.4 uncertainty metrics | coverage / calibration audit | `eval/uncertainty.py`, `calibration_audit.py` | run once (EXP_0009) |
 | §6.5 human evaluation | blinded judge pre-screen; gallery | `judge_pairs.py`, `make_gallery.py`, `reports/judge/` | blinding broken by construction until renders alter pixels |
 | §6.6 baselines | no-op, crop-only, blurred, v0/v1 | `null_baselines.py`, `compare.py` | in every report |
-| §2/§3 the product itself | one photo + cut spec -> prediction with interval, no ground truth needed | `tools/predict.py` | end-to-end tested; fringe depth from the prior (n=3, INSUFFICIENT), wash from priors |
+| §2/§3 the product itself | one photo + cut spec -> prediction with interval, no ground truth needed | `tools/predict.py`, `tools/score_predict.py` | end-to-end tested; scored on 11 pairs (EXP_0014): sil IoU 0.767 vs 0.819 evaluation path, 0.771 crop-only |
 | §7 Phase 0/1/2 | charter, protocol, literature, 2D baseline | `docs/`, `protocol/`, `canon/` | gate_0 ✔, gate_2 ✔; gate_1 (repeat captures) needs a rig or contributors |
 | §9 collaboration | advisor brief | `outreach/ADVISOR_BRIEF.md` | draft |
 | §12 weekly cadence | weekly note | `notes/weekly/2026-W35.md` | written |
