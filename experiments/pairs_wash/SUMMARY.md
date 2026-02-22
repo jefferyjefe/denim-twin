@@ -1,0 +1,26 @@
+# Found-pair batch (auto pipeline)
+
+| page | title | after | status | sil IoU pred / crop / no-op | chamfer px pred / crop | edge ΔE pred / crop | fringe IoU pred / no-op |
+|---|---|---|---|---|---|---|---|
+| b630a78c19 | How To Make Jeans Into Shorts The Easy W | after_cut | ok | 0.48 / 0.48 / 0.53 | 321 / 326 | 18.2 / 18.9 | 0.01 / 0.57 |
+| 660bef67bf | Cómo hacer shorts con jeans viejos | after_cut | FAIL: REJECT: degenerate cut: removed fraction 0.00 | | | | |
+| 85d48013a2 | Tutorial: Aus Lang mach Kurz – Jeanshose | after_cut | FAIL: REJECT: after: garment touches the frame edge (cropped photo | | | | |
+| 3560e543f6 | How to Cut Jeans into Shorts – DIY Denim | after_cut | FAIL: REJECT: after: garment touches the frame bottom (cropped pho | | | | |
+| 4bfef03bd7 | DIY Denim Shorts | Thrifted Jeans Into S | after_wash | ok | 0.78 / 0.75 / 0.29 | 15 / 23 | 22.5 / 23.4 | 0.38 / 0.04 |
+| ee4bf13a3c | Magnolia Mamas: Fashion Fix: DIY Distres | after_wash | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| 8d9f0df4ad | This summer's DIY cut-off jeans shorts-- | after_cut | ok | 0.95 / 0.94 / 0.43 | 8 / 13 | 19.6 / 21.5 | 0.38 / 0.02 |
+| 963fcdd264 | DIY; Mom Jeans to High Waisted Shorts |  | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| d52a3ff876 | Under Peach Trees: D.I.Y. Jeans to Short | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| 443d1d4658 | Create Kids Couture: Upcycle Old Jeans i | after_cut | ok | 0.92 / 0.92 / 0.59 | 9 / 9 | 16.2 / 17.0 | 0.17 / 0.01 |
+| 3082dfddc1 | DIY style: perfectly distressed jean sho | after_wash | FAIL: REJECT: degenerate cut: removed fraction 0.87 | | | | |
+| 22a5857a0c | Comment transformer son jeans en short - | after_cut | FAIL: REJECT: after: garment touches the frame edge (cropped photo | | | | |
+| f9c0e56308 | 7 Easy Steps to: DIY Denim Shorts - 51li | after_wash | ok | 0.93 / 0.93 / 0.44 | 34 / 34 | 15.6 / 15.9 | 0.02 / 0.01 |
+| 2691c1a8d0 | Jeans Upcycling: Shorts aus alter Jeans  | after_cut | ok | 0.61 / 0.61 / 0.58 | 48 / 49 | 16.2 / 17.5 | 0.04 / 0.29 |
+| 5cd6cff343 | Transformer un jean en short façon BD -  | after_cut | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| 26b1041d00 | Upcycle Jeans Into Shorts - Sewing Novic | after_cut | ok | 0.88 / 0.88 / 0.74 | 4 / 4 | 22.6 / 24.0 | 0.03 / 0.05 |
+| f542c57cec | DIY High Waisted Denim Shorts, Step-by-S | after_wash | ok | 0.86 / 0.85 / 0.52 | 50 / 51 | 28.6 / 27.8 | 0.16 / 0.03 |
+| 2e2063b93f | DIY: Cutoff Shorts - The Fitnessista | after_cut | FAIL: REJECT: after: widest top row is not a single waistband run  | | | | |
+| 964dc8a1f9 | Prudence and Austere: DIY Distressed Den | after_wash | FAIL: REJECT: before: widest top row is not a single waistband run | | | | |
+| e97924ad2d | Doodlecraft: How to Upcycle Jeans into B | after_cut | ok | 0.91 / 0.90 / 0.56 | 2 / 3 | 11.4 / 11.2 | 0.24 / 0.02 |
+| 2b0123d732 | Adventures in Dressmaking: "We need to l | after_cut | ok | 0.84 / 0.84 / 0.66 | 4 / 5 | 15.2 / 15.2 | 0.38 / 0.04 |
+| 4c30342e20 | [pair] TEST submission (pipeline dry run | after_wash | ok | 0.86 / 0.84 / 0.29 | 43 / 51 | 22.0 / 23.9 | 0.26 / 0.04 |
