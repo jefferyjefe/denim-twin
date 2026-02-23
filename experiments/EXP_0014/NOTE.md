@@ -34,7 +34,9 @@ unchanged (0.767 → 0.763/0.767). If cut *shape* is to be user-specifiable it n
 
 ## Finding 3: the honest headline
 Given only what a user actually supplies, the cut prediction scores **0.767** where the evaluation path scores 0.819 —
-and the crop-only null on the same mask scores 0.771, i.e. **on these pairs the fringe render adds nothing measurable to
-silhouette IoU**, which is consistent with EXP_0008. The remaining 0.05 IoU / 32 px gap is genuine: a straight canonical
+and the crop-only null on the same mask scores 0.771, i.e. **the fringe render is invisible to silhouette IoU** —
+a whole-garment metric cannot see a 7–40 px band. On the fringe-specific metric the render does beat the null (mean
+fringe IoU 0.17 vs 0.00), but that is with the depth read off the after-photo; held out through the prior it is not
+predictive (EXP_0008). The remaining 0.05 IoU / 32 px gap is genuine: a straight canonical
 cut cannot reproduce a hand-cut hem's per-leg curvature. README and STATUS must quote the product-path number when
 describing what the system can do for a user; the evaluation-path number describes only the scoring harness.
