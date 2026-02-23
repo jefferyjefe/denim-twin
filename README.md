@@ -56,8 +56,9 @@ Put a coin in the frame if you want any answer in centimetres.
   register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
 - On 11 usable found pairs, mean silhouette IoU: **0.767 product path** (what a user gets), 0.819 evaluation path
   (which reads the real after-photo), 0.507 no-op — so the cut *is* reproduced, but the honest number is the first one
-  (EXP_0014). The **fringe** adds nothing measurable over crop-only yet (0.767 vs 0.771) and is not predictive held out
-  (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
+  (EXP_0014). The **fringe** is invisible to silhouette IoU (0.767 vs 0.771 crop-only) but does beat it on the
+  fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
+  after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
   Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
