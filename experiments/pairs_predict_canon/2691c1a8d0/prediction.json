@@ -9,7 +9,7 @@
  "cut": {
   "inseam_fraction": 0.0,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.34117360801330143
+  "removed_fraction_of_garment": 0.341511550887438
  },
  "fringe_depth": {
   "unit": "px",
@@ -21,6 +21,7 @@
   "n": 0,
   "source": "edge treatment 'raw' does not fray"
  },
+ "changed_fraction_of_kept_region": 0.009135138464065034,
  "flags": [
   "mask score 0.802, area 0.20 of frame"
  ]

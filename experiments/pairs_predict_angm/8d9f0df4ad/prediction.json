@@ -9,7 +9,7 @@
  "cut": {
   "inseam_fraction": 0.0613,
   "angle_deg": -14.45,
-  "removed_fraction_of_garment": 0.5532786937968989
+  "removed_fraction_of_garment": 0.5492289701892487
  },
  "fringe_depth": {
   "unit": "px",
@@ -21,9 +21,10 @@
   "n": 0,
   "source": "edge treatment 'raw' does not fray"
  },
+ "changed_fraction_of_kept_region": 0.003507410081592233,
  "flags": [
   "mask score 0.910, area 0.45 of frame",
   "legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem",
-  "angled cut -14.4\u00b0: inner fraction 0.061, outer 0.122"
+  "angled cut -14.4\u00b0: inner fraction 0.031, outer 0.092"
  ]
 }

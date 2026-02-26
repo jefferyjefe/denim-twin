@@ -2,13 +2,13 @@
 
 **This is a prediction, not a measurement.** No after-photo exists for this garment.
 
-- cut: inseam fraction **0.428**, angle +9.3° — removes 18% of the garment
+- cut: inseam fraction **0.428**, angle +9.3° — removes 17% of the garment
 - state: **after_cut**
 - scale: **unknown** — every length below is in pixels
 - fringe depth: **0.0 px** (80% interval 0.0–0.0 px) from edge treatment 'raw' does not fray
 - interval calibration: **not established** (EXP_0009 coverage 0/10) — read the range as a spread, not a guarantee
 
-flags: mask score 1.004, area 0.44 of frame; landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut; angled cut +9.3°: inner fraction 0.428, outer 0.389
+flags: mask score 1.004, area 0.44 of frame; landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut; angled cut +9.3°: inner fraction 0.447, outer 0.408
 
 | file | what |
 |---|---|
@@ -19,4 +19,4 @@ flags: mask score 1.004, area 0.44 of frame; landmark heuristic calls this 'shor
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Everything outside the cut region is copied pixel-for-pixel from the input photo.
+Outside the cut region, 0.8% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).

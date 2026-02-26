@@ -21,6 +21,7 @@
   "n": 0,
   "source": "edge treatment 'raw' does not fray"
  },
+ "changed_fraction_of_kept_region": 0.004003647158027518,
  "flags": [
   "mask score 0.988, area 0.51 of frame"
  ]

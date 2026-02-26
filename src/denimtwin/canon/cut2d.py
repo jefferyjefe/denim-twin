@@ -12,20 +12,29 @@ def cut_mask_canon(canon_size, inseam_fraction=None, canon_y=None):
 
 def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None):
     """Return (out_image, removed_mask_image, keep_mask_image).
-    Pixels in removed region are replaced by background (median of non-garment pixels
-    unless background_fill given). All other pixels are byte-identical to the input."""
+    Every garment pixel is mapped into canonical space and looked up in `remove_canon_mask`, so an angled or
+    free-form cut path is honoured exactly (an earlier version collapsed the mask to its topmost row, which turned
+    every angled cut into a flat one — review 4, finding 1). Pixels whose canonical coordinate falls outside the
+    raster are resolved by the mask's per-column value at the nearest in-raster column, so garment pixels beyond the
+    canonical frame are still cut.
+    Pixels in removed region are replaced by background (median of non-garment pixels unless background_fill given).
+    All other pixels are byte-identical to the input."""
     gm = garment_mask.astype(bool)
-    rows = np.nonzero(remove_canon_mask.any(axis=1))[0]
-    if len(rows) == 0:
+    rc = np.asarray(remove_canon_mask, bool)
+    H, W = rc.shape
+    if not rc.any():
         removed = np.zeros_like(gm)
     else:
-        canon_y = float(rows.min())
         ys, xs = np.nonzero(gm)
         pts = np.stack([xs, ys], 1).astype(np.float32)
-        cy = np.empty(len(pts), np.float32)
+        cxy = np.empty((len(pts), 2), np.float32)
         for i in range(0, len(pts), 200_000):
-            cy[i:i + 200_000] = cmap.points_to_canon(pts[i:i + 200_000])[:, 1]
-        removed = np.zeros_like(gm); removed[ys, xs] = cy >= canon_y   # works for pixels outside the raster too
+            cxy[i:i + 200_000] = cmap.points_to_canon(pts[i:i + 200_000])
+        cx = np.clip(np.round(cxy[:, 0]).astype(np.int64), 0, W - 1)
+        cy = np.round(cxy[:, 1]).astype(np.int64)
+        # per canonical column, the first removed row; below it everything is removed (cuts are monotone in y)
+        has = rc.any(axis=0); first = np.where(has, rc.argmax(axis=0), H + 1)
+        removed = np.zeros_like(gm); removed[ys, xs] = cy >= first[cx]
     out = image.copy()
     if background_fill is None:
         # inpaint the removed region from the surrounding background (Telea) instead of a flat median colour, so the
@@ -62,10 +71,13 @@ def backdrop_fill(image, garment_mask, removed):
 
 
 def texture_backdrop_fill(image, garment_mask, removed, patch=48, seed=0):
-    """Backdrop fill for PRESENTATION renders: tile random background patches over `removed`, then blend.
-    `backdrop_fill` (diffusion inpaint) is what metrics see — it is deterministic and never invents texture;
-    on a patterned backdrop (carpet, wood) it produces a flat grey blob that reads as a rendering error to a viewer.
-    Never used in scoring: the evaluation masks exclude these pixels."""
+    """Backdrop fill for PRESENTATION renders ONLY: tile random background patches over `removed`, then blend.
+
+    On a patterned backdrop (carpet, wood) the diffusion inpaint in `backdrop_fill` leaves a flat grey blob that reads
+    as a rendering error; this invents plausible texture instead. That texture is a fabrication, and it is seeded, so
+    it must never reach a scored image: `compare.py`'s edge band and `identity.cut_region_similarity` both read pixels
+    inside `removed`, so an earlier version of `predict.py` that used this fill made scored numbers depend on an RNG
+    seed (review 4, finding 7). Feed scored images from `backdrop_fill`; use this one for panels and galleries."""
     gm = np.asarray(garment_mask, bool); rm = np.asarray(removed, bool)
     base = backdrop_fill(image, gm, rm)
     bgm = ~cv2.dilate(gm.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)

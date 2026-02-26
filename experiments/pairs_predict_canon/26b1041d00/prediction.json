@@ -9,7 +9,7 @@
  "cut": {
   "inseam_fraction": 0.4277,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.1637044722622721
+  "removed_fraction_of_garment": 0.16381227008745097
  },
  "fringe_depth": {
   "unit": "px",
@@ -21,6 +21,7 @@
   "n": 0,
   "source": "edge treatment 'raw' does not fray"
  },
+ "changed_fraction_of_kept_region": 0.007815521464483692,
  "flags": [
   "mask score 1.004, area 0.44 of frame",
   "landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut"

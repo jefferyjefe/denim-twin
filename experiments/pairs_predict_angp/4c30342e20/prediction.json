@@ -9,7 +9,7 @@
  "cut": {
   "inseam_fraction": 0.0,
   "angle_deg": 9.2,
-  "removed_fraction_of_garment": 0.6808929321184467
+  "removed_fraction_of_garment": 0.6715737476532518
  },
  "fringe_depth": {
   "unit": "px",
@@ -21,9 +21,10 @@
   "n": 3,
   "source": "prior[after_wash] n=3 \u2014 INSUFFICIENT (<5 samples): treat as a placeholder"
  },
+ "changed_fraction_of_kept_region": 0.0037643221508982237,
  "flags": [
   "mask score 1.017, area 0.37 of frame",
-  "angled cut +9.2\u00b0: inner fraction 0.000, outer 0.000",
+  "angled cut +9.2\u00b0: inner fraction 0.019, outer 0.000",
   "fringe prior has only n=3 samples: the depth below is not yet evidence-backed"
  ]
 }

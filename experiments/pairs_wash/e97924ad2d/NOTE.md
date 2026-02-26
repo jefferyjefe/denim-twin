@@ -11,8 +11,8 @@ registration residual (leave-one-landmark-out): 28.17px
 
 | system | sil IoU | chamfer | edge ΔE | fringe IoU |
 |---|---|---|---|---|
-| pred conservative | 0.906 | 2.7 | 11.3 | 0.158 |
-| pred median | 0.907 | 2.4 | 11.4 | 0.242 |
-| pred aggressive | 0.908 | 2.0 | 11.4 | 0.385 |
-| null:no-op | 0.560 | 123.9 | 18.0 | 0.022 |
-| null:crop-only | 0.904 | 3.2 | 11.2 | 0.000 |
+| pred conservative | 0.906 | 2.7 | 11.5 | 0.007 |
+| pred median | 0.907 | 2.4 | 11.6 | 0.041 |
+| pred aggressive | 0.908 | 2.0 | 11.6 | 0.141 |
+| null:no-op | 0.544 | 128.5 | 18.4 | 0.007 |
+| null:crop-only | 0.897 | 1.3 | 11.0 | 0.000 |

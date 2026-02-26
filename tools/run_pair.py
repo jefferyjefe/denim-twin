@@ -160,7 +160,11 @@ if a.wash != "none":                       # plan §4.7/4.8: the wash itself (sh
     from denimtwin.canon.wash import apply_wash, PRESETS as WASH_PRESETS
     cut, bmask_w, removed_w, wash_changed = apply_wash(cut, bmask, removed, mmpp, WASH_PRESETS[a.wash])
     FLAGS.append(f"wash preset {a.wash}: shrink {WASH_PRESETS[a.wash].shrink_along_frac:.1%} along / {WASH_PRESETS[a.wash].shrink_across_frac:.1%} across (PRIOR, not measured); {wash_changed.sum()} px changed")
-    bmask, removed = bmask_w, removed_w; keep = bmask & ~removed
+    # the PREDICTION's silhouette shrinks with the wash; the SCORING masks must not. keep_mask/removed_mask define
+    # `garment_before` in compare.py, which is what the null baselines are built from — if they moved with --wash,
+    # the A/B would not be against a fixed reference (review 4, finding 5).
+    bmask_pred, removed_pred = bmask_w, removed_w
+    keep_pred = bmask_pred & ~removed_pred
 depth_measured_px = np.mean([L["fringe_depth_px"] for L in legs.values() if L])
 depth_after_frame = None
 if fr_after is not None and fr_after.sum() > 50:                       # depth measured on the UN-WARPED after-photo, scaled by waist-width ratio
@@ -177,9 +181,10 @@ if a.prior:
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
 depth_mm = depth_px * mmpp
-res = render_three(cut, removed, bmask, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
+bmask_pred = locals().get("bmask_pred", bmask); removed_pred = locals().get("removed_pred", removed); keep_pred = locals().get("keep_pred", keep)
+res = render_three(cut, removed_pred, bmask_pred, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
 for k, (im, ch) in res.items():
-    cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep | (ch & removed)).astype(np.uint8) * 255))
+    cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep_pred | (ch & removed_pred)).astype(np.uint8) * 255))
 for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 255), ("removed_mask", removed.astype(np.uint8) * 255), ("bmask", bmask.astype(np.uint8) * 255), ("amask", amask.astype(np.uint8) * 255), ("real", real), ("real_mask", rmask.astype(np.uint8) * 255)):
     cv2.imwrite(f"{O}/{n}.png", im)
 cv2.imwrite(f"{O}/pred.png", res["median"][0]); cv2.imwrite(f"{O}/diff.png", (np.any(res["median"][0] != bf, axis=2) & True).astype(np.uint8) * 255)   # plan §4.8: exactly which pixels changed
