@@ -1,6 +1,6 @@
 # Literature Map — denim-twin
 
-Scope: prior work relevant to reconstructing a *specific* pair of denim jeans from guided phone captures and predicting its appearance after a user-specified cut and one standardized wash (see `CHARTER.md`). Every entry below was verified against a live URL on 2026-08-28. Component tags: capture / segmentation / geometry / material / cutting / fray / rendering / uncertainty / eval.
+Scope: prior work relevant to reconstructing a *specific* pair of denim jeans from guided phone captures and predicting its appearance after a user-specified cut and one standardized wash (see `CHARTER.md`). Every entry below was verified against a live URL on 2026-08-28 (entries 14–15: 2026-08-29). Component tags: capture / segmentation / geometry / material / cutting / fray / rendering / uncertainty / eval.
 
 ## 1. Overview table
 
@@ -19,6 +19,8 @@ Scope: prior work relevant to reconstructing a *specific* pair of denim jeans fr
 | 11 | Fiber-level Woven Fabric Capture from a Single Photo (Li, Shen, Sun, ..., Marschner, Hašan, Wang) | 2024 | arXiv 2409.06368 (cs.GR) | https://arxiv.org/abs/2409.06368 | Neural prediction + differentiable rasterization/path tracing recover procedural woven-fabric geometry and optical parameters from one microscope photo | material, rendering | Not mentioned on arXiv page |
 | 12 | AnyDoor: Zero-shot Object-level Image Customization (Chen et al.) | 2024 | CVPR 2024 | https://arxiv.org/abs/2307.09481 | Diffusion inpainting with ID extractor + frequency-aware detail extractor to insert a reference object into a masked region while preserving its identity | rendering (neural refinement) | Yes: https://github.com/ali-vilab/AnyDoor |
 | 13 | A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification (Angelopoulos, Bates) | 2021 | arXiv 2107.07511 | https://arxiv.org/abs/2107.07511 | Tutorial on split conformal prediction: wrap any model to get prediction sets/intervals with finite-sample coverage guarantees | uncertainty, eval | Yes: https://github.com/aangelopoulos/conformal-prediction |
+| 14 | Automatic Measurement of Shrinkage Rate in Denim Fabrics After Washing (Talu) | 2021 | Tekstil ve Mühendis 28(123), 191–198 | https://doi.org/10.7216/1300759920212812304 | CCD cabinet + Hough-line measurement of a 500 mm printed square on denim before/after industrial washing; agrees with manual measurement to 0.33–0.5% | material (shrinkage), capture | No code; method fully described |
+| 15 | Garment washed jeans: impact of launderings on physical properties (Card, Moore, Ankeny) | 2006 | Int. J. Clothing Science & Technology 18(1), 43–52 | https://doi.org/10.1108/09556220610637503 | Pre-washed / stone-washed / enzyme-treated jeans through 0, 5, 25 home launderings; measures pilling and **edge abrasion** by treatment | fray (edge behaviour), material | No code; paywalled full text |
 
 ## 2. Per-paper summaries
 
@@ -87,10 +89,31 @@ Explains split conformal prediction: hold out a calibration set, compute nonconf
 **Reuse:** gives us the conservative/median/aggressive fray range with a provable coverage claim ("calibrated intervals") on scalar targets — fray length, hem drop, colour shift — using our locked test set; code is public.
 **Does not solve:** coverage is marginal, not per-garment; requires exchangeable calibration data (≥ tens of pairs), which our dataset will only reach late in year one; no notion of calibrated *image* intervals.
 
+### 14. Automatic Measurement of Shrinkage Rate in Denim Fabrics After Washing (2021)
+A 50 cm square is printed on the denim, photographed in a fixed cabinet before and after washing, and the two side
+lengths are recovered by Hough lines; shrinkage is the difference against 500 mm. Reported table over six fabric types
+(five samples each): width change −0.2 to −25 mm on 500 mm (**0.04% to 5.0%**), the second measured direction −0.04 to
+−1.3%. Automatic vs manual measurement agrees to 0.33–0.5%.
+**Reuse:** the only source we could verify that reports *measured* denim shrinkage with a stated method, and it is
+essentially our own measurement problem (fiducial + vision + before/after). Its precision (~0.5%) also bounds what any
+photo-based shrinkage estimate can claim.
+**Does not solve:** it is industrial rope-washing of fabric rolls, not one home laundering of a made-up garment, and it
+does not label the two directions warp/weft in the results table. **It does not support the anisotropy our wash model
+assumes** (`canon/wash.py`: warp 2% > weft 1%); if anything the larger changes are in the width direction. Our
+shrinkage parameters therefore remain unsupported priors — flagged as such in EXP_0013 and in the module docstring.
+
+### 15. Garment washed jeans: impact of launderings on physical properties (2006)
+Factorial laundering experiment (0/5/25 cycles) on three garment-wash treatments, measuring pilling and edge abrasion.
+Pre-washed jeans pilled most but abraded least at edges; stone-washed abraded most.
+**Reuse:** the closest published evidence that *edge* behaviour under laundering depends on the garment's prior wash
+treatment — i.e. our fringe prior should eventually be conditioned on wash shade / finish, not just on state. It also
+justifies recording `wash_shade` and finish in the garment record, which the schema already does.
+**Does not solve:** no dimensional data, no raw cut edges (the edges are finished hems), no imagery, no fray depth.
+
 ## 3. Gaps — components with no directly reusable prior work
 
 - **Fray prediction (core gap).** No paper models the transition from a cut continuum edge to loose weft yarns, flyaways and hem roll after laundering. Macro cutting (Pfaff/ARCSim) and static yarn appearance (Zhao 2016; Li 2024) bracket the problem but neither covers the process or its dependence on fabric parameters and wash agitation. This must be built from scratch as a procedural/physical model and validated against our paired data.
-- **Wash as a physical process.** No garment-vision work models a laundering cycle (mechanical agitation, shrinkage, colour loss). Our single standardized protocol (`protocol/PROTOCOL.md`) is the only lever; the mapping wash → outcome is purely empirical for us.
+- **Wash as a physical process.** No garment-vision work models a laundering cycle (mechanical agitation, shrinkage, colour loss). Textile engineering does measure fabric shrinkage (entry 14) but for industrial roll washing, not one home cycle on a made-up garment, and no source we could verify establishes the warp/weft anisotropy our model assumes. Our single standardized protocol (`protocol/PROTOCOL.md`) is the only lever; the mapping wash → outcome is purely empirical for us.
 - **Instance-specific denim material from phone captures.** Image2Garment gives category-level physics from a photo and Li 2024 gives yarn-level structure from a microscope; nothing bridges phone close-ups + care label to yarn-level denim parameters (weight, twill, yarn count, elastane).
 - **Flat-lay, rig-calibrated capture.** All garment reconstruction work assumes worn garments; flat-lay with fiducials is simpler but unsupported by existing priors, so geometry will lean on classical multi-view + template fitting rather than DMap/Dress-1-to-3 as-is.
 - **Paired before/after garment dataset.** No public dataset contains the same physical garment before and after modification and wash; DeepFashion2 pairs are different photos of the same product, not the same instance transformed. Our ≥50-garment dataset is itself a contribution.
