@@ -51,3 +51,16 @@ On the 11 real pairs (`ssim_keep_vs_before` → `ssim_keep_vs_before_aligned`, m
 
 Null baselines score 1.00 aligned, as they must (they change nothing). Both metrics are now reported for every system;
 the strict pixel-copy check `ssim_keep_vs_before` remains the Gate 2 evidence for `--wash none`.
+
+## Part D — the shrinkage prior has no verified source behind its anisotropy (2026-08-29)
+The module says "~1–3% warp, ~0.5–2% weft" for sanforized denim. Searching for the primary evidence found exactly one
+verifiable measurement paper (LITERATURE.md entry 14, Talu 2021): a printed 50 cm square photographed before and after
+washing, six denim types × five samples, dimensional change 0.04–5.0% in one direction and 0.04–1.3% in the other, with
+a ±0.33–0.5% measurement precision. It is **industrial roll washing, not one home cycle on a made-up garment**, and its
+results table does not label the directions warp/weft — and the larger changes are in the *width* direction, i.e. it
+does not support the warp-dominant anisotropy `canon/wash.py` assumes. The commonly quoted "1–3% sanforized" figure
+traces only to trade/SEO pages, not to a study we could read.
+
+Consequence: `shrink_along_frac` / `shrink_across_frac` stay unsupported priors, the wash model stays off by default,
+and the honest statement is "we do not know the anisotropy". A single contributed pair with a coin in frame would
+measure it directly at ~0.5% precision — the same precision the published vision method achieves.
