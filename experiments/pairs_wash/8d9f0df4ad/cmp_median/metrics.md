@@ -2,8 +2,8 @@ registration residual (leave-one-landmark-out): 31.22 px; lighting matched on ke
 
 | system | sil_iou_vs_real | sil_chamfer | hem_chamfer | ssim_keep_vs_real | dE_keep_vs_real | feat_ret_keep_vs_real | ssim_keep_vs_before | ssim_keep_vs_before_aligned | feat_ret_keep_vs_before_aligned | align_scale | ssim_edge_band_vs_real | dE_edge_band_vs_real | fringe_iou_vs_real | fringe_profile_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| prediction | 0.9457 | 6.9479 | 8.2553 | 0.1037 | 14.1419 | 0.0000 | 0.2906 | 0.9166 | 0.7870 | 1.0153 | 0.1051 | 19.5992 | 0.3846 | 0.0090 |
-| null:no-op | 0.4285 | 142.0288 | 330.9150 | 0.0915 | 14.5728 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.1135 | 21.3715 | 0.0238 | 0.9816 |
-| null:crop-only | 0.9355 | 8.6066 | 13.2089 | 0.0915 | 14.5728 | 0.0000 | 1.0000 | 1.0000 | 0.7875 | 1.0000 | 0.0826 | 21.4876 | 0.0000 | 0.0184 |
+| prediction | 0.9457 | 6.9479 | 8.2494 | 0.0988 | 14.6047 | 0.0000 | 0.2767 | 0.9122 | 0.7585 | 1.0152 | 0.0981 | 20.5508 | 0.1653 | 0.0084 |
+| null:no-op | 0.4207 | 113.9723 | 339.5067 | 0.0920 | 14.6179 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.1200 | 22.6618 | 0.0154 | 0.9881 |
+| null:crop-only | 0.9434 | 7.6277 | 8.9686 | 0.0920 | 14.6179 | 0.0000 | 1.0000 | 1.0000 | 0.8895 | 1.0000 | 0.1021 | 21.5340 | 0.0000 | 0.0119 |
 
 (hem_chamfer in px)

@@ -17,7 +17,7 @@ import numpy as np, cv2
 from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.canon.warp import CanonicalMap
-from denimtwin.canon.cut2d import apply_cut, cut_mask_canon, cut_mask_canon_angled, texture_backdrop_fill
+from denimtwin.canon.cut2d import apply_cut, cut_mask_canon, cut_mask_canon_angled, backdrop_fill, texture_backdrop_fill
 from denimtwin.canon.rawedge_v1 import render_three
 from denimtwin.canon.wash import apply_wash, PRESETS as WASH_PRESETS
 from denimtwin.modification import CutModification, WashProtocol
@@ -100,10 +100,15 @@ else:
 if not 0.0 <= frac <= 1.0: FAIL(f"cut fraction {frac:.3f} outside the garment")
 if a.angle_deg:
     # convert an angle to the canonical inner/outer fractions: outer side moves by tan(angle) * (half leg width) in canonical y
+    # the cut line pivots about the requested height at mid-leg: +angle raises the outseam side and lowers the
+    # inseam side by the same amount, so +a and -a are mirror images (nesting them would make the sign meaningless).
     span = abs(cmap.W * 0.24) / max(cmap.H, 1)            # canonical half-leg width as a fraction of canonical height
     d = float(np.tan(np.radians(a.angle_deg))) * span
-    y_in = inseam_fraction_to_canonical_y(frac); y_out = float(np.clip(y_in - d, 0.02, 0.99))
-    inner_f = frac; outer_f = float(np.clip((y_out - inseam_fraction_to_canonical_y(0.0)) / max(inseam_fraction_to_canonical_y(1.0) - inseam_fraction_to_canonical_y(0.0), 1e-6), 0.0, 1.0))
+    y_c = inseam_fraction_to_canonical_y(frac)
+    y_in = float(np.clip(y_c + d / 2, 0.02, 0.99)); y_out = float(np.clip(y_c - d / 2, 0.02, 0.99))
+    y0_, y1_ = inseam_fraction_to_canonical_y(0.0), inseam_fraction_to_canonical_y(1.0)
+    to_frac = lambda y: float(np.clip((y - y0_) / max(y1_ - y0_, 1e-6), 0.0, 1.0))
+    inner_f, outer_f = to_frac(y_in), to_frac(y_out)
     remove_canon = cut_mask_canon_angled((cmap.W, cmap.H), inner_f, outer_f)
     FLAGS.append(f"angled cut {a.angle_deg:+.1f}°: inner fraction {inner_f:.3f}, outer {outer_f:.3f}")
 else:
@@ -111,14 +116,17 @@ else:
 _, removed, keep = apply_cut(img, mask, cmap, remove_canon)
 rf = removed.sum() / max(mask.sum(), 1)
 if not (0.01 <= rf <= 0.85): FAIL(f"degenerate cut: it removes {rf:.0%} of the garment")
-cut = texture_backdrop_fill(img, mask, removed, seed=a.seed)   # presentation fill; scoring never reads these pixels
+cut = backdrop_fill(img, mask, removed)      # deterministic fill: parts of it ARE read by the edge-band and
+                                             # cut-region metrics, so invented texture must not enter here
 
 # the wash itself (shrinkage, hem roll, dye loss) — before the fringe grows from the new edge
 gm, rm = mask, removed
 if a.state == "after_wash" and a.wash != "none":
     wp = WASH_PRESETS[a.wash]
     cut, gm, rm, _ = apply_wash(cut, mask, removed, mmpp_eff, wp)
-    FLAGS.append(f"wash '{a.wash}': shrink {wp.shrink_along_frac:.1%} along / {wp.shrink_across_frac:.1%} across, hem roll {wp.hem_roll_mm:.0f} mm — PRIOR values, not measured (EXP_0013)")
+    roll = (f"{wp.hem_roll_mm:.0f} mm" if metric else
+            f"{wp.hem_roll_mm:.0f} px — with no metric scale the roll width parameter is applied as pixels, so it is NOT a physical width")
+    FLAGS.append(f"wash '{a.wash}': shrink {wp.shrink_along_frac:.1%} along / {wp.shrink_across_frac:.1%} across, hem roll {roll} — PRIOR values, not measured (EXP_0013)")
 keep = gm & ~rm
 
 # fringe depth: from the prior, conditional on the state and the edge treatment
@@ -136,8 +144,10 @@ depth_mm = depth_px * mmpp_eff
 half = 1.28 * sd_rel * ww                                    # ~80% interval under a normal assumption (uncalibrated: EXP_0009)
 lo_px, hi_px = max(0.0, depth_px - half), depth_px + half
 
+# the three renders ARE the published interval: conservative = lo, median = centre, aggressive = hi. No flooring —
+# a picture labelled "aggressive (15 px)" must contain a 15 px fringe (review 4, finding 4).
 res = render_three(cut, rm, gm, mmpp_eff, seed=a.seed,
-                   depth_override={"conservative": max(lo_px, depth_px * 0.5) * mmpp_eff, "median": depth_mm, "aggressive": max(hi_px, depth_px * 1.5) * mmpp_eff})
+                   depth_override={"conservative": lo_px * mmpp_eff, "median": depth_mm, "aggressive": hi_px * mmpp_eff})
 for k, (im, ch) in res.items():
     cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep | (ch & rm)).astype(np.uint8) * 255))
 cv2.imwrite(f"{O}/orig.png", img); cv2.imwrite(f"{O}/cut.png", cut); cv2.imwrite(f"{O}/mask.png", mask.astype(np.uint8) * 255)
@@ -148,16 +158,23 @@ open(f"{O}/modification.json", "w").write(mod.to_json())
 
 y0 = int(np.nonzero(rm)[0].min()) if rm.any() else img.shape[0] // 2; H = img.shape[0]
 crop = lambda im: im[max(y0 - int(0.18 * H), 0): min(y0 + int(0.22 * H), H)].copy()
-tiles = [crop(img)] + [crop(res[k][0]) for k in ("conservative", "median", "aggressive")]
+def presentation(im):
+    """Same prediction, prettier hole: invented backdrop texture where the fabric was, for the panel only."""
+    return np.where(rm[..., None] & (np.abs(im.astype(int) - cut.astype(int)).max(axis=2) <= 8)[..., None],
+                    texture_backdrop_fill(img, mask, rm, seed=a.seed), im)
+tiles = [crop(img)] + [crop(presentation(res[k][0])) for k in ("conservative", "median", "aggressive")]
 for t, n in zip(tiles, ("before", f"conservative ({lo_px * mmpp_eff:.0f} {unit})", f"median ({depth_mm:.0f} {unit})", f"aggressive ({hi_px * mmpp_eff:.0f} {unit})")):
     cv2.putText(t, n, (10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 cv2.imwrite(f"{O}/panel.jpg", np.concatenate(tiles, 1))
 
+from denimtwin.eval.identity import changed_pixel_fraction_outside
+changed_outside = float(changed_pixel_fraction_outside(res["median"][0], img, keep & mask))
 pred = {"image": os.path.abspath(a.image), "state": a.state, "wash_preset": a.wash if a.state == "after_wash" else "none",
         "scale": {"mm_per_px": mmpp, "source": "coin" if (a.coin and metric) else ("given" if metric else "UNKNOWN — all lengths are pixels")},
         "cut": {"inseam_fraction": frac, "angle_deg": a.angle_deg, "removed_fraction_of_garment": float(rf)},
         "fringe_depth": {"unit": unit, "median": float(depth_mm), "lo": float(lo_px * mmpp_eff), "hi": float(hi_px * mmpp_eff),
                          "nominal_coverage": 0.8, "calibrated": False, "n": int(n_eff), "source": src},
+        "changed_fraction_of_kept_region": changed_outside,
         "flags": FLAGS}
 json.dump(pred, open(f"{O}/prediction.json", "w"), indent=1)
 
@@ -182,6 +199,6 @@ flags: {'; '.join(FLAGS) or 'none'}
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Everything outside the cut region is copied pixel-for-pixel from the input photo{" apart from the wash model's global shrink and dye-loss terms" if (a.state == "after_wash" and a.wash != "none") else ""}.
+Outside the cut region, {changed_outside:.1%} of kept pixels differ from the input photo{" (the wash model's shrink, hem roll and dye loss — set `--wash none` for a strict pixel copy)" if (a.state == "after_wash" and a.wash != "none") else " (a strict pixel copy: only the abraded band at the cut edge)"}.
 """
 open(f"{O}/NOTE.md", "w").write(md); print(md)

@@ -10,7 +10,7 @@
  "gate_2": {
   "passed": true,
   "date": "2026-08-29",
-  "evidence": "2D baseline preserves everything outside the cut by construction: changed_pixel_fraction_outside == 0.0 on every real pair (EXP_0003/0004, experiments/pairs/*/cmp_median/metrics.json); logos/pockets/seams untouched (judge report 2026-08-29: 5/5 same-garment for the prediction). Cut geometry reproduced automatically on 5 found pairs (sil IoU 0.75\u20130.95). Caveat: passes because the renderer copies pixels; must be re-checked when any renderer alters kept pixels (Phase 6)."
+  "evidence": "2D baseline preserves everything outside the cut by construction: changed_pixel_fraction_outside == 0.0 on every real pair (EXP_0003/0004, experiments/pairs/*/cmp_median/metrics.json); logos/pockets/seams untouched (judge report 2026-08-29: 5/5 same-garment for the prediction). Cut geometry reproduced automatically on the found pairs. SCOPE (2026-08-29, review 4 finding 13): this holds for the pixel-copy configuration (run_pair default, predict.py --wash none). tools/predict.py defaults to --wash median, whose shrink/hem-roll/dye-loss terms DO alter kept pixels; every prediction.json therefore reports changed_fraction_of_kept_region, and the gate does not certify that configuration."
  },
  "gate_3": {
   "passed": false

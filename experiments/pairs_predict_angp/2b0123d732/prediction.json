@@ -9,7 +9,7 @@
  "cut": {
   "inseam_fraction": 0.4612,
   "angle_deg": 37.45,
-  "removed_fraction_of_garment": 0.5395522471973283
+  "removed_fraction_of_garment": 0.3821191233850202
  },
  "fringe_depth": {
   "unit": "px",
@@ -21,9 +21,10 @@
   "n": 0,
   "source": "edge treatment 'raw' does not fray"
  },
+ "changed_fraction_of_kept_region": 0.004831665150136488,
  "flags": [
   "mask score 0.955, area 0.36 of frame",
   "rotated 24.3\u00b0 to upright",
-  "angled cut +37.5\u00b0: inner fraction 0.461, outer 0.281"
+  "angled cut +37.5\u00b0: inner fraction 0.551, outer 0.371"
  ]
 }

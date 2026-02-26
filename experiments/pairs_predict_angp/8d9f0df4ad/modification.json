@@ -2,7 +2,7 @@
  "kind": "cut",
  "target_inseam_cm": null,
  "inseam_fraction": 0.0613,
- "outer_fraction": 0.0006678204491294971,
+ "outer_fraction": 0.03098391022456479,
  "cut_path_canonical": null,
  "tool": "fabric_shears",
  "garment_flat": true,

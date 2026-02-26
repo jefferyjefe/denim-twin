@@ -14,9 +14,11 @@ and mis-scored another because of exactly that.
 |---|---|---|
 | evaluation path (sees the after-photo) | **0.819** | **48.4 px** |
 | product path, `inseam_fraction` as recorded by run_pair | 0.736 | 104.7 px |
-| product path, canonically-defined cut height | 0.767 | 80.7 px |
-| product path, canonical height + the fitted cut angle (best sign) | 0.767 | 80.9 px |
+| product path, canonically-defined cut height | 0.768 | 80.6 px |
+| product path, canonical height + the fitted cut angle (outseam-higher sign) | 0.772 | 80.2 px |
 | crop-only null on the product path's own mask | 0.771 | — |
+
+*(all conditions re-run 2026-08-29 after review 4 fixed `apply_cut`, which had been discarding cut angles entirely)*
 
 ## Finding 1 (bug): the two paths do not mean the same thing by "inseam fraction"
 `modification.py` documents `inseam_fraction` as *canonical* ("0 = crotch, 1 = original hem, canonical inseam
@@ -27,14 +29,21 @@ run_pair clips to 0. Feeding the canonical value recovers ~a third of the IoU ga
 Fix belongs in run_pair (record the canonical fraction, or rename the field); not applied here because the file is
 under adversarial review in parallel.
 
-## Finding 2: a single global cut angle buys nothing
-Real tutorial cuts are per-leg and often mirrored; passing the mean fitted angle (either sign convention) leaves IoU
-unchanged (0.767 → 0.763/0.767). If cut *shape* is to be user-specifiable it needs the per-leg polyline
-(`cut_path_canonical`, already in the schema), not one angle.
+## Finding 2 (RETRACTED and re-measured): a global cut angle helps slightly
+The original version of this finding — "a single global cut angle buys nothing" — was measured on code that never
+applied an angle. `apply_cut` reduced any canonical removal mask to its topmost row, so every angled cut was rendered
+as a flat cut (review 4, finding 1); `predict.py` was its only caller, so nothing else was affected. The angle also
+pivoted about the inseam side, which made `+a` and `-a` nested rather than mirrored; it now pivots about the requested
+cut height.
+
+Re-measured with angles actually applied: no angle 0.768 / 80.6 px, outseam-higher angle **0.772 / 80.2 px**,
+inseam-higher angle 0.761 / 85.5 px. So the angle carries a small real signal in the expected direction (tutorial cuts
+are cut higher on the outseam) and the sign convention is now meaningful. It remains far short of the evaluation path,
+and per-leg curvature would still need the polyline (`cut_path_canonical`, already in the schema).
 
 ## Finding 3: the honest headline
-Given only what a user actually supplies, the cut prediction scores **0.767** where the evaluation path scores 0.819 —
-and the crop-only null on the same mask scores 0.771, i.e. **the fringe render is invisible to silhouette IoU** —
+Given only what a user actually supplies, the cut prediction scores **0.768** (0.772 with a cut angle) where the
+evaluation path scores 0.819 — and the crop-only null on the same mask scores 0.771, i.e. **the fringe render is invisible to silhouette IoU** —
 a whole-garment metric cannot see a 7–40 px band. On the fringe-specific metric the render does beat the null (mean
 fringe IoU 0.17 vs 0.00), but that is with the depth read off the after-photo; held out through the prior it is not
 predictive (EXP_0008). The remaining 0.05 IoU / 32 px gap is genuine: a straight canonical

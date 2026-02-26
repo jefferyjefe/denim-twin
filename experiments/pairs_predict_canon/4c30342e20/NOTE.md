@@ -19,4 +19,4 @@ flags: mask score 1.017, area 0.37 of frame; fringe prior has only n=3 samples: 
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Everything outside the cut region is copied pixel-for-pixel from the input photo.
+Outside the cut region, 0.4% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).

@@ -8,7 +8,7 @@
 - fringe depth: **37.5 px** (80% interval 29.5–45.4 px) from prior[after_wash] n=3 — INSUFFICIENT (<5 samples): treat as a placeholder
 - interval calibration: **not established** (EXP_0009 coverage 0/10) — read the range as a spread, not a guarantee
 
-flags: mask score 0.993, area 0.43 of frame; angled cut -7.0°: inner fraction 0.042, outer 0.071; fringe prior has only n=3 samples: the depth below is not yet evidence-backed
+flags: mask score 0.993, area 0.43 of frame; angled cut -7.0°: inner fraction 0.028, outer 0.057; fringe prior has only n=3 samples: the depth below is not yet evidence-backed
 
 | file | what |
 |---|---|
@@ -19,4 +19,4 @@ flags: mask score 0.993, area 0.43 of frame; angled cut -7.0°: inner fraction 0
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Everything outside the cut region is copied pixel-for-pixel from the input photo.
+Outside the cut region, 0.3% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).

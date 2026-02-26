@@ -1,10 +1,12 @@
 """Procedural wash appearance v0 (plan §4.7/§4.8: "cut AND washed once").
 
 What one laundering cycle does to a raw-cut cotton denim garment, beyond the fringe (which `rawedge_v1` handles):
-  1. Shrinkage — anisotropic, larger along the warp (leg direction) than across. Typical first-wash relaxation
-     shrinkage of sanforized cotton denim is ~1–3% warp, ~0.5–2% weft; unsanforized ("shrink-to-fit") can be 7–10%.
-     These are textile-industry ranges, NOT measured on our data: EXP_0013 shows found-photo landmarks are far too
-     noisy to measure a 2% length change, so the numbers are priors until metric-scale contributed pairs arrive.
+  1. Shrinkage — modelled as anisotropic, larger along the leg than across. **Both the magnitude and the direction of
+     the anisotropy are unsupported priors.** The trade figure "1–3% warp on sanforized denim" traces only to
+     commercial pages; the one measurement study we could actually read (LITERATURE 14, Talu 2021) is industrial roll
+     washing, does not label warp/weft, and shows the larger change in the *width* direction. EXP_0013 also shows the
+     effect cannot be measured from found photos (landmark noise is ~50x the signal). Treat these numbers as
+     placeholders until a metric-scale contributed pair measures them.
   2. Hem roll — the raw edge curls after agitation; in a flat photo it reads as a shading strip (shadow under the
      curl, lit crest) on the fabric side of the cut, a few mm wide.
   3. Colour — a small loss of surface indigo: slightly lighter, slightly less saturated. Unvalidated prior; lighting
@@ -25,7 +27,7 @@ class WashParams:
     roll_strength: float = 0.35          # peak darkening of L* inside the strip (0 = none)
     lightness_shift: float = 1.5         # Lab L* added inside the garment (dye loss)
     chroma_scale: float = 0.97           # multiplier on Lab a*, b*
-    seed: int = 0
+    # (no seed: every term here is deterministic — the randomness in the pipeline lives in the fringe renderer)
 
 PRESETS = {
     "none": WashParams(0.0, 0.0, 0.0, 0.0, 0.0, 1.0),
@@ -85,5 +87,6 @@ def apply_wash(img, garment, removed, mm_per_px, p=PRESETS["median"]):
     changed = np.any(out != img, axis=2)
     return out, g2, r2, changed
 
-def wash_three(img, garment, removed, mm_per_px, seed=0):
-    return {k: apply_wash(img, garment, removed, mm_per_px, WashParams(**{**p.__dict__, "seed": seed})) for k, p in PRESETS.items() if k != "none"}
+def wash_three(img, garment, removed, mm_per_px):
+    """The three presets as an interval, exactly as rendered."""
+    return {k: apply_wash(img, garment, removed, mm_per_px, p) for k, p in PRESETS.items() if k != "none"}
