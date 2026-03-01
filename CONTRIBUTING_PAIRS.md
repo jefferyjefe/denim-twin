@@ -12,3 +12,16 @@ Good photos (any phone is fine):
 4. Tell us the care label and how you washed/dried it.
 
 Photos are released under CC BY 4.0 with your GitHub username as credit (or anonymously). Only submit photos you took.
+
+## Please also send one close-up of the hem (added 2026-08-29)
+
+We found (EXP_0015) that at ordinary flat-lay distance the fringe is only a few pixels deep, which is the same size as
+the error in the garment outline — so a cuffed hem and a frayed hem measure identically and **no fringe depth we have
+recorded is real**. One extra photo fixes it:
+
+- after the wash, take **one close-up of the hem**, filling the frame with about 10 cm of the cut edge,
+- put the coin in that frame too, next to the fringe,
+- keep the garment flat and the camera parallel to it.
+
+That single photo is worth more to this project than the rest of the set, because it is the only one where the thing we
+are trying to predict is actually resolvable.

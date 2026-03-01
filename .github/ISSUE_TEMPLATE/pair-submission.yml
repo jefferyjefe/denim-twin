@@ -24,7 +24,11 @@ body:
     id: after_wash
     attributes:
       label: AFTER WASHING photo(s) — the frayed hem
-      description: Close-ups of the hem are gold. Include the coin/ruler if you can.
+      description: >-
+        Two shots please. (1) the whole garment laid flat, and (2) ONE CLOSE-UP of the hem filling the frame with about
+        10 cm of the cut edge, with the coin in that same frame. The close-up is the single most valuable photo in the
+        set: at normal flat-lay distance the fringe is only a few pixels deep, which we measured to be the same size as
+        our own outline error — so without it a frayed hem and a cuffed hem are indistinguishable to us (EXP_0015).
     validations: { required: false }
   - type: input
     id: label
