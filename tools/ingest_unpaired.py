@@ -67,8 +67,10 @@ def main():
     from denimtwin.canon.autolm import landmarks_from_mask
     seg = SamSegmenter(); out = []
     for rec in uniq:
-        base = {"page_url": rec["page_url"], "image_url": rec["image_url"], "license_or_terms": rec.get("license_or_terms"),
-                "state_evidence": rec.get("state_evidence"), "source": "web_unpaired"}
+        base = {"pair": hashlib.sha1(rec["page_url"].encode()).hexdigest()[:10],   # same id as pairs.jsonl: a page in
+                "page_url": rec["page_url"], "image_url": rec["image_url"],        # both channels must exclude as one
+                "license_or_terms": rec.get("license_or_terms"), "state_evidence": rec.get("state_evidence"),
+                "source": "web_unpaired"}
         why = validate(rec)
         if why: out.append({**base, "status": why}); print(f"REFUSED {why}: {rec.get('page_url','?')[:60]}"); continue
         if not a.fetch: out.append({**base, "status": "not_fetched"}); continue

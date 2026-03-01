@@ -36,7 +36,7 @@ def test_rendered_aggressive_fringe_matches_the_published_upper_bound():
         r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "predict.py"), "--image", f"{tmp}/jeans.png",
                             "--out", f"{tmp}/out", "--inseam-fraction", "0.35"], capture_output=True, text=True)
         assert r.returncode == 0, r.stdout + r.stderr
-        f = json.load(open(f"{tmp}/out/prediction.json"))["fringe_depth"]
+        pred = json.load(open(f"{tmp}/out/prediction.json")); f = pred["fringe_depth"]
         rm = cv2.imread(f"{tmp}/out/removed_mask.png", 0) > 127
         area = {}
         for k in ("median", "aggressive"):
@@ -44,6 +44,11 @@ def test_rendered_aggressive_fringe_matches_the_published_upper_bound():
             area[k] = float((m & rm).sum())
         rendered_ratio = area["aggressive"] / area["median"]
         published_ratio = f["hi"] / f["median"]
+        if f.get("below_render_resolution"):
+            # sub-pixel fringe: the renders cannot represent the interval, so predict.py must say so rather than
+            # publishing three pictures that differ by less than a pixel of fringe (EXP_0015)
+            assert any("below the renderer's resolution" in x for x in pred["flags"]), pred["flags"]
+            return
         assert abs(rendered_ratio - published_ratio) < 0.15, (
             f"the aggressive render does not correspond to the published hi: rendered fringe-area ratio "
             f"{rendered_ratio:.3f} vs published hi/median {published_ratio:.3f} "

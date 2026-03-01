@@ -146,6 +146,9 @@ lo_px, hi_px = max(0.0, depth_px - half), depth_px + half
 
 # the three renders ARE the published interval: conservative = lo, median = centre, aggressive = hi. No flooring —
 # a picture labelled "aggressive (15 px)" must contain a 15 px fringe (review 4, finding 4).
+if depth_px < 5.0:
+    FLAGS.append(f"fringe depth {depth_px:.1f} px is below the renderer's resolution: the three renders differ by less than a "
+                 f"pixel of fringe and must not be read as an interval (EXP_0015 — the depth itself is a placeholder)")
 res = render_three(cut, rm, gm, mmpp_eff, seed=a.seed,
                    depth_override={"conservative": lo_px * mmpp_eff, "median": depth_mm, "aggressive": hi_px * mmpp_eff})
 for k, (im, ch) in res.items():
@@ -173,6 +176,7 @@ pred = {"image": os.path.abspath(a.image), "state": a.state, "wash_preset": a.wa
         "scale": {"mm_per_px": mmpp, "source": "coin" if (a.coin and metric) else ("given" if metric else "UNKNOWN — all lengths are pixels")},
         "cut": {"inseam_fraction": frac, "angle_deg": a.angle_deg, "removed_fraction_of_garment": float(rf)},
         "fringe_depth": {"unit": unit, "median": float(depth_mm), "lo": float(lo_px * mmpp_eff), "hi": float(hi_px * mmpp_eff),
+                         "below_render_resolution": bool(depth_px < 5.0),
                          "nominal_coverage": 0.8, "calibrated": False, "n": int(n_eff), "source": src},
         "changed_fraction_of_kept_region": changed_outside,
         "flags": FLAGS}
