@@ -173,6 +173,19 @@ if fr_after is not None and fr_after.sum() > 50:                       # depth m
         wwb = abs(lmb["waist_right"][0] - lmb["waist_left"][0]); wwa = abs(lma["waist_right"][0] - lma["waist_left"][0])
         depth_after_frame = float(np.median(ds)) * (wwb / max(wwa, 1))
         depth_measured_px = depth_after_frame                             # prefer the un-warped measurement
+# Direct thread measurement on the un-warped after-photo. SAM's prompted "fringe" mask returns fabric, not threads,
+# on real after-wash photos (EXP_0015: rel 0.10-0.61 vs 0.004-0.03 measured directly, confirmed by eye), so it is the
+# fringe number of record now; the SAM/hem-fit value is kept alongside for comparison.
+from denimtwin.eval.fringe_measure import measure_fringe_depth as _mfd
+_wwa = abs(lma["waist_right"][0] - lma["waist_left"][0]); _wwb = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
+_direct = _mfd(af, amask, waist_px=_wwa)
+depth_sam_px = depth_measured_px
+depth_direct_px = float(_direct["median_px"]) * (_wwb / max(_wwa, 1)) if _direct["ok"] else None
+if depth_direct_px is not None:
+    depth_measured_px = depth_direct_px
+    FLAGS.append(f"fringe measured directly: {_direct['median_px']:.1f}px in the after frame (rel {_direct.get('depth_rel', 0):.4f}, coverage {_direct['coverage']:.2f}); SAM/hem-fit said {depth_sam_px:.1f}px")
+else:
+    FLAGS.append(f"direct fringe measurement failed ({_direct['n_columns_with_fringe']} columns); falling back to the SAM/hem-fit value {depth_sam_px:.1f}px")
 if a.prior:
     from denimtwin.prior import predict_depth_rel
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
@@ -212,7 +225,17 @@ for r in rows["median"]:
     if r["system"] != "prediction": md += row(r["system"], r) + "\n"
 from denimtwin.modification import CutModification, WashProtocol
 mod = CutModification(cut_path_canonical=[[0.0, 0.0]], edge_treatment="raw" if a.state == "after_cut" else "hand_frayed", wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed)
-mod.cut_path_canonical = None; mod.inseam_fraction = float(np.clip((np.mean([np.nonzero(removed[:, x])[0].min() for x in range(removed.shape[1]) if removed[:, x].any()]) - lmb["crotch"][1]) / max(np.mean([lmb.get("hem_left_inner", (0, bf.shape[0]))[1], lmb.get("hem_right_inner", (0, bf.shape[0]))[1]]) - lmb["crotch"][1], 1), 0, 1))
+# `inseam_fraction` is defined in CANONICAL coordinates (see modification.py); measuring it in image y between the
+# crotch and hem landmarks gave a different number — off by up to 0.21 of the leg on the found pairs, and negative
+# (clipped to 0) on four of them (EXP_0014, finding 1). Map the fitted cut into canonical space instead.
+from denimtwin.canon.warp import CanonicalMap as _CM
+from denimtwin.canon.landmarks import inseam_fraction_to_canonical_y as _f2y
+_cm = _CM(lmb)
+_pts = np.array([(x, np.nonzero(removed[:, x])[0].min()) for x in range(removed.shape[1]) if removed[:, x].any()], np.float32)
+_cy = _cm.points_to_canon(_pts)[:, 1] / _cm.H
+_y0, _y1 = _f2y(0.0), _f2y(1.0)
+mod.cut_path_canonical = None; mod.inseam_fraction = float(np.clip((float(np.median(_cy)) - _y0) / max(_y1 - _y0, 1e-6), 0.0, 1.0))
+FLAGS.append(f"cut height (canonical inseam fraction): {mod.inseam_fraction:.3f}")
 open(f"{O}/modification.json", "w").write(mod.to_json())
 # plan §4.9: never imply certainty — emit a prediction interval for fringe depth (from the prior's spread when available)
 interval = {"garment_id": os.path.basename(O), "stratum": a.state, "metric": "fringe_depth_px", "median": float(depth_px), "nominal": 0.8}
@@ -222,4 +245,9 @@ if a.prior:
 else:
     interval.update(lo=float(depth_px * 0.5), hi=float(depth_px * 1.5), real=None, source="preset spread (not calibrated; real omitted because median IS the measurement)")
 open(f"{O}/intervals.jsonl", "w").write(json.dumps(interval) + "\n")
+json.dump({"state": a.state, "waist_px_before": float(_wwb), "waist_px_after": float(_wwa),
+           "depth_direct_px_before_frame": depth_direct_px, "depth_direct_rel": (depth_direct_px / _wwb) if depth_direct_px else None,
+           "direct_coverage": _direct["coverage"], "direct_ok": _direct["ok"],
+           "depth_sam_hemfit_px": float(depth_sam_px), "depth_used_px": float(depth_px), "depth_source": depth_source},
+          open(f"{O}/measure.json", "w"), indent=1)
 open(f"{O}/NOTE.md", "w").write(md); print(md)

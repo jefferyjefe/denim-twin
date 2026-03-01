@@ -81,3 +81,22 @@ def test_openverse_query_returns_results():
             pytest.skip(f"openverse unavailable: {e}")
         pytest.fail(f"openverse() raised: {e}")
     assert len(recs) > 0
+
+
+def test_inseam_fraction_is_canonical_not_image_space():
+    """EXP_0014 finding 1: `modification.inseam_fraction` is documented as a canonical coordinate; run_pair used to
+    measure it in image y between the crotch and hem landmarks, which differs by up to 0.21 of the leg."""
+    import numpy as np
+    from denimtwin.canon.warp import CanonicalMap
+    from denimtwin.canon.landmarks import inseam_fraction_to_canonical_y
+    from denimtwin.canon.cut2d import cut_mask_canon, apply_cut
+    from test_canon import synthetic_jeans
+    img, mask, lm = synthetic_jeans(jitter=4, seed=3)
+    cm = CanonicalMap(lm)
+    for want in (0.2, 0.5, 0.8):
+        _, removed, _ = apply_cut(img, mask, cm, cut_mask_canon((cm.W, cm.H), inseam_fraction=want))
+        pts = np.array([(x, np.nonzero(removed[:, x])[0].min()) for x in range(removed.shape[1]) if removed[:, x].any()], np.float32)
+        cy = cm.points_to_canon(pts)[:, 1] / cm.H
+        y0, y1 = inseam_fraction_to_canonical_y(0.0), inseam_fraction_to_canonical_y(1.0)
+        got = float(np.clip((float(np.median(cy)) - y0) / (y1 - y0), 0, 1))
+        assert abs(got - want) < 0.02, (want, got)      # the recorded number round-trips to the requested cut

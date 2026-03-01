@@ -50,13 +50,16 @@ Put a coin in the frame if you want any answer in centimetres.
 
 ## Status (2026-08-29, honest)
 - Product path (`tools/predict.py`): one photo + a cut spec → three renders + an 80% fringe-depth interval, every
-  number labelled with where it came from. It runs end-to-end; its fringe prior has **n=3** and its intervals are
-  **not calibrated** (EXP_0009 coverage 0/10), and the outputs say so.
+  number labelled with where it came from. It runs end-to-end; its fringe prior has **n=3**, its intervals are
+  **not calibrated** (EXP_0009 coverage 0/10), and — since EXP_0015 — its fringe depth rests on **no validated
+  measurement at all**. The outputs say so.
 - Evaluation path (`tools/run_pair.py`): before + after photo → mask → landmarks → canonical warp → cut → fringe →
   register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
 - On 11 usable found pairs, mean silhouette IoU: **0.768 product path** (what a user gets), 0.819 evaluation path
   (which reads the real after-photo), 0.507 no-op — so the cut *is* reproduced, but the honest number is the first one
-  (EXP_0014). The **fringe** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
+  (EXP_0014). **Fringe measurement is broken** (EXP_0015): SAM's prompted "fringe" mask returns the bottom third of the
+  fabric, and a direct thread measurement, though visually correct, scores a cuffed hem the same as a frayed one. Every
+  fringe number in the repo predates that check. The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
   fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).

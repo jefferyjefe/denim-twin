@@ -187,6 +187,8 @@ md = f"""# PREDICTION — {os.path.basename(a.image)}
 - scale: {"%.4f mm/px (%s)" % (mmpp, "coin" if a.coin else "given") if metric else "**unknown** — every length below is in pixels"}
 - fringe depth: **{depth_mm:.1f} {unit}** (80% interval {lo_px * mmpp_eff:.1f}–{hi_px * mmpp_eff:.1f} {unit}) from {src}
 - interval calibration: **not established** (EXP_0009 coverage 0/10) — read the range as a spread, not a guarantee
+- fringe depth provenance: **no validated measurement exists** (EXP_0015) — the number above is a placeholder and the
+  three renders differ only in a quantity nobody has yet measured on real garments
 
 flags: {'; '.join(FLAGS) or 'none'}
 
