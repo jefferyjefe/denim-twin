@@ -1,18 +1,18 @@
 # PAIR — auto pipeline
 
-flags: coin scale rejected: no coin-like circle found
+flags: coin scale rejected: no coin-like circle found; fringe measured directly: 2.0px in the after frame (rel 0.0060, coverage 0.61); SAM/hem-fit said 67.3px
 before: /Users/jefferyhuang/denim-twin/data/external/pair_images/4c30342e20_before_ccfb944a.jpg 
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/4c30342e20_after_wash_44ffba7e.jpeg collage split (stacked) at y=512, kept top
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
-fringe depth used: 35.5 px from prior[after_wash] (n=3 after excluding self, INSUFFICIENT); measured on after-photo: 67.3 px (fabric/fringe split: SAM; after-frame)
+fringe depth used: 4.9 px from prior[after_wash] (n=8 after excluding self); measured on after-photo: 4.1 px (fabric/fringe split: SAM; after-frame)
 hem fit: left: angle -1.9°, depth 72 px, right: angle -16.5°, depth 30 px
 registration residual (leave-one-landmark-out): 56.91px
 
 | system | sil IoU | chamfer | edge ΔE | fringe IoU |
 |---|---|---|---|---|
-| pred conservative | 0.850 | 46.5 | 23.1 | 0.065 |
-| pred median | 0.853 | 45.6 | 22.7 | 0.142 |
-| pred aggressive | 0.855 | 45.0 | 22.2 | 0.197 |
+| pred conservative | 0.846 | 48.2 | 23.5 | 0.007 |
+| pred median | 0.847 | 47.9 | 23.5 | 0.018 |
+| pred aggressive | 0.848 | 47.5 | 23.4 | 0.031 |
 | null:no-op | 0.279 | 820.4 | 16.0 | 0.038 |
 | null:crop-only | 0.846 | 48.4 | 23.6 | 0.000 |

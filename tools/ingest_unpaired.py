@@ -32,7 +32,7 @@ def validate(rec):
     if rec.get("hem_finish") != "frayed": return f"hem_finish={rec.get('hem_finish')}"
     ev = rec["state_evidence"].strip()
     if len(ev) < 12: return "state_evidence_too_short"      # must be a real sentence from the page, not a label
-    stems = ("wash", "dryer", "dried", "laundr", "lav", "wasch", "wäsche", "lessive", "bucato")   # en/de/fr/es/it
+    stems = ("wash", "dryer", "dried", "laundr", "lav", "wasch", "wäsche", "lessive", "bucato", "tvätt", "tvatt", "vask", "pesu")   # en/de/fr/es/it/sv/da/no/fi
     if not any(w in ev.lower() for w in stems):
         return "state_evidence_does_not_mention_a_wash"
     if not urllib.parse.urlparse(rec["image_url"]).scheme.startswith("http"): return "image_url_not_http"
@@ -63,7 +63,7 @@ def main():
         if r.get("image_url") in seen: continue
         seen.add(r.get("image_url")); uniq.append(r)
     if a.limit: uniq = uniq[:a.limit]
-    from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_fringe
+    from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
     from denimtwin.canon.autolm import landmarks_from_mask
     seg = SamSegmenter(); out = []
     for rec in uniq:
@@ -82,20 +82,18 @@ def main():
         lm, conf = landmarks_from_mask(m)
         if "waist_left" not in lm or "waist_right" not in lm: out.append({**base, "status": "no_waist_landmarks"}); continue
         ww = abs(lm["waist_right"][0] - lm["waist_left"][0])
-        fr = segment_fringe(seg, img, m)
-        if fr is None or fr.sum() < 50: out.append({**base, "status": "no_fringe_mask"}); continue
-        depths = [np.nonzero(m[:, x])[0].max() - np.nonzero(fr[:, x])[0].min()
-                  for x in range(m.shape[1]) if m[:, x].any() and fr[:, x].any()]
-        if len(depths) < 20: out.append({**base, "status": "too_few_columns"}); continue
-        d = float(np.median(depths)); rel = d / max(ww, 1)
+        from denimtwin.eval.fringe_measure import measure_fringe_depth
+        r_ = measure_fringe_depth(img, m, waist_px=ww)     # EXP_0015: SAM's prompted fringe mask returns fabric
+        if not r_["ok"]: out.append({**base, "status": "no_fringe_columns"}); continue
+        d = float(r_["median_px"]); rel = float(r_["depth_rel"])
         ys = np.nonzero(m.any(axis=1))[0]; gh = ys.max() - ys.min()
         bad = None
         if conf.get("garment_type") != "shorts": bad = f"not_shorts ({conf.get('garment_type')})"
         elif ww < 0.3 * m.shape[1]: bad = "waist_too_narrow_for_frame"
-        elif d > 0.15 * gh: bad = "fringe_mask_implausible"     # same gate as run_pair: a fringe is a thin band
+        elif d > 0.15 * gh: bad = "depth_implausible_vs_height"
         elif rel > 0.5: bad = "depth_implausible"
         out.append({**base, "status": "ok" if bad is None else bad, "file": p.name, "waist_px": int(ww),
-                    "depth_px": d, "depth_rel": rel, "garment": conf.get("garment_type"), "sam_score": round(float(sc), 3)})
+                    "depth_px": d, "depth_rel": rel, "coverage": round(r_["coverage"], 3), "method": "direct", "garment": conf.get("garment_type"), "sam_score": round(float(sc), 3)})
         print(f"{'OK ' if bad is None else 'REJ'} {p.name} waist {ww:4d}px depth {d:6.1f}px rel {rel:.3f} {bad or ''}")
     ok = [o for o in out if o["status"] == "ok"]
     res = {"n": len(ok), "depth_rel_mean": st.mean([o["depth_rel"] for o in ok]) if ok else None,
