@@ -1,6 +1,9 @@
 {
  "n": 6,
- "insufficient": true,
+ "insufficient": false,
+ "measurement_method": "direct (eval/fringe_measure.py)",
+ "validated": false,
+ "validation_note": "EXP_0015: this measurement scores finished-hem controls the same as frayed hems; the depths below are NOT evidence of fray depth",
  "pairs": [
   {
    "pair": "26b1041d00",
@@ -37,8 +40,8 @@
    "kind": "after_wash",
    "hem_finish": "frayed",
    "waist_px": 369,
-   "depth_px": 23.0,
-   "depth_rel": 0.06233062330623306,
+   "depth_px": 2.2095808383233533,
+   "depth_rel": 0.005988023952095809,
    "angle_l": -10.4,
    "angle_r": 4.5
   },
@@ -57,35 +60,62 @@
    "kind": "after_cut",
    "hem_finish": "raw",
    "waist_px": 131,
-   "depth_px": 1.0,
-   "depth_rel": 0.007633587786259542,
+   "depth_px": 1.31,
+   "depth_rel": 0.01,
    "angle_l": 23.4,
    "angle_r": -22.0
   }
  ],
- "depth_rel_mean": 0.011660701848748766,
- "depth_rel_sd": 0.022831069688042716,
- "depth_px_mean": 4.0,
- "depth_px_sd": 8.504900548115382,
- "depth_rel_mean_after_wash": 0.06233062330623306,
+ "depth_rel_mean": 0.002664670658682635,
+ "depth_rel_sd": 0.003942368419605323,
+ "depth_px_mean": 0.5865968063872256,
+ "depth_px_sd": 0.8692690992536565,
+ "depth_rel_mean_after_wash": 0.005988023952095809,
  "n_after_wash": 1,
- "depth_rel_mean_after_cut": 0.0015267175572519084,
+ "depth_rel_mean_after_cut": 0.002,
  "n_after_cut": 5,
  "unpaired": {
-  "n": 2,
-  "depth_rel_mean": 0.04712709303355744,
-  "depth_rel_sd": 0.005970252099185919,
+  "n": 7,
+  "depth_rel_mean": 0.007366737927719825,
+  "depth_rel_sd": 0.00336075528257889,
   "samples": [
    {
     "pair": "c94c958696",
-    "depth_rel": 0.041156840934371525
+    "depth_rel": 0.0033370411568409346,
+    "channel": "pairs_manifest"
    },
    {
     "pair": "ee4bf13a3c",
-    "depth_rel": 0.05309734513274336
+    "depth_rel": 0.011799410029498525,
+    "channel": "pairs_manifest"
+   },
+   {
+    "pair": "http://elartedelascosasnimias.blogspot.com/2012/08/diy-convierte-tus-antiguos-pantalones.html",
+    "depth_rel": 0.0037105751391465678,
+    "channel": "web"
+   },
+   {
+    "pair": "https://expressthrudress.wordpress.com/2012/05/23/diy-create-your-own-denim-cut-off-shorts/",
+    "depth_rel": 0.009153318077803204,
+    "channel": "web"
+   },
+   {
+    "pair": "https://recycledjunk.wordpress.com/2012/06/05/daisy-dukes/",
+    "depth_rel": 0.00418702023726448,
+    "channel": "web"
+   },
+   {
+    "pair": "https://adaras.se/diy-blekta-slitna-jeansshorts/",
+    "depth_rel": 0.008,
+    "channel": "web"
+   },
+   {
+    "pair": "https://mommysavers.com/diy-cutoff-shorts/",
+    "depth_rel": 0.011379800853485065,
+    "channel": "web"
    }
   ]
  },
- "depth_rel_mean_after_wash_combined": 0.05219493645778265,
- "n_after_wash_combined": 3
+ "depth_rel_mean_after_wash_combined": 0.007194398680766823,
+ "n_after_wash_combined": 8
 }

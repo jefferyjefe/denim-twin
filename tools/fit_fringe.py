@@ -26,11 +26,18 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
         pr_ = {x["system"]: x for x in json.load(open(mp))["rows"]}["prediction"]
         if pr_["sil_iou_vs_real"] < 0.75 or pr_["hem_chamfer"] > 40: print(f"  skip {Path(note).parent.name}: sil IoU {pr_['sil_iou_vs_real']:.2f}, hem err {pr_['hem_chamfer']:.0f}"); continue
     al, dl, ar, dr = map(float, m.groups()); kind = "after_wash" if "after_wash" in txt else "after_cut"
+    # EXP_0015: the hem-fit/SAM depths in the NOTE measure fabric, not threads. Prefer the direct measurement.
+    mj = Path(note).parent / "measure.json"
+    if mj.exists():
+        _d = json.load(open(mj))
+        if _d.get("depth_direct_px_before_frame") is not None: dl = dr = float(_d["depth_direct_px_before_frame"])
     finish = RECS.get(Path(note).parent.name, {}).get("hem_finish", "unknown")
     if finish in ("cuffed", "hemmed", "serged"): dl = dr = 0.0            # finished hems have no fringe; a measured value is an artefact
     if finish == "raw" and kind == "after_cut": dl, dr = min(dl, 0.01 * ww), min(dr, 0.01 * ww)   # unwashed raw cut: ~no fringe yet
     rows.append(dict(pair=Path(note).parent.name, kind=kind, hem_finish=finish, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
-prior = {"n": len(rows), "insufficient": len(rows) < 5, "pairs": rows}
+prior = {"n": len(rows), "insufficient": len(rows) < 5, "measurement_method": "direct (eval/fringe_measure.py)",
+         "validated": False, "validation_note": "EXP_0015: this measurement scores finished-hem controls the same as frayed hems; the depths below are NOT evidence of fray depth",
+         "pairs": rows}
 if rows:
     for k in ("depth_rel", "depth_px"):
         v = [r[k] for r in rows]; prior[k + "_mean"] = st.mean(v); prior[k + "_sd"] = st.pstdev(v) if len(v) > 1 else None
@@ -42,10 +49,23 @@ if rows:
         for i, r in enumerate(rows):
             others = [x["depth_rel"] for j, x in enumerate(rows) if j != i]; pred = st.mean(others) * r["waist_px"]
             print(f"  {r['pair']}: measured {r['depth_px']:.1f}, predicted {pred:.1f}, |err| {abs(pred - r['depth_px']):.1f}")
+# unpaired after-wash samples come from two channels: images already in pairs.jsonl, and the harvested web set
+_web = OUT / "fringe_unpaired_web.json"
+if _web.exists():
+    _w = json.load(open(_web)); _u = json.load(open(OUT / "fringe_unpaired.json")) if (OUT / "fringe_unpaired.json").exists() else {"samples": []}
+    _have = {s.get("file") for s in _u["samples"]}
+    for s_ in _w["samples"]:
+        if s_.get("file") and s_["file"] not in _have: _u["samples"].append({**s_, "channel": "web"})
+    _ok = [s_ for s_ in _u["samples"] if s_.get("status") == "ok"]
+    _u["n"] = len(_ok)
+    _u["depth_rel_mean"] = st.mean([s_["depth_rel"] for s_ in _ok]) if _ok else None
+    _u["depth_rel_sd"] = st.pstdev([s_["depth_rel"] for s_ in _ok]) if len(_ok) > 1 else None
+    (OUT / "fringe_unpaired.json").write_text(json.dumps(_u, indent=1))
 up = OUT / "fringe_unpaired.json"
 if up.exists():
     u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"],
-                                                  "samples": [{"pair": s_["pair"], "depth_rel": s_["depth_rel"]} for s_ in u.get("samples", []) if s_.get("status") == "ok"]}
+                                                  "samples": [{"pair": s_.get("pair") or s_.get("page_url") or s_.get("file"), "depth_rel": s_["depth_rel"],
+                          "channel": s_.get("channel", "pairs_manifest")} for s_ in u.get("samples", []) if s_.get("status") == "ok"]}
     # unpaired samples are all AFTER-WASH: they only inform the after_wash prior
     if u["n"]:
         wp = prior.get("n_after_wash", 0); mp = prior.get("depth_rel_mean_after_wash", 0.0)

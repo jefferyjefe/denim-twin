@@ -58,3 +58,28 @@ A photo where the fringe is resolvable: contributed close-range shots (fringe �
 coin, where the floor (a few px of mask error) is small against the signal. The contributor form already asks for the
 coin; it should also ask for one close-up of the hem. Until then `predict.py` should say the fringe depth is a
 placeholder — it already prints "INSUFFICIENT (n<5)", which understates the problem, so the wording is now stronger.
+
+## Rebuild of the prior on one method (2026-08-29, same day)
+Every channel now measures the same way (`eval/fringe_measure.py`); the SAM-derived numbers are gone from
+`data/priors/*`, and `fringe.json` carries `measurement_method`, `validated: false` and the control result as fields so
+no consumer can quote it as evidence by accident.
+
+| | before (SAM) | after (direct) |
+|---|---|---|
+| after-wash samples in the prior | 3 | **8** (1 paired + 7 unpaired) |
+| after-wash mean depth_rel | 0.052 | **0.0072** |
+| after-cut mean depth_rel | 0.0015 | 0.0020 |
+| held-out error on the one fray pair | 15.2 px (predicted 17.4, measured 2.2) | **0.5 px** (predicted 2.7, measured 2.2) |
+| 80% interval coverage over 11 runs | 0.18 | **0.55** (nominal 0.80 — still miscalibrated) |
+
+The sample count rose because the harvested photos are no longer rejected by a gate that existed only to catch SAM's
+broken masks (4 of 7 candidates now measure; +2 from the older manifest).
+
+**Do not read the improved held-out error as progress on fray prediction.** It is one pair, and the reason prediction
+and measurement now agree is that both are small numbers near the method's noise floor. The apparent 3.6× separation
+between after-wash (0.0072) and after-cut (0.0020) is also partly manufactured: `fit_fringe.py` forces finished hems
+(cuffed/hemmed/serged) to depth 0 by rule, and four of the five after-cut pairs are cuffed. Measured without that rule,
+the cuffed controls sit at 0.0081 — indistinguishable from the frayed group. The control result stands, and it is the
+finding of record: **we cannot yet measure fray depth from these photos.**
+
+Gate 5 verdict is unchanged: INSUFFICIENT (1 after-wash pair with a held-out prediction; needs ≥10).
