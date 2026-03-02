@@ -24,6 +24,8 @@ p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-o
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
 p.add_argument("--coin", help="coin type in the BEFORE photo (see util/coins.py); metric scale is recovered with the garment masked out")
+p.add_argument("--edge-treatment", choices=["raw", "cuffed", "hemmed", "serged", "hand_frayed"], default="raw",
+               help="how the cut edge was finished; a finished hem does not fray, so no fringe is rendered (modification.expects_fringe)")
 p.add_argument("--wash", choices=["none", "conservative", "median", "aggressive"], default="none", help="procedural wash appearance v0 (shrink + hem roll + colour; canon/wash.py). Default none keeps the bench unchanged")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
@@ -189,10 +191,16 @@ else:
 if a.prior:
     from denimtwin.prior import predict_depth_rel
     pr = json.load(open(a.prior)); ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0])
-    rel, n_eff, sd_rel_prior = predict_depth_rel(pr, a.state, a.exclude)
+    rel, n_eff, sd_rel_prior = predict_depth_rel(pr, a.state, a.exclude, os.path.join(os.path.dirname(__file__), '..', 'data/external/pairs.jsonl'))
     depth_px = rel * ww; depth_source = f"prior[{a.state}] (n={n_eff}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if n_eff < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
+from denimtwin.modification import CutModification as _CM, WashProtocol as _WP
+_expects = _CM(inseam_fraction=0.5, edge_treatment=a.edge_treatment,
+               wash=_WP(cycles=1 if a.state == "after_wash" else 0)).expects_fringe()
+if not _expects:
+    FLAGS.append(f"no fringe rendered: edge_treatment '{a.edge_treatment}' with {'a wash' if a.state == 'after_wash' else 'no wash'} does not fray (EXP_0017)")
+    depth_px = 0.0; depth_source += " [suppressed: finished hem]"
 depth_mm = depth_px * mmpp
 bmask_pred = locals().get("bmask_pred", bmask); removed_pred = locals().get("removed_pred", removed); keep_pred = locals().get("keep_pred", keep)
 res = render_three(cut, removed_pred, bmask_pred, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
@@ -224,7 +232,7 @@ for k in res:
 for r in rows["median"]:
     if r["system"] != "prediction": md += row(r["system"], r) + "\n"
 from denimtwin.modification import CutModification, WashProtocol
-mod = CutModification(cut_path_canonical=[[0.0, 0.0]], edge_treatment="raw" if a.state == "after_cut" else "hand_frayed", wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed)
+mod = CutModification(cut_path_canonical=[[0.0, 0.0]], edge_treatment=a.edge_treatment, wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed)
 # `inseam_fraction` is defined in CANONICAL coordinates (see modification.py); measuring it in image y between the
 # crotch and hem landmarks gave a different number — off by up to 0.21 of the leg on the found pairs, and negative
 # (clipped to 0) on four of them (EXP_0014, finding 1). Map the fitted cut into canonical space instead.

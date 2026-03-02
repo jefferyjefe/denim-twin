@@ -32,12 +32,37 @@ for note in sorted(glob.glob(str(ROOT / "experiments/pairs/*/NOTE.md"))):
         _d = json.load(open(mj))
         if _d.get("depth_direct_px_before_frame") is not None: dl = dr = float(_d["depth_direct_px_before_frame"])
     finish = RECS.get(Path(note).parent.name, {}).get("hem_finish", "unknown")
-    if finish in ("cuffed", "hemmed", "serged"): dl = dr = 0.0            # finished hems have no fringe; a measured value is an artefact
-    if finish == "raw" and kind == "after_cut": dl, dr = min(dl, 0.01 * ww), min(dr, 0.01 * ww)   # unwashed raw cut: ~no fringe yet
-    rows.append(dict(pair=Path(note).parent.name, kind=kind, hem_finish=finish, waist_px=ww, depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww, angle_l=al, angle_r=ar))
-prior = {"n": len(rows), "insufficient": len(rows) < 5, "measurement_method": "direct (eval/fringe_measure.py)",
-         "validated": False, "validation_note": "EXP_0015: this measurement scores finished-hem controls the same as frayed hems; the depths below are NOT evidence of fray depth",
-         "pairs": rows}
+    measured = (dl + dr) / 2
+    rule = None
+    if finish in ("cuffed", "hemmed", "serged"): dl = dr = 0.0; rule = "finished hem -> 0 by rule"
+    elif finish == "raw" and kind == "after_cut":
+        cap = 0.01 * ww
+        if min(dl, dr) > cap or max(dl, dr) > cap: rule = f"unwashed raw cut -> capped at 0.01*waist ({cap:.1f}px) by rule"
+        dl, dr = min(dl, cap), min(dr, cap)
+    rows.append(dict(pair=Path(note).parent.name, kind=kind, hem_finish=finish, waist_px=ww,
+                     depth_px=(dl + dr) / 2, depth_rel=(dl + dr) / 2 / ww,
+                     depth_px_measured=measured, depth_rel_measured=measured / ww, rule_applied=rule,
+                     angle_l=al, angle_r=ar))
+prior = {
+    "n": len(rows),
+    "insufficient": True,          # ALWAYS: no depth measurement in this project has passed a control (EXP_0015/0016)
+    "validated": False,
+    "measurement_method": "none — depth measurements below are diagnostics, not evidence",
+    "validation_note": ("EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, "
+                        "displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot "
+                        "separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw "
+                        "measurement (depth_*_measured) so the difference is visible. Do not fit anything to them."),
+    # what a renderer should use until a validated measurement exists: a depth stated in a tutorial, not measured by us
+    "assumed_depth": {
+        "value_mm": 12.7,
+        "basis": ("itsalwaysautumn.com frayed method: a straight stitch is sewn 1/2 in (12.7 mm) above the raw cut "
+                  "edge before washing, and after ONE wash/dry the page states the fray 'formed up to stitch line'."),
+        "source_pair": "c94c958696",
+        "caveat": ("the fray was ARRESTED by the stitching, so 12.7 mm is what one wash reached against a stop, not a "
+                   "free fray depth; and it is one garment, one fabric, one machine."),
+    },
+    "pairs": rows,
+}
 if rows:
     for k in ("depth_rel", "depth_px"):
         v = [r[k] for r in rows]; prior[k + "_mean"] = st.mean(v); prior[k + "_sd"] = st.pstdev(v) if len(v) > 1 else None
@@ -70,5 +95,4 @@ if up.exists():
     if u["n"]:
         wp = prior.get("n_after_wash", 0); mp = prior.get("depth_rel_mean_after_wash", 0.0)
         prior["depth_rel_mean_after_wash_combined"] = (mp * wp + u["depth_rel_mean"] * u["n"]) / (wp + u["n"]); prior["n_after_wash_combined"] = wp + u["n"]
-        prior["insufficient"] = prior["n_after_wash_combined"] < 5 or prior.get("n_after_cut", 0) < 3
 (OUT / "fringe.json").write_text(json.dumps(prior, indent=1)); print(json.dumps({k: v for k, v in prior.items() if k != "pairs"}, indent=1))

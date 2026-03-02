@@ -1,0 +1,146 @@
+[
+ {
+  "file": "00d0c4704c.jpg",
+  "page": "https://www.tateandyoko.com/products/andie-linen-blend-denim-indigo-1",
+  "hem_finish": "hemmed",
+  "waist_px": 517,
+  "garment": "jeans",
+  "rough_p90": 0.0,
+  "rough_mean": 0.075,
+  "rough_ok": true,
+  "depth_px": 4.0,
+  "depth_rel": 0.0077,
+  "size": [
+   2048,
+   2048
+  ]
+ },
+ {
+  "file": "6f606e9956.jpg",
+  "page": "https://www.tateandyoko.com/products/twin-pleated-short-10oz-rinsed-denim",
+  "hem_finish": "hemmed",
+  "waist_px": 1123,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.0,
+  "rough_ok": true,
+  "depth_px": 2.0,
+  "depth_rel": 0.0018,
+  "size": [
+   2048,
+   2048
+  ]
+ },
+ {
+  "file": "850ceb6690.jpg",
+  "page": "https://www.tateandyoko.com/products/andie-organic-hickory-1",
+  "hem_finish": "hemmed",
+  "waist_px": 1185,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.26,
+  "rough_ok": true,
+  "depth_px": 2.0,
+  "depth_rel": 0.0017,
+  "size": [
+   2048,
+   2048
+  ]
+ },
+ {
+  "file": "dbde5e4083.jpg",
+  "page": "https://www.tateandyoko.com/products/andie-secret-agent-bleach-blue",
+  "hem_finish": "hemmed",
+  "waist_px": 987,
+  "garment": "shorts",
+  "rough_p90": 4.0,
+  "rough_mean": 2.276,
+  "rough_ok": true,
+  "depth_px": 5.0,
+  "depth_rel": 0.0051,
+  "size": [
+   2048,
+   2048
+  ]
+ },
+ {
+  "file": "7b0a1ceaaf.jpg",
+  "page": "https://www.tateandyoko.com/products/andie-short-vertical-slub-denim-indigo-1",
+  "hem_finish": "hemmed",
+  "waist_px": 1153,
+  "garment": "jeans",
+  "rough_p90": 4.0,
+  "rough_mean": 1.183,
+  "rough_ok": true,
+  "depth_px": 10.0,
+  "depth_rel": 0.0087,
+  "size": [
+   2048,
+   2048
+  ]
+ },
+ {
+  "file": "bf69fc5a92.jpg",
+  "page": "https://www.sonofastag.com/products/buzz-ricksons-m-1951-denim-civilian-shorts-rinsed",
+  "hem_finish": "hemmed",
+  "waist_px": 1247,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.394,
+  "rough_ok": true,
+  "depth_px": 5.0,
+  "depth_rel": 0.004,
+  "size": [
+   2500,
+   2500
+  ]
+ },
+ {
+  "file": "af71c8a996.jpg",
+  "page": "https://www.sonofastag.com/products/fullcount-1143-8oz-denim-resort-shorts-hand-wash",
+  "hem_finish": "hemmed",
+  "waist_px": 1049,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.186,
+  "rough_ok": true,
+  "depth_px": 2.0,
+  "depth_rel": 0.0019,
+  "size": [
+   2500,
+   2500
+  ]
+ },
+ {
+  "file": "f94f6b8545.jpg",
+  "page": "https://www.sonofastag.com/products/sugar-cane-sc5194-14-25oz-1947-modeldenim-shorts-one-wash",
+  "hem_finish": "hemmed",
+  "waist_px": 1366,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.328,
+  "rough_ok": true,
+  "depth_px": 3.0,
+  "depth_rel": 0.0022,
+  "size": [
+   2500,
+   2500
+  ]
+ },
+ {
+  "file": "412c1097ef.jpg",
+  "page": "https://www.blueowl.us/products/obelisk-shorts-in-natural-undyed-powerloom-denim",
+  "hem_finish": "hemmed",
+  "waist_px": 994,
+  "garment": "shorts",
+  "rough_p90": 0.0,
+  "rough_mean": 0.89,
+  "rough_ok": true,
+  "depth_px": 2.0,
+  "depth_rel": 0.002,
+  "size": [
+   2000,
+   1600
+  ]
+ }
+]

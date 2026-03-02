@@ -1,1 +1,0 @@
-{"garment_id": "4c30342e20", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 4.8993855016022065, "nominal": 0.8, "lo": 2.1304123411182054, "hi": 7.668358662086208, "real": 4.077844311377246, "source": "prior sd (LOO, n=8)"}

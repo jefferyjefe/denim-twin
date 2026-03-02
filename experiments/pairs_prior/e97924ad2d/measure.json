@@ -8,5 +8,5 @@
  "direct_ok": true,
  "depth_sam_hemfit_px": 1.0,
  "depth_used_px": 0.0,
- "depth_source": "prior[after_cut] (n=4 after excluding self, INSUFFICIENT)"
+ "depth_source": "prior[after_cut] (n=4 after excluding self, INSUFFICIENT) [suppressed: finished hem]"
 }

@@ -7,6 +7,6 @@
  "direct_coverage": 1.0,
  "direct_ok": true,
  "depth_sam_hemfit_px": 2.75,
- "depth_used_px": 0.5660000000000001,
- "depth_source": "prior[after_cut] (n=5 after excluding self)"
+ "depth_used_px": 0.0,
+ "depth_source": "prior[after_cut] (n=5 after excluding self) [suppressed: finished hem]"
 }

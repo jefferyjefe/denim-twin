@@ -63,8 +63,11 @@ for name, (im, sil) in systems.items():
     from denimtwin.eval.hem_texture import hem_roughness
     _ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0]) if all(k in lmb for k in ("waist_left", "waist_right")) else None
     _hp = hem_roughness(sil, waist_px=_ww); _hr = hem_roughness(rmask, waist_px=_ww)
-    r["hem_rough_p90_pred"] = _hp["p90_px"]; r["hem_rough_p90_real"] = _hr["p90_px"]
-    r["hem_rough_err_px"] = abs(_hp["p90_px"] - _hr["p90_px"])
+    # a refused measurement (broken mask) is UNKNOWN, not zero: reporting 0.0 would read as "this hem is smooth"
+    r["hem_rough_p90_pred"] = _hp["p90_px"] if _hp["ok"] else float("nan")
+    r["hem_rough_p90_real"] = _hr["p90_px"] if _hr["ok"] else float("nan")
+    r["hem_rough_err_px"] = abs(r["hem_rough_p90_pred"] - r["hem_rough_p90_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
+    r["hem_rough_refused"] = (not _hp["ok"]) or (not _hr["ok"])
     r["fringe_iou_vs_real"] = G.fringe_iou(sil, rmask, keep, garment_before)
     r["fringe_profile_dist"] = G.fringe_profile_distance_masks(sil, rmask, keep, garment_before)
     rows.append(r)

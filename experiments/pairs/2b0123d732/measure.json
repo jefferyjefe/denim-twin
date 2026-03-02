@@ -7,6 +7,6 @@
  "direct_coverage": 0.9118279569892473,
  "direct_ok": true,
  "depth_sam_hemfit_px": 8.082758620689654,
- "depth_used_px": 2.0206896551724136,
- "depth_source": "measured from after-photo (NOT a prediction)"
+ "depth_used_px": 0.0,
+ "depth_source": "measured from after-photo (NOT a prediction) [suppressed: finished hem]"
 }

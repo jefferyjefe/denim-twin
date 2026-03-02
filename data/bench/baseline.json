@@ -1,23 +1,23 @@
 {
  "2691c1a8d0": {
-  "sil_iou_vs_real": 0.6173658986647531,
-  "hem_chamfer": 46.35511363636363,
-  "fringe_iou_vs_real": 0.04613509749303621
+  "sil_iou_vs_real": 0.6148927445603424,
+  "hem_chamfer": 47.54261363636363,
+  "fringe_iou_vs_real": 0.012534818941504178
  },
  "26b1041d00": {
-  "sil_iou_vs_real": 0.8872032480009917,
-  "hem_chamfer": 2.964028776978417,
-  "fringe_iou_vs_real": 0.16718266253869968
+  "sil_iou_vs_real": 0.8875769940887158,
+  "hem_chamfer": 2.8303249097472922,
+  "fringe_iou_vs_real": 0.03278688524590164
  },
  "2b0123d732": {
-  "sil_iou_vs_real": 0.847208480565371,
-  "hem_chamfer": 3.7777777777777777,
-  "fringe_iou_vs_real": 0.1
+  "sil_iou_vs_real": 0.8470038064165307,
+  "hem_chamfer": 3.8185185185185184,
+  "fringe_iou_vs_real": 0.044444444444444446
  },
  "443d1d4658": {
-  "sil_iou_vs_real": 0.917961209347382,
-  "hem_chamfer": 8.941814569536422,
-  "fringe_iou_vs_real": 0.04106280193236715
+  "sil_iou_vs_real": 0.9179929654097544,
+  "hem_chamfer": 8.915933774834437,
+  "fringe_iou_vs_real": 0.012626262626262626
  },
  "4bfef03bd7": {
   "sil_iou_vs_real": 0.7525948743459003,
@@ -25,13 +25,13 @@
   "fringe_iou_vs_real": 0.028714911151171776
  },
  "8d9f0df4ad": {
-  "sil_iou_vs_real": 0.9442843983407359,
-  "hem_chamfer": 8.565872020075282,
-  "fringe_iou_vs_real": 0.06436420722135008
+  "sil_iou_vs_real": 0.9438488081405584,
+  "hem_chamfer": 8.755332496863238,
+  "fringe_iou_vs_real": 0.03513318934485241
  },
  "e97924ad2d": {
-  "sil_iou_vs_real": 0.8956454612442541,
-  "hem_chamfer": 1.4645669291338583,
-  "fringe_iou_vs_real": 0.24358974358974358
+  "sil_iou_vs_real": 0.8966050467421101,
+  "hem_chamfer": 1.2519685039370079,
+  "fringe_iou_vs_real": 0.2328042328042328
  }
 }

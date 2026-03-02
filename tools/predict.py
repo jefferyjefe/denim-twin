@@ -138,7 +138,16 @@ if not mod.expects_fringe():
 else:
     from denimtwin.prior import predict_depth_rel
     pr = json.load(open(a.prior)); rel, n_eff, sd_rel = predict_depth_rel(pr, a.state, None)
-    depth_px = rel * ww; src = f"prior[{a.state}] n={n_eff}" + (" — INSUFFICIENT (<5 samples): treat as a placeholder" if n_eff < 5 else "")
+    depth_px = rel * ww
+    prior_validated = bool(pr.get("validated", False)); prior_note = pr.get("validation_note", "")
+    src = f"prior[{a.state}] n={n_eff}" + ("" if prior_validated else " — UNVALIDATED")
+    if not prior_validated:
+        # unconditional: not gated on n, not gated on resolution (review 5, finding 6)
+        FLAGS.append("fringe depth is a PLACEHOLDER, not an estimate: " + (prior_note or "the prior declares itself unvalidated"))
+        src += " — " + (prior_note or "the prior declares itself unvalidated")
+    _ad = pr.get("assumed_depth")
+    if _ad:
+        FLAGS.append(f"the only sourced fray depth we have is {_ad['value_mm']} mm — {_ad['basis']} Caveat: {_ad['caveat']}")
     if n_eff < 5: FLAGS.append(f"fringe prior has only n={n_eff} samples: the depth below is not yet evidence-backed")
 depth_mm = depth_px * mmpp_eff
 half = 1.28 * sd_rel * ww                                    # ~80% interval under a normal assumption (uncalibrated: EXP_0009)
@@ -177,7 +186,10 @@ pred = {"image": os.path.abspath(a.image), "state": a.state, "wash_preset": a.wa
         "cut": {"inseam_fraction": frac, "angle_deg": a.angle_deg, "removed_fraction_of_garment": float(rf)},
         "fringe_depth": {"unit": unit, "median": float(depth_mm), "lo": float(lo_px * mmpp_eff), "hi": float(hi_px * mmpp_eff),
                          "below_render_resolution": bool(depth_px < 5.0),
-                         "nominal_coverage": 0.8, "calibrated": False, "n": int(n_eff), "source": src},
+                         "nominal_coverage": 0.8, "calibrated": False, "n": int(n_eff), "source": src,
+                         "prior_validated": bool(locals().get("prior_validated", False)),
+                         "prior_validation_note": locals().get("prior_note", ""),
+                         "assumed_depth_mm_sourced": (json.load(open(a.prior)).get("assumed_depth") or {}).get("value_mm")},
         "changed_fraction_of_kept_region": changed_outside,
         "flags": FLAGS}
 json.dump(pred, open(f"{O}/prediction.json", "w"), indent=1)

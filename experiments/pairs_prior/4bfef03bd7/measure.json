@@ -7,6 +7,6 @@
  "direct_coverage": 0.6063829787234043,
  "direct_ok": true,
  "depth_sam_hemfit_px": 36.458083832335326,
- "depth_used_px": 2.718326295328615,
- "depth_source": "prior[after_wash] (n=7 after excluding self)"
+ "depth_used_px": 2.6885867159082095,
+ "depth_source": "prior[after_wash] (n=5 after excluding self)"
 }

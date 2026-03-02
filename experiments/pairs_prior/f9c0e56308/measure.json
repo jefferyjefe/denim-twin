@@ -2,11 +2,11 @@
  "state": "after_wash",
  "waist_px_before": 718.0,
  "waist_px_after": 911.0,
- "depth_direct_px_before_frame": 8.669593852908891,
- "depth_direct_rel": 0.012074643249176729,
- "direct_coverage": 0.7486744432661718,
+ "depth_direct_px_before_frame": 9.457738748627882,
+ "depth_direct_rel": 0.013172338090010978,
+ "direct_coverage": 0.5135135135135135,
  "direct_ok": true,
  "depth_sam_hemfit_px": 0.0,
- "depth_used_px": 5.16557825279058,
- "depth_source": "prior[after_wash] (n=8 after excluding self)"
+ "depth_used_px": 5.076109011755483,
+ "depth_source": "prior[after_wash] (n=6 after excluding self)"
 }

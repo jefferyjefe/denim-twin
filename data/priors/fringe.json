@@ -1,9 +1,15 @@
 {
  "n": 6,
- "insufficient": false,
- "measurement_method": "direct (eval/fringe_measure.py)",
+ "insufficient": true,
  "validated": false,
- "validation_note": "EXP_0015: this measurement scores finished-hem controls the same as frayed hems; the depths below are NOT evidence of fray depth",
+ "measurement_method": "none \u2014 depth measurements below are diagnostics, not evidence",
+ "validation_note": "EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.",
+ "assumed_depth": {
+  "value_mm": 12.7,
+  "basis": "itsalwaysautumn.com frayed method: a straight stitch is sewn 1/2 in (12.7 mm) above the raw cut edge before washing, and after ONE wash/dry the page states the fray 'formed up to stitch line'.",
+  "source_pair": "c94c958696",
+  "caveat": "the fray was ARRESTED by the stitching, so 12.7 mm is what one wash reached against a stop, not a free fray depth; and it is one garment, one fabric, one machine."
+ },
  "pairs": [
   {
    "pair": "26b1041d00",
@@ -12,6 +18,9 @@
    "waist_px": 241,
    "depth_px": 0.0,
    "depth_rel": 0.0,
+   "depth_px_measured": 0.0,
+   "depth_rel_measured": 0.0,
+   "rule_applied": "finished hem -> 0 by rule",
    "angle_l": 9.1,
    "angle_r": -9.5
   },
@@ -22,6 +31,9 @@
    "waist_px": 293,
    "depth_px": 0.0,
    "depth_rel": 0.0,
+   "depth_px_measured": 2.0206896551724136,
+   "depth_rel_measured": 0.00689655172413793,
+   "rule_applied": "finished hem -> 0 by rule",
    "angle_l": -20.0,
    "angle_r": 54.9
   },
@@ -32,6 +44,9 @@
    "waist_px": 336,
    "depth_px": 0.0,
    "depth_rel": 0.0,
+   "depth_px_measured": 1.8823529411764706,
+   "depth_rel_measured": 0.0056022408963585435,
+   "rule_applied": "finished hem -> 0 by rule",
    "angle_l": 11.4,
    "angle_r": -11.3
   },
@@ -42,6 +57,9 @@
    "waist_px": 369,
    "depth_px": 2.2095808383233533,
    "depth_rel": 0.005988023952095809,
+   "depth_px_measured": 2.2095808383233533,
+   "depth_rel_measured": 0.005988023952095809,
+   "rule_applied": null,
    "angle_l": -10.4,
    "angle_r": 4.5
   },
@@ -52,6 +70,9 @@
    "waist_px": 587,
    "depth_px": 0.0,
    "depth_rel": 0.0,
+   "depth_px_measured": 2.5689277899343543,
+   "depth_rel_measured": 0.00437636761487965,
+   "rule_applied": "finished hem -> 0 by rule",
    "angle_l": 14.1,
    "angle_r": -14.8
   },
@@ -62,6 +83,9 @@
    "waist_px": 131,
    "depth_px": 1.31,
    "depth_rel": 0.01,
+   "depth_px_measured": 2.020565552699229,
+   "depth_rel_measured": 0.015424164524421595,
+   "rule_applied": "unwashed raw cut -> capped at 0.01*waist (1.3px) by rule",
    "angle_l": 23.4,
    "angle_r": -22.0
   }
@@ -75,20 +99,10 @@
  "depth_rel_mean_after_cut": 0.002,
  "n_after_cut": 5,
  "unpaired": {
-  "n": 7,
-  "depth_rel_mean": 0.007366737927719825,
-  "depth_rel_sd": 0.00336075528257889,
+  "n": 5,
+  "depth_rel_mean": 0.0072861428615398635,
+  "depth_rel_sd": 0.002937455246811147,
   "samples": [
-   {
-    "pair": "c94c958696",
-    "depth_rel": 0.0033370411568409346,
-    "channel": "pairs_manifest"
-   },
-   {
-    "pair": "ee4bf13a3c",
-    "depth_rel": 0.011799410029498525,
-    "channel": "pairs_manifest"
-   },
    {
     "pair": "2c12b41b48",
     "depth_rel": 0.0037105751391465678,
@@ -116,6 +130,6 @@
    }
   ]
  },
- "depth_rel_mean_after_wash_combined": 0.007194398680766823,
- "n_after_wash_combined": 8
+ "depth_rel_mean_after_wash_combined": 0.007069789709965854,
+ "n_after_wash_combined": 6
 }
