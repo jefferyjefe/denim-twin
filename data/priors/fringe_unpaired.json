@@ -1,19 +1,13 @@
 {
- "n": 7,
- "depth_rel_mean": 0.007366737927719825,
- "depth_rel_sd": 0.00336075528257889,
+ "n": 5,
+ "depth_rel_mean": 0.0072861428615398635,
+ "depth_rel_sd": 0.002937455246811147,
  "samples": [
   {
    "pair": "c94c958696",
-   "file": "c94c958696_after_wash_e10298f7.jpg",
-   "status": "ok",
-   "waist_px": 899,
-   "depth_px": 3.0,
-   "depth_rel": 0.0033370411568409346,
-   "coverage": 0.326,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 1.009
+   "file": null,
+   "status": "more_than_one_wash",
+   "note": "Finished frayed-edge cutoffs after several washes"
   },
   {
    "pair": "4bfef03bd7",
@@ -21,15 +15,21 @@
   },
   {
    "pair": "ee4bf13a3c",
-   "file": "ee4bf13a3c_after_wash_7a3c514f.jpg",
-   "status": "ok",
-   "waist_px": 339,
-   "depth_px": 4.0,
-   "depth_rel": 0.011799410029498525,
-   "coverage": 0.887,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 0.974
+   "file": null,
+   "status": "hem_finish_not_evidenced_as_frayed",
+   "note": "Shorts after first washer/dryer cycle (image order per page; role assignment approximate)"
+  },
+  {
+   "pair": "ee4bf13a3c",
+   "file": null,
+   "status": "more_than_one_wash",
+   "note": "Final front/back after second wash"
+  },
+  {
+   "pair": "ee4bf13a3c",
+   "file": null,
+   "status": "hem_finish_not_evidenced_as_frayed",
+   "note": "Before/after composite"
   },
   {
    "pair": "8d9f0df4ad",

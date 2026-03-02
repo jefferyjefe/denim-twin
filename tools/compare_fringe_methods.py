@@ -33,8 +33,11 @@ def sources():
         if note.exists() and "rejected" in note.read_text().splitlines()[0]: continue
         mod = Path(d).parent / "modification.json"
         if mod.exists() and json.load(open(mod)).get("wash", {}).get("cycles", 0) < 1: continue   # after_cut only
+        if pid in EXCL: continue          # exclude.txt applies here too (review 5, finding 4)
         yield f"pair:{pid}", d
 
+EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines()
+        if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
 seg = SamSegmenter(); rows = []; tiles = []
 for label, path in sources():
     img = cv2.imread(path)

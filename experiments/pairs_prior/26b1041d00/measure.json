@@ -2,11 +2,11 @@
  "state": "after_cut",
  "waist_px_before": 241.0,
  "waist_px_after": 241.0,
- "depth_direct_px_before_frame": 4.0,
- "depth_direct_rel": 0.016597510373443983,
+ "depth_direct_px_before_frame": null,
+ "depth_direct_rel": null,
  "direct_coverage": 0.9344262295081968,
- "direct_ok": true,
+ "direct_ok": false,
  "depth_sam_hemfit_px": 0.0,
- "depth_used_px": 0.6025,
- "depth_source": "prior[after_cut] (n=4 after excluding self, INSUFFICIENT)"
+ "depth_used_px": 0.0,
+ "depth_source": "prior[after_cut] (n=4 after excluding self, INSUFFICIENT) [suppressed: finished hem]"
 }

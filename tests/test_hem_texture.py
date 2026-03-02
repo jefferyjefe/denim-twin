@@ -6,13 +6,23 @@ import numpy as np
 from denimtwin.eval.hem_texture import hem_roughness, hem_profile
 
 def _mask(kind, W=800, H=600, edge=430, amp=6, seed=0, curve=0.0, tilt=0.0):
-    """Garment block whose bottom edge is smooth, curved, tilted, or jagged."""
+    """Garment block whose bottom edge is smooth, curved, tilted, or frayed.
+
+    The frayed edge is *spatially correlated* noise (a smoothed random field), not per-column jitter. That matters:
+    SAM does not resolve individual threads, so on real photos a frayed hem's mask is a smooth outline with occasional
+    notches — measured contour compactness 1.46-2.10 across 8 real frayed garments. Per-column jitter produces
+    compactness ~8, which is not a garment mask at all and would be refused by the quality gate (correctly)."""
     rng = np.random.default_rng(seed)
     m = np.zeros((H, W), bool)
+    noise = np.zeros(W)
+    if kind == "frayed":
+        raw = rng.normal(0, 1, W)
+        kern = np.ones(9) / 9.0
+        noise = np.convolve(raw, kern, mode="same")
+        noise = noise / (np.abs(noise).max() + 1e-9) * amp
     for x in range(60, W - 60):
         t = (x - 60) / (W - 120)
-        y = edge + curve * np.sin(np.pi * t) * 40 + tilt * (t - 0.5) * 60
-        if kind == "frayed": y += rng.integers(-amp, amp + 1)
+        y = edge + curve * np.sin(np.pi * t) * 40 + tilt * (t - 0.5) * 60 + noise[x]
         m[100:int(round(y)), x] = True
     return m
 
@@ -47,3 +57,23 @@ def test_too_few_columns_is_reported_not_guessed():
     m = np.zeros((200, 200), bool); m[50:100, 90:100] = True
     r = hem_roughness(m, waist_px=10)
     assert not r["ok"] and r["p90_px"] == 0.0
+
+def test_a_broken_mask_is_refused_not_called_frayed():
+    """EXP_0016 addendum: 2 of 9 high-resolution FINISHED hems were called frayed because SAM's mask was speckled.
+    A ragged outline must be refused (ok=False with a reason), never reported as roughness."""
+    from denimtwin.eval.hem_texture import mask_compactness
+    import cv2
+    m = _mask("smooth")
+    rng = np.random.default_rng(3)
+    # SAM's real failure on patterned/bleached denim: coarse blobs of the garment go missing, so the OUTER outline
+    # wanders (interior speckle alone does not — the external contour ignores holes).
+    field = cv2.GaussianBlur(rng.normal(0, 1, m.shape).astype(np.float32), (0, 0), 6.0)
+    broken = m & (field > -0.02)
+    assert mask_compactness(broken) > 3.0 > mask_compactness(m)
+    r = hem_roughness(broken, waist_px=680)
+    assert not r["ok"] and "compactness" in r.get("reason", ""), r
+    assert r["p90_px"] == 0.0
+
+def test_a_clean_mask_reports_its_compactness_and_is_judged():
+    r = hem_roughness(_mask("frayed"), waist_px=680)
+    assert r["ok"] and 1.0 <= r["compactness"] <= 3.0 and r["p90_px"] > 0

@@ -22,6 +22,14 @@ for r in recs:
     if pn.exists() and not pn.read_text().splitlines()[0].startswith("# PAIR — rejected"): out.append(dict(pair=pid, status="paired_elsewhere")); continue   # its after-photo is already a paired sample
     for im in r["images"]:
         if im["role"] != "after_wash": continue
+        # the thesis is ONE wash on a RAW cut edge: a photo after several washes, or of a hem whose finish is not
+        # evidenced as frayed, is a different quantity and must not enter the prior (review 5, finding 10)
+        note = (im.get("note") or "").lower()
+        if any(w in note for w in ("several wash", "second wash", "third wash", "multiple wash", "each wash", "washes")):
+            out.append(dict(pair=pid, file=None, status="more_than_one_wash", note=im.get("note"))); continue
+        finish = r.get("hem_finish")
+        if finish != "frayed" and "fray" not in note:
+            out.append(dict(pair=pid, file=None, status="hem_finish_not_evidenced_as_frayed", note=im.get("note"))); continue
         f = f"{pid}_{im['role']}_{hashlib.sha1(im['url'].encode()).hexdigest()[:8]}{os.path.splitext(urllib.parse.urlparse(im['url']).path)[1] or '.jpg'}"
         tag = next((t.get("tag") for t in (v["images"] if v else []) if t.get("file") == f), None)
         if tag != "whole_garment_flat" or not (IMG / f).exists(): continue

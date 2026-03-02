@@ -1,1 +1,1 @@
-{"garment_id": "8d9f0df4ad", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 1.4675, "nominal": 0.8, "lo": 0.0, "hi": 4.720984236937379, "real": 1.9266958424507656, "source": "prior sd (LOO, n=4)"}
+{"garment_id": "8d9f0df4ad", "stratum": "after_cut", "metric": "fringe_depth_px", "median": 0.0, "nominal": 0.8, "lo": 0.0, "hi": 3.253484236937379, "real": 2.5689277899343543, "source": "prior sd (LOO, n=4)"}
