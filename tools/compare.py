@@ -58,6 +58,13 @@ for name, (im, sil) in systems.items():
     band = ((keep & (d_in <= band_px)) | (~keep & (d_out <= band_px))) & garment_before & (rmask | sil)
     r["ssim_edge_band_vs_real"] = I.unchanged_ssim(im, real, band) if band.sum() > 500 else float("nan")
     r["dE_edge_band_vs_real"] = I.unchanged_color_delta_e(im, real, band) if band.sum() > 500 else float("nan")
+    # §6.3: hem roughness — the only fray observable that passes a negative control (EXP_0016). A crop-only null
+    # has a perfectly smooth hem, so this is where a fringe renderer must show up if it is doing anything real.
+    from denimtwin.eval.hem_texture import hem_roughness
+    _ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0]) if all(k in lmb for k in ("waist_left", "waist_right")) else None
+    _hp = hem_roughness(sil, waist_px=_ww); _hr = hem_roughness(rmask, waist_px=_ww)
+    r["hem_rough_p90_pred"] = _hp["p90_px"]; r["hem_rough_p90_real"] = _hr["p90_px"]
+    r["hem_rough_err_px"] = abs(_hp["p90_px"] - _hr["p90_px"])
     r["fringe_iou_vs_real"] = G.fringe_iou(sil, rmask, keep, garment_before)
     r["fringe_profile_dist"] = G.fringe_profile_distance_masks(sil, rmask, keep, garment_before)
     rows.append(r)
