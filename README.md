@@ -50,16 +50,20 @@ Put a coin in the frame if you want any answer in centimetres.
 
 ## Status (2026-08-29, honest)
 - Product path (`tools/predict.py`): one photo + a cut spec → three renders + an 80% fringe-depth interval, every
-  number labelled with where it came from. It runs end-to-end; its fringe prior has **n=3**, its intervals are
-  **not calibrated** (EXP_0009 coverage 0/10), and — since EXP_0015 — its fringe depth rests on **no validated
-  measurement at all**. The outputs say so.
+  number labelled with where it came from. It runs end-to-end; its intervals are **not calibrated**, and its fringe
+  depth rests on **no validated measurement at all** — depth was withdrawn as evidence after five reviews (EXP_0015).
+  The only sourced fray depth is 12.7 mm, from a tutorial that stitched a stop 1/2 in above the cut and reported the
+  fray reaching it after one wash. Every prediction says all of this in its own output.
 - Evaluation path (`tools/run_pair.py`): before + after photo → mask → landmarks → canonical warp → cut → fringe →
   register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
 - On 11 usable found pairs, mean silhouette IoU: **0.768 product path** (what a user gets), 0.819 evaluation path
   (which reads the real after-photo), 0.507 no-op — so the cut *is* reproduced, but the honest number is the first one
-  (EXP_0014). **Fringe measurement is broken** (EXP_0015): SAM's prompted "fringe" mask returns the bottom third of the
-  fabric, and a direct thread measurement, though visually correct, scores a cuffed hem the same as a frayed one. Every
-  fringe number in the repo predates that check. The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
+  (EXP_0014). **Fringe DEPTH is not measurable here** (EXP_0015/0016): SAM's prompted mask returns the bottom third of the fabric;
+  a direct thread measurement returns garment-mask error, displaced shadows and patterned floors as "fringe"; and
+  resolution does not help, because the mask-error floor scales with the image. Depth is therefore no longer used as
+  evidence anywhere. **Hem roughness** (`eval/hem_texture.py`) is the fray signal that does survive its control —
+  0 false positives on 11 finished-hem garments, reliable above ~600–1000 px of waistband (EXP_0016), and the fringe
+  renderer beats crop-only on it 5-1-2 (p=0.22, EXP_0017). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
   fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
