@@ -64,3 +64,29 @@ are sparse and pale against a pale floor, which is a segmentation limit, not a m
 The controls are cuffed garments from the paired set and are systematically lower-resolution than the frayed set; the
 zero-false-positive result therefore rests on 14 measurements over waist 31–914 px, not on high-resolution controls.
 That is the single most important gap in this experiment.
+
+## Addendum (same day) — high-resolution controls, and the gate they forced
+The caveat above ("the controls are systematically lower-resolution than the frayed set") was the right thing to worry
+about. Nine finished-hem (all *hemmed*, turned-and-topstitched) denim shorts flat-lays at 2048–2500 px were harvested
+specifically as controls, and measured:
+
+| | photos | accepted by the mask gate | called rough (false positives) |
+|---|---|---|---|
+| high-resolution finished hems (waist 517–1366 px) | 9 | 7 | **0** |
+| lower-resolution finished hems (paired set) | 4 | 4 | **0** |
+| frayed + washed | 8 | 8 | 6 |
+
+**Two of the nine initially read as frayed (p90 4 and 8 px), and they were segmentation failures, not hems.** Both
+photos are of strongly patterned/bleached denim where SAM dropped large blobs of the leg; the roughness sat exactly on
+the ragged edges of those holes. That is a false positive of the kind that would have quietly become "fray detected"
+in a contributor pipeline.
+
+The separator is **contour compactness** (perimeter² / 4πA of the largest component): 3.96 and 4.05 for the two broken
+masks against ≤ 2.10 for every other photo in the set, frayed or finished. `hem_roughness` now refuses to judge a mask
+above 3.0 (`ok=False` with a reason) rather than reporting roughness. With that gate: **0 false positives in 11
+accepted control measurements, 2 refusals, 6/8 frayed detected.**
+
+Two honest caveats on the gate: the 3.0 bound sits between values measured on the same 21 photos that motivated it, so
+it is a *decision rule read off this data*, not a calibrated threshold; and every high-resolution control is a *hemmed*
+edge — a rolled cuff at this resolution could not be found (retail flat-lays are hemmed; cuffed examples live on sewing
+blogs below 1600 px). A cuff casts a fold shadow the hemmed edges do not, so that class is still untested.
