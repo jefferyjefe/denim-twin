@@ -5,7 +5,9 @@
   "evidence": "charter + protocol v0.1"
  },
  "gate_1": {
-  "passed": false
+  "passed": false,
+  "date": "2026-08-29",
+  "evidence": "EXP_0018: the closest available test \u2014 two photos of the same garment (front and back of one pair) \u2014 returns waist widths of 874 px and 191 px, because SAM segmented a back pocket instead of the garment at score 0.906. The pipeline is not repeatable across two photos of one garment, and no automatic mask-validity check we tried (area, compactness, denim colour, fabric texture, leg topology) separates a confident mistake from a correct mask. Human mask verification is now required for anything entering a prior (data/external/mask_verdicts.json)."
  },
  "gate_2": {
   "passed": true,
