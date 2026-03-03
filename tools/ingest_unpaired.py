@@ -76,6 +76,17 @@ def main():
         if not a.fetch: out.append({**base, "status": "not_fetched"}); continue
         try: p = fetch(rec)
         except Exception as e: out.append({**base, "status": f"download_failed: {type(e).__name__}"}); print("download failed:", rec["image_url"][:70]); continue
+        # EXP_0018: no measurement enters a prior from an unverified mask. SAM returns confidently wrong objects
+        # (a back pocket at score 0.906, a wall at 0.992) and no automatic check we tried separates them from correct
+        # masks — area, compactness, denim colour, fabric texture and leg topology each fail on a real photo. At this
+        # dataset size the honest gate is a person looking at the overlay (tools/mask_sheet.py).
+        _vf = ROOT / "data/external/mask_verdicts.json"
+        _verdicts = json.load(open(_vf))["verdicts"] if _vf.exists() else {}
+        _v = _verdicts.get(os.path.splitext(p.name)[0])
+        if _v is None:
+            out.append({**base, "status": "mask_unverified", "file": p.name}); print("mask not verified, refusing:", p.name); continue
+        if _v.get("verdict") != "ok":
+            out.append({**base, "status": "mask_rejected", "file": p.name, "saw": _v.get("saw")}); print("mask rejected:", p.name); continue
         img = cv2.imread(str(p))
         if img is None: out.append({**base, "status": "unreadable"}); continue
         if min(img.shape[:2]) < 500: out.append({**base, "status": f"too_small_{img.shape[1]}x{img.shape[0]}"}); continue
