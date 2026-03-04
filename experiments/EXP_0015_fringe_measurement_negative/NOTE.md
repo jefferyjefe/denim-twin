@@ -69,14 +69,14 @@ no consumer can quote it as evidence by accident.
 
 | | before (SAM) | after (direct) |
 |---|---|---|
-| after-wash samples in the prior | 3 | **6** (1 paired + 5 unpaired) |
+| after-wash samples in the prior | 3 | **2** (1 paired + 1 unpaired) |
 | after-wash mean depth_rel | 0.052 | **0.0071** |
 | after-cut mean depth_rel | 0.0015 | 0.0020 |
 | held-out error on the one fray pair | 15.2 px (predicted 17.4, measured 2.2) | **0.5 px** (predicted 2.7, measured 2.2) |
 | 80% interval coverage | **0.09** (1 hit of 11) | 0.55 of 11, now 0.55 of 10 after the duplicate record was deleted (nominal 0.80 — still miscalibrated) |
 
 The sample count rose because the harvested photos are no longer rejected by a gate that existed only to catch SAM's
-broken masks: **5 of 7 candidates measure** (one is a whole pair of jeans, one has too narrow a waist in frame). The
+broken masks: **1 of 7 candidates measures** — one is a full-length pair of jeans, one had a mask a human rejected (SAM segmented a back pocket), and **five state no wash count at all**. Silence is not evidence of a single wash, and this project predicts exactly one (review 6, finding 7). The
 two samples that used to come from the older pairs manifest were later removed for a different reason — their pages
 describe *several* washes, and this project predicts one (review 5, finding 10).
 

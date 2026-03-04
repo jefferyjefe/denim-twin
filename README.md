@@ -62,8 +62,9 @@ Put a coin in the frame if you want any answer in centimetres.
   a direct thread measurement returns garment-mask error, displaced shadows and patterned floors as "fringe"; and
   resolution does not help, because the mask-error floor scales with the image. Depth is therefore no longer used as
   evidence anywhere. **Hem roughness** (`eval/hem_texture.py`) is the fray signal that does survive its control —
-  0 false positives on 11 finished-hem garments, reliable above ~600–1000 px of waistband (EXP_0016), and the fringe
-  renderer beats crop-only on it 5-1-2 (p=0.22, EXP_0017). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
+  0 false positives on 11 finished-hem garments, reliable above ~600–1000 px of waistband (EXP_0016), The fringe renderer's score on it is **undetermined**: 8 of 10 pairs
+  are not decidable because the rendered fringe defeats the metric's own reliability check, and the 2 that are give
+  p = 1.0 (EXP_0017, retracted and restated). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
   fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).

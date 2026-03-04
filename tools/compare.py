@@ -64,8 +64,16 @@ for name, (im, sil) in systems.items():
     _ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0]) if all(k in lmb for k in ("waist_left", "waist_right")) else None
     _hp = hem_roughness(sil, waist_px=_ww); _hr = hem_roughness(rmask, waist_px=_ww)
     # a refused measurement (broken mask) is UNKNOWN, not zero: reporting 0.0 would read as "this hem is smooth"
+    # Compare roughness RELATIVE to waist width: the same fray photographed twice as large doubles the pixel value,
+    # so a pixel-space error ranks photo size (review 6, finding on scale). `rough_fraction` accompanies it because a
+    # p90 of 0 only means "fewer than 10% of hem columns deviate", not "smooth".
     r["hem_rough_p90_pred"] = _hp["p90_px"] if _hp["ok"] else float("nan")
     r["hem_rough_p90_real"] = _hr["p90_px"] if _hr["ok"] else float("nan")
+    r["hem_rough_rel_pred"] = _hp.get("p90_rel", float("nan")) if _hp["ok"] else float("nan")
+    r["hem_rough_rel_real"] = _hr.get("p90_rel", float("nan")) if _hr["ok"] else float("nan")
+    r["hem_rough_frac_pred"] = _hp["rough_fraction"] if _hp["ok"] else float("nan")
+    r["hem_rough_frac_real"] = _hr["rough_fraction"] if _hr["ok"] else float("nan")
+    r["hem_rough_err_rel"] = abs(r["hem_rough_rel_pred"] - r["hem_rough_rel_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_err_px"] = abs(r["hem_rough_p90_pred"] - r["hem_rough_p90_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_refused"] = (not _hp["ok"]) or (not _hr["ok"])
     r["fringe_iou_vs_real"] = G.fringe_iou(sil, rmask, keep, garment_before)

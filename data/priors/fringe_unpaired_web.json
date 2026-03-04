@@ -1,7 +1,7 @@
 {
- "n": 5,
- "depth_rel_mean": 0.007710205224119139,
- "depth_rel_sd": 0.0032272394960741247,
+ "n": 1,
+ "depth_rel_mean": 0.009153318077803204,
+ "depth_rel_sd": null,
  "candidates": 7,
  "samples": [
   {
@@ -11,15 +11,7 @@
    "license_or_terms": "copyright / all rights reserved (Blogger blog, no licence statement in footer)",
    "state_evidence": "Os dejo una foto mas grande de los pantalones que si me quedaron bien. Podeis ver que al lavarlos en la lavadora se deshilachan las partes que hemos cortado.",
    "source": "web_unpaired",
-   "status": "ok",
-   "file": "eac3449d65.jpg",
-   "waist_px": 1078,
-   "depth_px": 4.0,
-   "depth_rel": 0.0037105751391465678,
-   "coverage": 0.867,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 1.007
+   "status": "wash_count_unknown"
   },
   {
    "pair": "1fe61ede5b",
@@ -56,15 +48,7 @@
    "license_or_terms": "copyright / all rights reserved (no licence statement on page)",
    "state_evidence": "- Wash the cutoffs The washing machine frays the hems a little bit so they aren't quite as clean cut.",
    "source": "web_unpaired",
-   "status": "ok",
-   "file": "821bfe4c0b.jpg",
-   "waist_px": 1433,
-   "depth_px": 7.0,
-   "depth_rel": 0.004884856943475227,
-   "coverage": 0.712,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 0.971
+   "status": "wash_count_unknown"
   },
   {
    "pair": "28d01fb8a3",
@@ -73,15 +57,7 @@
    "license_or_terms": "footer reads 'Copyright (c) 2026 * ... * All Rights Reserved.'",
    "state_evidence": "Wash and dry.",
    "source": "web_unpaired",
-   "status": "not_shorts (jeans)",
-   "file": "f41d64c01b.jpg",
-   "waist_px": 851,
-   "depth_px": 29.0,
-   "depth_rel": 0.03407755581668625,
-   "coverage": 0.851,
-   "method": "direct",
-   "garment": "jeans",
-   "sam_score": 0.992
+   "status": "wash_count_unknown"
   },
   {
    "pair": "a81c98b6b9",
@@ -90,15 +66,7 @@
    "license_or_terms": "footer: '(c) 2026 All rights reserved Made with love by Ida Josefin'",
    "state_evidence": "Skolj sedan av shortsen och tvatta dem i tvattmaskinen (valdigt viktigt sa att allt klorin skoljs bort!). Nar du tar ut jeansen kommer aven slitningarna se mycket battre ut.",
    "source": "web_unpaired",
-   "status": "ok",
-   "file": "35bda9db86.jpg",
-   "waist_px": 375,
-   "depth_px": 3.0,
-   "depth_rel": 0.008,
-   "coverage": 0.694,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 0.993
+   "status": "wash_count_unknown"
   },
   {
    "pair": "28d01fb8a3",
@@ -107,15 +75,7 @@
    "license_or_terms": "footer reads 'Copyright (c) 2026 * MommySavers.com * All Rights Reserved.'",
    "state_evidence": "Wash and dry.",
    "source": "web_unpaired",
-   "status": "ok",
-   "file": "c2a0e6e470.jpg",
-   "waist_px": 1406,
-   "depth_px": 18.0,
-   "depth_rel": 0.012802275960170697,
-   "coverage": 0.993,
-   "method": "direct",
-   "garment": "shorts",
-   "sam_score": 0.982
+   "status": "wash_count_unknown"
   }
  ]
 }

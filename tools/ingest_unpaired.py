@@ -30,12 +30,27 @@ def validate(rec):
     for k in REQUIRED:
         if not str(rec.get(k, "")).strip(): return f"missing_{k}"
     if rec.get("hem_finish") != "frayed": return f"hem_finish={rec.get('hem_finish')}"
+    if not urllib.parse.urlparse(rec["image_url"]).scheme.startswith("http"): return "image_url_not_http"
     ev = rec["state_evidence"].strip()
     if len(ev) < 12: return "state_evidence_too_short"      # must be a real sentence from the page, not a label
     stems = ("wash", "dryer", "dried", "laundr", "lav", "wasch", "wäsche", "lessive", "bucato", "tvätt", "tvatt", "vask", "pesu")   # en/de/fr/es/it/sv/da/no/fi
-    if not any(w in ev.lower() for w in stems):
+    low = ev.lower()
+    if not any(w in low for w in stems):
         return "state_evidence_does_not_mention_a_wash"
-    if not urllib.parse.urlparse(rec["image_url"]).scheme.startswith("http"): return "image_url_not_http"
+    # This project predicts ONE wash. A photo after several washes is a different quantity, and the evidence must say
+    # which it is — silence is not "once" (review 6, finding 7: five of seven records gave no count at all).
+    MANY = ("several wash", "few wash", "couple of wash", "multiple wash", "many wash", "twice", "two washes",
+            "second wash", "third wash", "each wash", "every wash", "washes", "repeated wash", "some washing",
+            "washing and wearing", "a few times", "several times")
+    if any(w in low for w in MANY): return "more_than_one_wash"
+    # Only an EXPLICIT singular counts. "in the wash", "the washer", "in die Waschmaschine" name a machine, not a
+    # number of cycles, and this project predicts exactly one (review 6, finding 7).
+    ONE = ("one wash", "once", "single wash", "first wash", "one cycle", "a single", "1 wash", "one time",
+           "einmal", "una vez", "en gang", "en gång", "une fois", "un lavado", "un lavaggio")
+    if not any(w in low for w in ONE): return "wash_count_unknown"
+    # and it must be evidence of FRAYING, not of its absence
+    if any(n in low for n in ("did not fray", "didn't fray", "no fray", "not fray", "without fraying")):
+        return "evidence_says_the_hem_did_not_fray"
     return None
 
 def fname(rec):
