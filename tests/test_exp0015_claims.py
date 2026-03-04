@@ -31,7 +31,7 @@ def test_the_quoted_ranges_match_the_run():
 
 def test_the_web_channel_yield_matches_the_file():
     w = json.load(open(os.path.join(ROOT, "data/priors/fringe_unpaired_web.json")))
-    m = re.search(r"\*\*(\d+) of (\d+) candidates measure\*\*", open(NOTE).read())
+    m = re.search(r"\*\*(\d+) of (\d+) candidates measures?\*\*", open(NOTE).read())
     assert m, "the note no longer states the web-channel yield"
     assert (int(m.group(1)), int(m.group(2))) == (w["n"], w["candidates"]), (m.groups(), w["n"], w["candidates"])
 
