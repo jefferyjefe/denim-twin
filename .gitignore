@@ -21,3 +21,4 @@ experiments/pairs/GALLERY.html
 experiments/pairs_v1/*/cmp_*/
 experiments/pairs_v1/*/*.png
 data/external/unpaired_images/
+data/external/control_images/
