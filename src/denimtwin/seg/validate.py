@@ -54,3 +54,63 @@ def _runs(row_bool, gap=3):
     x = np.nonzero(row_bool)[0]
     if not len(x): return 0
     return 1 + int((np.diff(x) > gap).sum())
+
+
+def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, iou_same=0.7, boundary='median'):
+    """Segment the garment by AGREEMENT across prompt sets instead of by best score (EXP_0018).
+
+    `segment_garment_coarse` takes the highest-scoring plausible candidate, and SAM is confidently wrong: it returned
+    a back pocket at score 0.906 and a wall at 0.992 on real flat-lay photos, and those masks produced measurements.
+    Here every prompt set votes: candidates are clustered by IoU, and the cluster with the most *distinct prompt sets*
+    wins. `agreement` is the fraction of prompt sets that found essentially this mask — a number the caller can refuse
+    on, which is what the best-score interface could never provide.
+
+    Returns (mask, agreement, info) — mask is None when no cluster reaches `min_agreement`."""
+    h, w = image_bgr.shape[:2]
+    s = min(1.0, max_side / max(h, w))
+    small = cv2.resize(image_bgr, None, fx=s, fy=s) if s < 1 else image_bgr
+    seg.predictor.set_image(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+    prompt_sets = [np.array([[0.5, 0.4]]), np.array([[0.5, 0.35], [0.4, 0.6], [0.6, 0.6]]), np.array([[0.5, 0.5]]),
+                   np.array([[0.5, 0.3], [0.5, 0.7]]), np.array([[0.35, 0.5], [0.65, 0.5]]), np.array([[0.5, 0.25]]),
+                   np.array([[0.3, 0.35], [0.7, 0.35]]), np.array([[0.5, 0.6]])]
+    cands = []
+    for i, pts in enumerate(prompt_sets):
+        pc = pts * np.array([small.shape[1], small.shape[0]])
+        masks, scores, _ = seg.predictor.predict(point_coords=pc, point_labels=np.ones(len(pc)), multimask_output=True)
+        for m, sc in zip(masks, scores):
+            a = float(m.mean())
+            if not (0.05 <= a <= 0.75): continue
+            cands.append({"prompt": i, "mask": m, "score": float(sc), "area": a})
+    if not cands: return None, 0.0, {"reason": "no plausible candidate from any prompt"}
+    clusters = []
+    for c in sorted(cands, key=lambda c: -c["score"]):
+        for cl in clusters:
+            inter = (cl["rep"] & c["mask"]).sum(); union = (cl["rep"] | c["mask"]).sum()
+            if union and inter / union >= iou_same:
+                cl["members"].append(c); cl["prompts"].add(c["prompt"]); break
+        else:
+            clusters.append({"rep": c["mask"], "members": [c], "prompts": {c["prompt"]}})
+    n_prompts = len(prompt_sets)
+    best = max(clusters, key=lambda cl: (len(cl["prompts"]), max(m["score"] for m in cl["members"])))
+    agreement = len(best["prompts"]) / n_prompts
+    info = {"agreement": agreement, "boundary": boundary, "n_clusters": len(clusters), "n_prompt_sets": n_prompts,
+            "best_score": max(m["score"] for m in best["members"]), "area": float(best["rep"].mean()),
+            "rival_areas": sorted({round(float(np.mean([m["area"] for m in cl["members"]])), 3) for cl in clusters})[:5]}
+    if agreement < min_agreement:
+        info["reason"] = (f"prompt sets disagree: the most-agreed mask was found by {len(best['prompts'])} of "
+                          f"{n_prompts} prompts ({len(clusters)} distinct candidates)")
+        return None, agreement, info
+    # Which boundary to return from the winning cluster:
+    #   'median' — per-pixel majority of its members: robust, but it smooths the hem, and hem *texture* is the fray
+    #              signal (EXP_0019: fray detection fell from 6/8 to 3/7 with the median boundary),
+    #   'member' — the highest-scoring single member: identity comes from the agreement, detail from one mask.
+    if boundary == "member":
+        stack = max(best["members"], key=lambda m: m["score"])["mask"]
+    else:
+        stack = np.stack([m["mask"] for m in best["members"]]).mean(axis=0) > 0.5
+    u = (stack.astype(np.uint8) * 255)
+    u = cv2.morphologyEx(u, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(u)
+    if n > 1: u = (lab == (1 + np.argmax(stats[1:, cv2.CC_STAT_AREA]))).astype(np.uint8) * 255
+    if s < 1: u = cv2.resize(u, (w, h), interpolation=cv2.INTER_NEAREST)
+    return u > 127, agreement, info
