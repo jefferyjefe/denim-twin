@@ -56,7 +56,7 @@ def _runs(row_bool, gap=3):
     return 1 + int((np.diff(x) > gap).sum())
 
 
-def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, iou_same=0.7, boundary='median'):
+def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, iou_same=0.7, boundary='median', agreement_slack=0.25):
     """Segment the garment by AGREEMENT across prompt sets instead of by best score (EXP_0018).
 
     `segment_garment_coarse` takes the highest-scoring plausible candidate, and SAM is confidently wrong: it returned
@@ -80,7 +80,12 @@ def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, 
         for m, sc in zip(masks, scores):
             a = float(m.mean())
             if not (0.05 <= a <= 0.75): continue
-            cands.append({"prompt": i, "mask": m, "score": float(sc), "area": a})
+            # A flat-laid garment does not run off the edge of the frame. Without this, agreement REWARDS the
+            # backdrop: on a plain studio background every prompt finds the same white field and votes for it
+            # (observed on two real pairs — the whole backdrop at agreement 0.88 and 1.00).
+            bf = float((m[0].mean() + m[-1].mean() + m[:, 0].mean() + m[:, -1].mean()) / 4)
+            if bf > 0.02: continue
+            cands.append({"prompt": i, "mask": m, "score": float(sc), "area": a, "border_frac": bf})
     if not cands: return None, 0.0, {"reason": "no plausible candidate from any prompt"}
     clusters = []
     for c in sorted(cands, key=lambda c: -c["score"]):
@@ -91,10 +96,21 @@ def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, 
         else:
             clusters.append({"rep": c["mask"], "members": [c], "prompts": {c["prompt"]}})
     n_prompts = len(prompt_sets)
-    best = max(clusters, key=lambda cl: (len(cl["prompts"]), max(m["score"] for m in cl["members"])))
+    # Agreement alone has a known failure: on a plain studio sweep every prompt agrees on the BACKDROP, and the
+    # winning mask is the white field around the garment (observed at agreement 0.88 and 1.00 on two real pairs).
+    # Preferring the more denim-coloured cluster fixes one of those and breaks a light-wash garment, so it is NOT
+    # applied — that is threshold-fitting on sixteen photos. The failure mode is documented in EXP_0019 instead, and
+    # `denim_frac` is reported so a caller can see it. Consensus stays opt-in until it has data it was not tuned on.
+    hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
+    denimish = ((hsv[..., 0] >= 95) & (hsv[..., 0] <= 135) & (hsv[..., 1] >= 40)) | (hsv[..., 2] < 60)
+    for cl in clusters:
+        cl["n_prompts"] = len(cl["prompts"])
+        cl["denim"] = float(denimish[cl["rep"]].mean()) if cl["rep"].any() else 0.0
+    best = max(clusters, key=lambda cl: (cl["n_prompts"], max(m["score"] for m in cl["members"])))
     agreement = len(best["prompts"]) / n_prompts
     info = {"agreement": agreement, "boundary": boundary, "n_clusters": len(clusters), "n_prompt_sets": n_prompts,
             "best_score": max(m["score"] for m in best["members"]), "area": float(best["rep"].mean()),
+            "denim_frac": best["denim"], "rival_denim": sorted(round(cl["denim"], 2) for cl in clusters)[-4:],
             "rival_areas": sorted({round(float(np.mean([m["area"] for m in cl["members"]])), 3) for cl in clusters})[:5]}
     if agreement < min_agreement:
         info["reason"] = (f"prompt sets disagree: the most-agreed mask was found by {len(best['prompts'])} of "

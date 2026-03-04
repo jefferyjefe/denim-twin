@@ -24,6 +24,9 @@ p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-o
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
 p.add_argument("--coin", help="coin type in the BEFORE photo (see util/coins.py); metric scale is recovered with the garment masked out")
+p.add_argument("--seg", choices=["coarse", "consensus"], default="coarse",
+               help="garment segmentation: 'coarse' takes SAM's best-scoring candidate; 'consensus' takes the object "
+                    "the most prompt sets agree on and reports that agreement (EXP_0019)")
 p.add_argument("--edge-treatment", choices=["raw", "cuffed", "hemmed", "serged", "hand_frayed"], default="raw",
                help="how the cut edge was finished; a finished hem does not fray, so no fringe is rendered (modification.expects_fringe)")
 p.add_argument("--wash", choices=["none", "conservative", "median", "aggressive"], default="none", help="procedural wash appearance v0 (shrink + hem roll + colour; canon/wash.py). Default none keeps the bench unchanged")
@@ -54,6 +57,12 @@ BEFORE_PATH, AFTER_PATH = f"{O}/before_used.png", f"{O}/after_used.png"
 seg = SamSegmenter()
 # masks: first pass with a coarse box (whole image minus margins), then refine with auto landmarks
 def coarse(img):
+    if a.seg == "consensus":
+        from denimtwin.seg.validate import segment_garment_consensus
+        m, agr, info = segment_garment_consensus(seg, img, boundary="member")
+        if m is None: print(f"consensus segmentation refused: {info.get('reason')}"); sys.exit(2)
+        FLAGS.append(f"segmentation by consensus: {agr:.0%} of prompt sets agree, area {info['area']:.2f}")
+        print(f"consensus mask agreement {agr:.2f} area {info['area']:.2f}"); return m
     m, sc, info = segment_garment_coarse(seg, img)
     if m is None: print("coarse segmentation failed"); sys.exit(2)
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
