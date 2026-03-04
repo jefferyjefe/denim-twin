@@ -99,37 +99,17 @@
  "depth_rel_mean_after_cut": 0.002,
  "n_after_cut": 5,
  "unpaired": {
-  "n": 5,
-  "depth_rel_mean": 0.0072861428615398635,
-  "depth_rel_sd": 0.002937455246811147,
+  "n": 1,
+  "depth_rel_mean": 0.009153318077803204,
+  "depth_rel_sd": null,
   "samples": [
-   {
-    "pair": "2c12b41b48",
-    "depth_rel": 0.0037105751391465678,
-    "channel": "web"
-   },
    {
     "pair": "1fe61ede5b",
     "depth_rel": 0.009153318077803204,
     "channel": "web"
-   },
-   {
-    "pair": "97136bc8fd",
-    "depth_rel": 0.00418702023726448,
-    "channel": "web"
-   },
-   {
-    "pair": "a81c98b6b9",
-    "depth_rel": 0.008,
-    "channel": "web"
-   },
-   {
-    "pair": "28d01fb8a3",
-    "depth_rel": 0.011379800853485065,
-    "channel": "web"
    }
   ]
  },
- "depth_rel_mean_after_wash_combined": 0.007069789709965854,
- "n_after_wash_combined": 6
+ "depth_rel_mean_after_wash_combined": 0.007570671014949506,
+ "n_after_wash_combined": 2
 }

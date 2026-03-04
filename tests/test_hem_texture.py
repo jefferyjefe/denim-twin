@@ -58,9 +58,13 @@ def test_too_few_columns_is_reported_not_guessed():
     r = hem_roughness(m, waist_px=10)
     assert not r["ok"] and r["p90_px"] == 0.0
 
-def test_a_broken_mask_is_refused_not_called_frayed():
-    """EXP_0016 addendum: 2 of 9 high-resolution FINISHED hems were called frayed because SAM's mask was speckled.
-    A ragged outline must be refused (ok=False with a reason), never reported as roughness."""
+def test_a_broken_mask_reports_a_high_compactness_for_the_caller_to_see():
+    """2 of 9 high-resolution FINISHED hems were called frayed because SAM's mask was speckled (EXP_0016 addendum).
+
+    A compactness *gate* was the first response and was removed: review 6 showed compactness is a garment-shape
+    statistic (2.33 shorts, 3.95 full-length jeans) that also rises with fray depth, so as a gate it refused the
+    project's own subject and silently zeroed the deepest frays. Broken masks are now handled at source by consensus
+    segmentation (EXP_0019) and human verification; compactness is still reported so a caller can see it."""
     from denimtwin.eval.hem_texture import mask_compactness
     import cv2
     m = _mask("smooth")
@@ -71,9 +75,19 @@ def test_a_broken_mask_is_refused_not_called_frayed():
     broken = m & (field > -0.02)
     assert mask_compactness(broken) > 3.0 > mask_compactness(m)
     r = hem_roughness(broken, waist_px=680)
-    assert not r["ok"] and "compactness" in r.get("reason", ""), r
-    assert r["p90_px"] == 0.0
+    assert r["compactness"] > 3.0 and r["ok"], "compactness is reported, not enforced"
+    r_gated = hem_roughness(broken, waist_px=680, max_compactness=3.0)
+    assert not r_gated["ok"] and "compactness" in r_gated.get("reason", ""), r_gated
 
 def test_a_clean_mask_reports_its_compactness_and_is_judged():
     r = hem_roughness(_mask("frayed"), waist_px=680)
     assert r["ok"] and 1.0 <= r["compactness"] <= 3.0 and r["p90_px"] > 0
+
+def test_the_compactness_gate_is_off_by_default_because_it_refuses_jeans():
+    """Review 6: an exact full-length jeans silhouette scores ~4-5, so a 3.0 gate refuses the project's subject."""
+    from denimtwin.eval.hem_texture import mask_compactness
+    tall = np.zeros((1400, 700), bool)
+    tall[100:400, 180:520] = True                    # body
+    tall[400:1300, 180:330] = True; tall[400:1300, 370:520] = True    # two long legs
+    assert mask_compactness(tall) > 3.0
+    assert hem_roughness(tall, waist_px=340)["ok"], "the default must not refuse a pair of jeans"

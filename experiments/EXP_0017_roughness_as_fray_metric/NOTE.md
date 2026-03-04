@@ -1,37 +1,38 @@
-# EXP_0017 — Scoring the fringe renderer on the one fray metric that passes a control
+# EXP_0017 — RETRACTED and restated: scoring the fringe renderer on hem roughness
 
-EXP_0016 gave us hem roughness: a fray observable with 0/14 false positives on finished-hem controls. It is now
-computed for every system in `compare.py` (`hem_rough_p90_pred`, `hem_rough_p90_real`, `hem_rough_err_px`), which lets
-us ask, for the first time with a controlled metric, whether the procedural fringe renderer produces a hem of
-approximately the right raggedness.
+> **This experiment's original numbers were wrong and are withdrawn.** Review 6 checked every figure against the pair
+> artefacts and found none of them there: the note claimed 11 usable pairs (7 were decidable), mean errors of
+> 0.91/1.27/1.55 px (the artefacts gave 0.43/1.00/1.00), and a 6-3-2 split at p = 0.51 (4-1-2, p = 0.375). The
+> arithmetic was right; the note had been written from a run whose artefacts were then regenerated under a rewritten
+> metric and never recomputed. README and STATUS quoted two further different versions of the same result. All three
+> are corrected to what follows.
 
-## Result (11 usable found pairs, median preset)
+## What is actually measurable today
+`compare.py` now reports hem roughness **relative to waist width** (a pixel value ranks photo size: the same fray
+photographed twice as large doubles it) together with `rough_fraction`, because a p90 of 0 means only "fewer than 10%
+of hem columns deviate", not "this hem is smooth".
 
-| system | mean \|roughness error\| |
+On the current artefacts, **8 of 10 usable pairs cannot be decided at all**: the predicted silhouette includes rendered
+fringe, which breaks the solid-column requirement `hem_roughness` uses to avoid measuring speckle, so the metric
+refuses. Of the 2 decidable pairs the prediction matches the real roughness exactly on one and ties on the other:
+
+| system | mean \|roughness error\| (relative to waist width), n=2 |
 |---|---|
-| prediction (cut + procedural fringe) | **0.91 px** |
-| null: crop-only (a clean cut, no fringe) | 1.27 px |
-| null: no-op (the uncut jeans) | 1.55 px |
+| prediction | 0.00000 |
+| null: crop-only | 0.00136 |
+| null: no-op | 0.00136 |
 
-Per pair, the prediction is closer to the real hem's roughness than crop-only on **6**, worse on 3, tied on 2.
+Sign test: 1 win, 0 losses, 1 tie, **p = 1.0**. There is no evidence here either way, and n = 2 is not a result.
 
-## Read: directionally right, statistically nothing
-A sign test on the 9 decided pairs gives **p = 0.51**. Six-three is what a coin does. The ordering
-(prediction < crop-only < no-op) is the ordering we would want, and it is the first time the fringe renderer has beaten
-a null on a metric whose control passes — but with n = 11 and a 0.36 px margin it is **not evidence** that the renderer
-models fray. It is evidence that the metric is worth keeping and that the renderer is not obviously wrong.
+## The real finding of this experiment
+Scoring the *rendered silhouette* was the wrong design. The renderer paints threads below the fabric edge, which is
+exactly what the roughness metric treats as an unreliable boundary — so the better the fringe render, the less
+measurable it becomes. Roughness should be computed on the predicted **fabric edge** (the cut line), with the fringe
+compared separately, and that is a change to make deliberately rather than in the middle of a correction.
 
-## The failure mode worth naming
-On three pairs the prediction puts roughness on a hem the real garment left smooth (b630a78c19, 443d1d4658,
-e97924ad2d — all `after_cut` or finished-hem garments, predicted p90 1.0 px against a real 0.0). The renderer frays
-whenever it is asked to render, including where the modification says the edge was cuffed or unwashed. The
-`expects_fringe()` rule already exists in `modification.py`; `run_pair` does not consult it when rendering. That is a
-concrete, testable fix — but it changes rendered output, so it is recorded here and left for the next round rather than
-being slipped in alongside the measurement work (docs/GATES.md tuning rule).
-
-## Status of the fray claim after EXP_0015–0017
-- fringe **depth**: no valid measurement exists, at any resolution we can obtain (EXP_0015, EXP_0016).
-- fringe **presence/roughness**: measurable, specific (0 false positives), resolution-limited (reliable above ~600–1000
-  px of waistband).
-- the **renderer**: produces roughness in the right direction, at p = 0.51. Nothing more can be said until there are
-  more washed garments to score against.
+## What still stands from the original
+Two things, both independently checked:
+- the *ordering* the earlier run reported (prediction ≤ crop-only ≤ no-op) is the ordering the corrected numbers show
+  on the pairs that can be decided;
+- the failure mode it named is real and was fixed: the renderer used to fray hems the modification declared finished
+  (`run_pair` now consults `modification.expects_fringe()`; false frays on real pairs went 3 → 1).

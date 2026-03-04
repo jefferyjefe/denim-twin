@@ -6,7 +6,7 @@ spec = importlib.util.spec_from_file_location("ingest_unpaired", os.path.join(RO
 IU = importlib.util.module_from_spec(spec); spec.loader.exec_module(IU)
 
 GOOD = {"page_url": "https://x/y", "image_url": "https://x/a.jpg", "license_or_terms": "copyright / all rights reserved",
-        "state_evidence": "I threw them in the wash and the hem frayed beautifully.", "hem_finish": "frayed"}
+        "state_evidence": "I washed them once and the hem frayed beautifully.", "hem_finish": "frayed"}
 
 def test_a_complete_record_is_accepted():
     assert IU.validate(GOOD) is None
@@ -19,7 +19,8 @@ def test_missing_or_empty_fields_are_refused():
 def test_evidence_must_actually_mention_a_wash():
     assert IU.validate({**GOOD, "state_evidence": "The finished shorts look great with sneakers."}) == "state_evidence_does_not_mention_a_wash"
     assert IU.validate({**GOOD, "state_evidence": "washed"}) == "state_evidence_too_short"     # a label, not a quote
-    assert IU.validate({**GOOD, "state_evidence": "Nach dem Waschen sind die Fransen perfekt."}) is None
+    assert IU.validate({**GOOD, "state_evidence": "Nach dem Waschen in die Waschmaschine sind die Fransen perfekt."}) == "wash_count_unknown"
+    assert IU.validate({**GOOD, "state_evidence": "Nach einmal Waschen sind die Fransen perfekt geworden."}) is None
 
 def test_finished_hems_are_not_fringe_samples():
     for h in ("cuffed", "hemmed", "serged", None):

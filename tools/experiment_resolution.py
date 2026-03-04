@@ -34,11 +34,15 @@ from denimtwin.eval.hem_texture import hem_roughness
 RECS = {hashlib.sha1(json.loads(l)["page_url"].encode()).hexdigest()[:10]: json.loads(l)
         for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()}
 
+EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines()
+        if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
+
 def subjects():
     """(id, group, path). Only photos big enough that downscaling has room to say something."""
     for f in sorted(glob.glob(str(ROOT / "experiments/pairs/*/after_used.png"))):
         pid = Path(f).parent.name
         if "rejected" in (Path(f).parent / "NOTE.md").read_text().splitlines()[0]: continue
+        if pid in EXCL: continue        # exclude.txt applies here too (review 6, finding 3)
         hf = RECS.get(pid, {}).get("hem_finish")
         if hf == "frayed": g = "frayed"
         elif hf in ("cuffed", "hemmed", "serged"): g = "control"

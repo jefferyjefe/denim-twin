@@ -14,25 +14,35 @@ fringe", ask "how far does the hem boundary deviate from its own local median".
     residual(x) = |y(x) - smooth(x)|
     roughness   = the p90 of residual (px), and its mean; both also reported relative to waist width
 
-On the 21 photos available on 2026-08-29 — 8 frayed, 13 finished-hem controls including 9 at 2048–2500 px — the p90 was
-0 px on every control whose mask passed the quality gate (11/11) and non-zero on 6 of 8 frayed garments. The two
-controls that read "frayed" both had visibly broken segmentation masks, which the compactness gate now refuses; that
-gate is the load-bearing part, and its margin on this data is 2.10 (worst good mask) against 3.96 (best broken one).
-See EXP_0016 for what this does and does not establish. No parameter here is fitted: the window, hem region and
-compactness bound were each chosen from an inspected failure and then left alone.
+**What p90 == 0 does and does not mean.** p90 of an integer residual is 0 whenever fewer than 10% of hem columns
+deviate at all, at any depth (review 6: 8 px notches on 5% and 8% of columns both give p90 0). So a zero is "no
+widespread deviation", not "provably a finished hem" — `rough_fraction` is the companion number and separates those
+cases (0.009 vs 0.075). Both are reported; neither is a fray classifier on its own.
+
+**What it responds to.** A hem that deviates from its own local median over a window of 6% of waist width. A smooth
+but *decorative* hem (scallops with a period near that window) reads as fray at 1–2 px, inside the range real frayed
+garments measure. It is a spatial-frequency statistic, not a fray detector, and it is only meaningful on a mask that
+has been verified to be the garment (EXP_0018/0019).
+
+Measured on the photos available 2026-08-29 with consensus segmentation: p90 > 0 on 0 of 9 high-resolution
+finished-hem controls and 4 of 7 frayed garments.
 """
 import numpy as np
 import cv2
 from scipy.ndimage import median_filter
 
-DEFAULTS = dict(window_frac=0.06, hem_region=0.6, min_columns=50, solid_frac=0.02, max_compactness=3.0)
+DEFAULTS = dict(window_frac=0.06, hem_region=0.6, min_columns=50, solid_frac=0.02, max_compactness=None)
 
 def mask_compactness(garment_mask):
-    """perimeter^2 / (4*pi*area) of the largest connected component: 1.0 for a disc, ~1.5-2.1 for a clean garment
-    silhouette (measured over 21 real photos), and much higher for a speckled or torn segmentation whose outline
-    wanders. This is the only reliable separator we found between "this hem is frayed" and "this mask is broken":
-    the two false positives among nine high-resolution finished-hem controls scored 3.96 and 4.05, against <= 2.10
-    for every other photo in the set, frayed or finished (EXP_0016 addendum)."""
+    """perimeter^2 / (4*pi*area) of the largest connected component. Reported for information; **not a validity test**.
+
+    It was briefly used as one, because the two broken masks among nine high-resolution controls scored 3.96 and 4.05
+    against <= 2.10 for every good mask in that set. Review 6 showed that is a coincidence of garment shape: an exact,
+    noise-free silhouette scores 2.33 for shorts, **3.95 for full-length jeans** and 4.72 for skinny jeans, so the
+    threshold refuses the project's own subject; and because a frayed outline is longer, compactness rises with fray
+    depth (2.33 -> 4.13 as notch depth goes 0 -> 16 px), making the gate a fray-depth cutoff that silently zeroes the
+    deepest frays. Mask validity comes from consensus segmentation (`seg/validate.segment_garment_consensus`) and
+    human verification (`data/external/mask_verdicts.json`) instead."""
     u = np.asarray(garment_mask, bool).astype(np.uint8)
     cnts, _ = cv2.findContours(u, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if not cnts: return float("inf")
@@ -74,8 +84,7 @@ def hem_roughness(garment_mask, waist_px=None, window_frac=DEFAULTS["window_frac
     x, y = hem_profile(garment_mask, hem_region, solid_px=max(round(solid_frac * _w), 2))
     out = {"n_columns": int(len(y)), "ok": bool(len(y) >= min_columns), "compactness": comp,
            "p90_px": 0.0, "mean_px": 0.0, "rough_fraction": 0.0}
-    if comp > max_compactness:
-        # a broken mask has a ragged outline that is indistinguishable from fray. Refuse rather than guess.
+    if max_compactness is not None and comp > max_compactness:
         out.update(ok=False, reason=f"mask outline too ragged to judge (compactness {comp:.2f} > {max_compactness})")
         return out
     if len(y) < min_columns:

@@ -78,9 +78,11 @@ if rows:
 _web = OUT / "fringe_unpaired_web.json"
 if _web.exists():
     _w = json.load(open(_web)); _u = json.load(open(OUT / "fringe_unpaired.json")) if (OUT / "fringe_unpaired.json").exists() else {"samples": []}
-    _have = {s.get("file") for s in _u["samples"]}
+    # REPLACE the web channel rather than append to it: a sample that no longer qualifies (a tightened gate, a
+    # rejected mask) must disappear from the prior, not survive as a stale row (review 6, finding 7).
+    _u["samples"] = [s_ for s_ in _u["samples"] if s_.get("channel") != "web"]
     for s_ in _w["samples"]:
-        if s_.get("file") and s_["file"] not in _have: _u["samples"].append({**s_, "channel": "web"})
+        if s_.get("file"): _u["samples"].append({**s_, "channel": "web"})
     _ok = [s_ for s_ in _u["samples"] if s_.get("status") == "ok"]
     _u["n"] = len(_ok)
     _u["depth_rel_mean"] = st.mean([s_["depth_rel"] for s_ in _ok]) if _ok else None

@@ -141,6 +141,11 @@ else:
     depth_px = rel * ww
     prior_validated = bool(pr.get("validated", False)); prior_note = pr.get("validation_note", "")
     src = f"prior[{a.state}] n={n_eff}" + ("" if prior_validated else " — UNVALIDATED")
+    if n_eff == 0:
+        FLAGS.append(f"the prior has NO observations for state '{a.state}' (every row for it was a rule output, not a "
+                     f"measurement), so the predicted fringe depth is 0 by absence of evidence, not by measurement")
+    elif n_eff < 5:
+        FLAGS.append(f"the prior for '{a.state}' rests on {n_eff} sample(s)")
     if not prior_validated:
         # unconditional: not gated on n, not gated on resolution (review 5, finding 6)
         FLAGS.append("fringe depth is a PLACEHOLDER, not an estimate: " + (prior_note or "the prior declares itself unvalidated"))

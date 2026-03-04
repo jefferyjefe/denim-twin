@@ -25,3 +25,12 @@ recorded is real**. One extra photo fixes it:
 
 That single photo is worth more to this project than the rest of the set, because it is the only one where the thing we
 are trying to predict is actually resolvable.
+
+## How big does the photo need to be? (added 2026-08-29)
+
+Our fray measurement only works above a certain scale, and we measured where: in the whole-garment photo the
+**waistband should span at least ~800 pixels** — any phone photo taken from about a metre away does this, so it is
+rarely a problem in practice. Below roughly 600 px of waistband we cannot tell a frayed hem from a finished one at all.
+
+The hem close-up described above is still the reliable route, because it puts the fringe at a scale where it is
+resolvable rather than a few pixels deep.

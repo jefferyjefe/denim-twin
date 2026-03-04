@@ -1,20 +1,29 @@
+> **CORRECTED 2026-08-29 (review 6).** The first version was computed on a subject set that included two pairs banned
+> by the project's own `data/priors/exclude.txt` — one of them excluded for having *two overlapping garments in the
+> after photo*, precisely the failure this experiment is about — and on web samples a later, stricter wash-count gate
+> removed. `tools/experiment_resolution.py` now honours `exclude.txt`. Everything below is recomputed and some
+> conclusions changed. The reviewer verified the original *arithmetic*; the fault was in what it was computed on.
+
 # EXP_0016 — resolution, and a fray signal that survives its control
 
 EXP_0015 ended with "fringe depth cannot tell a frayed hem from a cuffed one". Two follow-up questions: is that a
 resolution problem, and is there a different observable that does work? Method: take the same photos, re-segment and
-re-measure at scales 1.0 → 0.15, split into **frayed** (raw cut, washed; 8 garments) and **control** (cuffed/hemmed,
-which cannot have a fringe; 3–4 garments).
+re-measure at scales 1.0 → 0.15, split into **frayed** (raw cut, washed) and **control**
+(cuffed/hemmed, which cannot have a fringe). After the exclusions the clean set is **2 frayed and 3 control
+garments** — 25 measurements, but few subjects.
 
 ## 1. Resolution does not rescue the depth measurement
 The hoped-for asymmetry was "the mask-boundary floor is a fixed few pixels while the fringe scales with resolution".
 Fitting depth against waist width across all scales says otherwise:
 
-    frayed  depth_px = 0.0048 * waist_px + 2.16   (r = 0.73, n = 47)
-    control depth_px = 0.0039 * waist_px + 1.05   (r = 0.69, n = 14)
+    frayed  depth_px = 0.0082 * waist_px + 0.38   (r = 0.96, n = 11 rows / 2 garments)
+    control depth_px = 0.0047 * waist_px + 0.88   (r = 0.79, n = 14 rows / 3 garments)
 
-**The floor scales too**, at 80% of the signal's rate. In relative terms the two lines converge on 0.0048 and 0.0039 —
-a separation of 0.0009 of waist width, which is far below the scatter. A bigger photo does not fix this measurement;
-the boundary error is proportional to the image, because it comes from SAM's mask, not from the sensor.
+**The floor scales too**, at 58% of the signal's rate: both are proportional to the image, because the error comes
+from SAM's mask and not from the sensor. Resolution buys roughly a factor 1.7 in signal-to-floor and no more. Before
+the correction this looked like 80% and no separation at all; with the banned pairs dropped the separation is real but
+small (0.0035 of waist width) between lines fitted to 2 and 3 garments. Either way it does not rescue depth as a
+measurement — EXP_0015 Part F withdrew it for independent reasons.
 
 ## 2. Hem roughness does separate them
 A finished hem is a *smooth curve*: its mask boundary deviates from its own local median by nothing at all. A frayed
@@ -46,14 +55,15 @@ resolution —
 | 1000–1600 px | 3/5 | 0/0 |
 | > 1600 px | 2/2 | 0/0 |
 
-So roughness is **specific but resolution-limited**: it never cries fray on a cuffed hem, and it sees fray reliably once
-the waistband spans roughly 600–1000 px or more. One frayed garment (web:821bfe4c) reads 0 even at 1433 px — its threads
-are sparse and pale against a pale floor, which is a segmentation limit, not a metric limit.
+So roughness is **specific but resolution-limited**. After the correction the clean subject set is 2 frayed and 3
+control garments, far too few for the per-band table to carry weight; it is kept only to show the shape of the effect.
+The durable specificity evidence is the high-resolution control set in the addendum, measured with consensus
+segmentation rather than with these masks.
 
 ## What this changes
 - **The contributor ask becomes a number.** A whole-garment photo is useful for fray if the waistband spans ≥ ~800 px
-  (any phone shot from ~1 m does this); the hem close-up remains the reliable route. This is now stated in
-  `CONTRIBUTING_PAIRS.md` and the issue form.
+  (any phone shot from ~1 m does this); the hem close-up remains the reliable route. *(Stated in `CONTRIBUTING_PAIRS.md`
+  as of this correction — review 6 caught that the earlier note claimed this before it was written there.)*
 - **Fray detection is possible today; fray *depth* is not.** We can say "this hem is frayed" (0 false positives) well
   before we can say "the fringe is 4 mm deep". Any near-term claim should be about presence and roughness, not depth.
 - No parameter was fitted to this data: the window (6% of waist) and hem region (lower 40%) are fixed and were chosen
@@ -70,23 +80,27 @@ The caveat above ("the controls are systematically lower-resolution than the fra
 about. Nine finished-hem (all *hemmed*, turned-and-topstitched) denim shorts flat-lays at 2048–2500 px were harvested
 specifically as controls, and measured:
 
-| | photos | accepted by the mask gate | called rough (false positives) |
+| (consensus segmentation, no gate) | photos | measured | called rough (false positives) |
 |---|---|---|---|
-| high-resolution finished hems (waist 517–1366 px) | 9 | 7 | **0** |
-| lower-resolution finished hems (paired set) | 4 | 4 | **0** |
-| frayed + washed | 8 | 8 | 6 |
+| high-resolution finished hems (waist 994–1366 px) | 9 | 9 | **0** |
+| frayed + washed (harvested) | 7 | 7 | 4 |
 
-**Two of the nine initially read as frayed (p90 4 and 8 px), and they were segmentation failures, not hems.** Both
+**Two of the nine initially read as frayed (p90 4.0 px each — an earlier draft said "4 and 8"), and they were
+segmentation failures, not hems.** Both
 photos are of strongly patterned/bleached denim where SAM dropped large blobs of the leg; the roughness sat exactly on
 the ragged edges of those holes. That is a false positive of the kind that would have quietly become "fray detected"
 in a contributor pipeline.
 
-The separator is **contour compactness** (perimeter² / 4πA of the largest component): 3.96 and 4.05 for the two broken
-masks against ≤ 2.10 for every other photo in the set, frayed or finished. `hem_roughness` now refuses to judge a mask
-above 3.0 (`ok=False` with a reason) rather than reporting roughness. With that gate: **0 false positives in 11
-accepted control measurements, 2 refusals, 6/8 frayed detected.**
+A contour-compactness gate was introduced here to refuse those two masks (3.96 and 4.05 against ≤ 2.10 for every other
+photo) — and **it has since been removed**. Review 6 showed compactness is a *garment-shape* statistic, not a mask-quality
+one: an exact, noise-free silhouette scores 2.33 for shorts and **3.95 for full-length jeans**, so the threshold refused
+the project's own subject; and because a frayed outline is longer, compactness rises with fray depth (2.33 → 4.13 as
+notch depth goes 0 → 16 px), making the "gate" a silent fray-depth cutoff. It was a rule read off 21 photos, and it was
+wrong.
 
-Two honest caveats on the gate: the 3.0 bound sits between values measured on the same 21 photos that motivated it, so
-it is a *decision rule read off this data*, not a calibrated threshold; and every high-resolution control is a *hemmed*
-edge — a rolled cuff at this resolution could not be found (retail flat-lays are hemmed; cuffed examples live on sewing
-blogs below 1600 px). A cuff casts a fold shadow the hemmed edges do not, so that class is still untested.
+What replaced it is **consensus segmentation** (EXP_0019), which fixes the two broken masks at source. Measured that
+way: **0 of 9 high-resolution controls read as frayed, with no gate at all, and 4 of 7 frayed garments are detected.**
+
+One class remains untested: every high-resolution control is a *hemmed* edge. A rolled cuff casts a fold shadow that a
+flat hem does not, and no cuffed flat-lay above 1200 px could be found (retail shoots hemmed; cuffed examples live on
+sewing blogs at lower resolution).
