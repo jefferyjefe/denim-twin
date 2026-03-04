@@ -1,0 +1,180 @@
+{
+ "before_auto": {
+  "waist_left": [
+   220,
+   107
+  ],
+  "waist_right": [
+   1341,
+   107
+  ],
+  "waist_center": [
+   780,
+   107
+  ],
+  "hip_left": [
+   114,
+   611
+  ],
+  "hip_right": [
+   1307,
+   611
+  ],
+  "crotch": [
+   756,
+   1141
+  ],
+  "hem_left_outer": [
+   338,
+   1387
+  ],
+  "hem_left_inner": [
+   693,
+   1387
+  ],
+  "hem_right_outer": [
+   1172,
+   1316
+  ],
+  "hem_right_inner": [
+   873,
+   1316
+  ]
+ },
+ "after_auto": {
+  "waist_left": [
+   1066,
+   412
+  ],
+  "waist_right": [
+   3872,
+   412
+  ],
+  "waist_center": [
+   2469,
+   412
+  ],
+  "hip_left": [
+   536,
+   1674
+  ],
+  "hip_right": [
+   4347,
+   1674
+  ],
+  "crotch": [
+   2398,
+   3147
+  ],
+  "hem_left_outer": [
+   1725,
+   3223
+  ],
+  "hem_left_inner": [
+   2190,
+   3223
+  ],
+  "hem_right_outer": [
+   2747,
+   3333
+  ],
+  "hem_right_inner": [
+   2483,
+   3333
+  ]
+ },
+ "before_used": {
+  "waist_left": [
+   220,
+   107
+  ],
+  "waist_right": [
+   1341,
+   107
+  ],
+  "waist_center": [
+   780,
+   107
+  ],
+  "hip_left": [
+   114,
+   611
+  ],
+  "hip_right": [
+   1307,
+   611
+  ],
+  "crotch": [
+   756,
+   1141
+  ],
+  "hem_left_outer": [
+   338,
+   1387
+  ],
+  "hem_left_inner": [
+   693,
+   1387
+  ],
+  "hem_right_outer": [
+   1172,
+   1316
+  ],
+  "hem_right_inner": [
+   873,
+   1316
+  ]
+ },
+ "after_used": {
+  "waist_left": [
+   1066,
+   412
+  ],
+  "waist_right": [
+   3872,
+   412
+  ],
+  "waist_center": [
+   2469,
+   412
+  ],
+  "hip_left": [
+   536,
+   1674
+  ],
+  "hip_right": [
+   4347,
+   1674
+  ],
+  "crotch": [
+   2398,
+   3147
+  ],
+  "hem_left_outer": [
+   1725,
+   3223
+  ],
+  "hem_left_inner": [
+   2190,
+   3223
+  ],
+  "hem_right_outer": [
+   2747,
+   3333
+  ],
+  "hem_right_inner": [
+   2483,
+   3333
+  ]
+ },
+ "conf": {
+  "before": {
+   "crotch": "gap",
+   "garment_type": "shorts"
+  },
+  "after": {
+   "crotch": "gap",
+   "garment_type": "shorts"
+  }
+ }
+}
