@@ -1,0 +1,6 @@
+[
+ {"claim": "mask verdicts recorded (all harvested photos)",
+  "claimed": "7", "source": "data/external/mask_verdicts.json", "path": "verdicts", "count": {"verdict": "any"}},
+ {"claim": "masks a human rejected",
+  "claimed": "1", "source": "data/external/mask_verdicts.json", "path": "verdicts", "count": {"verdict": "bad"}}
+]

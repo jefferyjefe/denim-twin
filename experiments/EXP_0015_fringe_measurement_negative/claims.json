@@ -1,0 +1,13 @@
+[
+ {"claim": "after-wash samples in the rebuilt prior",
+  "note_regex": "\\| after-wash samples in the prior \\| \\d+ \\| \\*\\*(\\d+)\\*\\*",
+  "source": "data/priors/fringe.json", "path": "n_after_wash_combined"},
+ {"claim": "web channel yield (usable of candidates)",
+  "note_regex": "\\*\\*(\\d+) of \\d+ candidates measures?\\*\\*",
+  "source": "data/priors/fringe_unpaired_web.json", "path": "n"},
+ {"claim": "web channel candidates considered",
+  "note_regex": "\\*\\*\\d+ of (\\d+) candidates measures?\\*\\*",
+  "source": "data/priors/fringe_unpaired_web.json", "path": "candidates"},
+ {"claim": "the prior declares itself unvalidated",
+  "claimed": "False", "source": "data/priors/fringe.json", "path": "validated"}
+]
