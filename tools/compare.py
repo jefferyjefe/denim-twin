@@ -41,7 +41,7 @@ for name, (im, sil) in systems.items():
     r = dict(system=name,
              sil_iou_vs_real=G.silhouette_iou(sil, rmask),
              sil_chamfer=G.boundary_chamfer(G.mask_boundary(sil), G.mask_boundary(rmask), a.mm_per_px),
-             hem_chamfer=G.hem_chamfer(sil, rmask, keep, garment_before, band_px0, a.mm_per_px),
+             hem_chamfer=G.hem_chamfer(sil, rmask, keep, garment_before, a.mm_per_px),
              ssim_keep_vs_real=I.unchanged_ssim(im, real, keep & rmask),
              dE_keep_vs_real=I.unchanged_color_delta_e(im, real, keep & rmask),
              feat_ret_keep_vs_real=I.feature_retention(im, real, keep & rmask),

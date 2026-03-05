@@ -10,6 +10,7 @@ import numpy as np, cv2
 from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_fringe
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.eval.fringe_measure import measure_fringe_depth   # EXP_0015: SAM's fringe mask returns fabric
+from denimtwin.evidence import single_wash_evidence, hem_frayed
 ROOT = Path(__file__).resolve().parents[1]; IMG = ROOT / "data/external/pair_images"
 recs = [json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()]
 EXCL = {l.split()[0] for l in (ROOT / "data/priors/exclude.txt").read_text().splitlines() if l.strip() and not l.startswith("#")} if (ROOT / "data/priors/exclude.txt").exists() else set()
@@ -22,14 +23,17 @@ for r in recs:
     if pn.exists() and not pn.read_text().splitlines()[0].startswith("# PAIR — rejected"): out.append(dict(pair=pid, status="paired_elsewhere")); continue   # its after-photo is already a paired sample
     for im in r["images"]:
         if im["role"] != "after_wash": continue
-        # the thesis is ONE wash on a RAW cut edge: a photo after several washes, or of a hem whose finish is not
-        # evidenced as frayed, is a different quantity and must not enter the prior (review 5, finding 10)
-        note = (im.get("note") or "").lower()
-        if any(w in note for w in ("several wash", "second wash", "third wash", "multiple wash", "each wash", "washes")):
-            out.append(dict(pair=pid, file=None, status="more_than_one_wash", note=im.get("note"))); continue
-        finish = r.get("hem_finish")
-        if finish != "frayed" and "fray" not in note:
-            out.append(dict(pair=pid, file=None, status="hem_finish_not_evidenced_as_frayed", note=im.get("note"))); continue
+        # the thesis is ONE wash on a RAW cut edge: a photo after several washes, or after an unstated number, or of
+        # a hem whose finish is not evidenced as frayed, is a different quantity and must not enter the prior
+        # (review 5 finding 10; review 6 finding 7 — this channel had a blocklist whose default was ACCEPT and a
+        # fray test with no polarity, while the strict rules lived only in tools/ingest_unpaired.py).
+        note = im.get("note") or ""
+        ok, why = single_wash_evidence(note)
+        if not ok:
+            out.append(dict(pair=pid, file=None, status=why, note=im.get("note"))); continue
+        ok, why = hem_frayed(note, r.get("hem_finish"))
+        if not ok:
+            out.append(dict(pair=pid, file=None, status=why, note=im.get("note"))); continue
         f = f"{pid}_{im['role']}_{hashlib.sha1(im['url'].encode()).hexdigest()[:8]}{os.path.splitext(urllib.parse.urlparse(im['url']).path)[1] or '.jpg'}"
         tag = next((t.get("tag") for t in (v["images"] if v else []) if t.get("file") == f), None)
         if tag != "whole_garment_flat" or not (IMG / f).exists(): continue

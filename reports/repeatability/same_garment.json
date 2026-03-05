@@ -1,0 +1,157 @@
+{
+ "garment": "expressthrudress_acidwash_cutoffs",
+ "page": "https://expressthrudress.wordpress.com/2012/05/23/diy-create-your-own-denim-cut-off-shorts/",
+ "n_garments": 1,
+ "views": {
+  "front": {
+   "file": "b0576a1603",
+   "px": [
+    1578,
+    1169
+   ],
+   "best": {
+    "score": 0.9916759133338928,
+    "area_frac": 0.3287417560316629,
+    "garment_type": "shorts",
+    "waist_px": 874.0,
+    "height_over_waist": 0.8192219679633868,
+    "hip_over_waist": 1.196796338672769,
+    "rise_over_waist": 0.6601830663615561,
+    "rough_ok": true,
+    "rough_p90_px": 5.0,
+    "rough_p90_rel": 0.005720823798627002,
+    "rough_fraction": 0.15281501340482573,
+    "compactness": 2.0151638451752767
+   },
+   "consensus": {
+    "agreement": 1.0,
+    "denim_frac": 0.9077169636839548,
+    "area_frac": 0.3287417560316629,
+    "garment_type": "shorts",
+    "waist_px": 874.0,
+    "height_over_waist": 0.8192219679633868,
+    "hip_over_waist": 1.196796338672769,
+    "rise_over_waist": 0.6601830663615561,
+    "rough_ok": true,
+    "rough_p90_px": 5.0,
+    "rough_p90_rel": 0.005720823798627002,
+    "rough_fraction": 0.15281501340482573,
+    "compactness": 2.0151638451752767
+   },
+   "iou_best_vs_consensus": 1.0
+  },
+  "back": {
+   "file": "de6740d5b9",
+   "px": [
+    1600,
+    1200
+   ],
+   "best": {
+    "score": 0.9059128761291504,
+    "area_frac": 0.043753125,
+    "garment_type": "shorts",
+    "waist_px": 191.0,
+    "height_over_waist": 1.4397905759162304,
+    "hip_over_waist": 1.7277486910994764,
+    "rise_over_waist": 1.4240837696335078,
+    "rough_ok": true,
+    "rough_p90_px": 0.0,
+    "rough_p90_rel": 0.0,
+    "rough_fraction": 0.0,
+    "compactness": 1.7460207129112035
+   },
+   "consensus": {
+    "agreement": 1.0,
+    "denim_frac": 0.8956727900366376,
+    "area_frac": 0.3965635416666667,
+    "garment_type": "shorts",
+    "waist_px": 953.0,
+    "height_over_waist": 0.8709338929695698,
+    "hip_over_waist": 1.2256033578174186,
+    "rise_over_waist": 0.7135362014690452,
+    "rough_ok": true,
+    "rough_p90_px": 5.0,
+    "rough_p90_rel": 0.005246589716684155,
+    "rough_fraction": 0.18579686209744012,
+    "compactness": 2.1300117683298834
+   },
+   "iou_best_vs_consensus": 0.11033067945710676
+  }
+ },
+ "agreement_between_views": {
+  "best": {
+   "height_over_waist": {
+    "front": 0.8192219679633868,
+    "back": 1.4397905759162304,
+    "abs_diff": 0.6205686079528436,
+    "ratio": 1.7575097253502587
+   },
+   "hip_over_waist": {
+    "front": 1.196796338672769,
+    "back": 1.7277486910994764,
+    "abs_diff": 0.5309523524267075,
+    "ratio": 1.4436446998288168
+   },
+   "rise_over_waist": {
+    "front": 0.6601830663615561,
+    "back": 1.4240837696335078,
+    "abs_diff": 0.7639007032719517,
+    "ratio": 2.157104358162367
+   },
+   "rough_p90_rel": {
+    "front": 0.005720823798627002,
+    "back": 0.0,
+    "abs_diff": 0.005720823798627002,
+    "ratio": null
+   },
+   "rough_fraction": {
+    "front": 0.15281501340482573,
+    "back": 0.0,
+    "abs_diff": 0.15281501340482573,
+    "ratio": null
+   },
+   "waist_px": {
+    "front": 874.0,
+    "back": 191.0,
+    "ratio": 4.575916230366492
+   }
+  },
+  "consensus": {
+   "height_over_waist": {
+    "front": 0.8192219679633868,
+    "back": 0.8709338929695698,
+    "abs_diff": 0.051711925006183046,
+    "ratio": 1.063123215719838
+   },
+   "hip_over_waist": {
+    "front": 1.196796338672769,
+    "back": 1.2256033578174186,
+    "abs_diff": 0.02880701914464967,
+    "ratio": 1.0240701096868297
+   },
+   "rise_over_waist": {
+    "front": 0.6601830663615561,
+    "back": 0.7135362014690452,
+    "abs_diff": 0.05335313510748907,
+    "ratio": 1.0808156673898535
+   },
+   "rough_p90_rel": {
+    "front": 0.005720823798627002,
+    "back": 0.005246589716684155,
+    "abs_diff": 0.00047423408194284707,
+    "ratio": 1.0903890160183067
+   },
+   "rough_fraction": {
+    "front": 0.15281501340482573,
+    "back": 0.18579686209744012,
+    "abs_diff": 0.03298184869261439,
+    "ratio": 1.215828588813073
+   },
+   "waist_px": {
+    "front": 874.0,
+    "back": 953.0,
+    "ratio": 1.0903890160183067
+   }
+  }
+ }
+}

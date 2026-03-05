@@ -34,3 +34,34 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
 - 2026-08-29: 9 high-resolution finished-hem controls harvested and measured. Hem roughness: 0 false positives in 11 accepted control measurements, 6/8 frayed detected — but 2 of the 9 needed a new mask-quality gate (contour compactness > 3.0 is refused) because SAM's broken masks read exactly like fray. Rolled cuffs remain untested at high resolution.
 - 2026-08-29: EXP_0018 — segmentation is the real bottleneck. Two photos of the same garment give waist 874 px vs 191 px (SAM segmented a pocket, score 0.906); elsewhere it segmented a wall at 0.992. Five automatic validity checks all fail on at least one real photo, so human mask verification is now required before any measurement enters a prior. Gate 1 is recorded as failed with this as the reason.
 - 2026-08-29 (review 6, 12 findings): the contour-compactness gate was removed — it is a garment-shape statistic that refuses full-length jeans and silently zeroes the deepest frays. EXP_0017 retracted (its numbers were not in the artefacts); EXP_0016 recomputed without two pairs `exclude.txt` bans. Requiring explicit single-wash evidence cut the harvested channel from 7 candidates to 1 and the after-wash prior to n=2 — the evidence was always this thin. Nine all-rights-reserved retailer photos were committed and untracked the same hour. New: `tools/check_claims.py` + `tests/test_experiment_claims.py` re-derive every quoted number from its artefact, so notes cannot drift from their data again.
+
+- 2026-08-29: EXP_0021 — **repeatability, and the first tolerance numbers this project has.** Three parts.
+  (A) The one same-garment pair (front and back of one pair of cut-offs) agrees to 8% on rise/waist under consensus
+  segmentation, against a 2.16x disagreement and a 4.58x waist-width disagreement under best-score: **EXP_0018's
+  Gate 1 failure was a segmentation failure and it is fixed**. (B) 16 photographs x 14 simulated re-captures x 2
+  methods = 480 segmentations. Best-score SAM returns a *different object* on 16 of 96 runs where nothing but the
+  JPEG quality or the exposure changed; consensus does so on **0**. Over all 224 runs per method: 48 vs **9** below
+  IoU 0.8, and consensus's 10 refusals are mostly one cause — a 1.15x zoom pushes the garment past a hard 75%
+  area ceiling, and the refusal used to say "prompt sets disagree" when the prompts agreed perfectly. (C) The
+  ~30% swing in shape ratios at 8° of tilt is **not** segmentation: rotating an already-correct mask reproduces it,
+  and on an exact synthetic silhouette a 5° tilt already costs more than 5%. `predict.py`/`run_pair.py` only correct
+  tilt above 8°, which is on the wrong side of the effect (left unchanged: it needs its own A/B).
+- 2026-08-29: EXP_0021 also puts a number on the fray metric's reproducibility, and it is bad. Re-encoding the same
+  photograph at JPEG 15 changes hem roughness by 80% of its value; the fray *verdict* flips on **6 of 16 photos**,
+  and **2 of the 9 high-resolution finished-hem controls read "frayed"** under at least one perturbation. EXP_0016's
+  "0 false positives on 9 controls" is a statement about one photograph each and does not survive a re-encode.
+  `p90 > 0` was also shown to be exactly `rough_fraction > 0.10` (verified on all 239 real measurements), which names
+  the detection limit: a fray touching fewer than a tenth of the hem columns is invisible, and real finished hems
+  already deviate on up to 7.3% — a 2.7-point margin. The threshold is NOT moved; 16 photographs cannot set it.
+- 2026-08-29: the product path (`tools/predict.py`) gained `--seg consensus` — it could not use the segmentation that
+  fixes catastrophic object-identity failures — and every prediction now records which segmentation produced it.
+- 2026-08-29: review 5 and review 6's test files are now **in the repository and green** (they were local and
+  excluded from git). The remaining findings were fixed rather than argued: the wash/fray evidence gate is one
+  implementation shared by both intake channels (`denimtwin/evidence.py`) instead of two that disagreed, with the
+  polarity bug ("the hem did not fray" read as evidence of fray) fixed; the control-roughness artefact that EXP_0016
+  cites now has a script that produces it (`tools/measure_controls.py`) instead of being an ad-hoc leftover that
+  still described a removed gate; and one finding stands as an accepted, documented limitation (a scalloped hem reads
+  as fray) marked xfail with its reason.
+- 2026-08-29: `tests/test_no_dead_parameters.py` — a declared parameter that the body never reads is a silent lie to
+  the caller. It found five, including `hem_chamfer(band_px=40)`: `tools/compare.py` computed a 15 mm band and passed
+  it positionally for nothing on every pair report ever produced.

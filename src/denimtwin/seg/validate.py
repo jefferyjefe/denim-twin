@@ -56,7 +56,7 @@ def _runs(row_bool, gap=3):
     return 1 + int((np.diff(x) > gap).sum())
 
 
-def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, iou_same=0.7, boundary='median', agreement_slack=0.25):
+def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, iou_same=0.7, boundary='median'):
     """Segment the garment by AGREEMENT across prompt sets instead of by best score (EXP_0018).
 
     `segment_garment_coarse` takes the highest-scoring plausible candidate, and SAM is confidently wrong: it returned
@@ -74,19 +74,28 @@ def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, 
                    np.array([[0.5, 0.3], [0.5, 0.7]]), np.array([[0.35, 0.5], [0.65, 0.5]]), np.array([[0.5, 0.25]]),
                    np.array([[0.3, 0.35], [0.7, 0.35]]), np.array([[0.5, 0.6]])]
     cands = []
+    dropped = {"too_small": 0, "too_large": 0, "touches_border": 0}     # why candidates never reached the vote
     for i, pts in enumerate(prompt_sets):
         pc = pts * np.array([small.shape[1], small.shape[0]])
         masks, scores, _ = seg.predictor.predict(point_coords=pc, point_labels=np.ones(len(pc)), multimask_output=True)
         for m, sc in zip(masks, scores):
             a = float(m.mean())
-            if not (0.05 <= a <= 0.75): continue
+            if a < 0.05: dropped["too_small"] += 1; continue
+            if a > 0.75: dropped["too_large"] += 1; continue
             # A flat-laid garment does not run off the edge of the frame. Without this, agreement REWARDS the
             # backdrop: on a plain studio background every prompt finds the same white field and votes for it
             # (observed on two real pairs — the whole backdrop at agreement 0.88 and 1.00).
             bf = float((m[0].mean() + m[-1].mean() + m[:, 0].mean() + m[:, -1].mean()) / 4)
-            if bf > 0.02: continue
+            if bf > 0.02: dropped["touches_border"] += 1; continue
             cands.append({"prompt": i, "mask": m, "score": float(sc), "area": a, "border_frac": bf})
-    if not cands: return None, 0.0, {"reason": "no plausible candidate from any prompt"}
+    # A refusal must name the filter that caused it. EXP_0021: zooming a photo 1.15x made this function refuse 7 of
+    # 16 garments while reporting "prompt sets disagree" — the prompts agreed perfectly, but the garment now covered
+    # more than 75% of the frame and every candidate was discarded before the vote. The old message sent the caller
+    # looking for a segmentation failure that was really a framing assumption.
+    filt = f"of the candidate masks SAM proposed, {dropped['too_large']} covered more than 75% of the frame, " \
+           f"{dropped['too_small']} less than 5%, and {dropped['touches_border']} touched the frame border"
+    if not cands:
+        return None, 0.0, {"reason": f"no candidate survived the framing filters: {filt}", "dropped": dropped}
     clusters = []
     for c in sorted(cands, key=lambda c: -c["score"]):
         for cl in clusters:
@@ -112,9 +121,10 @@ def segment_garment_consensus(seg, image_bgr, max_side=1024, min_agreement=0.5, 
             "best_score": max(m["score"] for m in best["members"]), "area": float(best["rep"].mean()),
             "denim_frac": best["denim"], "rival_denim": sorted(round(cl["denim"], 2) for cl in clusters)[-4:],
             "rival_areas": sorted({round(float(np.mean([m["area"] for m in cl["members"]])), 3) for cl in clusters})[:5]}
+    info["dropped"] = dropped
     if agreement < min_agreement:
         info["reason"] = (f"prompt sets disagree: the most-agreed mask was found by {len(best['prompts'])} of "
-                          f"{n_prompts} prompts ({len(clusters)} distinct candidates)")
+                          f"{n_prompts} prompts ({len(clusters)} distinct candidates); {filt}")
         return None, agreement, info
     # Which boundary to return from the winning cluster:
     #   'median' — per-pixel majority of its members: robust, but it smooths the hem, and hem *texture* is the fray

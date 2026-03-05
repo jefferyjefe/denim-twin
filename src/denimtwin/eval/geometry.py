@@ -56,9 +56,15 @@ def hem_zone(keep, garment_before, band_px=40):
     d = cv2.distanceTransform(np.asarray(keep, np.uint8), cv2.DIST_L2, 3)
     return (~keep & garment_before) | (keep & (d <= band_px))
 
-def hem_chamfer(pred_sil, real_sil, keep, garment_before, band_px=40, mm_per_px=None):
+def hem_chamfer(pred_sil, real_sil, keep, garment_before, mm_per_px=None):
     """Hem profile error: per column, |lowest predicted garment pixel - lowest real garment pixel|, averaged over
-    columns where both exist below the waist. A 40 px hem error reads as ~40, not averaged away over the outline."""
+    columns where both masks have a lowest pixel and the garment extends below the cut.
+
+    It is DILUTED by columns that carry no hem: review 3 built a T-shaped garment whose two hems were each 40 px
+    high and measured 30-40, not 40 (`tests/test_review3_geometry.py`). Read it as a lower bound on hem error.
+
+    (A `band_px` parameter stood here until EXP_0021 and was never read by the body — `tools/compare.py` computed a
+    15 mm band and passed it positionally for nothing. `hem_zone` is the function that takes a band.)"""
     p = np.asarray(pred_sil, bool); r = np.asarray(real_sil, bool)
     below = ~np.asarray(keep, bool) & np.asarray(garment_before, bool)   # columns where the hem lives: garment below the cut
     cols = np.nonzero(p.any(axis=0) & r.any(axis=0) & below.any(axis=0))[0]

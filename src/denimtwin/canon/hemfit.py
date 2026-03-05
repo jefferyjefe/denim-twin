@@ -43,13 +43,13 @@ def fabric_vs_fringe(real_img, real_mask, lm_before, thresh_dE=None, hem_zone_px
     fabric = cv2.morphologyEx(fabric.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
     return fabric, real_mask & ~fabric, float(thresh_dE)
 
-def _split_x(lm_before, real_mask):
+def _split_x(lm_before):
     """Column that separates the legs: midpoint of the hips if available (robust to a mis-placed crotch x)."""
     if "hip_left" in lm_before and "hip_right" in lm_before: return int((lm_before["hip_left"][0] + lm_before["hip_right"][0]) / 2)
     return int(lm_before["crotch"][0])
 
 def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, real_img=None, min_pts=6, fringe_mask=None):
-    H, W = real_mask.shape; cx = _split_x(lm_before, real_mask)
+    H, W = real_mask.shape; cx = _split_x(lm_before)
     # scan from the HIP row, not the crotch: the per-column 'last fabric row' is unaffected by starting higher, and the
     # crotch estimate can be badly off when the legs touch (no gap) — starting there can miss the whole hem.
     cy = int(lm_before["hip_left"][1]) if "hip_left" in lm_before else int(lm_before["crotch"][1])
@@ -86,7 +86,7 @@ def estimate_hems(real_mask, garment_before, lm_before, w=6, solid_frac=0.6, rea
 
 def cut_mask_from_lines(garment_before, lm_before, legs):
     """Removal mask: garment pixels below each leg's fitted line (split at crotch x)."""
-    H, W = garment_before.shape; cx = _split_x(lm_before, garment_before); rem = np.zeros_like(garment_before)
+    H, W = garment_before.shape; cx = _split_x(lm_before); rem = np.zeros_like(garment_before)
     ys = np.arange(H)[:, None]
     for name, cols in (("left", slice(0, cx)), ("right", slice(cx, W))):
         L = legs.get(name)
