@@ -35,5 +35,7 @@ The reviewer verified, and could not break:
 ## The lesson worth keeping
 Four of the twelve findings are the same mistake: **a number was written into a note, and then the code or data it came
 from changed underneath it.** `tests/test_exp0015_claims.py` was review 5's answer to that — it parses a note and checks
-it against the artefacts it cites. It exists for one experiment. It should exist for every experiment that quotes a
-number, and that is the next piece of infrastructure this project needs.
+it against the artefacts it cites. It existed for one experiment. It now exists as
+infrastructure: `tools/check_claims.py` re-derives each annotated claim from the artefact it cites, and
+`tests/test_experiment_claims.py` runs it in the suite, so a note that drifts from its data fails CI. Six claims are
+annotated today (EXP_0015, EXP_0018); the list grows with each experiment that quotes a number.
