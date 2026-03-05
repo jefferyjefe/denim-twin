@@ -18,7 +18,7 @@ def detect(gray, board):
         return None, None
     return np.asarray(corners).reshape(-1, 2), np.asarray(ids).ravel()
 
-def mm_per_pixel(corners, ids, board, spec):
+def mm_per_pixel(corners, ids, spec):
     """Approximate scale from mean spacing of adjacent detected chessboard corners.
     Valid for near-overhead shots; use full pose for obliques."""
     cols = spec["cols"] - 1

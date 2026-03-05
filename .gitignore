@@ -22,3 +22,7 @@ experiments/pairs_v1/*/cmp_*/
 experiments/pairs_v1/*/*.png
 data/external/unpaired_images/
 data/external/control_images/
+
+# EXP_0021: silhouette masks derived from all-rights-reserved control/unpaired photos.
+# Derived numbers go in the repo; a traced outline of a copyrighted photograph does not.
+reports/repeatability/masks/

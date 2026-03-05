@@ -19,6 +19,22 @@ deviate at all, at any depth (review 6: 8 px notches on 5% and 8% of columns bot
 widespread deviation", not "provably a finished hem" — `rough_fraction` is the companion number and separates those
 cases (0.009 vs 0.075). Both are reported; neither is a fray classifier on its own.
 
+**`p90 > 0` IS a threshold on `rough_fraction`, at 0.10.** They are the same test: the 90th percentile of a
+non-negative integer array is positive exactly when more than a tenth of its entries are. Everything the p90 rule
+does is therefore "call it frayed when more than 10% of hem columns deviate", and the interesting question is where
+that 0.10 sits relative to real photographs. Measured on the 16 photographs available 2026-08-29 under consensus
+segmentation (`reports/fringe_methods/controls_roughness.json`, `reports/repeatability/rows.json`):
+
+    9 finished-hem controls   rough_fraction 0.000 - 0.073
+    4 frayed, detected        rough_fraction 0.126 - 0.186
+    3 frayed, not detected    rough_fraction 0.023, 0.052, 0.057   (inside the control band)
+
+There is a clean gap between 0.073 and 0.126, and 0.10 falls in it — but the margin above the noisiest finished hem
+is 2.7 points, and EXP_0021 found that a JPEG re-encode of the same photograph moves 2 of those 9 controls across it.
+**The threshold is not moved here.** Choosing 0.09 or 0.11 on sixteen photographs is exactly the fitting the tuning
+rule in docs/GATES.md forbids; what the numbers say is that the detection limit is a fray touching roughly a tenth of
+the hem, that three of seven frayed garments do not reach it, and that the gap is too small to call the metric safe.
+
 **What it responds to.** A hem that deviates from its own local median over a window of 6% of waist width. A smooth
 but *decorative* hem (scallops with a period near that window) reads as fray at 1–2 px, inside the range real frayed
 garments measure. It is a spatial-frequency statistic, not a fray detector, and it is only meaningful on a mask that
@@ -97,6 +113,10 @@ def hem_roughness(garment_mask, waist_px=None, window_frac=DEFAULTS["window_frac
     r = np.abs(y - median_filter(y, size=k, mode="nearest"))
     out.update(p90_px=float(np.percentile(r, 90)), mean_px=float(r.mean()),
                rough_fraction=float((r > 0).mean()), window_px=int(k))
+    # The fray verdict, named: `p90 > 0` is the same test as `rough_fraction > 0.10`. Reporting it as a threshold on
+    # a fraction makes the detection limit visible to the caller instead of hiding it inside a percentile.
+    out["fray_threshold_on_rough_fraction"] = 0.10
+    out["reads_as_frayed"] = bool(out["rough_fraction"] > 0.10)
     if waist_px:
         out["p90_rel"] = out["p90_px"] / float(waist_px)
         out["mean_rel"] = out["mean_px"] / float(waist_px)

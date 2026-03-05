@@ -38,6 +38,14 @@ p.add_argument("--prior", default=os.path.join(os.path.dirname(__file__), "..", 
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="predict the just-cut garment or the washed one")
 p.add_argument("--edge-treatment", choices=["raw", "cuffed", "hemmed", "serged", "hand_frayed"], default="raw")
 p.add_argument("--seed", type=int, default=1)
+p.add_argument("--seg", choices=["coarse", "consensus"], default="coarse",
+               help="garment segmentation: 'coarse' takes SAM's best-scoring candidate; 'consensus' takes the "
+                    "object the most prompt sets agree on and reports that agreement. Consensus fixes the "
+                    "catastrophic object-identity failures (a back pocket at score 0.906) that best-score cannot "
+                    "detect, and is the only setting that survives re-capture perturbation (EXP_0019/0021); it is "
+                    "opt-in because it changes every rendered output and has its own failure on plain studio "
+                    "backdrops, where the vote can elect the backdrop instead of the garment.")
+p.add_argument("--min-agreement", type=float, default=0.5, help="--seg consensus: refuse below this prompt agreement")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 FLAGS = []
 def FAIL(why):
@@ -46,9 +54,26 @@ def FAIL(why):
 img = cv2.imread(a.image)
 if img is None: FAIL(f"cannot read {a.image}")
 seg = SamSegmenter()
-mask, sc, info = segment_garment_coarse(seg, img)
-if mask is None: FAIL("segmentation failed (garment not found against the background)")
-FLAGS.append(f"mask score {sc:.3f}, area {info['area']:.2f} of frame")
+SEG_PROVENANCE = {"method": a.seg}
+if a.seg == "consensus":
+    from denimtwin.seg.validate import segment_garment_consensus
+    mask, agr, info = segment_garment_consensus(seg, img, boundary="member", min_agreement=a.min_agreement)
+    if mask is None:
+        FAIL(f"consensus segmentation refused: {info.get('reason', 'no cluster reached the agreement threshold')}. "
+             "Re-shoot the garment against a background it does not blend into, or pass --seg coarse and check the mask by eye.")
+    SEG_PROVENANCE.update(agreement=float(agr), area=float(info.get("area", 0.0)), denim_frac=info.get("denim_frac"),
+                          n_clusters=info.get("n_clusters"))
+    FLAGS.append(f"segmentation by consensus: {agr:.0%} of prompt sets agree, area {info['area']:.2f} of frame")
+    if info.get("denim_frac") is not None and info["denim_frac"] < 0.35:
+        FLAGS.append(f"only {info['denim_frac']:.0%} of the chosen mask is denim-coloured — on a plain studio backdrop "
+                     "the prompts can agree on the BACKDROP instead of the garment (EXP_0019); check diff.png before trusting this")
+else:
+    mask, sc, info = segment_garment_coarse(seg, img)
+    if mask is None: FAIL("segmentation failed (garment not found against the background)")
+    SEG_PROVENANCE.update(score=float(sc), area=float(info["area"]))
+    FLAGS.append(f"mask score {sc:.3f}, area {info['area']:.2f} of frame")
+    FLAGS.append("mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a "
+                 "back pocket returned at 0.906): look at diff.png, or use --seg consensus")
 
 # upright: flat-lays are often shot at an angle
 ys, xs = np.nonzero(mask); pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
@@ -196,6 +221,7 @@ pred = {"image": os.path.abspath(a.image), "state": a.state, "wash_preset": a.wa
                          "prior_validation_note": locals().get("prior_note", ""),
                          "assumed_depth_mm_sourced": (json.load(open(a.prior)).get("assumed_depth") or {}).get("value_mm")},
         "changed_fraction_of_kept_region": changed_outside,
+        "segmentation": SEG_PROVENANCE,
         "flags": FLAGS}
 json.dump(pred, open(f"{O}/prediction.json", "w"), indent=1)
 

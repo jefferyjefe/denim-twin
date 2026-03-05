@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 NAMES = ["cx", "top", "waist_w", "hip_w", "hip_dy", "rise", "thigh_w", "knee_w", "leg_len", "hem_w", "spread"]
 
-def polygon(p, H, W):
+def polygon(p):
     cx, top, waist_w, hip_w, hip_dy, rise, thigh_w, knee_w, leg_len, hem_w, spread = p
     y0 = top; yh = top + hip_dy; yc = top + rise; yk = yc + 0.47 * leg_len; yb = yc + leg_len
     L = []
@@ -22,7 +22,7 @@ def polygon(p, H, W):
     return np.array(pts, np.float32)
 
 def render(p, H, W):
-    m = np.zeros((H, W), np.uint8); cv2.fillPoly(m, [polygon(p, H, W).astype(np.int32)], 1); return m.astype(bool)
+    m = np.zeros((H, W), np.uint8); cv2.fillPoly(m, [polygon(p).astype(np.int32)], 1); return m.astype(bool)
 
 def init_from_mask(mask):
     ys, xs = np.nonzero(mask); top, bot = ys.min(), ys.max(); h = bot - top

@@ -34,3 +34,19 @@ rarely a problem in practice. Below roughly 600 px of waistband we cannot tell a
 
 The hem close-up described above is still the reliable route, because it puts the fringe at a scale where it is
 resolvable rather than a few pixels deep.
+
+## Take the after-wash photo twice (added 2026-08-29)
+
+If you send one extra thing, send this: after the after-wash flat-lay, **put the phone down, pick it up again, and take
+the same photo a second time.** Nothing about the garment changes between the two.
+
+We have never had a single pair of photographs of one unchanged garment. Without them we cannot answer the most basic
+question about our own measurements — if you measured the same pair of shorts twice, would you get the same number?
+Everything we can say today comes from *simulated* re-captures (re-framing, re-exposing and re-compressing one photo),
+which cannot move the fabric, change the drape or move the light, and therefore flatter us: they bound our error from
+above and no more (EXP_0021).
+
+Two shots, ten seconds, and the first honest tolerance this project has ever had.
+
+**Also: shoot from directly above.** Our landmark measurements lose more than 5% at as little as 1–8° of camera tilt,
+depending on the garment, and tilt is invisible in the photograph itself.

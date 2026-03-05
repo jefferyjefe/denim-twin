@@ -62,7 +62,11 @@ Put a coin in the frame if you want any answer in centimetres.
   a direct thread measurement returns garment-mask error, displaced shadows and patterned floors as "fringe"; and
   resolution does not help, because the mask-error floor scales with the image. Depth is therefore no longer used as
   evidence anywhere. **Hem roughness** (`eval/hem_texture.py`) is the fray signal that does survive its control —
-  0 false positives on 11 finished-hem garments, reliable above ~600–1000 px of waistband (EXP_0016), The fringe renderer's score on it is **undetermined**: 8 of 10 pairs
+  0 false positives on 9 high-resolution finished-hem garments *in one photograph each*, reliable above ~600–1000 px
+  of waistband (EXP_0016) — but **that result does not survive a re-capture**: re-encoding the same photo flips the
+  verdict on 6 of 16 photos and makes 2 of those 9 controls read frayed (EXP_0021). `p90 > 0` is exactly
+  `rough_fraction > 0.10`, so the detection limit is a fray touching a tenth of the hem, against finished hems that
+  already deviate on up to 7.3% of columns, The fringe renderer's score on it is **undetermined**: 8 of 10 pairs
   are not decidable because the rendered fringe defeats the metric's own reliability check, and the 2 that are give
   p = 1.0 (EXP_0017, retracted and restated). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
   fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
@@ -70,5 +74,15 @@ Put a coin in the frame if you want any answer in centimetres.
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
   Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
+- Segmentation and repeatability (EXP_0021): **consensus segmentation** (`--seg consensus`, now on both `run_pair.py`
+  and `predict.py`) is the setting that survives a re-capture. Change nothing but a photo's JPEG quality or exposure
+  and SAM's best-scoring mask returns a *different object* on 16 of 96 tries; consensus does so on 0, and when it is
+  unsure it refuses and says which filter refused. The one same-garment pair in the dataset agrees to 8% on rise/waist
+  under consensus, against 4.58x on waist width under best-score — the EXP_0018 Gate 1 failure was segmentation.
+  What is **not** repeatable is one level up: the landmark heuristic loses >5% at 1–8° of camera tilt (an exact
+  silhouette loses 33% at 8°), and the fray verdict flips on 6 of 16 photos under a JPEG re-encode — including 2 of
+  the 9 finished-hem controls. Every number comes from a *simulated* re-capture and therefore **bounds our error from
+  above**; two real photographs of one garment would settle it, and we have never had a pair.
 - Automation: local launchd jobs work (`ops/`); cloud routines never executed in this environment (`tools/agents/README.md`).
-- Tests: 99 + 1 xfail (`pytest -q tests`), CI green; fresh-clone verified without ML deps (`reports/repro/`).
+- Tests: 247 + 6 xfail (`pytest -q tests`), CI green; fresh-clone verified without ML deps (`reports/repro/`).
+  Reviews 2–6's findings are all in the suite; the review-5/6 files were local-only until EXP_0021 and are now tracked.

@@ -1,0 +1,1512 @@
+{
+ "angles_deg": [
+  0,
+  1,
+  2,
+  3,
+  5,
+  8,
+  12,
+  20
+ ],
+ "subjects": {
+  "synthetic_shorts": {
+   "base": {
+    "waist_px": 368.0,
+    "height_over_waist": 1.4619565217391304,
+    "hip_over_waist": 1.0,
+    "rise_over_waist": 0.6005434782608695,
+    "garment_type": "jeans"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 368.0,
+     "height_over_waist": 1.4619565217391304,
+     "hip_over_waist": 1.0,
+     "rise_over_waist": 0.6005434782608695,
+     "garment_type": "jeans"
+    },
+    "1": {
+     "waist_px": 368.0,
+     "height_over_waist": 1.4701086956521738,
+     "hip_over_waist": 1.0,
+     "rise_over_waist": 0.6005434782608695,
+     "garment_type": "jeans"
+    },
+    "2": {
+     "waist_px": 367.0,
+     "height_over_waist": 1.4822888283378746,
+     "hip_over_waist": 1.002724795640327,
+     "rise_over_waist": 0.6021798365122616,
+     "garment_type": "jeans"
+    },
+    "3": {
+     "waist_px": 367.0,
+     "height_over_waist": 1.4877384196185286,
+     "hip_over_waist": 1.005449591280654,
+     "rise_over_waist": 0.5994550408719346,
+     "garment_type": "jeans"
+    },
+    "5": {
+     "waist_px": 312.0,
+     "height_over_waist": 1.766025641025641,
+     "hip_over_waist": 1.185897435897436,
+     "rise_over_waist": 0.7051282051282052,
+     "garment_type": "jeans"
+    },
+    "8": {
+     "waist_px": 271.0,
+     "height_over_waist": 2.0516605166051662,
+     "hip_over_waist": 1.3726937269372694,
+     "rise_over_waist": 0.8007380073800738,
+     "garment_type": "jeans"
+    },
+    "12": {
+     "waist_px": 242.0,
+     "height_over_waist": 2.322314049586777,
+     "hip_over_waist": 1.5537190082644627,
+     "rise_over_waist": 0.8884297520661157,
+     "garment_type": "jeans"
+    },
+    "20": {
+     "waist_px": 231.0,
+     "height_over_waist": 2.4372294372294374,
+     "hip_over_waist": 1.6926406926406927,
+     "rise_over_waist": 0.8831168831168831,
+     "garment_type": "jeans"
+    }
+   }
+  },
+  "synthetic_jeans": {
+   "base": {
+    "waist_px": 368.0,
+    "height_over_waist": 2.1277173913043477,
+    "hip_over_waist": 1.0,
+    "rise_over_waist": 0.5869565217391305,
+    "garment_type": "jeans"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 368.0,
+     "height_over_waist": 2.1277173913043477,
+     "hip_over_waist": 1.0,
+     "rise_over_waist": 0.5869565217391305,
+     "garment_type": "jeans"
+    },
+    "1": {
+     "waist_px": 368.0,
+     "height_over_waist": 2.135869565217391,
+     "hip_over_waist": 1.002717391304348,
+     "rise_over_waist": 0.5869565217391305,
+     "garment_type": "jeans"
+    },
+    "2": {
+     "waist_px": 367.0,
+     "height_over_waist": 2.1498637602179835,
+     "hip_over_waist": 1.002724795640327,
+     "rise_over_waist": 0.5885558583106267,
+     "garment_type": "jeans"
+    },
+    "3": {
+     "waist_px": 367.0,
+     "height_over_waist": 2.1525885558583107,
+     "hip_over_waist": 1.005449591280654,
+     "rise_over_waist": 0.5858310626702997,
+     "garment_type": "jeans"
+    },
+    "5": {
+     "waist_px": 367.0,
+     "height_over_waist": 2.1662125340599454,
+     "hip_over_waist": 1.005449591280654,
+     "rise_over_waist": 0.5858310626702997,
+     "garment_type": "jeans"
+    },
+    "8": {
+     "waist_px": 307.0,
+     "height_over_waist": 2.6026058631921822,
+     "hip_over_waist": 1.211726384364821,
+     "rise_over_waist": 0.6905537459283387,
+     "garment_type": "jeans"
+    },
+    "12": {
+     "waist_px": 267.0,
+     "height_over_waist": 3.0037453183520597,
+     "hip_over_waist": 1.408239700374532,
+     "rise_over_waist": 0.7865168539325843,
+     "garment_type": "jeans"
+    },
+    "20": {
+     "waist_px": 247.0,
+     "height_over_waist": 3.214574898785425,
+     "hip_over_waist": 1.5870445344129556,
+     "rise_over_waist": 0.805668016194332,
+     "garment_type": "jeans"
+    }
+   }
+  },
+  "00d0c4704c": {
+   "base": {
+    "waist_px": 537.0,
+    "height_over_waist": 1.4729981378026071,
+    "hip_over_waist": 1.277467411545624,
+    "rise_over_waist": 1.4078212290502794,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 537.0,
+     "height_over_waist": 1.4729981378026071,
+     "hip_over_waist": 1.277467411545624,
+     "rise_over_waist": 1.4078212290502794,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 536.0,
+     "height_over_waist": 1.4757462686567164,
+     "hip_over_waist": 1.2798507462686568,
+     "rise_over_waist": 1.4104477611940298,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 537.0,
+     "height_over_waist": 1.4729981378026071,
+     "hip_over_waist": 1.2811918063314711,
+     "rise_over_waist": 1.4059590316573556,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 538.0,
+     "height_over_waist": 1.4646840148698885,
+     "hip_over_waist": 1.278810408921933,
+     "rise_over_waist": 1.3977695167286246,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 542.0,
+     "height_over_waist": 1.448339483394834,
+     "hip_over_waist": 1.2767527675276753,
+     "rise_over_waist": 1.3800738007380073,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 556.0,
+     "height_over_waist": 1.4118705035971224,
+     "hip_over_waist": 1.2625899280575539,
+     "rise_over_waist": 1.3237410071942446,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 574.0,
+     "height_over_waist": 1.39198606271777,
+     "hip_over_waist": 1.2578397212543555,
+     "rise_over_waist": 1.2560975609756098,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 447.0,
+     "height_over_waist": 1.7695749440715884,
+     "hip_over_waist": 1.6196868008948546,
+     "rise_over_waist": 1.541387024608501,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "35bda9db86": {
+   "base": {
+    "waist_px": 272.0,
+    "height_over_waist": 1.5588235294117647,
+    "hip_over_waist": 1.9963235294117647,
+    "rise_over_waist": 1.1948529411764706,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 272.0,
+     "height_over_waist": 1.5588235294117647,
+     "hip_over_waist": 1.9963235294117647,
+     "rise_over_waist": 1.1948529411764706,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 273.0,
+     "height_over_waist": 1.5531135531135531,
+     "hip_over_waist": 2.0,
+     "rise_over_waist": 1.1831501831501832,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 263.0,
+     "height_over_waist": 1.623574144486692,
+     "hip_over_waist": 2.0836501901140685,
+     "rise_over_waist": 1.231939163498099,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 254.0,
+     "height_over_waist": 1.6929133858267718,
+     "hip_over_waist": 2.1653543307086616,
+     "rise_over_waist": 1.279527559055118,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 242.0,
+     "height_over_waist": 1.7933884297520661,
+     "hip_over_waist": 2.2768595041322315,
+     "rise_over_waist": 1.3429752066115703,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 232.0,
+     "height_over_waist": 1.896551724137931,
+     "hip_over_waist": 2.3275862068965516,
+     "rise_over_waist": 1.4008620689655173,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 224.0,
+     "height_over_waist": 1.9866071428571428,
+     "hip_over_waist": 2.21875,
+     "rise_over_waist": 1.4419642857142858,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 233.0,
+     "height_over_waist": 1.9699570815450644,
+     "hip_over_waist": 1.9484978540772533,
+     "rise_over_waist": 1.9570815450643777,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "412c1097ef": {
+   "base": {
+    "waist_px": 444.0,
+    "height_over_waist": 0.963963963963964,
+    "hip_over_waist": 1.1463963963963963,
+    "rise_over_waist": 0.8806306306306306,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 444.0,
+     "height_over_waist": 0.963963963963964,
+     "hip_over_waist": 1.1463963963963963,
+     "rise_over_waist": 0.8806306306306306,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 448.0,
+     "height_over_waist": 0.9508928571428571,
+     "hip_over_waist": 1.1383928571428572,
+     "rise_over_waist": 0.8683035714285714,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 449.0,
+     "height_over_waist": 0.9487750556792873,
+     "hip_over_waist": 1.133630289532294,
+     "rise_over_waist": 0.8663697104677061,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 405.0,
+     "height_over_waist": 1.0493827160493827,
+     "hip_over_waist": 1.2469135802469136,
+     "rise_over_waist": 0.9604938271604938,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 357.0,
+     "height_over_waist": 1.184873949579832,
+     "hip_over_waist": 1.4005602240896358,
+     "rise_over_waist": 1.084033613445378,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 306.0,
+     "height_over_waist": 1.3790849673202614,
+     "hip_over_waist": 1.6176470588235294,
+     "rise_over_waist": 1.2581699346405228,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 291.0,
+     "height_over_waist": 1.4879725085910653,
+     "hip_over_waist": 1.7079037800687284,
+     "rise_over_waist": 1.309278350515464,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 288.0,
+     "height_over_waist": 1.5729166666666667,
+     "hip_over_waist": 1.8090277777777777,
+     "rise_over_waist": 1.2673611111111112,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "6f606e9956": {
+   "base": {
+    "waist_px": 495.0,
+    "height_over_waist": 1.393939393939394,
+    "hip_over_waist": 1.3353535353535353,
+    "rise_over_waist": 1.38989898989899,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 495.0,
+     "height_over_waist": 1.393939393939394,
+     "hip_over_waist": 1.3353535353535353,
+     "rise_over_waist": 1.38989898989899,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 496.0,
+     "height_over_waist": 1.3891129032258065,
+     "hip_over_waist": 1.3387096774193548,
+     "rise_over_waist": 1.3850806451612903,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 496.0,
+     "height_over_waist": 1.3870967741935485,
+     "hip_over_waist": 1.342741935483871,
+     "rise_over_waist": 1.3830645161290323,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 496.0,
+     "height_over_waist": 1.3850806451612903,
+     "hip_over_waist": 1.342741935483871,
+     "rise_over_waist": 1.3810483870967742,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 498.0,
+     "height_over_waist": 1.3714859437751004,
+     "hip_over_waist": 1.3433734939759037,
+     "rise_over_waist": 1.3674698795180722,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 512.0,
+     "height_over_waist": 1.310546875,
+     "hip_over_waist": 1.33203125,
+     "rise_over_waist": 1.30859375,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 423.0,
+     "height_over_waist": 1.5673758865248226,
+     "hip_over_waist": 1.5673758865248226,
+     "rise_over_waist": 1.553191489361702,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 373.0,
+     "height_over_waist": 1.804289544235925,
+     "hip_over_waist": 1.8176943699731904,
+     "rise_over_waist": 1.801608579088472,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "7b0a1ceaaf": {
+   "base": {
+    "waist_px": 538.0,
+    "height_over_waist": 1.5074349442379182,
+    "hip_over_waist": 1.2732342007434945,
+    "rise_over_waist": 1.41635687732342,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 538.0,
+     "height_over_waist": 1.5074349442379182,
+     "hip_over_waist": 1.2732342007434945,
+     "rise_over_waist": 1.41635687732342,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 537.0,
+     "height_over_waist": 1.51024208566108,
+     "hip_over_waist": 1.2737430167597765,
+     "rise_over_waist": 1.4189944134078212,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 539.0,
+     "height_over_waist": 1.5009276437847867,
+     "hip_over_waist": 1.2708719851576995,
+     "rise_over_waist": 1.411873840445269,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 540.0,
+     "height_over_waist": 1.4962962962962962,
+     "hip_over_waist": 1.2703703703703704,
+     "rise_over_waist": 1.4074074074074074,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 542.0,
+     "height_over_waist": 1.481549815498155,
+     "hip_over_waist": 1.2712177121771218,
+     "rise_over_waist": 1.3929889298892988,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 548.0,
+     "height_over_waist": 1.4525547445255473,
+     "hip_over_waist": 1.2755474452554745,
+     "rise_over_waist": 1.3576642335766422,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 561.0,
+     "height_over_waist": 1.4224598930481283,
+     "hip_over_waist": 1.2745098039215685,
+     "rise_over_waist": 1.3012477718360071,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 422.0,
+     "height_over_waist": 1.8578199052132702,
+     "hip_over_waist": 1.6895734597156398,
+     "rise_over_waist": 1.6635071090047393,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "821bfe4c0b": {
+   "base": {
+    "waist_px": 603.0,
+    "height_over_waist": 0.835820895522388,
+    "hip_over_waist": 1.2587064676616915,
+    "rise_over_waist": 0.6301824212271974,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 603.0,
+     "height_over_waist": 0.835820895522388,
+     "hip_over_waist": 1.2587064676616915,
+     "rise_over_waist": 0.6301824212271974,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 604.0,
+     "height_over_waist": 0.8360927152317881,
+     "hip_over_waist": 1.2566225165562914,
+     "rise_over_waist": 0.6258278145695364,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 605.0,
+     "height_over_waist": 0.8347107438016529,
+     "hip_over_waist": 1.2611570247933885,
+     "rise_over_waist": 0.6198347107438017,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 609.0,
+     "height_over_waist": 0.8308702791461412,
+     "hip_over_waist": 1.2561576354679802,
+     "rise_over_waist": 0.6141215106732348,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 447.0,
+     "height_over_waist": 1.138702460850112,
+     "hip_over_waist": 1.6465324384787472,
+     "rise_over_waist": 0.8299776286353467,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 409.0,
+     "height_over_waist": 1.2493887530562346,
+     "hip_over_waist": 1.7970660146699267,
+     "rise_over_waist": 0.8924205378973105,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 400.0,
+     "height_over_waist": 1.2825,
+     "hip_over_waist": 1.8625,
+     "rise_over_waist": 0.8925,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 401.0,
+     "height_over_waist": 1.3067331670822944,
+     "hip_over_waist": 1.9326683291770574,
+     "rise_over_waist": 0.8503740648379052,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "850ceb6690": {
+   "base": {
+    "waist_px": 521.0,
+    "height_over_waist": 1.510556621880998,
+    "hip_over_waist": 1.2917466410748562,
+    "rise_over_waist": 1.3973128598848368,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 521.0,
+     "height_over_waist": 1.510556621880998,
+     "hip_over_waist": 1.2917466410748562,
+     "rise_over_waist": 1.3973128598848368,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 522.0,
+     "height_over_waist": 1.5076628352490422,
+     "hip_over_waist": 1.2873563218390804,
+     "rise_over_waist": 1.3946360153256705,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 521.0,
+     "height_over_waist": 1.510556621880998,
+     "hip_over_waist": 1.293666026871401,
+     "rise_over_waist": 1.3973128598848368,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 524.0,
+     "height_over_waist": 1.501908396946565,
+     "hip_over_waist": 1.2900763358778626,
+     "rise_over_waist": 1.3874045801526718,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 527.0,
+     "height_over_waist": 1.4838709677419355,
+     "hip_over_waist": 1.2903225806451613,
+     "rise_over_waist": 1.3681214421252372,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 531.0,
+     "height_over_waist": 1.4557438794726931,
+     "hip_over_waist": 1.2975517890772128,
+     "rise_over_waist": 1.3370998116760828,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 544.0,
+     "height_over_waist": 1.4466911764705883,
+     "hip_over_waist": 1.2941176470588236,
+     "rise_over_waist": 1.2830882352941178,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 393.0,
+     "height_over_waist": 1.9923664122137406,
+     "hip_over_waist": 1.7684478371501273,
+     "rise_over_waist": 1.702290076335878,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "af71c8a996": {
+   "base": {
+    "waist_px": 377.0,
+    "height_over_waist": 1.6551724137931034,
+    "hip_over_waist": 1.4721485411140585,
+    "rise_over_waist": 1.4190981432360743,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 377.0,
+     "height_over_waist": 1.6551724137931034,
+     "hip_over_waist": 1.4721485411140585,
+     "rise_over_waist": 1.4190981432360743,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 374.0,
+     "height_over_waist": 1.6631016042780749,
+     "hip_over_waist": 1.4866310160427807,
+     "rise_over_waist": 1.427807486631016,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 379.0,
+     "height_over_waist": 1.6358839050131926,
+     "hip_over_waist": 1.474934036939314,
+     "rise_over_waist": 1.403693931398417,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 381.0,
+     "height_over_waist": 1.627296587926509,
+     "hip_over_waist": 1.4724409448818898,
+     "rise_over_waist": 1.3937007874015748,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 396.0,
+     "height_over_waist": 1.5580808080808082,
+     "hip_over_waist": 1.4393939393939394,
+     "rise_over_waist": 1.3282828282828283,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 407.0,
+     "height_over_waist": 1.5135135135135136,
+     "hip_over_waist": 1.425061425061425,
+     "rise_over_waist": 1.28009828009828,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 350.0,
+     "height_over_waist": 1.7714285714285714,
+     "hip_over_waist": 1.6285714285714286,
+     "rise_over_waist": 1.4657142857142857,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 322.0,
+     "height_over_waist": 1.9596273291925466,
+     "hip_over_waist": 1.8198757763975155,
+     "rise_over_waist": 1.5434782608695652,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "b0576a1603": {
+   "base": {
+    "waist_px": 498.0,
+    "height_over_waist": 0.8192771084337349,
+    "hip_over_waist": 1.1967871485943775,
+    "rise_over_waist": 0.6606425702811245,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 498.0,
+     "height_over_waist": 0.8192771084337349,
+     "hip_over_waist": 1.1967871485943775,
+     "rise_over_waist": 0.6606425702811245,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 494.0,
+     "height_over_waist": 0.8279352226720648,
+     "hip_over_waist": 1.2024291497975708,
+     "rise_over_waist": 0.6720647773279352,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 492.0,
+     "height_over_waist": 0.8292682926829268,
+     "hip_over_waist": 1.2052845528455285,
+     "rise_over_waist": 0.6788617886178862,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 493.0,
+     "height_over_waist": 0.8255578093306288,
+     "hip_over_waist": 1.206896551724138,
+     "rise_over_waist": 0.6774847870182555,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 498.0,
+     "height_over_waist": 0.8012048192771084,
+     "hip_over_waist": 1.2108433734939759,
+     "rise_over_waist": 0.6626506024096386,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 504.0,
+     "height_over_waist": 0.7698412698412699,
+     "hip_over_waist": 1.1924603174603174,
+     "rise_over_waist": 0.6428571428571429,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 360.0,
+     "height_over_waist": 1.086111111111111,
+     "hip_over_waist": 1.6388888888888888,
+     "rise_over_waist": 0.8916666666666667,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 299.0,
+     "height_over_waist": 1.3678929765886287,
+     "hip_over_waist": 2.0133779264214047,
+     "rise_over_waist": 1.0501672240802675,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "bf69fc5a92": {
+   "base": {
+    "waist_px": 446.0,
+    "height_over_waist": 1.3497757847533631,
+    "hip_over_waist": 1.3273542600896862,
+    "rise_over_waist": 1.201793721973094,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 446.0,
+     "height_over_waist": 1.3497757847533631,
+     "hip_over_waist": 1.3273542600896862,
+     "rise_over_waist": 1.201793721973094,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 445.0,
+     "height_over_waist": 1.348314606741573,
+     "hip_over_waist": 1.3348314606741574,
+     "rise_over_waist": 1.2,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 444.0,
+     "height_over_waist": 1.3513513513513513,
+     "hip_over_waist": 1.3333333333333333,
+     "rise_over_waist": 1.2027027027027026,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 441.0,
+     "height_over_waist": 1.3560090702947847,
+     "hip_over_waist": 1.3492063492063493,
+     "rise_over_waist": 1.2018140589569162,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 442.0,
+     "height_over_waist": 1.3484162895927603,
+     "hip_over_waist": 1.3461538461538463,
+     "rise_over_waist": 1.1923076923076923,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 448.0,
+     "height_over_waist": 1.3147321428571428,
+     "hip_over_waist": 1.3526785714285714,
+     "rise_over_waist": 1.15625,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 357.0,
+     "height_over_waist": 1.6442577030812324,
+     "hip_over_waist": 1.6414565826330532,
+     "rise_over_waist": 1.4341736694677871,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 357.0,
+     "height_over_waist": 1.6526610644257702,
+     "hip_over_waist": 1.742296918767507,
+     "rise_over_waist": 1.3697478991596639,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "c2a0e6e470": {
+   "base": {
+    "waist_px": 401.0,
+    "height_over_waist": 0.8628428927680798,
+    "hip_over_waist": 1.371571072319202,
+    "rise_over_waist": 0.7206982543640897,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 401.0,
+     "height_over_waist": 0.8628428927680798,
+     "hip_over_waist": 1.371571072319202,
+     "rise_over_waist": 0.7206982543640897,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 402.0,
+     "height_over_waist": 0.8606965174129353,
+     "hip_over_waist": 1.36318407960199,
+     "rise_over_waist": 0.7164179104477612,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 402.0,
+     "height_over_waist": 0.8631840796019901,
+     "hip_over_waist": 1.36318407960199,
+     "rise_over_waist": 0.7164179104477612,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 404.0,
+     "height_over_waist": 0.8589108910891089,
+     "hip_over_waist": 1.3613861386138615,
+     "rise_over_waist": 0.7103960396039604,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 403.0,
+     "height_over_waist": 0.8660049627791563,
+     "hip_over_waist": 1.3647642679900744,
+     "rise_over_waist": 0.7096774193548387,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 295.0,
+     "height_over_waist": 1.1898305084745762,
+     "hip_over_waist": 1.7118644067796611,
+     "rise_over_waist": 0.9661016949152542,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 276.0,
+     "height_over_waist": 1.2753623188405796,
+     "hip_over_waist": 1.8659420289855073,
+     "rise_over_waist": 1.0217391304347827,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 269.0,
+     "height_over_waist": 1.342007434944238,
+     "hip_over_waist": 2.0,
+     "rise_over_waist": 1.033457249070632,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "dbde5e4083": {
+   "base": {
+    "waist_px": 546.0,
+    "height_over_waist": 1.456043956043956,
+    "hip_over_waist": 1.2692307692307692,
+    "rise_over_waist": 1.3131868131868132,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 546.0,
+     "height_over_waist": 1.456043956043956,
+     "hip_over_waist": 1.2692307692307692,
+     "rise_over_waist": 1.3131868131868132,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 549.0,
+     "height_over_waist": 1.4462659380692167,
+     "hip_over_waist": 1.2622950819672132,
+     "rise_over_waist": 1.3041894353369763,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 548.0,
+     "height_over_waist": 1.447080291970803,
+     "hip_over_waist": 1.2645985401459854,
+     "rise_over_waist": 1.3065693430656935,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 548.0,
+     "height_over_waist": 1.447080291970803,
+     "hip_over_waist": 1.2645985401459854,
+     "rise_over_waist": 1.3083941605839415,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 553.0,
+     "height_over_waist": 1.4213381555153708,
+     "hip_over_waist": 1.2622061482820977,
+     "rise_over_waist": 1.2857142857142858,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 566.0,
+     "height_over_waist": 1.3886925795053005,
+     "hip_over_waist": 1.2526501766784452,
+     "rise_over_waist": 1.2402826855123674,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 507.0,
+     "height_over_waist": 1.571992110453649,
+     "hip_over_waist": 1.3964497041420119,
+     "rise_over_waist": 1.3609467455621302,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 415.0,
+     "height_over_waist": 1.8867469879518073,
+     "hip_over_waist": 1.7325301204819277,
+     "rise_over_waist": 1.6024096385542168,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "de6740d5b9": {
+   "base": {
+    "waist_px": 535.0,
+    "height_over_waist": 0.8728971962616823,
+    "hip_over_waist": 1.2280373831775702,
+    "rise_over_waist": 0.7158878504672898,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 535.0,
+     "height_over_waist": 0.8728971962616823,
+     "hip_over_waist": 1.2280373831775702,
+     "rise_over_waist": 0.7158878504672898,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 535.0,
+     "height_over_waist": 0.874766355140187,
+     "hip_over_waist": 1.2261682242990655,
+     "rise_over_waist": 0.7158878504672898,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 532.0,
+     "height_over_waist": 0.8796992481203008,
+     "hip_over_waist": 1.2330827067669172,
+     "rise_over_waist": 0.7180451127819549,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 534.0,
+     "height_over_waist": 0.8745318352059925,
+     "hip_over_waist": 1.2322097378277153,
+     "rise_over_waist": 0.7097378277153558,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 528.0,
+     "height_over_waist": 0.8825757575757576,
+     "hip_over_waist": 1.25,
+     "rise_over_waist": 0.7121212121212122,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 434.0,
+     "height_over_waist": 1.0714285714285714,
+     "hip_over_waist": 1.5023041474654377,
+     "rise_over_waist": 0.836405529953917,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 354.0,
+     "height_over_waist": 1.3135593220338984,
+     "hip_over_waist": 1.8135593220338984,
+     "rise_over_waist": 1.03954802259887,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 314.0,
+     "height_over_waist": 1.4904458598726114,
+     "hip_over_waist": 2.073248407643312,
+     "rise_over_waist": 1.1592356687898089,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "eac3449d65": {
+   "base": {
+    "waist_px": 606.0,
+    "height_over_waist": 0.8102310231023102,
+    "hip_over_waist": 1.2673267326732673,
+    "rise_over_waist": 0.7458745874587459,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 606.0,
+     "height_over_waist": 0.8102310231023102,
+     "hip_over_waist": 1.2673267326732673,
+     "rise_over_waist": 0.7458745874587459,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 488.0,
+     "height_over_waist": 1.0020491803278688,
+     "hip_over_waist": 1.5184426229508197,
+     "rise_over_waist": 0.9262295081967213,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 477.0,
+     "height_over_waist": 1.0188679245283019,
+     "hip_over_waist": 1.5534591194968554,
+     "rise_over_waist": 0.9433962264150944,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 450.0,
+     "height_over_waist": 1.0822222222222222,
+     "hip_over_waist": 1.6333333333333333,
+     "rise_over_waist": 0.9977777777777778,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 425.0,
+     "height_over_waist": 1.143529411764706,
+     "hip_over_waist": 1.724705882352941,
+     "rise_over_waist": 1.051764705882353,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 393.0,
+     "height_over_waist": 1.2417302798982188,
+     "hip_over_waist": 1.8549618320610688,
+     "rise_over_waist": 1.1323155216284988,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 389.0,
+     "height_over_waist": 1.249357326478149,
+     "hip_over_waist": 1.8894601542416452,
+     "rise_over_waist": 1.1285347043701799,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 344.0,
+     "height_over_waist": 1.502906976744186,
+     "hip_over_waist": 2.1540697674418605,
+     "rise_over_waist": 1.2732558139534884,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "f41d64c01b": {
+   "base": {
+    "waist_px": 239.0,
+    "height_over_waist": 1.7615062761506277,
+    "hip_over_waist": 2.075313807531381,
+    "rise_over_waist": 0.4686192468619247,
+    "garment_type": "jeans"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 239.0,
+     "height_over_waist": 1.7615062761506277,
+     "hip_over_waist": 2.075313807531381,
+     "rise_over_waist": 0.4686192468619247,
+     "garment_type": "jeans"
+    },
+    "1": {
+     "waist_px": 239.0,
+     "height_over_waist": 1.7531380753138075,
+     "hip_over_waist": 2.075313807531381,
+     "rise_over_waist": 0.46443514644351463,
+     "garment_type": "jeans"
+    },
+    "2": {
+     "waist_px": 240.0,
+     "height_over_waist": 1.7458333333333333,
+     "hip_over_waist": 2.066666666666667,
+     "rise_over_waist": 0.4666666666666667,
+     "garment_type": "jeans"
+    },
+    "3": {
+     "waist_px": 239.0,
+     "height_over_waist": 1.7489539748953975,
+     "hip_over_waist": 2.079497907949791,
+     "rise_over_waist": 0.4686192468619247,
+     "garment_type": "jeans"
+    },
+    "5": {
+     "waist_px": 245.0,
+     "height_over_waist": 1.689795918367347,
+     "hip_over_waist": 2.048979591836735,
+     "rise_over_waist": 0.4489795918367347,
+     "garment_type": "jeans"
+    },
+    "8": {
+     "waist_px": 241.0,
+     "height_over_waist": 1.7219917012448134,
+     "hip_over_waist": 2.0622406639004147,
+     "rise_over_waist": 0.44813278008298757,
+     "garment_type": "jeans"
+    },
+    "12": {
+     "waist_px": 363.0,
+     "height_over_waist": 1.1542699724517906,
+     "hip_over_waist": 1.3333333333333333,
+     "rise_over_waist": 0.9559228650137741,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 363.0,
+     "height_over_waist": 1.2479338842975207,
+     "hip_over_waist": 1.3278236914600552,
+     "rise_over_waist": 1.0055096418732783,
+     "garment_type": "shorts"
+    }
+   }
+  },
+  "f94f6b8545": {
+   "base": {
+    "waist_px": 492.0,
+    "height_over_waist": 1.443089430894309,
+    "hip_over_waist": 1.2459349593495934,
+    "rise_over_waist": 1.1890243902439024,
+    "garment_type": "shorts"
+   },
+   "by_angle": {
+    "0": {
+     "waist_px": 492.0,
+     "height_over_waist": 1.443089430894309,
+     "hip_over_waist": 1.2459349593495934,
+     "rise_over_waist": 1.1890243902439024,
+     "garment_type": "shorts"
+    },
+    "1": {
+     "waist_px": 489.0,
+     "height_over_waist": 1.4539877300613497,
+     "hip_over_waist": 1.2494887525562373,
+     "rise_over_waist": 1.2004089979550103,
+     "garment_type": "shorts"
+    },
+    "2": {
+     "waist_px": 455.0,
+     "height_over_waist": 1.5582417582417583,
+     "hip_over_waist": 1.3252747252747252,
+     "rise_over_waist": 1.287912087912088,
+     "garment_type": "shorts"
+    },
+    "3": {
+     "waist_px": 431.0,
+     "height_over_waist": 1.6519721577726219,
+     "hip_over_waist": 1.3874709976798143,
+     "rise_over_waist": 1.359628770301624,
+     "garment_type": "shorts"
+    },
+    "5": {
+     "waist_px": 404.0,
+     "height_over_waist": 1.75990099009901,
+     "hip_over_waist": 1.4727722772277227,
+     "rise_over_waist": 1.443069306930693,
+     "garment_type": "shorts"
+    },
+    "8": {
+     "waist_px": 366.0,
+     "height_over_waist": 1.9453551912568305,
+     "hip_over_waist": 1.6120218579234973,
+     "rise_over_waist": 1.5819672131147542,
+     "garment_type": "shorts"
+    },
+    "12": {
+     "waist_px": 354.0,
+     "height_over_waist": 2.0,
+     "hip_over_waist": 1.6779661016949152,
+     "rise_over_waist": 1.6073446327683616,
+     "garment_type": "shorts"
+    },
+    "20": {
+     "waist_px": 358.0,
+     "height_over_waist": 2.0279329608938546,
+     "hip_over_waist": 1.7318435754189945,
+     "rise_over_waist": 1.5195530726256983,
+     "garment_type": "shorts"
+    }
+   }
+  }
+ },
+ "tolerance": {
+  "height_over_waist": {
+   "synthetic_shorts": {
+    "base": 1.4619565217391304,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.403366301321006
+   },
+   "synthetic_jeans": {
+    "base": 2.1277173913043477,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.2231915168004127
+   },
+   "00d0c4704c": {
+    "base": 1.4729981378026071,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.04149878580068938
+   },
+   "35bda9db86": {
+    "base": 1.5588235294117647,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.21665582303188027
+   },
+   "412c1097ef": {
+    "base": 0.963963963963964,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.43063954553784123
+   },
+   "6f606e9956": {
+    "base": 1.393939393939394,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.05982506793478267
+   },
+   "7b0a1ceaaf": {
+    "base": 1.5074349442379182,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.03640634703484038
+   },
+   "821bfe4c0b": {
+    "base": 0.835820895522388,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.49480440097799505
+   },
+   "850ceb6690": {
+    "base": 1.510556621880998,
+    "first_angle_over_5pct": 20,
+    "dev_at_8deg": 0.03628645336051698
+   },
+   "af71c8a996": {
+    "base": 1.6551724137931034,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.08558558558558552
+   },
+   "b0576a1603": {
+    "base": 0.8192771084337349,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.06034080298786173
+   },
+   "bf69fc5a92": {
+    "base": 1.3497757847533631,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.025962565258661578
+   },
+   "c2a0e6e470": {
+    "base": 0.8628428927680798,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.37896541589105504
+   },
+   "dbde5e4083": {
+    "base": 1.456043956043956,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.046256417094472854
+   },
+   "de6740d5b9": {
+    "base": 0.8728971962616823,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.22743958397063313
+   },
+   "eac3449d65": {
+    "base": 0.8102310231023102,
+    "first_angle_over_5pct": 1,
+    "dev_at_8deg": 0.5325632375118546
+   },
+   "f41d64c01b": {
+    "base": 1.7615062761506277,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.02243226461398961
+   },
+   "f94f6b8545": {
+    "base": 1.443089430894309,
+    "first_angle_over_5pct": 2,
+    "dev_at_8deg": 0.3480489494343107
+   }
+  },
+  "hip_over_waist": {
+   "synthetic_shorts": {
+    "base": 1.0,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.37269372693726943
+   },
+   "synthetic_jeans": {
+    "base": 1.0,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.21172638436482094
+   },
+   "00d0c4704c": {
+    "base": 1.277467411545624,
+    "first_angle_over_5pct": 20,
+    "dev_at_8deg": 0.011646076724626265
+   },
+   "35bda9db86": {
+    "base": 1.9963235294117647,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.16593636883215843
+   },
+   "412c1097ef": {
+    "base": 1.1463963963963963,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.41107130474979786
+   },
+   "6f606e9956": {
+    "base": 1.3353535353535353,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.0024879444024205294
+   },
+   "7b0a1ceaaf": {
+    "base": 1.2732342007434945,
+    "first_angle_over_5pct": 20,
+    "dev_at_8deg": 0.0018168256167083842
+   },
+   "821bfe4c0b": {
+    "base": 1.2587064676616915,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.4277085729195861
+   },
+   "850ceb6690": {
+    "base": 1.2917466410748562,
+    "first_angle_over_5pct": 20,
+    "dev_at_8deg": 0.004494029879981896
+   },
+   "af71c8a996": {
+    "base": 1.4721485411140585,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.031985302255572584
+   },
+   "b0576a1603": {
+    "base": 1.1967871485943775,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.0036153723234260333
+   },
+   "bf69fc5a92": {
+    "base": 1.3273542600896862,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.019078788610038543
+   },
+   "c2a0e6e470": {
+    "base": 1.371571072319202,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.24810477657935287
+   },
+   "dbde5e4083": {
+    "base": 1.2692307692307692,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.013063497162437024
+   },
+   "de6740d5b9": {
+    "base": 1.2280373831775702,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.2233374716803792
+   },
+   "eac3449d65": {
+    "base": 1.2673267326732673,
+    "first_angle_over_5pct": 1,
+    "dev_at_8deg": 0.46368082061068705
+   },
+   "f41d64c01b": {
+    "base": 2.075313807531381,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.0062993575157276275
+   },
+   "f94f6b8545": {
+    "base": 1.2459349593495934,
+    "first_angle_over_5pct": 2,
+    "dev_at_8deg": 0.2938250474687777
+   }
+  },
+  "rise_over_waist": {
+   "synthetic_shorts": {
+    "base": 0.6005434782608695,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.33335559599939907
+   },
+   "synthetic_jeans": {
+    "base": 0.5869565217391305,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.176498974544577
+   },
+   "00d0c4704c": {
+    "base": 1.4078212290502794,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.05972364965170726
+   },
+   "35bda9db86": {
+    "base": 1.1948529411764706,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.1724137931034484
+   },
+   "412c1097ef": {
+    "base": 0.8806306306306306,
+    "first_angle_over_5pct": 3,
+    "dev_at_8deg": 0.42871470838974973
+   },
+   "6f606e9956": {
+    "base": 1.38989898989899,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.05849722928779074
+   },
+   "7b0a1ceaaf": {
+    "base": 1.41635687732342,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.04143916317029722
+   },
+   "821bfe4c0b": {
+    "base": 0.6301824212271974,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.41613048513704787
+   },
+   "850ceb6690": {
+    "base": 1.3973128598848368,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.043092030380165944
+   },
+   "af71c8a996": {
+    "base": 1.4190981432360743,
+    "first_angle_over_5pct": 5,
+    "dev_at_8deg": 0.09794943626719331
+   },
+   "b0576a1603": {
+    "base": 0.6606425702811245,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.026921406860616514
+   },
+   "bf69fc5a92": {
+    "base": 1.201793721973094,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.03789645522388053
+   },
+   "c2a0e6e470": {
+    "base": 0.7206982543640897,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.3405078881004047
+   },
+   "dbde5e4083": {
+    "base": 1.3131868131868132,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.055516950781377104
+   },
+   "de6740d5b9": {
+    "base": 0.7158878504672898,
+    "first_angle_over_5pct": 8,
+    "dev_at_8deg": 0.16834715019672478
+   },
+   "eac3449d65": {
+    "base": 0.7458745874587459,
+    "first_angle_over_5pct": 1,
+    "dev_at_8deg": 0.5181044382895359
+   },
+   "f41d64c01b": {
+    "base": 0.4686192468619247,
+    "first_angle_over_5pct": 12,
+    "dev_at_8deg": 0.04371665678719617
+   },
+   "f94f6b8545": {
+    "base": 1.1890243902439024,
+    "first_angle_over_5pct": 2,
+    "dev_at_8deg": 0.3304749894913831
+   }
+  }
+ },
+ "summary": {
+  "height_over_waist": {
+   "n_real_masks": 16,
+   "n_real_masks_over_5pct_by_5deg": 6
+  },
+  "hip_over_waist": {
+   "n_real_masks": 16,
+   "n_real_masks_over_5pct_by_5deg": 5
+  },
+  "rise_over_waist": {
+   "n_real_masks": 16,
+   "n_real_masks_over_5pct_by_5deg": 6
+  }
+ }
+}

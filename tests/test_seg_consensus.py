@@ -3,7 +3,7 @@ import sys, os, pytest, importlib.util
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, os.path.join(ROOT, "src"))
 import numpy as np, cv2
-from denimtwin.seg.validate import check_garment_mask, _runs
+from denimtwin.seg.validate import check_garment_mask, _runs, segment_garment_consensus
 
 pytestmark = pytest.mark.skipif(
     not os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) or importlib.util.find_spec("torch") is None,
@@ -58,3 +58,23 @@ def test_check_garment_mask_rejects_a_detail_sized_mask():
 def test_runs_counts_separated_segments():
     row = np.zeros(100, bool); row[10:20] = True; row[60:70] = True
     assert _runs(row) == 2 and _runs(np.zeros(10, bool)) == 0
+
+
+def test_a_refusal_names_the_filter_that_caused_it():
+    """EXP_0021: a 1.15x zoom made consensus refuse 7 of 16 garments while reporting 'prompt sets disagree'. The
+    prompts agreed; the garment simply covered more than 75% of the frame and every candidate was dropped before the
+    vote. A refusal that misnames its own cause sends the user to re-shoot the wrong thing."""
+    class FakeSeg:
+        class predictor:
+            @staticmethod
+            def set_image(img): pass
+            @staticmethod
+            def predict(point_coords=None, point_labels=None, multimask_output=True):
+                # every candidate covers 90% of the frame: too large for the vote, whatever the prompts think
+                m = np.zeros((64, 64), bool); m[2:60, 2:60] = True
+                return np.stack([m, m, m]), np.array([0.99, 0.98, 0.97]), None
+    img = np.zeros((64, 64, 3), np.uint8)
+    mask, agr, info = segment_garment_consensus(FakeSeg(), img)
+    assert mask is None
+    assert "75%" in info["reason"] and info["dropped"]["too_large"] > 0, info["reason"]
+    assert "prompt sets disagree" not in info["reason"]

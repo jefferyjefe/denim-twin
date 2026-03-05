@@ -58,3 +58,19 @@ def test_untouched_pixels_are_byte_identical_outside_the_cut_when_wash_is_off():
         d = np.abs(orig.astype(int) - pred.astype(int)).max(axis=2)
         outside = d[~removed] > 8
         assert outside.mean() < 0.01, outside.mean()      # only the abraded band at the cut may touch kept fabric
+
+
+def test_seg_consensus_is_available_on_the_product_path_and_records_its_agreement():
+    """EXP_0021: the product path could not use the segmentation that fixes catastrophic object-identity failures.
+    `--seg consensus` now exists there, and every prediction records which segmentation produced it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        pred = _run(tmp, "--seg", "consensus")
+        s = pred["segmentation"]
+        assert s["method"] == "consensus" and 0.0 <= s["agreement"] <= 1.0
+        assert any("consensus" in f for f in pred["flags"])
+
+def test_default_segmentation_warns_that_sam_score_does_not_detect_a_wrong_object():
+    with tempfile.TemporaryDirectory() as tmp:
+        pred = _run(tmp)
+        assert pred["segmentation"]["method"] == "coarse" and "score" in pred["segmentation"]
+        assert any("0.906" in f or "confidently wrong" in f for f in pred["flags"]), pred["flags"]

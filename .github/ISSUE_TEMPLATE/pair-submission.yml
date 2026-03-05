@@ -9,6 +9,10 @@ body:
         Thanks! We're building a dataset to predict how a specific pair of jeans will look after being cut and washed.
         **Please only submit photos you took yourself.** By submitting you agree they may be used for research and released under CC BY 4.0 with your GitHub username as attribution (or anonymously — tick below).
         Best photos: jeans laid flat on a plain floor/sheet, shot from directly above, whole garment in frame, **a coin or ruler on the floor next to the hem**.
+
+        Two things we learned the hard way, so your photos are usable:
+        - **Resolution:** the waistband should span **at least ~800 pixels** in the photo. Any phone from about a metre away does this. Below that we cannot tell a frayed hem from a finished one at all (EXP_0016).
+        - **Shoot from directly above.** Our landmark measurements lose more than 5% at as little as 1–8° of camera tilt, depending on the garment (EXP_0021), and tilt is invisible in the photo itself.
   - type: textarea
     id: before
     attributes:
@@ -29,6 +33,16 @@ body:
         10 cm of the cut edge, with the coin in that same frame. The close-up is the single most valuable photo in the
         set: at normal flat-lay distance the fringe is only a few pixels deep, which we measured to be the same size as
         our own outline error — so without it a frayed hem and a cuffed hem are indistinguishable to us (EXP_0015).
+    validations: { required: false }
+  - type: textarea
+    id: repeat
+    attributes:
+      label: REPEAT photo (optional, and the most scientifically valuable thing you can send)
+      description: >-
+        After you take the AFTER-WASHING flat-lay, put the phone down, pick it up again, and take the same photo a
+        second time. Two independent captures of one unchanged garment are the only way to measure how repeatable our
+        measurements are — we have never had a single such pair, so our repeatability numbers come from simulated
+        re-captures that cannot move the fabric or the light, and can only flatter us (EXP_0021).
     validations: { required: false }
   - type: input
     id: label
