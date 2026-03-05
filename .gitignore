@@ -26,3 +26,11 @@ data/external/control_images/
 # EXP_0021: silhouette masks derived from all-rights-reserved control/unpaired photos.
 # Derived numbers go in the repo; a traced outline of a copyrighted photograph does not.
 reports/repeatability/masks/
+
+# Derived imagery from the found-pair photographs (all-rights-reserved tutorial and retailer images): renders,
+# masks, panels and diffs are derivative works of photographs this project is not licensed to redistribute, and the
+# policy in data/external/README.md is that only derived NUMBERS enter the repository. .gitignore covered
+# experiments/pairs/ but not the other batch directories, so every A/B arm committed its renders (EXP_0022).
+experiments/**/*.png
+experiments/**/*.jpg
+experiments/**/*.jpeg
