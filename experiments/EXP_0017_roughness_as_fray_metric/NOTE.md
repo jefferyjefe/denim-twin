@@ -7,7 +7,27 @@
 > metric and never recomputed. README and STATUS quoted two further different versions of the same result. All three
 > are corrected to what follows.
 
-## What is actually measurable today
+## Recomputed 2026-08-29 (after the compactness gate was removed)
+The restatement below was itself written between two changes and is superseded: with the gate gone, **all 10 usable
+pairs are decidable**, not 2. The numbers are re-derived from the artefacts by `result.json` in this directory, and
+`claims.json` checks this note against it in CI — the mechanism that exists precisely because this note has now drifted
+twice.
+
+| system | mean \|roughness error\| relative to waist width (n=10) |
+|---|---|
+| prediction (cut + procedural fringe) | **0.00194** |
+| null: no-op (the uncut jeans) | 0.00214 |
+| null: crop-only (a clean cut, no fringe) | 0.00231 |
+
+Prediction beats crop-only on **4** pairs, loses on **1**, ties on **5**; sign test **p = 0.375**. The ordering is the
+one we would want and the margin is 16% of the null's error, but five ties on ten pairs is not a result — a tie here
+usually means both silhouettes have a hem that deviates on fewer than 10% of columns, which is the p90 floor rather
+than agreement.
+
+One false fray remains (`e97924ad2d`: predicted p90 1.0 against a real 0.0), down from three before `run_pair` started
+consulting `modification.expects_fringe()`.
+
+## What was measurable at the time of the retraction
 `compare.py` now reports hem roughness **relative to waist width** (a pixel value ranks photo size: the same fray
 photographed twice as large doubles it) together with `rough_fraction`, because a p90 of 0 means only "fewer than 10%
 of hem columns deviate", not "this hem is smooth".

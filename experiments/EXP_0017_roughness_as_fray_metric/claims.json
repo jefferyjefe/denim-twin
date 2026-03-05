@@ -1,0 +1,17 @@
+[
+ {"claim": "pairs decidable under the roughness metric",
+  "note_regex": "\\*\\*all (\\d+) usable\\n?pairs are decidable\\*\\*",
+  "source": "experiments/EXP_0017_roughness_as_fray_metric/result.json", "path": "decidable"},
+ {"claim": "prediction mean relative roughness error",
+  "note_regex": "\\| prediction \\(cut \\+ procedural fringe\\) \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0017_roughness_as_fray_metric/result.json", "path": "mean_rel_err.prediction", "tol": 1e-05},
+ {"claim": "crop-only null mean relative roughness error",
+  "note_regex": "\\| null: crop-only \\(a clean cut, no fringe\\) \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0017_roughness_as_fray_metric/result.json", "path": "mean_rel_err.null:crop-only", "tol": 1e-05},
+ {"claim": "wins over the crop-only null",
+  "note_regex": "beats crop-only on \\*\\*(\\d+)\\*\\* pairs",
+  "source": "experiments/EXP_0017_roughness_as_fray_metric/result.json", "path": "wins"},
+ {"claim": "sign-test p value",
+  "note_regex": "sign test \\*\\*p = ([0-9.]+)\\*\\*",
+  "source": "experiments/EXP_0017_roughness_as_fray_metric/result.json", "path": "p_two_sided", "tol": 0.001}
+]

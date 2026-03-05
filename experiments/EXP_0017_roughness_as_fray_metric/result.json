@@ -1,0 +1,13 @@
+{
+ "usable": 10,
+ "decidable": 10,
+ "mean_rel_err": {
+  "prediction": 0.001943309124675351,
+  "null:crop-only": 0.002314800098723706,
+  "null:no-op": 0.0021417897181008685
+ },
+ "wins": 4,
+ "losses": 1,
+ "ties": 5,
+ "p_two_sided": 0.375
+}
