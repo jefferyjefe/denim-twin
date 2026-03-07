@@ -56,9 +56,13 @@ Put a coin in the frame if you want any answer in centimetres.
   fray reaching it after one wash. Every prediction says all of this in its own output.
 - Evaluation path (`tools/run_pair.py`): before + after photo → mask → landmarks → canonical warp → cut → fringe →
   register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
-- On 11 usable found pairs, mean silhouette IoU: **0.768 product path** (what a user gets), 0.819 evaluation path
-  (which reads the real after-photo), 0.507 no-op — so the cut *is* reproduced, but the honest number is the first one
-  (EXP_0014). **Fringe DEPTH is not measurable here** (EXP_0015/0016): SAM's prompted mask returns the bottom third of the fabric;
+- On the 7 pairs `data/priors/exclude.txt` allows, mean silhouette IoU: **0.803 product path** (what a user gets),
+  0.857 evaluation path (which reads the real after-photo), and **0.803 crop-only null**. The product path is a dead
+  heat with cropping the photograph at the same height — it wins on 2 pairs and loses on 4, by thousandths. Silhouette
+  IoU is dominated by the kept region both systems copy pixel-for-pixel, so it is the wrong metric for what the
+  product does, and it is the one that was being quoted. (EXP_0027, recomputed: EXP_0014's 0.768/0.819/0.771 was over
+  11 pairs, four of which `exclude.txt` bans.) The gap that matters is the 0.857 against 0.803 between reading the
+  after-photo and predicting without it. **Fringe DEPTH is not measurable here** (EXP_0015/0016): SAM's prompted mask returns the bottom third of the fabric;
   a direct thread measurement returns garment-mask error, displaced shadows and patterned floors as "fringe"; and
   resolution does not help, because the mask-error floor scales with the image. Depth is therefore no longer used as
   evidence anywhere. **Hem roughness** (`eval/hem_texture.py`) is the fray signal that does survive its control —

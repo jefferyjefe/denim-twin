@@ -7,23 +7,34 @@
   "source": "UNKNOWN \u2014 all lengths are pixels"
  },
  "cut": {
-  "inseam_fraction": 0.2208,
+  "inseam_fraction": 0.0831,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.43916345163037396
+  "removed_fraction_of_garment": 0.530194814396838
  },
  "fringe_depth": {
   "unit": "px",
   "median": 0.0,
   "lo": 0.0,
   "hi": 0.0,
+  "below_render_resolution": true,
   "nominal_coverage": 0.8,
   "calibrated": false,
   "n": 0,
-  "source": "edge treatment 'raw' does not fray"
+  "source": "edge treatment 'cuffed' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
  },
- "changed_fraction_of_kept_region": 0.0023901330170956444,
+ "changed_fraction_of_kept_region": 0.002912182079934188,
+ "segmentation": {
+  "method": "coarse",
+  "score": 1.0038026571273804,
+  "area": 0.4344241794064748
+ },
  "flags": [
-  "mask score 0.910, area 0.45 of frame",
-  "legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem"
+  "mask score 1.004, area 0.43 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "rotated 0.5\u00b0 to upright",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
  ]
 }

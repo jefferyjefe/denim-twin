@@ -11,6 +11,7 @@ using the inseam fraction the evaluation path fitted, and scores it against the 
 Prints a table: product path vs evaluation path vs crop-only null, per pair.
 """
 import argparse, json, os, subprocess, sys, glob
+from pathlib import Path
 import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -26,13 +27,22 @@ p.add_argument("--frac-source", default="recorded", choices=["recorded", "canoni
                help="recorded = the inseam_fraction run_pair wrote (image-space y between crotch and hem); "
                     "canonical = the canonical-space fraction of the real fitted cut (isolates cut PLACEMENT from the "
                     "parameterisation mismatch between the two paths)")
+p.add_argument("--include-excluded", action="store_true",
+               help="also score pairs data/priors/exclude.txt bans (they are banned for reasons the pipeline cannot see)")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
+
+# data/priors/exclude.txt bans pairs for reasons the pipeline cannot see (a folded before-photo, two garments in the
+# after shot, a legs-only crop). Review 6 found EXP_0016 scored two of them; this script had the same hole, and its
+# published mean was over eleven pairs of which four are banned.
+_ex = Path(ROOT) / "data/priors/exclude.txt"
+EXCLUDE = {l.split()[0] for l in _ex.read_text().splitlines() if l.strip() and not l.startswith("#")} if _ex.exists() else set()
 
 rows = []
 for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
     pid = os.path.basename(os.path.dirname(d))
     src = os.path.dirname(d)
     if "rejected" in open(f"{src}/NOTE.md").readline(): continue
+    if pid in EXCLUDE and not a.include_excluded: continue
     mod = json.load(open(d)); frac = mod.get("inseam_fraction")
     if frac is None: continue
     if a.frac_source == "canonical":
@@ -86,3 +96,21 @@ if ok:
            f"evaluation IoU {mean(lambda r: r[3]['sil_iou_vs_real']):.3f}, crop-only IoU {mean(lambda r: r[4]['sil_iou_vs_real']):.3f}; "
            f"product hem {mean(lambda r: r[2]['hem_chamfer']):.1f} px, evaluation hem {mean(lambda r: r[3]['hem_chamfer']):.1f} px\n")
 open(os.path.join(a.out, "SUMMARY.md"), "w").write(md); print(md)
+# machine-readable, so a note quoting these numbers can be checked against them (tools/check_claims.py)
+if ok:
+    mean = lambda f: sum(f(r) for r in ok) / len(ok)
+    json.dump({"n_pairs": len(ok), "excluded_honoured": not a.include_excluded, "frac_source": a.frac_source,
+               "wash": a.wash, "angle_source": a.angle_source,
+               "mean_sil_iou": {"product": mean(lambda r: r[2]["sil_iou_vs_real"]),
+                                "evaluation": mean(lambda r: r[3]["sil_iou_vs_real"]),
+                                "crop_only": mean(lambda r: r[4]["sil_iou_vs_real"])},
+               "mean_hem_chamfer": {"product": mean(lambda r: r[2]["hem_chamfer"]),
+                                    "evaluation": mean(lambda r: r[3]["hem_chamfer"])},
+               "pairs": [{"pair": r[0], "state": r[1],
+                          "product_sil_iou": r[2]["sil_iou_vs_real"], "evaluation_sil_iou": r[3]["sil_iou_vs_real"],
+                          "crop_only_sil_iou": r[4]["sil_iou_vs_real"],
+                          "product_hem": r[2]["hem_chamfer"], "evaluation_hem": r[3]["hem_chamfer"]} for r in ok],
+               "product_beats_crop_only_on": sum(1 for r in ok if r[2]["sil_iou_vs_real"] > r[4]["sil_iou_vs_real"]),
+               "product_loses_to_crop_only_on": sum(1 for r in ok if r[2]["sil_iou_vs_real"] < r[4]["sil_iou_vs_real"]),
+               },
+              open(os.path.join(a.out, "result.json"), "w"), indent=1)

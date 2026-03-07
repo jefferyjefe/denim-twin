@@ -1,8 +1,6 @@
 {
- "commit": "8b410809c58d2707b2ace964df56740112f4ba4b",
- "dirty_paths": [
-  "tools/experiment_upright.py"
- ],
+ "commit": "b70a9bfa2b4725195a1f260ea73221d0de4e0840",
+ "dirty_paths": [],
  "knobs": {
   "PAIRS_WASH": "median"
  },
