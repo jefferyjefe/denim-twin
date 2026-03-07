@@ -7,23 +7,36 @@
   "source": "UNKNOWN \u2014 all lengths are pixels"
  },
  "cut": {
-  "inseam_fraction": 0.0691,
+  "inseam_fraction": 0.0399,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.504255738581109
+  "removed_fraction_of_garment": 0.5279477688620408
  },
  "fringe_depth": {
   "unit": "px",
-  "median": 37.47596437668794,
-  "lo": 29.510019531360857,
-  "hi": 45.44190922201502,
+  "median": 5.711493269845674,
+  "lo": 4.59822296188429,
+  "hi": 6.824763577807057,
+  "below_render_resolution": false,
   "nominal_coverage": 0.8,
   "calibrated": false,
-  "n": 3,
-  "source": "prior[after_wash] n=3 \u2014 INSUFFICIENT (<5 samples): treat as a placeholder"
+  "n": 2,
+  "source": "prior[after_wash] n=2 \u2014 UNVALIDATED \u2014 EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.",
+  "prior_validated": false,
+  "prior_validation_note": "EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.",
+  "assumed_depth_mm_sourced": 12.7
  },
- "changed_fraction_of_kept_region": 0.0028004771810060686,
+ "changed_fraction_of_kept_region": 0.0029992824501480025,
+ "segmentation": {
+  "method": "coarse",
+  "score": 0.9938614368438721,
+  "area": 0.41687766792847936
+ },
  "flags": [
-  "mask score 0.993, area 0.43 of frame",
-  "fringe prior has only n=3 samples: the depth below is not yet evidence-backed"
+  "mask score 0.994, area 0.42 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "the prior for 'after_wash' rests on 2 sample(s)",
+  "fringe depth is a PLACEHOLDER, not an estimate: EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.",
+  "the only sourced fray depth we have is 12.7 mm \u2014 itsalwaysautumn.com frayed method: a straight stitch is sewn 1/2 in (12.7 mm) above the raw cut edge before washing, and after ONE wash/dry the page states the fray 'formed up to stitch line'. Caveat: the fray was ARRESTED by the stitching, so 12.7 mm is what one wash reached against a stop, not a free fray depth; and it is one garment, one fabric, one machine.",
+  "fringe prior has only n=2 samples: the depth below is not yet evidence-backed"
  ]
 }

@@ -5,10 +5,12 @@
 - cut: inseam fraction **0.000** — removes 24% of the garment
 - state: **after_wash**, wash preset 'none'
 - scale: **unknown** — every length below is in pixels
-- fringe depth: **52.6 px** (80% interval 41.4–63.8 px) from prior[after_wash] n=3 — INSUFFICIENT (<5 samples): treat as a placeholder
+- fringe depth: **8.1 px** (80% interval 6.5–9.6 px) from prior[after_wash] n=2 — UNVALIDATED — EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.
 - interval calibration: **not established** (EXP_0009 coverage 0/10) — read the range as a spread, not a guarantee
+- fringe depth provenance: **no validated measurement exists** (EXP_0015) — the number above is a placeholder and the
+  three renders differ only in a quantity nobody has yet measured on real garments
 
-flags: mask score 0.974, area 0.47 of frame; landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut; fringe prior has only n=3 samples: the depth below is not yet evidence-backed
+flags: mask score 0.974, area 0.47 of frame; mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus; rotated -2.6° to upright; landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut; the prior for 'after_wash' rests on 2 sample(s); fringe depth is a PLACEHOLDER, not an estimate: EXP_0015/0016 and review 5: the direct measurement returns garment-mask boundary error, displaced drop shadows and mottled backdrops as 'fringe' with full coverage, and cannot separate a cuffed hem from a frayed one. Rows carry both the rule-adjusted depth and the raw measurement (depth_*_measured) so the difference is visible. Do not fit anything to them.; the only sourced fray depth we have is 12.7 mm — itsalwaysautumn.com frayed method: a straight stitch is sewn 1/2 in (12.7 mm) above the raw cut edge before washing, and after ONE wash/dry the page states the fray 'formed up to stitch line'. Caveat: the fray was ARRESTED by the stitching, so 12.7 mm is what one wash reached against a stop, not a free fray depth; and it is one garment, one fabric, one machine.; fringe prior has only n=2 samples: the depth below is not yet evidence-backed
 
 | file | what |
 |---|---|
@@ -19,4 +21,4 @@ flags: mask score 0.974, area 0.47 of frame; landmark heuristic calls this 'shor
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Outside the cut region, 0.3% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).
+Outside the cut region, 0.2% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).

@@ -135,3 +135,11 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   precise when it answers is not the same as answering about the waistband — sometimes the straight line across the
   top of a mask is a fold, a belt or a shadow. `tilt_estimate(prefer_waistband=True)` is kept, tested and **off**.
   The 443d1d4658 bench regression stands; what this rules out is the cheap fix.
+- 2026-08-29: EXP_0027 — the product path recomputed. `tools/score_predict.py` never read `data/priors/exclude.txt`,
+  so EXP_0014's headline was over 11 pairs of which 4 are banned; it is the third experiment in this repo caught doing
+  that. On the 7 pairs the list allows, and after the tilt fix: **product path 0.8026 silhouette IoU against a
+  crop-only null of 0.8026** — a dead heat, winning on 2 pairs and losing on 4 by thousandths. What a user gets is
+  indistinguishable from cropping their own photograph at the same height on this metric, which is what EXP_0014
+  already implied (0.768 against 0.771) and this sharpens. The evaluation path did improve: 0.819 → **0.857** IoU and
+  48.4 → **7.8 px** of hem error, mostly from the tilt fix. The 0.857-vs-0.803 gap between reading the after-photo and
+  predicting without it is the actual research problem, and it is larger than any appearance work downstream of it.

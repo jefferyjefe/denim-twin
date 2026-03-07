@@ -7,22 +7,34 @@
   "source": "UNKNOWN \u2014 all lengths are pixels"
  },
  "cut": {
-  "inseam_fraction": 0.2771,
+  "inseam_fraction": 0.2898,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.43821536736941474
+  "removed_fraction_of_garment": 0.43025560054710155
  },
  "fringe_depth": {
   "unit": "px",
   "median": 0.0,
   "lo": 0.0,
   "hi": 0.0,
+  "below_render_resolution": true,
   "nominal_coverage": 0.8,
   "calibrated": false,
   "n": 0,
-  "source": "edge treatment 'raw' does not fray"
+  "source": "edge treatment 'raw' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
  },
- "changed_fraction_of_kept_region": 0.0031506399737446667,
+ "changed_fraction_of_kept_region": 0.0030816176121988958,
+ "segmentation": {
+  "method": "coarse",
+  "score": 0.9908837080001831,
+  "area": 0.4007039680755396
+ },
  "flags": [
-  "mask score 0.991, area 0.42 of frame"
+  "mask score 0.991, area 0.40 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "rotated 0.2\u00b0 to upright",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
  ]
 }
