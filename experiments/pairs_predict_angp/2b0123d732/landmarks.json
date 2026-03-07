@@ -1,60 +1,60 @@
 {
  "landmarks": {
   "waist_left": [
-   315,
-   210
+   88,
+   146
   ],
   "waist_right": [
-   581,
-   210
+   381,
+   146
   ],
   "waist_center": [
-   448,
-   210
+   234,
+   146
   ],
   "hip_left": [
-   294,
-   329
+   111,
+   277
   ],
   "hip_right": [
-   604,
-   329
+   452,
+   277
   ],
   "crotch": [
-   448,
-   366
+   274,
+   277
   ],
   "hem_left_outer": [
-   236,
-   794
+   256,
+   496
   ],
   "hem_left_inner": [
-   398,
-   794
+   273,
+   496
   ],
   "knee_left_outer": [
-   271,
-   567
+   146,
+   379
   ],
   "knee_left_inner": [
-   403,
-   567
+   273,
+   379
   ],
   "hem_right_outer": [
-   656,
-   796
+   283,
+   496
   ],
   "hem_right_inner": [
-   503,
-   796
+   274,
+   496
   ],
   "knee_right_outer": [
-   622,
-   568
+   450,
+   379
   ],
   "knee_right_inner": [
-   493,
-   568
+   274,
+   379
   ]
  },
  "conf": {

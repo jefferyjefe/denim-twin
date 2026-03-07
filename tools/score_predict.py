@@ -27,6 +27,10 @@ p.add_argument("--frac-source", default="recorded", choices=["recorded", "canoni
                help="recorded = the inseam_fraction run_pair wrote (image-space y between crotch and hem); "
                     "canonical = the canonical-space fraction of the real fitted cut (isolates cut PLACEMENT from the "
                     "parameterisation mismatch between the two paths)")
+p.add_argument("--path-source", default="none", choices=["none", "fitted"],
+               help="fitted = hand the product path the whole cut LINE the evaluation path fitted, as a canonical "
+                    "polyline, instead of one height. Isolates the cut line from everything else (EXP_0028).")
+p.add_argument("--path-points", type=int, default=16, help="--path-source fitted: samples along the canonical width")
 p.add_argument("--include-excluded", action="store_true",
                help="also score pairs data/priors/exclude.txt bans (they are banned for reasons the pipeline cannot see)")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
@@ -57,6 +61,29 @@ for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
         frac = float(np.clip((np.median(cy) - y0) / (y1 - y0), 0.0, 1.0))
     state = "after_wash" if mod.get("wash", {}).get("cycles", 0) >= 1 else "after_cut"
     od = os.path.join(a.out, pid); os.makedirs(od, exist_ok=True)
+    cutpath = []
+    if a.path_source == "fitted":
+        # The cut LINE the evaluation path fitted, as a canonical polyline: the richest thing a user could specify
+        # (they drew it on their own photo). If the product path reaches the evaluation path with this, then the
+        # whole gap between them is the cut line and nothing else in the product path is losing accuracy.
+        import numpy as np, cv2
+        from denimtwin.canon.warp import CanonicalMap
+        lm = json.load(open(f"{src}/before_lm.json"))["landmarks"]; rm = cv2.imread(f"{src}/removed_mask.png", 0) > 127
+        cm = CanonicalMap(lm)
+        pts = np.array([(x, np.nonzero(rm[:, x])[0].min()) for x in range(rm.shape[1]) if rm[:, x].any()], np.float32)
+        c = cm.points_to_canon(pts); cx = c[:, 0] / cm.W; cy = c[:, 1] / cm.H
+        keep_ = (cx >= 0) & (cx <= 1) & (cy >= 0) & (cy <= 1)
+        cx, cy = cx[keep_], cy[keep_]
+        if len(cx) >= 8:
+            bins = np.linspace(0, 1, a.path_points + 1)
+            pathpts = []
+            for i in range(a.path_points):
+                sel = (cx >= bins[i]) & (cx < bins[i + 1] + (1e-9 if i == a.path_points - 1 else 0))
+                if sel.sum() >= 3:
+                    pathpts.append([float((bins[i] + bins[i + 1]) / 2), float(np.median(cy[sel]))])
+            if len(pathpts) >= 2:
+                json.dump(pathpts, open(f"{od}/cut_path.json", "w"))
+                cutpath = ["--cut-path", f"{od}/cut_path.json"]
     angle = []
     if a.angle_source == "fitted":
         import re
@@ -64,9 +91,14 @@ for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
         angs = [float(x) for x in re.findall(r"angle (-?\d+\.\d)", m_.group(1))] if m_ else []
         # per-leg angles are mirror images across the centre line; the user-facing --angle-deg is one signed number
         if angs: angle = ["--angle-deg", f"{np.mean([abs(x) for x in angs]) * a.angle_sign:.2f}"]
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/predict.py"), "--image", f"{src}/before_used.png",
-                        "--out", od, "--inseam-fraction", f"{frac:.4f}", "--state", state, "--wash", a.wash,
-                        "--edge-treatment", mod.get("edge_treatment", "raw")] + angle, capture_output=True, text=True)
+    # the photo as it came in, not run_pair's uprighted copy: predict uprights too, and correcting an already
+    # corrected image is a second resampling at best and a 24-degree round trip at worst (EXP_0028, 2b0123d732).
+    before_img = f"{src}/before_native.png" if os.path.exists(f"{src}/before_native.png") else f"{src}/before_used.png"
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/predict.py"), "--image", before_img,
+                        "--out", od, "--state", state, "--wash", a.wash,
+                        "--edge-treatment", mod.get("edge_treatment", "raw")]
+                       + (cutpath if cutpath else ["--inseam-fraction", f"{frac:.4f}"] + angle),
+                       capture_output=True, text=True)
     if r.returncode != 0:
         rows.append((pid, state, None, None, None, (r.stdout + r.stderr).strip().splitlines()[-1][:80])); print(pid, "FAIL"); continue
     # compare in PREDICT's frame: it may rotate the before photo again, so its own orig.png + landmarks are the reference

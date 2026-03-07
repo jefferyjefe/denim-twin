@@ -30,6 +30,10 @@ p.add_argument("--out", required=True)
 g = p.add_mutually_exclusive_group(required=True)
 g.add_argument("--inseam-fraction", type=float, help="0 = at the crotch, 1 = the original hem")
 g.add_argument("--target-inseam-cm", type=float, help="finished inseam in cm (needs metric scale: --coin or --mm-per-px)")
+g.add_argument("--cut-path", help="JSON file holding the cut LINE as a polyline of [x, y] points in canonical "
+                                  "[0,1]^2 coordinates — the whole line, not a height and an angle. This is what a "
+                                  "user drawing on their own photo would supply, and what EXP_0028 uses to ask how "
+                                  "much of the product path's error is the cut line and how much is everything else.")
 p.add_argument("--angle-deg", type=float, default=0.0, help="cut angle: positive = outseam side cut higher (a-line jorts)")
 p.add_argument("--mm-per-px", type=float, default=None)
 p.add_argument("--coin", help="coin lying in frame (see util/coins.py) to recover metric scale")
@@ -123,10 +127,20 @@ if a.target_inseam_cm is not None:
     inseam_px = (hem_y - crotch_y); inseam_cm = inseam_px * mmpp_eff / 10.0
     frac = float(np.clip(a.target_inseam_cm / max(inseam_cm, 1e-6), 0.0, 1.0))
     FLAGS.append(f"target inseam {a.target_inseam_cm} cm of {inseam_cm:.1f} cm original -> inseam fraction {frac:.3f}")
+elif a.cut_path:
+    frac = None                                  # the path IS the cut; a single fraction cannot express it
 else:
     frac = float(a.inseam_fraction)
-if not 0.0 <= frac <= 1.0: FAIL(f"cut fraction {frac:.3f} outside the garment")
-if a.angle_deg:
+if frac is not None and not 0.0 <= frac <= 1.0: FAIL(f"cut fraction {frac:.3f} outside the garment")
+if a.cut_path:
+    from denimtwin.canon.cut2d import cut_mask_canon_path
+    CUT_PATH = json.load(open(a.cut_path))
+    if isinstance(CUT_PATH, dict): CUT_PATH = CUT_PATH.get("cut_path_canonical") or CUT_PATH.get("path")
+    remove_canon = cut_mask_canon_path((cmap.W, cmap.H), CUT_PATH)
+    frac = float(np.clip((np.median([y for _, y in CUT_PATH]) - inseam_fraction_to_canonical_y(0.0))
+                         / max(inseam_fraction_to_canonical_y(1.0) - inseam_fraction_to_canonical_y(0.0), 1e-6), 0.0, 1.0))
+    FLAGS.append(f"cut given as a {len(CUT_PATH)}-point path in canonical coordinates (median height {frac:.3f} of the leg)")
+elif a.angle_deg:
     # convert an angle to the canonical inner/outer fractions: outer side moves by tan(angle) * (half leg width) in canonical y
     # the cut line pivots about the requested height at mid-leg: +angle raises the outseam side and lowers the
     # inseam side by the same amount, so +a and -a are mirror images (nesting them would make the sign meaningless).
@@ -158,7 +172,8 @@ if a.state == "after_wash" and a.wash != "none":
 keep = gm & ~rm
 
 # fringe depth: from the prior, conditional on the state and the edge treatment
-mod = CutModification(inseam_fraction=frac, outer_fraction=(outer_f if a.angle_deg else None), edge_treatment=a.edge_treatment,
+mod = CutModification(inseam_fraction=(None if a.cut_path else frac),
+                      cut_path_canonical=(CUT_PATH if a.cut_path else None), outer_fraction=(outer_f if a.angle_deg else None), edge_treatment=a.edge_treatment,
                       wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed).validate()
 ww = abs(lm["waist_right"][0] - lm["waist_left"][0])
 if not mod.expects_fringe():

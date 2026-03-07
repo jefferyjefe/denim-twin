@@ -143,3 +143,17 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   already implied (0.768 against 0.771) and this sharpens. The evaluation path did improve: 0.819 → **0.857** IoU and
   48.4 → **7.8 px** of hem error, mostly from the tilt fix. The 0.857-vs-0.803 gap between reading the after-photo and
   predicting without it is the actual research problem, and it is larger than any appearance work downstream of it.
+- 2026-08-29: EXP_0028 — the product path's remaining gap is **not the cut specification**. `predict.py` gained
+  `--cut-path`, the cut as a polyline in canonical coordinates — the most a user interface can carry — and
+  `score_predict.py --path-source fitted` hands it the line the evaluation path fitted to the real garment. The
+  ladder: one canonical height **0.8232**, + the fitted angle 0.8168, + the whole fitted cut line 0.8190, against the
+  evaluation path's 0.8566. Giving away the exact answer about the cut recovers none of the gap. On 5 of 7 pairs the
+  two paths already produce the same garment (predicted-silhouette IoU 0.952–0.997) and score within 0.03 of each
+  other; the aggregate gap is carried by 2 pairs where the same canonical cut removes a different region. Registration
+  is identical on all seven, so it is not that either.
+  Found on the way: `score_predict.py` was feeding `predict.py` the photograph `run_pair` had **already uprighted**,
+  which was harmless while the deadband was 8° and became a second correction on every pair once EXP_0022 set it to 0
+  — a −23.5° then +24.3° round trip on 2b0123d732. Cost: 0.020 IoU and 11 px of hem. `run_pair` now writes
+  `before_native.png`/`after_native.png` and the harness uses them; EXP_0027's headline is corrected 0.803 → **0.823**
+  (the null moves with it, so the dead heat stands); and `tests/test_upright.py` pins the invariant that broke —
+  uprighting an already-uprighted image, re-segmenting in between, must not rotate it again.

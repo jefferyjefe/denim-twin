@@ -1,0 +1,17 @@
+[
+ {"claim": "product path, one canonical fraction",
+  "note_regex": "\\| one canonical inseam fraction \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "experiments/pairs_predict/result.json", "path": "mean_sil_iou.product", "tol": 0.0005},
+ {"claim": "product path, fitted angle",
+  "note_regex": "\\| \\+ the fitted cut angle \\| ([0-9.]+) \\|",
+  "source": "experiments/pairs_predict_angp/result.json", "path": "mean_sil_iou.product", "tol": 0.0005},
+ {"claim": "product path, whole fitted cut line",
+  "note_regex": "16 canonical samples \\| ([0-9.]+) \\|",
+  "source": "experiments/pairs_predict_path/result.json", "path": "mean_sil_iou.product", "tol": 0.0005},
+ {"claim": "evaluation path",
+  "note_regex": "fits the cut to the real after-photo — \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "experiments/pairs_predict/result.json", "path": "mean_sil_iou.evaluation", "tol": 0.0005},
+ {"claim": "crop-only null under the corrected harness",
+  "note_regex": "dead heat \\(0\\.8232 against ([0-9.]+)\\)",
+  "source": "experiments/pairs_predict/result.json", "path": "mean_sil_iou.crop_only", "tol": 0.0005}
+]

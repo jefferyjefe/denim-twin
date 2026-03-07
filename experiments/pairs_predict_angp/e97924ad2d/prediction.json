@@ -1,5 +1,5 @@
 {
- "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/e97924ad2d/before_used.png",
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/e97924ad2d/before_native.png",
  "state": "after_cut",
  "wash_preset": "none",
  "scale": {
@@ -7,24 +7,36 @@
   "source": "UNKNOWN \u2014 all lengths are pixels"
  },
  "cut": {
-  "inseam_fraction": 0.3398,
-  "angle_deg": 22.7,
-  "removed_fraction_of_garment": 0.401664504971898
+  "inseam_fraction": 0.3395,
+  "angle_deg": 22.05,
+  "removed_fraction_of_garment": 0.40191522016385295
  },
  "fringe_depth": {
   "unit": "px",
   "median": 0.0,
   "lo": 0.0,
   "hi": 0.0,
+  "below_render_resolution": true,
   "nominal_coverage": 0.8,
   "calibrated": false,
   "n": 0,
-  "source": "edge treatment 'raw' does not fray"
+  "source": "edge treatment 'raw' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
  },
- "changed_fraction_of_kept_region": 0.011452725893276491,
+ "changed_fraction_of_kept_region": 0.011529564840248663,
+ "segmentation": {
+  "method": "coarse",
+  "score": 0.9937549233436584,
+  "area": 0.4561283815851922
+ },
  "flags": [
   "mask score 0.994, area 0.46 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "rotated -1.9\u00b0 to upright",
   "legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem",
-  "angled cut +22.7\u00b0: inner fraction 0.389, outer 0.291"
+  "angled cut +22.1\u00b0: inner fraction 0.387, outer 0.292",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
  ]
 }
