@@ -1,0 +1,228 @@
+{
+ "arm_a": "experiments/pairs_upright8",
+ "arm_b": "experiments/pairs_upright0",
+ "preset": "median",
+ "excluded": [
+  "2e2063b93f",
+  "3082dfddc1",
+  "4c30342e20",
+  "5cd6cff343",
+  "963fcdd264",
+  "964dc8a1f9",
+  "b630a78c19",
+  "d52a3ff876",
+  "f542c57cec",
+  "f9c0e56308"
+ ],
+ "honoured_exclude": true,
+ "n_a": 7,
+ "n_b": 7,
+ "n_both": 7,
+ "only_a": [],
+ "only_b": [],
+ "pairs_rotated_in_b_only": [
+  "443d1d4658",
+  "4bfef03bd7",
+  "e97924ad2d"
+ ],
+ "per_pair": {
+  "2691c1a8d0": {
+   "sil_iou_vs_real": [
+    0.6148927445603424,
+    0.6148927445603424
+   ],
+   "hem_chamfer": [
+    47.54261363636363,
+    47.54261363636363
+   ],
+   "dE_edge_band_vs_real": [
+    16.773636400803724,
+    16.773636400803724
+   ],
+   "fringe_iou_vs_real": [
+    0.012534818941504178,
+    0.012534818941504178
+   ],
+   "rotated_a": [],
+   "rotated_b": []
+  },
+  "26b1041d00": {
+   "sil_iou_vs_real": [
+    0.8875769940887158,
+    0.8875769940887158
+   ],
+   "hem_chamfer": [
+    2.8303249097472922,
+    2.8303249097472922
+   ],
+   "dE_edge_band_vs_real": [
+    24.2812000321989,
+    24.2812000321989
+   ],
+   "fringe_iou_vs_real": [
+    0.03278688524590164,
+    0.03278688524590164
+   ],
+   "rotated_a": [],
+   "rotated_b": []
+  },
+  "2b0123d732": {
+   "sil_iou_vs_real": [
+    0.8470038064165307,
+    0.8470038064165307
+   ],
+   "hem_chamfer": [
+    3.8185185185185184,
+    3.8185185185185184
+   ],
+   "dE_edge_band_vs_real": [
+    15.63275612960651,
+    15.63275612960651
+   ],
+   "fringe_iou_vs_real": [
+    0.044444444444444446,
+    0.044444444444444446
+   ],
+   "rotated_a": [
+    "flags: before: tilt -23.5\u00b0 estimated from a near-isotropic silhouette (elongation 1.08) \u2014 the principal-axis estimate is unreliable here (EXP_0022) and the correction may be off by several degrees; before: rotated -23.5\u00b0 to upright; fringe measured directly: 2.0px in the after frame (rel 0.0069, coverage 0.91); SAM/hem-fit said 8.1px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: before: tilt -23.5\u00b0 estimated from a near-isotropic silhouette (elongation 1.08) \u2014 the principal-axis estimate is unreliable here (EXP_0022) and the correction may be off by several degrees; before: rotated -23.5\u00b0 to upright; fringe measured directly: 2.0px in the after frame (rel 0.0069, coverage 0.91); SAM/hem-fit said 8.1px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "443d1d4658": {
+   "sil_iou_vs_real": [
+    0.9179929654097544,
+    0.9089350941275639
+   ],
+   "hem_chamfer": [
+    8.915933774834437,
+    8.070729372937294
+   ],
+   "dE_edge_band_vs_real": [
+    18.246011515583845,
+    18.255806376823084
+   ],
+   "fringe_iou_vs_real": [
+    0.012626262626262626,
+    0.045454545454545456
+   ],
+   "rotated_a": [],
+   "rotated_b": [
+    "flags: before: rotated -3.6\u00b0 to upright; after: touches the edge of a MANUAL crop (second object removed from frame); fringe measured directly: 2.0px in the after frame (rel 0.0056, coverage 0.53); SAM/hem-fit said 8.0px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "4bfef03bd7": {
+   "sil_iou_vs_real": [
+    0.7525948743459003,
+    0.7563660731380433
+   ],
+   "hem_chamfer": [
+    20.303763440860216,
+    20.913513513513514
+   ],
+   "dE_edge_band_vs_real": [
+    23.365062674075872,
+    22.64753139614776
+   ],
+   "fringe_iou_vs_real": [
+    0.028714911151171776,
+    0.030413472414226466
+   ],
+   "rotated_a": [],
+   "rotated_b": [
+    "flags: before: rotated 0.5\u00b0 to upright; fringe measured directly: 2.0px in the after frame (rel 0.0060, coverage 0.61); SAM/hem-fit said 36.8px"
+   ]
+  },
+  "8d9f0df4ad": {
+   "sil_iou_vs_real": [
+    0.9438488081405584,
+    0.9438488081405584
+   ],
+   "hem_chamfer": [
+    8.755332496863238,
+    8.755332496863238
+   ],
+   "dE_edge_band_vs_real": [
+    21.20859727791156,
+    21.20859727791156
+   ],
+   "fringe_iou_vs_real": [
+    0.03513318934485241,
+    0.03513318934485241
+   ],
+   "rotated_a": [],
+   "rotated_b": []
+  },
+  "e97924ad2d": {
+   "sil_iou_vs_real": [
+    0.8966050467421101,
+    0.8966156212852248
+   ],
+   "hem_chamfer": [
+    1.2519685039370079,
+    1.2109375
+   ],
+   "dE_edge_band_vs_real": [
+    11.182881625057302,
+    11.427929384685088
+   ],
+   "fringe_iou_vs_real": [
+    0.2328042328042328,
+    0.32142857142857145
+   ],
+   "rotated_a": [],
+   "rotated_b": [
+    "flags: before: rotated -1.9\u00b0 to upright; before: touches the edge of a MANUAL crop (second object removed from frame); before (refined): touches the edge of a MANUAL crop (second object removed from frame); fringe measured directly: 6.0px in the after frame (rel 0.0154, coverage 0.97); SAM/hem-fit said 1.0px; no fringe rendered: edge_treatment 'raw' with no wash does not fray (EXP_0017)"
+   ]
+  }
+ },
+ "means": {
+  "sil_iou_vs_real": {
+   "a": 0.8372164628148446,
+   "b": 0.8364627345367113,
+   "n": 7
+  },
+  "hem_chamfer": {
+   "a": 13.345493611589191,
+   "b": 13.30599570684907,
+   "n": 7
+  },
+  "dE_edge_band_vs_real": {
+   "a": 18.670020807891103,
+   "b": 18.603922428310945,
+   "n": 7
+  },
+  "fringe_iou_vs_real": {
+   "a": 0.057006392079767126,
+   "b": 0.07459941818200658,
+   "n": 7
+  }
+ },
+ "sign_test": {
+  "sil_iou_vs_real": {
+   "b_better": 2,
+   "b_worse": 1,
+   "tied": 4,
+   "p_two_sided": 1.0
+  },
+  "hem_chamfer": {
+   "b_better": 2,
+   "b_worse": 1,
+   "tied": 4,
+   "p_two_sided": 1.0
+  },
+  "dE_edge_band_vs_real": {
+   "b_better": 1,
+   "b_worse": 2,
+   "tied": 4,
+   "p_two_sided": 1.0
+  },
+  "fringe_iou_vs_real": {
+   "b_better": 3,
+   "b_worse": 0,
+   "tied": 4,
+   "p_two_sided": 0.25
+  }
+ }
+}

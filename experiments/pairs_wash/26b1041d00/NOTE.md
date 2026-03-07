@@ -1,11 +1,11 @@
 # PAIR — auto pipeline
 
-flags: SAM fringe mask rejected: median depth 45px > 15% of garment height 274px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; wash preset median: shrink 2.0% along / 1.0% across (PRIOR, not measured); 71505 px changed
+flags: SAM fringe mask rejected: median depth 45px > 15% of garment height 274px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; wash preset median: shrink 2.0% along / 1.0% across (PRIOR, not measured); 71505 px changed; direct fringe measurement failed (342 columns); falling back to the SAM/hem-fit value 0.0px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)
 before: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_before_62dc9a85.jpg 
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_after_cut_38ff38d5.jpg 
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
-fringe depth used: 0.0 px from measured from after-photo (NOT a prediction); measured on after-photo: 0.0 px (fabric/fringe split: colour split; registered-frame)
+fringe depth used: 0.0 px from measured from after-photo (NOT a prediction) [suppressed: finished hem]; measured on after-photo: 0.0 px (fabric/fringe split: colour split; registered-frame)
 hem fit: left: angle 9.1°, depth 0 px, right: angle -9.5°, depth 0 px
 registration residual (leave-one-landmark-out): 14.59px
 

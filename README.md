@@ -74,6 +74,11 @@ Put a coin in the frame if you want any answer in centimetres.
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
   Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
+- Camera tilt (EXP_0022): the pipeline now uprights every photo (`canon/upright.py`), not only those tilted more than
+  8°. The old deadband skipped the band where the tilt estimate is accurate to 0.41° and the measurement error from
+  not correcting is already >5%, and acted in the band where a squat silhouette's principal axis can be 10° wrong.
+  The A/B on 7 pairs is inconclusive (fringe IoU 0.057 → 0.075, 3-0-4, p = 0.25) and the change rests on the measured
+  defect, not on it; the bench shows no regression.
 - Segmentation and repeatability (EXP_0021): **consensus segmentation** (`--seg consensus`, now on both `run_pair.py`
   and `predict.py`) is the setting that survives a re-capture. Change nothing but a photo's JPEG quality or exposure
   and SAM's best-scoring mask returns a *different object* on 16 of 96 tries; consensus does so on 0, and when it is

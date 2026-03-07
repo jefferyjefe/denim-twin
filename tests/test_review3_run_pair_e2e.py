@@ -17,9 +17,23 @@ RUNNER = textwrap.dedent("""
     sam.SamSegmenter = SamSegmenter
     sam.segment_garment_coarse = lambda seg, img, **k: (colour_mask(img), 0.9, {"area": float(colour_mask(img).mean()), "border_frac": 0.0})
     import os, cv2
-    def segment_fringe(seg, img, m, **k):                       # fringe hint = the thread pixels drawn by make_pair, in the image's own frame
-        h = os.environ.get("FRINGE_HINT"); f = cv2.imread(h, 0) if h else None
-        return (f > 127) & m if f is not None and f.shape == m.shape else None
+    def segment_fringe(seg, img, m, **k):
+        # A frame-INDEPENDENT stand-in for SAM's fringe mask: the threads make_pair draws are teeth of garment mask
+        # sticking below the local hem line, so find them from the mask itself. The hint PNG this used to read is
+        # keyed to the ORIGINAL frame and silently returned None the moment run_pair started uprighting small tilts
+        # (EXP_0022) — a stub that only works while the pipeline does nothing tests nothing. (Colour cannot be used:
+        # synthetic_jeans draws the garment in the same colour as the threads.)
+        import numpy as _np
+        xs = [x for x in range(m.shape[1]) if m[:, x].any()]
+        if len(xs) < 20: return None
+        y = _np.array([_np.nonzero(m[:, x])[0].max() for x in xs], float)
+        k_ = min(31 | 1, (len(y) - 1) | 1)
+        pad = k_ // 2
+        sm = _np.array([_np.median(y[max(i - pad, 0): i + pad + 1]) for i in range(len(y))])
+        out = _np.zeros_like(m)
+        for x, yy, s_ in zip(xs, y, sm):
+            if yy - s_ > 3: out[int(s_): int(yy) + 1, x] = True
+        return (out & m) if out.any() else None
     sam.segment_fringe = segment_fringe
     clip = types.ModuleType("denimtwin.seg.clipgate"); clip.whole_garment_probability = lambda img: 0.5
     sys.modules["denimtwin.seg.sam"] = sam; sys.modules["denimtwin.seg.clipgate"] = clip

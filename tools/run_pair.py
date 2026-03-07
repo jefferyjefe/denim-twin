@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
 from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_fringe
 from denimtwin.canon.autolm import landmarks_from_mask
+from denimtwin.canon import upright as U
 from denimtwin.canon.register import warp_after_to_before, SURVIVING
 from denimtwin.canon.hemfit import estimate_hems, cut_mask_from_lines
 from denimtwin.canon.cut2d import backdrop_fill
@@ -31,6 +32,12 @@ p.add_argument("--edge-treatment", choices=["raw", "cuffed", "hemmed", "serged",
                help="how the cut edge was finished; a finished hem does not fray, so no fringe is rendered (modification.expects_fringe)")
 p.add_argument("--wash", choices=["none", "conservative", "median", "aggressive"], default="none", help="procedural wash appearance v0 (shrink + hem roll + colour; canon/wash.py). Default none keeps the bench unchanged")
 p.add_argument("--cropped", default="", help="comma list of 'before'/'after' that were manually cropped: frame-edge contact becomes a flag, not a rejection")
+p.add_argument("--upright-deadband", type=float, default=0.0,
+               help="skip the upright rotation below this tilt (degrees). Was 8.0 until EXP_0022. The landmark "
+                    "heuristic loses more than 5%% of every shape ratio at 1-8 degrees of tilt (EXP_0021), and the "
+                    "principal-axis estimate tracks a known rotation to <=0.41 degrees in that band (EXP_0022), so "
+                    "the old deadband skipped correction exactly where it was both needed and reliable. Pass 8.0 to "
+                    "reproduce the pre-EXP_0022 baseline.")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 bf = cv2.imread(a.before); af = cv2.imread(a.after); assert bf is not None and af is not None
 FLAGS = []
@@ -67,18 +74,14 @@ def coarse(img):
     if m is None: print("coarse segmentation failed"); sys.exit(2)
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
 def upright(img, mask, name):
-    """Rotate image+mask so the garment's principal axis is vertical (flat-lays are often photographed at an angle)."""
-    ys, xs = np.nonzero(mask); pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
-    cov = pts.T @ pts / len(pts); w_, v_ = np.linalg.eigh(cov); major = v_[:, np.argmax(w_)]
-    ang = np.degrees(np.arctan2(major[0], major[1]))          # angle of the long axis from vertical
-    ang = (ang + 90) % 180 - 90
-    elong = float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))     # major/minor extent ratio: jeans ≈ 2–3, shorts ≈ 1
-    cap = 80 if elong > 1.8 else 30                                # elongated garment: any tilt is a tilt; squat garment: only modest tilts
-    if abs(ang) < 8 or abs(ang) > cap: return img, mask, 0.0
-    h, w = img.shape[:2]; M = cv2.getRotationMatrix2D((w / 2, h / 2), -ang, 1.0)
-    cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h * sin + w * cos), int(h * cos + w * sin); M[0, 2] += nw / 2 - w / 2; M[1, 2] += nh / 2 - h / 2
-    bgc = tuple(int(c) for c in np.median(img[~mask], axis=0)) if (~mask).any() else (128, 128, 128)
-    FLAGS.append(f"{name}: rotated {ang:.1f}° to upright"); return cv2.warpAffine(img, M, (nw, nh), borderValue=bgc), cv2.warpAffine(mask.astype(np.uint8), M, (nw, nh)) > 0, ang
+    """Rotate image+mask so the garment is upright (canon/upright.py — one implementation, shared with predict.py)."""
+    img2, mask2, ang = U.upright(img, mask, deadband=a.upright_deadband)
+    if ang:
+        FLAGS.append(f"{name}: rotated {ang:.1f}° to upright")
+        if U.unreliable(ang, U.tilt_angle(mask)[1]):
+            FLAGS.append(f"{name}: tilt {ang:.1f}° estimated from a near-isotropic silhouette — the principal-axis "
+                         "estimate is off by up to 4.7° there (EXP_0022) and the correction may be several degrees out")
+    return img2, mask2, ang
 bf_pre_rot, af_pre_rot = bf, af
 bmask = coarse(bf); amask = coarse(af)
 bf, bmask, rot_b = upright(bf, bmask, "before"); af, amask, rot_a = upright(af, amask, "after")

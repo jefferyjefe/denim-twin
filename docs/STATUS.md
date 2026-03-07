@@ -65,3 +65,31 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
 - 2026-08-29: `tests/test_no_dead_parameters.py` — a declared parameter that the body never reads is a silent lie to
   the caller. It found five, including `hem_chamfer(band_px=40)`: `tools/compare.py` computed a 15 mm band and passed
   it positionally for nothing on every pair report ever produced.
+- 2026-08-29: EXP_0022 — the tilt correction was switched off exactly where it was needed. Measured against known
+  rotations of 16 real masks, the principal-axis estimate has median error **0.00°**, p90 1.64°, and correcting was
+  never worse than not correcting (0 of 176). Its one failure mode is structural: on a near-isotropic silhouette
+  (a squat pair of shorts, elongation < 1.2) it is off by up to 4.67° at 8° of tilt and 10.45° at 15°, against
+  ≤0.41° below 3°. So the old **8° deadband skipped the band where the estimate is reliable and the un-corrected
+  measurement error is already >5%, and acted in the band where the estimate is not**. Two alternative estimators
+  (a waistband-edge line fit, a flattest-top search) were tried and are much worse. The deadband is now **0.0**
+  (`canon/upright.py`, one implementation shared by `run_pair.py` and `predict.py`; pass `--upright-deadband 8.0`
+  for the old behaviour), a near-isotropic tilt ≥5° is flagged in the output, and `tests/test_upright.py` pins the
+  invariance the change is for: shape ratios stable within 5% from −20° to +20° of tilt.
+  The A/B on 7 pairs is **inconclusive and is not the reason for the change**: silhouette IoU 0.8372 → 0.8365,
+  hem 13.35 → 13.31 px, fringe IoU 0.0570 → 0.0746 (3 better, 0 worse, 4 tied, p = 0.25). `bench.py` shows no
+  regression on any tracked metric, and the baseline is deliberately **not** re-frozen — the older baseline is the
+  stricter test.
+- 2026-08-29: two problems found while committing EXP_0022, both bigger than the experiment.
+  **(1) 2035 derived images were tracked in git.** `.gitignore` covered `experiments/pairs/` and two siblings but not
+  `pairs_wash/`, `pairs_consensus/`, `pairs_predict*/`, nor `experiments/pairs/*/panel.jpg` (the `*.png` rule misses
+  it by extension). Every render, mask, diff and side-by-side panel built from the found-pair tutorial photographs was
+  in the repository — the same policy review 6 found broken with nine files, at ten times the scale. Untracked and
+  ignored properly; EXP_0022's own two A/B arms would have added 926 more and were kept out of history. **They remain
+  in the pushed history on GitHub**, and purging them means rewriting public history — the owner's decision, recorded
+  here rather than done silently.
+  **(2) The test suite rewrote the prior.** `tests/test_reports.py` ran `tools/fit_fringe.py` with no arguments, and
+  that tool writes `data/priors/fringe.json` — so running the tests replaced the prior every prediction depends on
+  with whatever the local pair artefacts said that minute, and in a fresh clone would have written an empty one.
+  `fit_fringe.py` now takes `--out-dir`, the test uses a temporary one, and
+  `tests/test_tools_do_not_touch_tracked_data.py` fails if a tool given an explicit destination touches the tracked
+  prior anyway. The committed prior has since been regenerated deliberately from the re-run pairs.

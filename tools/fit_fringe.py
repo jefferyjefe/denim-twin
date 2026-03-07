@@ -4,9 +4,18 @@ scale-free as depth / waist width. Writes data/priors/fringe.json and prints a l
 for each pair, predict its depth from the OTHER pairs' mean and compare with its measured depth.
 With n < 5 the prior is written but flagged 'insufficient'. run_pair.py --prior uses it instead of reading the
 depth off the after-photo (which is circular)."""
-import json, glob, re, statistics as st
+import argparse, json, glob, re, statistics as st
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]; OUT = ROOT / "data/priors"; OUT.mkdir(parents=True, exist_ok=True)
+ROOT = Path(__file__).resolve().parents[1]
+_ap = argparse.ArgumentParser(description=__doc__)
+_ap.add_argument("--out-dir", default=str(ROOT / "data/priors"),
+                 help="where to WRITE fringe.json and fringe_unpaired.json. Inputs are always read from "
+                      "data/priors. Point this at a temporary directory to compute the prior without replacing the "
+                      "tracked one — tests/test_reports.py ran this tool with no argument and silently rewrote the "
+                      "prior that every prediction depends on, so a green test run left modified tracked data behind.")
+_args = _ap.parse_args()
+IN = ROOT / "data/priors"
+OUT = Path(_args.out_dir); OUT.mkdir(parents=True, exist_ok=True)
 import hashlib as _h
 RECS = {_h.sha1(json.loads(l)["page_url"].encode()).hexdigest()[:10]: json.loads(l) for l in (ROOT / "data/external/pairs.jsonl").read_text().splitlines() if l.strip()}
 rows = []
@@ -75,9 +84,9 @@ if rows:
             others = [x["depth_rel"] for j, x in enumerate(rows) if j != i]; pred = st.mean(others) * r["waist_px"]
             print(f"  {r['pair']}: measured {r['depth_px']:.1f}, predicted {pred:.1f}, |err| {abs(pred - r['depth_px']):.1f}")
 # unpaired after-wash samples come from two channels: images already in pairs.jsonl, and the harvested web set
-_web = OUT / "fringe_unpaired_web.json"
+_web = IN / "fringe_unpaired_web.json"
 if _web.exists():
-    _w = json.load(open(_web)); _u = json.load(open(OUT / "fringe_unpaired.json")) if (OUT / "fringe_unpaired.json").exists() else {"samples": []}
+    _w = json.load(open(_web)); _u = json.load(open(IN / "fringe_unpaired.json")) if (IN / "fringe_unpaired.json").exists() else {"samples": []}
     # REPLACE the web channel rather than append to it: a sample that no longer qualifies (a tightened gate, a
     # rejected mask) must disappear from the prior, not survive as a stale row (review 6, finding 7).
     _u["samples"] = [s_ for s_ in _u["samples"] if s_.get("channel") != "web"]
@@ -88,7 +97,7 @@ if _web.exists():
     _u["depth_rel_mean"] = st.mean([s_["depth_rel"] for s_ in _ok]) if _ok else None
     _u["depth_rel_sd"] = st.pstdev([s_["depth_rel"] for s_ in _ok]) if len(_ok) > 1 else None
     (OUT / "fringe_unpaired.json").write_text(json.dumps(_u, indent=1))
-up = OUT / "fringe_unpaired.json"
+up = OUT / "fringe_unpaired.json" if (OUT / "fringe_unpaired.json").exists() else IN / "fringe_unpaired.json"
 if up.exists():
     u = json.load(open(up)); prior["unpaired"] = {"n": u["n"], "depth_rel_mean": u["depth_rel_mean"], "depth_rel_sd": u["depth_rel_sd"],
                                                   "samples": [{"pair": s_.get("pair") or s_.get("page_url") or s_.get("file"), "depth_rel": s_["depth_rel"],

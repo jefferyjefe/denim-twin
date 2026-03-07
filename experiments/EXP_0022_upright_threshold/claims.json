@@ -1,0 +1,23 @@
+[
+ {"claim": "pairs in the A/B after exclude.txt",
+  "note_regex": "against `0\\.0`, (\\d+) usable pairs after `exclude\\.txt`",
+  "source": "experiments/EXP_0022_upright_threshold/result.json", "path": "n_both"},
+ {"claim": "silhouette IoU, baseline arm",
+  "note_regex": "\\| silhouette IoU \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0022_upright_threshold/result.json", "path": "means.sil_iou_vs_real.a", "tol": 0.0001},
+ {"claim": "silhouette IoU, always-upright arm",
+  "note_regex": "\\| silhouette IoU \\| [0-9.]+ \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0022_upright_threshold/result.json", "path": "means.sil_iou_vs_real.b", "tol": 0.0001},
+ {"claim": "fringe IoU, always-upright arm",
+  "note_regex": "\\| fringe IoU \\| [0-9.]+ \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0022_upright_threshold/result.json", "path": "means.fringe_iou_vs_real.b", "tol": 0.0001},
+ {"claim": "fringe IoU sign test: pairs where always-upright is worse",
+  "note_regex": "\\| fringe IoU \\| [0-9.]+ \\| \\*\\*[0-9.]+\\*\\* \\| \\d+ / (\\d+) / \\d+ \\|",
+  "source": "experiments/EXP_0022_upright_threshold/result.json", "path": "sign_test.fringe_iou_vs_real.b_worse"},
+ {"claim": "principal-axis: cases where correcting was worse than doing nothing",
+  "note_regex": "\\*\\*(\\d+) / 176\\*\\* \\|",
+  "source": "reports/repeatability/upright.json", "path": "pca.correction_worse_than_nothing"},
+ {"claim": "principal-axis p90 absolute error",
+  "note_regex": "\\| \\*\\*principal axis\\*\\* \\(the one in use\\) \\| \\*\\*0\\.00°\\*\\* \\| \\*\\*([0-9.]+)°\\*\\*",
+  "source": "reports/repeatability/upright.json", "path": "pca.p90_abs_err_deg", "tol": 0.01}
+]

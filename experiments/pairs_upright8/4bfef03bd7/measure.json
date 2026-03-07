@@ -1,0 +1,12 @@
+{
+ "state": "after_wash",
+ "waist_px_before": 369.0,
+ "waist_px_after": 334.0,
+ "depth_direct_px_before_frame": 2.2095808383233533,
+ "depth_direct_rel": 0.005988023952095809,
+ "direct_coverage": 0.6063829787234043,
+ "direct_ok": true,
+ "depth_sam_hemfit_px": 36.458083832335326,
+ "depth_used_px": 2.2095808383233533,
+ "depth_source": "measured from after-photo (NOT a prediction)"
+}
