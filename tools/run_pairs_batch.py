@@ -54,3 +54,20 @@ for pid, t, k, ok, m, err in rows:
     if m: p, c, n = m["prediction"], m["null:crop-only"], m["null:no-op"]; md += f"| {pid} | {t} | {k} | ok | {p['sil_iou_vs_real']:.2f} / {c['sil_iou_vs_real']:.2f} / {n['sil_iou_vs_real']:.2f} | {p['hem_chamfer']:.0f} / {c['hem_chamfer']:.0f} | {p['dE_edge_band_vs_real']:.1f} / {c['dE_edge_band_vs_real']:.1f} | {p['fringe_iou_vs_real']:.2f} / {n['fringe_iou_vs_real']:.2f} |\n"
     else: md += f"| {pid} | {t} | {k} | FAIL: {err[:60]} | | | | |\n"
 (OUT / "SUMMARY.md").write_text(md); print(md)
+# Which code and which knobs produced this batch. Two batches are only comparable if these match: review 4's
+# null-baseline test compares experiments/pairs against experiments/pairs_wash, and it fails — loudly, on an
+# unrelated finding — whenever one of them was regenerated and the other was not.
+import subprocess as _sp
+def _git(*a):
+    try: return _sp.run(["git", "-C", str(ROOT), *a], capture_output=True, text=True).stdout.strip()
+    except Exception: return ""
+KNOBS = ("PAIRS_REFINE", "PAIRS_SEG", "PAIRS_UPRIGHT", "PAIRS_WASH", "PAIRS_USE_PRIOR")
+(OUT / "provenance.json").write_text(json.dumps({
+    "commit": _git("rev-parse", "HEAD"),
+    # porcelain lines are two status characters, a space, then the path; a rename adds " -> ". Slicing a fixed
+    # number of characters loses the first letter of the path on some statuses.
+    "dirty_paths": sorted(l[2:].strip().split(" -> ")[-1]
+                          for l in _git("status", "--porcelain", "src", "tools").splitlines() if l.strip()),
+    "knobs": {k: os.environ.get(k) for k in KNOBS if os.environ.get(k)},
+    "n_pairs": len(rows),
+}, indent=1))

@@ -1,1 +1,1 @@
-{"garment_id": "f542c57cec", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 3.920742591931453, "nominal": 0.8, "lo": 1.9603712959657265, "hi": 5.881113887897179, "real": null, "source": "preset spread (not calibrated; real omitted because median IS the measurement)"}
+{"garment_id": "f542c57cec", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 5.840490797546012, "nominal": 0.8, "lo": 2.920245398773006, "hi": 8.76073619631902, "real": null, "source": "preset spread (not calibrated; real omitted because median IS the measurement)"}

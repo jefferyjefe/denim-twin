@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-after: garment touches the frame bottom (cropped photo)
+before: widest top row is not a single waistband run (legs-only crop?)

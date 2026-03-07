@@ -1,0 +1,28 @@
+[
+ {
+  "claim": "masks that read p90 = 0 unrotated",
+  "note_regex": "Twelve of the sixteen reference masks read p90 = 0 unrotated",
+  "claimed": "12",
+  "source": "reports/repeatability/resample_floor.json",
+  "path": "n_masks_reading_zero_unrotated"
+ },
+ {
+  "claim": "how many of those read frayed after some rotation",
+  "note_regex": "\\*\\*(\\d+) of 12\\*\\* \\|",
+  "source": "reports/repeatability/resample_floor.json",
+  "path": "n_of_those_that_read_frayed_after_a_rotation"
+ },
+ {
+  "claim": "maximum induced p90/waist",
+  "note_regex": "a rotation creates is \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/repeatability/resample_floor.json",
+  "path": "induced_p90_rel_median_when_it_fires",
+  "tol": 1e-05
+ },
+ {
+  "claim": "readings that fire out of 72",
+  "note_regex": "waist width \\((\\d+) of 72 readings fire",
+  "source": "reports/repeatability/resample_floor.json",
+  "path": "n_readings_that_fire"
+ }
+]

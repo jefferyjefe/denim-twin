@@ -92,3 +92,51 @@ def test_upright_returns_the_mask_it_rotated_not_a_stale_one():
     img, m, applied = upright(photo(tilted), tilted)
     assert m.shape == img.shape[:2] and m.any()
     assert abs(tilt_angle(m)[0]) < 1.0, "the returned mask is still tilted"
+
+
+def wide_shorts(H=700, W=1100):
+    """A pair of shorts laid flat with the legs spread: WIDER THAN TALL, like 9 of the 16 photographs in EXP_0021.
+    The long axis runs left-to-right, which is what broke the original tilt estimate."""
+    m = np.zeros((H, W), np.uint8)
+    cx, top = W // 2, int(0.12 * H)
+    ww = int(0.66 * W); body = int(0.34 * H)
+    cv2.rectangle(m, (cx - ww // 2, top), (cx + ww // 2, top + body), 255, -1)
+    leg_w = int(ww * 0.46)
+    for s in (-1, 1):
+        x0 = cx + (0 if s < 0 else 0) - (leg_w if s < 0 else -int(ww * 0.04))
+        cv2.rectangle(m, (max(x0, 0), top + body), (min(x0 + leg_w, W - 1), top + body + int(0.42 * H)), 255, -1)
+    return m > 0
+
+
+def test_a_garment_wider_than_tall_reports_its_real_tilt_not_ninety_degrees():
+    """The estimate used to read the LONG axis unconditionally. On a flat-laid pair of shorts that axis is
+    horizontal, so it returned ~±88° — outside the correctable range, so uprighting did nothing on exactly the
+    garment this project is about (EXP_0023)."""
+    m = wide_shorts()
+    ys, xs = np.nonzero(m)
+    assert (ys.max() - ys.min()) < (xs.max() - xs.min()), "the fixture stopped being wider than tall"
+    ang, _ = tilt_angle(m)
+    assert abs(ang) < 10, f"a barely-tilted wide garment reads as {ang:.1f}° from vertical"
+    ang6, _ = tilt_angle(rotate(m, 6))
+    assert abs(ang6 - (ang + 6)) < 2.0, f"a 6° tilt of a wide garment reads as {ang6:.1f}°, not {ang + 6:.1f}°"
+
+
+@pytest.mark.parametrize("tilt", [-12, -8, -5, -3, 3, 5, 8, 12])
+def test_wide_shorts_shape_ratios_survive_tilt_once_upright_runs(tilt):
+    base = wide_shorts()
+    _, base_up, _ = upright(photo(base), base)      # the reference goes through the pipeline too: this fixture has
+    ref = ratios(base_up)                           # a -2.8 degree intrinsic tilt of its own
+    tilted = rotate(base, tilt)
+    _, corrected, _ = upright(photo(tilted), tilted)
+    got = ratios(corrected)
+    for k, v in ref.items():
+        assert abs(got[k] - v) / abs(v) < 0.05, f"{k} moved {abs(got[k]-v)/abs(v):.1%} at {tilt}°"
+
+
+def test_the_tilt_estimate_cannot_exceed_forty_five_degrees_by_construction():
+    """Documented consequence of reading the near-vertical axis: at 45° the two axes swap roles, so a garment truly
+    lying at 50° reads as -40°. Nothing in the silhouette can distinguish them."""
+    m = wide_shorts()
+    for d in (0, 10, 30, 44, 50, 70):
+        ang, _ = tilt_angle(rotate(m, d))
+        assert abs(ang) <= 45.001, f"{ang} at {d}°"

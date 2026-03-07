@@ -74,11 +74,18 @@ Put a coin in the frame if you want any answer in centimetres.
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
   Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
-- Camera tilt (EXP_0022): the pipeline now uprights every photo (`canon/upright.py`), not only those tilted more than
-  8°. The old deadband skipped the band where the tilt estimate is accurate to 0.41° and the measurement error from
-  not correcting is already >5%, and acted in the band where a squat silhouette's principal axis can be 10° wrong.
-  The A/B on 7 pairs is inconclusive (fringe IoU 0.057 → 0.075, 3-0-4, p = 0.25) and the change rests on the measured
-  defect, not on it; the bench shows no regression.
+- Camera tilt (EXP_0022/0023): the pipeline now uprights every photo (`canon/upright.py`), not only those tilted more
+  than 8°, and it reads the **near-vertical** principal axis — reading the long axis meant a flat-laid pair of shorts
+  (wider than tall) came back at ~±88° and was never corrected at all. Effect on repeatability: the shape ratios' swing
+  at 8° of tilt goes **29.6% → 0.5%**. On the pairs: IoU 0.8365 → 0.8566, hem error 13.3 → 7.9 px, with **one pair
+  regressing past the bench tolerance** (443d1d4658) because before and after are uprighted independently — recorded,
+  not tuned away, and the named next step.
+- **Fray scores are not trustworthy at the precision they were quoted (EXP_0024).** Hem roughness counts pixel-scale
+  deviations of the hem boundary, and rotating a mask creates them: at 8°, 12 of 12 finished-hem controls read as
+  frayed, median false p90/waist 0.00194 — the size of EXP_0017's whole quantity and five times its margin. The real
+  mask is warped into the prediction's frame and the prediction is not, so the artefact points the same way as the
+  result. `hem_roughness(resampled=True)` now marks such numbers `valid_for_fray: false`. EXP_0016's 0-false-positive
+  control result is unaffected: those masks were never resampled.
 - Segmentation and repeatability (EXP_0021): **consensus segmentation** (`--seg consensus`, now on both `run_pair.py`
   and `predict.py`) is the setting that survives a re-capture. Change nothing but a photo's JPEG quality or exposure
   and SAM's best-scoring mask returns a *different object* on 16 of 96 tries; consensus does so on 0, and when it is

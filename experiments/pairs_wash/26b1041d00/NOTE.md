@@ -1,18 +1,18 @@
 # PAIR — auto pipeline
 
-flags: SAM fringe mask rejected: median depth 45px > 15% of garment height 274px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; wash preset median: shrink 2.0% along / 1.0% across (PRIOR, not measured); 71505 px changed; direct fringe measurement failed (342 columns); falling back to the SAM/hem-fit value 0.0px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)
+flags: after: rotated 2.1° to upright; SAM fringe mask rejected: median depth 44px > 15% of garment height 269px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; wash preset median: shrink 2.0% along / 1.0% across (PRIOR, not measured); 71496 px changed; direct fringe measurement failed (350 columns); falling back to the SAM/hem-fit value 0.5px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)
 before: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_before_62dc9a85.jpg 
 after: /Users/jefferyhuang/denim-twin/data/external/pair_images/26b1041d00_after_cut_38ff38d5.jpg 
 scale: UNKNOWN (1.0 placeholder; mm values are px)
 landmarks: auto / auto (crotch: gap / gap)
-fringe depth used: 0.0 px from measured from after-photo (NOT a prediction) [suppressed: finished hem]; measured on after-photo: 0.0 px (fabric/fringe split: colour split; registered-frame)
-hem fit: left: angle 9.1°, depth 0 px, right: angle -9.5°, depth 0 px
-registration residual (leave-one-landmark-out): 14.59px
+fringe depth used: 0.0 px from measured from after-photo (NOT a prediction) [suppressed: finished hem]; measured on after-photo: 0.5 px (fabric/fringe split: colour split; registered-frame)
+hem fit: left: angle 12.6°, depth 1 px, right: angle -9.5°, depth 0 px
+registration residual (leave-one-landmark-out): 11.21px
 
 | system | sil IoU | chamfer | edge ΔE | fringe IoU |
 |---|---|---|---|---|
-| pred conservative | 0.879 | 3.8 | 23.6 | 0.000 |
-| pred median | 0.879 | 3.8 | 23.6 | 0.000 |
-| pred aggressive | 0.880 | 3.8 | 23.6 | 0.000 |
-| null:no-op | 0.732 | 51.5 | 33.0 | 0.016 |
-| null:crop-only | 0.888 | 2.8 | 24.3 | 0.000 |
+| pred conservative | 0.894 | 3.9 | 23.2 | 0.000 |
+| pred median | 0.894 | 3.9 | 23.2 | 0.000 |
+| pred aggressive | 0.894 | 3.9 | 23.2 | 0.000 |
+| null:no-op | 0.736 | 53.4 | 34.2 | 0.015 |
+| null:crop-only | 0.899 | 2.9 | 24.2 | 0.000 |

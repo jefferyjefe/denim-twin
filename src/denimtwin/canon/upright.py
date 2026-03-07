@@ -26,16 +26,33 @@ ISOTROPIC_ELONGATION = 1.2      # below this the principal axis is degenerate (E
 UNRELIABLE_TILT_DEG = 5.0       # ... and above this tilt its error grows past a degree
 
 
+def _axis_angle(v):
+    a = np.degrees(np.arctan2(v[0], v[1]))
+    return float((a + 90) % 180 - 90)
+
+
 def tilt_angle(mask):
-    """(angle_deg, elongation) of the garment's long axis from vertical. Angle is in (-90, 90]."""
+    """(angle_deg, elongation) — the tilt of the garment, as the deviation from vertical of whichever principal axis
+    is closer to vertical.
+
+    It used to be the LONG axis unconditionally, and that is wrong for the project's own subject. A pair of shorts
+    laid flat is usually **wider than tall** (9 of the 16 photographs measured in EXP_0021 have height/width 0.60-0.85),
+    so its long axis runs left-to-right and the old function returned ~±88 degrees — outside `max_correctable_tilt`,
+    so uprighting silently did nothing on exactly the garments this project is about. Reading the near-vertical axis
+    instead turns those same nine photographs into tilts of -3.4 to +2.6 degrees, which is what they actually are.
+
+    A consequence worth knowing: |angle| is now at most 45 degrees by construction, because at 45 the two axes swap
+    roles. A garment genuinely lying at 50 degrees reads as -40, and nothing here can tell those apart from the
+    silhouette alone.
+    """
     ys, xs = np.nonzero(np.asarray(mask, bool))
     if not len(ys): return 0.0, 1.0
     pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
     cov = pts.T @ pts / len(pts)
     w_, v_ = np.linalg.eigh(cov)
-    major = v_[:, np.argmax(w_)]
-    ang = np.degrees(np.arctan2(major[0], major[1]))
-    return float((ang + 90) % 180 - 90), float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))
+    angs = [_axis_angle(v_[:, i]) for i in (0, 1)]
+    ang = min(angs, key=abs)
+    return float(ang), float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))
 
 
 def max_correctable_tilt(elongation):

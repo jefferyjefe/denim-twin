@@ -1,0 +1,16 @@
+{
+ "commit": "12e3e85e0b48845d681ca5bdd238058d721a391f",
+ "dirty_paths": [
+  "rc/denimtwin/canon/upright.py",
+  "src/denimtwin/eval/hem_texture.py",
+  "tools/check_claims.py",
+  "tools/compare.py",
+  "tools/compare_upright_ab.py",
+  "tools/experiment_landmark_rotation.py",
+  "tools/experiment_repeatability.py",
+  "tools/run_pairs_batch.py",
+  "tools/experiment_resample_floor.py"
+ ],
+ "knobs": {},
+ "n_pairs": 21
+}

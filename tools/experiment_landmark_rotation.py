@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
 from denimtwin.canon.autolm import landmarks_from_mask
+from denimtwin.canon import upright as U
 
 ROOT = Path(__file__).resolve().parents[1]
 ANGLES = [0, 1, 2, 3, 5, 8, 12, 20]
@@ -38,7 +39,9 @@ def rotate(mask, deg):
     M = cv2.getRotationMatrix2D((w / 2, h / 2), deg, 1.0)
     return cv2.warpAffine(mask.astype(np.uint8), M, (w, h), flags=cv2.INTER_NEAREST) > 0
 
-def ratios(mask):
+def ratios(mask, upright=False):
+    if upright:
+        _, mask, _ = U.upright(np.zeros((*np.asarray(mask).shape, 3), np.uint8), mask, deadband=0.0)
     lm, conf = landmarks_from_mask(mask)
     if "waist_left" not in lm: return {}
     ww = float(lm["waist_right"][0] - lm["waist_left"][0])
@@ -54,16 +57,19 @@ def ratios(mask):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="reports/repeatability/landmark_rotation.json")
+    ap.add_argument("--upright", action="store_true",
+                    help="upright the mask before measuring, as run_pair/predict now do (EXP_0022). Without it this "
+                         "measures the raw tilted mask, which is what EXP_0021 Part C reported.")
     a = ap.parse_args()
     subjects = {"synthetic_shorts": synthetic(kind="shorts"), "synthetic_jeans": synthetic(kind="jeans")}
     for p in sorted(glob.glob(str(ROOT / "reports/repeatability/masks/*.png"))):
         subjects[Path(p).stem] = cv2.imread(p, 0) > 127
     res = {"angles_deg": ANGLES, "subjects": {}}
     for name, m in subjects.items():
-        base = ratios(m)
+        base = ratios(m, a.upright)
         rowsub = {"base": base, "by_angle": {}}
         for d in ANGLES:
-            rowsub["by_angle"][str(d)] = ratios(rotate(m, d))
+            rowsub["by_angle"][str(d)] = ratios(rotate(m, d), a.upright)
         res["subjects"][name] = rowsub
     # summary: the largest tilt at which every ratio stays within 5% of its unrotated value
     tol = {}
