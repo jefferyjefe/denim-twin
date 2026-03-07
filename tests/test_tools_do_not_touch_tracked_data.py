@@ -34,3 +34,30 @@ def test_the_prior_the_repo_ships_is_valid_json_with_its_provenance_fields():
     for k in ("n", "insufficient", "pairs"):
         assert k in pr, f"the committed prior has no '{k}'"
     assert isinstance(pr["pairs"], list)
+
+
+def test_the_weekly_scribe_preserves_hand_written_notes(tmp_path, monkeypatch):
+    """It used to `write_text` the whole file, so running it destroyed every hand-written weekly note it had started.
+    The generated block is now delimited and everything outside it survives."""
+    import datetime as dt, re, subprocess, sys
+    week_dir = os.path.join(ROOT, "notes/weekly")
+    today = dt.date.today()
+    path = os.path.join(week_dir, f"{today.year}-W{today.isocalendar()[1]:02d}.md")
+    had = os.path.exists(path)
+    original = open(path).read() if had else None
+    sentinel = "SENTINEL-a-human-wrote-this-line"
+    try:
+        open(path, "w").write(f"# hand written\n\n{sentinel}\n")
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/weekly_scribe.py")],
+                           capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        after = open(path).read()
+        assert sentinel in after, "the scribe destroyed hand-written content"
+        assert "weekly-scribe:begin" in after and "weekly-scribe:end" in after
+        # running twice must not duplicate the generated block
+        subprocess.run([sys.executable, os.path.join(ROOT, "tools/weekly_scribe.py")], capture_output=True, text=True)
+        assert open(path).read().count("weekly-scribe:begin") == 1
+        assert sentinel in open(path).read()
+    finally:
+        if original is not None: open(path, "w").write(original)
+        elif os.path.exists(path): os.unlink(path)
