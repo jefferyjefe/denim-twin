@@ -1,4 +1,12 @@
-# EXP_0017 — RETRACTED and restated: scoring the fringe renderer on hem roughness
+# EXP_0017 — RETRACTED TWICE: scoring the fringe renderer on hem roughness
+
+> **Second retraction (EXP_0025).** Everything below scores each system against the real garment's hem roughness
+> measured on the real mask **warped into the prediction's frame**. EXP_0024 showed that warp manufactures the
+> quantity being measured — rotating a finished-hem control makes 12 of 12 read as frayed, at the same magnitude as
+> this experiment's entire result. Measured on the mask as segmented, the real hems of **6 of the 7 usable pairs read
+> exactly zero**: at 241–389 px of waistband they are below the resolution EXP_0016 established this statistic needs.
+> The comparison therefore had no signal to score against, and the ordering below reverses when the artefact is
+> removed. Nothing in this note is evidence. It is kept because the retraction is the result.
 
 > **This experiment's original numbers were wrong and are withdrawn.** Review 6 checked every figure against the pair
 > artefacts and found none of them there: the note claimed 11 usable pairs (7 were decidable), mean errors of

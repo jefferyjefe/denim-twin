@@ -1,0 +1,92 @@
+{
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "real_warped": 0.0035335689045936395,
+   "real_native": 0.0,
+   "pred": 0.013780918727915214,
+   "crop": 0.013780918727915214,
+   "noop": 0.01060070671378092
+  },
+  {
+   "pair": "26b1041d00",
+   "real_warped": 0.004149377593360996,
+   "real_native": 0.0,
+   "pred": 0.0,
+   "crop": 0.0,
+   "noop": 0.0
+  },
+  {
+   "pair": "2b0123d732",
+   "real_warped": 0.0034129692832764505,
+   "real_native": 0.0,
+   "pred": 0.0,
+   "crop": 0.0,
+   "noop": 0.006825938566552901
+  },
+  {
+   "pair": "443d1d4658",
+   "real_warped": 0.0,
+   "real_native": 0.0,
+   "pred": 0.002967359050445104,
+   "crop": 0.0,
+   "noop": 0.0
+  },
+  {
+   "pair": "4bfef03bd7",
+   "real_warped": 0.005376344086021506,
+   "real_native": 0.0029940119760479044,
+   "pred": 0.002688172043010753,
+   "crop": 0.0,
+   "noop": 0.0
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "real_warped": 0.0017094017094017094,
+   "real_native": 0.0,
+   "pred": 0.0017094017094017094,
+   "crop": 0.0,
+   "noop": 0.0
+  },
+  {
+   "pair": "e97924ad2d",
+   "real_warped": 0.0,
+   "real_native": 0.0,
+   "pred": 0.007575757575757576,
+   "crop": 0.0,
+   "noop": 0.0
+  }
+ ],
+ "n_pairs": 7,
+ "preset": "median",
+ "source": "experiments/pairs",
+ "warped": {
+  "decidable": 7,
+  "wins": 2,
+  "losses": 2,
+  "ties": 3,
+  "p_two_sided": 1.0,
+  "mean_err_prediction": 0.00443442648131035,
+  "mean_err_crop_only": 0.0035564917850546044,
+  "mean_real": 0.002597380225236329
+ },
+ "native": {
+  "decidable": 7,
+  "wins": 1,
+  "losses": 3,
+  "ties": 3,
+  "p_two_sided": 0.625,
+  "mean_err_prediction": 0.003762753856650965,
+  "mean_err_crop_only": 0.002396418671994731,
+  "mean_real": 0.00042771599657827206
+ },
+ "real_hem_reads_zero_natively": 6,
+ "real_hem_measurable_natively": 1,
+ "warp_inflation": {
+  "n": 7,
+  "mean_real_warped": 0.002597380225236329,
+  "mean_real_native": 0.00042771599657827206,
+  "pairs_where_warped_reads_rougher": 5,
+  "pairs_where_native_reads_rougher": 0
+ }
+}

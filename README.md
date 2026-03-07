@@ -66,9 +66,11 @@ Put a coin in the frame if you want any answer in centimetres.
   of waistband (EXP_0016) — but **that result does not survive a re-capture**: re-encoding the same photo flips the
   verdict on 6 of 16 photos and makes 2 of those 9 controls read frayed (EXP_0021). `p90 > 0` is exactly
   `rough_fraction > 0.10`, so the detection limit is a fray touching a tenth of the hem, against finished hems that
-  already deviate on up to 7.3% of columns, The fringe renderer's score on it is **undetermined**: 8 of 10 pairs
-  are not decidable because the rendered fringe defeats the metric's own reliability check, and the 2 that are give
-  p = 1.0 (EXP_0017, retracted and restated). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
+  already deviate on up to 7.3% of columns. The fringe renderer's score on it is **retracted, twice** (EXP_0017): the
+  comparison measured the real hem on a mask warped into the prediction's frame, and that warp inflates its roughness
+  six-fold. Measured where nothing resampled it, **6 of the 7 real hems read exactly zero** — at 241-389 px of
+  waistband they are below the resolution the statistic needs, so there was never a signal to score against
+  (EXP_0025). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
   fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).

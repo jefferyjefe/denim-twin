@@ -1,0 +1,8 @@
+{
+ "commit": "6998d10917fabaae89bd95f28da3c2ba6be4059d",
+ "dirty_paths": [],
+ "knobs": {
+  "PAIRS_WASH": "median"
+ },
+ "n_pairs": 21
+}

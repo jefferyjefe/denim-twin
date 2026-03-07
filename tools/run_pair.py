@@ -84,6 +84,9 @@ def upright(img, mask, name):
     return img2, mask2, ang
 bf_pre_rot, af_pre_rot = bf, af
 bmask = coarse(bf); amask = coarse(af)
+# The after mask AS SEGMENTED, before any rotation. Hem texture must be measured on it and not on the registered
+# copy: a warp alone makes 12 of 12 finished-hem controls read as frayed (EXP_0024).
+amask_native = amask.copy()
 bf, bmask, rot_b = upright(bf, bmask, "before"); af, amask, rot_a = upright(af, amask, "after")
 def _xform(lm, note, rot, shape_before, shape_after):
     """Manual landmarks were clicked on the ORIGINAL photo: apply the collage crop (left/top panel: offset 0) and the upright rotation."""
@@ -218,14 +221,14 @@ bmask_pred = locals().get("bmask_pred", bmask); removed_pred = locals().get("rem
 res = render_three(cut, removed_pred, bmask_pred, mmpp, seed=a.seed, depth_override={"conservative": depth_mm * 0.5, "median": depth_mm, "aggressive": depth_mm * 1.5})
 for k, (im, ch) in res.items():
     cv2.imwrite(f"{O}/pred_{k}.png", im); cv2.imwrite(f"{O}/pred_{k}_mask.png", ((keep_pred | (ch & removed_pred)).astype(np.uint8) * 255))
-for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 255), ("removed_mask", removed.astype(np.uint8) * 255), ("bmask", bmask.astype(np.uint8) * 255), ("amask", amask.astype(np.uint8) * 255), ("real", real), ("real_mask", rmask.astype(np.uint8) * 255)):
+for n, im in (("orig", bf), ("cut", cut), ("keep_mask", keep.astype(np.uint8) * 255), ("removed_mask", removed.astype(np.uint8) * 255), ("bmask", bmask.astype(np.uint8) * 255), ("amask", amask.astype(np.uint8) * 255), ("amask_native", amask_native.astype(np.uint8) * 255), ("real", real), ("real_mask", rmask.astype(np.uint8) * 255)):
     cv2.imwrite(f"{O}/{n}.png", im)
 cv2.imwrite(f"{O}/pred.png", res["median"][0]); cv2.imwrite(f"{O}/diff.png", (np.any(res["median"][0] != bf, axis=2) & True).astype(np.uint8) * 255)   # plan §4.8: exactly which pixels changed
 json.dump({"landmarks": lmb}, open(f"{O}/before_lm.json", "w")); json.dump({"landmarks": lma}, open(f"{O}/after_lm.json", "w"))
 rows = {}
 for k in res:
     r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "compare.py"), "--before", BEFORE_PATH, "--before-lm", f"{O}/before_lm.json", "--pred", f"{O}/pred_{k}.png", "--pred-mask", f"{O}/pred_{k}_mask.png",
-                        "--keep", f"{O}/keep_mask.png", "--removed", f"{O}/removed_mask.png", "--after", AFTER_PATH, "--after-lm", f"{O}/after_lm.json", "--after-mask", f"{O}/amask.png", "--out", f"{O}/cmp_{k}"] + (["--mm-per-px", str(mmpp)] if a.mm_per_px else []), capture_output=True, text=True)
+                        "--keep", f"{O}/keep_mask.png", "--removed", f"{O}/removed_mask.png", "--after", AFTER_PATH, "--after-lm", f"{O}/after_lm.json", "--after-mask", f"{O}/amask.png", "--after-mask-native", f"{O}/amask_native.png", "--out", f"{O}/cmp_{k}"] + (["--mm-per-px", str(mmpp)] if a.mm_per_px else []), capture_output=True, text=True)
     rows[k] = json.load(open(f"{O}/cmp_{k}/metrics.json"))["rows"]
 # panel
 y0 = int(np.nonzero(removed)[0].min()) if removed.any() else bf.shape[0] // 2; H = bf.shape[0]

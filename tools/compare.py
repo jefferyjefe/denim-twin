@@ -14,7 +14,7 @@ from denimtwin.eval import identity as I, geometry as G
 
 p = argparse.ArgumentParser()
 for k in ("before", "before-lm", "pred", "keep", "removed", "after", "after-lm"): p.add_argument("--" + k, required=True)
-p.add_argument("--after-mask"); p.add_argument("--pred-mask", help="predicted garment mask incl. fringe (default: keep)"); p.add_argument("--mm-per-px", type=float); p.add_argument("--out", required=True)
+p.add_argument("--after-mask"); p.add_argument("--after-mask-native", help="the after mask AS SEGMENTED, before uprighting or registration: hem texture is measured on this one (EXP_0024)"); p.add_argument("--pred-mask", help="predicted garment mask incl. fringe (default: keep)"); p.add_argument("--mm-per-px", type=float); p.add_argument("--out", required=True)
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
 before = cv2.imread(a.before); pred = cv2.imread(a.pred); after = cv2.imread(a.after)
 keep = cv2.imread(a.keep, 0) > 127; removed = cv2.imread(a.removed, 0) > 127
@@ -25,6 +25,12 @@ else:
     amask, _ = SamSegmenter().segment(after, landmarks={**lma, **{k: lma.get(k, v) for k, v in lma.items()}}) if all(k in lma for k in ("hem_left_outer",)) else (None, None)
     if amask is None:
         g = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY); amask = np.abs(g.astype(int) - np.median(g[:8])) > 40
+# the after mask as segmented (no upright, no registration): the only mask hem TEXTURE may be measured on (EXP_0024)
+NATIVE = (cv2.imread(a.after_mask_native, 0) > 127) if (a.after_mask_native and os.path.exists(a.after_mask_native)) else None
+def _native_waist(m):
+    from denimtwin.canon.autolm import landmarks_from_mask
+    _lm, _ = landmarks_from_mask(m)
+    return float(_lm["waist_right"][0] - _lm["waist_left"][0]) if "waist_left" in _lm else None
 real, rmask, resid = warp_after_to_before(after, amask, lma, lmb, before.shape)
 p.add_argument  # (no-op; keeps linters quiet)
 real_raw = real.copy()
@@ -79,6 +85,18 @@ for name, (im, sil) in systems.items():
     r["hem_rough_frac_real"] = _hr["rough_fraction"] if _hr["ok"] else float("nan")
     r["hem_rough_real_is_resampled"] = True          # see above; the real mask is registered into the before frame
     r["hem_rough_valid_for_fray"] = False
+    # The comparison that IS valid: both sides measured on a boundary nothing has resampled, and compared as a
+    # fraction of waist width, which is what p90_rel is for. The prediction's hem is drawn synthetically in its own
+    # frame; the real hem comes straight out of segmentation. Neither carries a resampling staircase.
+    if NATIVE is not None:
+        _wn = _native_waist(NATIVE) or _ww
+        _hn = hem_roughness(NATIVE, waist_px=_wn)
+        r["hem_rough_rel_real_native"] = _hn.get("p90_rel", float("nan")) if _hn["ok"] else float("nan")
+        r["hem_rough_frac_real_native"] = _hn["rough_fraction"] if _hn["ok"] else float("nan")
+        r["hem_rough_rel_err_native"] = (abs(r["hem_rough_rel_pred"] - r["hem_rough_rel_real_native"])
+                                         if r["hem_rough_rel_pred"] == r["hem_rough_rel_pred"]
+                                         and r["hem_rough_rel_real_native"] == r["hem_rough_rel_real_native"] else float("nan"))
+        r["hem_rough_native_valid_for_fray"] = bool(_hn["ok"] and _hn.get("valid_for_fray"))
     r["hem_rough_err_rel"] = abs(r["hem_rough_rel_pred"] - r["hem_rough_rel_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_err_px"] = abs(r["hem_rough_p90_pred"] - r["hem_rough_p90_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_refused"] = (not _hp["ok"]) or (not _hr["ok"])
