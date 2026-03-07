@@ -1,0 +1,1 @@
+{"garment_id": "4bfef03bd7", "stratum": "after_wash", "metric": "fringe_depth_px", "median": 2.2222222222222223, "nominal": 0.8, "lo": 1.1111111111111112, "hi": 3.3333333333333335, "real": null, "source": "preset spread (not calibrated; real omitted because median IS the measurement)"}

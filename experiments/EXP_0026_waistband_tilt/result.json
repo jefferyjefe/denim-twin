@@ -1,0 +1,230 @@
+{
+ "arm_a": "experiments/pairs",
+ "arm_b": "experiments/pairs_hybrid",
+ "preset": "median",
+ "excluded": [
+  "2e2063b93f",
+  "3082dfddc1",
+  "4c30342e20",
+  "5cd6cff343",
+  "963fcdd264",
+  "964dc8a1f9",
+  "b630a78c19",
+  "d52a3ff876",
+  "f542c57cec",
+  "f9c0e56308"
+ ],
+ "honoured_exclude": true,
+ "n_a": 7,
+ "n_b": 7,
+ "n_both": 6,
+ "only_a": [
+  "2b0123d732"
+ ],
+ "only_b": [
+  "22a5857a0c"
+ ],
+ "pairs_rotated_in_b_only": [],
+ "n_pairs_rotated_in_b_only": 0,
+ "pairs_rotated_differently": [
+  "2691c1a8d0",
+  "443d1d4658",
+  "4bfef03bd7",
+  "8d9f0df4ad",
+  "e97924ad2d"
+ ],
+ "per_pair": {
+  "2691c1a8d0": {
+   "sil_iou_vs_real": [
+    0.7355278642013122,
+    0.5579823968689944
+   ],
+   "hem_chamfer": [
+    11.478927203065133,
+    86.5575221238938
+   ],
+   "dE_edge_band_vs_real": [
+    18.456973238809287,
+    16.66286459572375
+   ],
+   "fringe_iou_vs_real": [
+    0.009852216748768473,
+    1.0
+   ],
+   "rotated_a": [
+    "flags: after: rotated -8.8\u00b0 to upright; fringe measured directly: 4.0px in the after frame (rel 0.0105, coverage 1.00); SAM/hem-fit said 2.2px; no fringe rendered: edge_treatment 'raw' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: before: rotated -3.9\u00b0 to upright; after: rotated -8.3\u00b0 to upright; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; fringe measured directly: 4.0px in the after frame (rel 0.0118, coverage 1.00); SAM/hem-fit said 3.2px; no fringe rendered: edge_treatment 'raw' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "26b1041d00": {
+   "sil_iou_vs_real": [
+    0.8992786492786493,
+    0.8992786492786493
+   ],
+   "hem_chamfer": [
+    2.9963503649635035,
+    2.9963503649635035
+   ],
+   "dE_edge_band_vs_real": [
+    24.178240963413565,
+    24.178240963413565
+   ],
+   "fringe_iou_vs_real": [
+    0.03292181069958848,
+    0.03292181069958848
+   ],
+   "rotated_a": [
+    "flags: after: rotated 2.1\u00b0 to upright; SAM fringe mask rejected: median depth 44px > 15% of garment height 269px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; direct fringe measurement failed (350 columns); falling back to the SAM/hem-fit value 0.5px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: after: rotated 2.1\u00b0 to upright; SAM fringe mask rejected: median depth 44px > 15% of garment height 269px; before garment is short (bermuda/shorts): a short->shorter cut, not jeans->shorts; direct fringe measurement failed (350 columns); falling back to the SAM/hem-fit value 0.5px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "443d1d4658": {
+   "sil_iou_vs_real": [
+    0.8565523031605311,
+    0.9224319547543302
+   ],
+   "hem_chamfer": [
+    27.67218122977346,
+    7.6003411371237455
+   ],
+   "dE_edge_band_vs_real": [
+    18.180643535745865,
+    16.43080032972611
+   ],
+   "fringe_iou_vs_real": [
+    0.003395174002667637,
+    0.028255528255528257
+   ],
+   "rotated_a": [
+    "flags: before: rotated -3.6\u00b0 to upright; after: rotated 4.8\u00b0 to upright; fringe measured directly: 5.0px in the after frame (rel 0.0138, coverage 0.64); SAM/hem-fit said 47.5px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: before: rotated 0.9\u00b0 to upright; after: rotated -1.9\u00b0 to upright; fringe measured directly: 4.0px in the after frame (rel 0.0112, coverage 0.64); SAM/hem-fit said 12.2px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "4bfef03bd7": {
+   "sil_iou_vs_real": [
+    0.8065386705307009,
+    0.7688046798157063
+   ],
+   "hem_chamfer": [
+    4.459016393442623,
+    33.15447154471545
+   ],
+   "dE_edge_band_vs_real": [
+    19.538144540389645,
+    22.53104567214336
+   ],
+   "fringe_iou_vs_real": [
+    0.11846061334936861,
+    0.009321553051795411
+   ],
+   "rotated_a": [
+    "flags: before: rotated 0.5\u00b0 to upright; after: rotated -4.8\u00b0 to upright; SAM fringe mask rejected: median depth 46px > 15% of garment height 305px; fringe measured directly: 2.0px in the after frame (rel 0.0067, coverage 0.60); SAM/hem-fit said 1.0px"
+   ],
+   "rotated_b": [
+    "flags: before: rotated -0.3\u00b0 to upright; after: rotated -1.0\u00b0 to upright; fringe measured directly: 2.0px in the after frame (rel 0.0060, coverage 0.63); SAM/hem-fit said 35.6px"
+   ]
+  },
+  "8d9f0df4ad": {
+   "sil_iou_vs_real": [
+    0.958155392699601,
+    0.9557640239484422
+   ],
+   "hem_chamfer": [
+    3.1891191709844557,
+    4.090322580645161
+   ],
+   "dE_edge_band_vs_real": [
+    19.906240010368627,
+    20.261632539709716
+   ],
+   "fringe_iou_vs_real": [
+    0.1179273377010125,
+    0.05252993433758208
+   ],
+   "rotated_a": [
+    "flags: before: rotated -1.2\u00b0 to upright; after: rotated 1.1\u00b0 to upright; before: legs reach the frame bottom \u2014 original hem unknown; cut expressed vs frame, not inseam; before (refined): legs reach the frame bottom \u2014 original hem unknown; cut expressed vs frame, not inseam; fringe measured directly: 5.0px in the after frame (rel 0.0055, coverage 0.12); SAM/hem-fit said 4.5px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: before: rotated -1.2\u00b0 to upright; after: rotated 0.1\u00b0 to upright; before: legs reach the frame bottom \u2014 original hem unknown; cut expressed vs frame, not inseam; before (refined): legs reach the frame bottom \u2014 original hem unknown; cut expressed vs frame, not inseam; fringe measured directly: 5.0px in the after frame (rel 0.0055, coverage 0.14); SAM/hem-fit said 12.2px; no fringe rendered: edge_treatment 'cuffed' with no wash does not fray (EXP_0017)"
+   ]
+  },
+  "e97924ad2d": {
+   "sil_iou_vs_real": [
+    0.8929021860986547,
+    0.8831314727049324
+   ],
+   "hem_chamfer": [
+    1.323076923076923,
+    5.3106060606060606
+   ],
+   "dE_edge_band_vs_real": [
+    11.736140256700718,
+    12.137710283507957
+   ],
+   "fringe_iou_vs_real": [
+    0.37554585152838427,
+    0.12808988764044943
+   ],
+   "rotated_a": [
+    "flags: before: rotated -1.9\u00b0 to upright; after: rotated 2.2\u00b0 to upright; before: touches the edge of a MANUAL crop (second object removed from frame); before (refined): touches the edge of a MANUAL crop (second object removed from frame); fringe measured directly: 6.0px in the after frame (rel 0.0154, coverage 0.96); SAM/hem-fit said 1.5px; no fringe rendered: edge_treatment 'raw' with no wash does not fray (EXP_0017)"
+   ],
+   "rotated_b": [
+    "flags: before: rotated 2.9\u00b0 to upright; after: rotated -0.8\u00b0 to upright; fringe measured directly: 6.0px in the after frame (rel 0.0154, coverage 0.98); SAM/hem-fit said 6.4px; no fringe rendered: edge_treatment 'raw' with no wash does not fray (EXP_0017)"
+   ]
+  }
+ },
+ "means": {
+  "sil_iou_vs_real": {
+   "a": 0.8581591776615749,
+   "b": 0.8312321962285092,
+   "n": 6
+  },
+  "hem_chamfer": {
+   "a": 8.519778547551017,
+   "b": 23.284935635324622,
+   "n": 6
+  },
+  "dE_edge_band_vs_real": {
+   "a": 18.666063757571283,
+   "b": 18.700382397370742,
+   "n": 6
+  },
+  "fringe_iou_vs_real": {
+   "a": 0.109683834004965,
+   "b": 0.20851978566415727,
+   "n": 6
+  }
+ },
+ "sign_test": {
+  "sil_iou_vs_real": {
+   "b_better": 1,
+   "b_worse": 4,
+   "tied": 1,
+   "p_two_sided": 0.375
+  },
+  "hem_chamfer": {
+   "b_better": 1,
+   "b_worse": 4,
+   "tied": 1,
+   "p_two_sided": 0.375
+  },
+  "dE_edge_band_vs_real": {
+   "b_better": 2,
+   "b_worse": 3,
+   "tied": 1,
+   "p_two_sided": 1.0
+  },
+  "fringe_iou_vs_real": {
+   "b_better": 2,
+   "b_worse": 3,
+   "tied": 1,
+   "p_two_sided": 1.0
+  }
+ }
+}

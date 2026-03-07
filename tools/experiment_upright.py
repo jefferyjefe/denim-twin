@@ -25,44 +25,10 @@ import argparse, json, os, sys, glob
 from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
+from denimtwin.canon.upright import principal_axis_angle as pca_angle, waistband_angle, _wrap
 
 ROOT = Path(__file__).resolve().parents[1]
 TRUE_ANGLES = [-15, -8, -5, -3, -1, 0, 1, 3, 5, 8, 15]
-
-def pca_angle(mask):
-    """The estimator `run_pair.upright` uses. Returns (angle_deg, elongation)."""
-    ys, xs = np.nonzero(mask)
-    pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
-    cov = pts.T @ pts / len(pts); w_, v_ = np.linalg.eigh(cov); major = v_[:, np.argmax(w_)]
-    ang = np.degrees(np.arctan2(major[0], major[1])); ang = (ang + 90) % 180 - 90
-    return float(ang), float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))
-
-def _wrap(d):
-    """Angles are defined modulo 180 degrees (a garment rotated by 180 is still a garment, and the PCA axis has no
-    sign). Errors must be wrapped the same way or a 1 degree miss reads as 179."""
-    return (float(d) + 90.0) % 180.0 - 90.0
-
-def waistband_angle(mask, span=(0.15, 0.85)):
-    """Tilt from the top edge of the waistband, fitted robustly (cv2.fitLine, L1) over the middle of the span.
-
-    The waistband is the one part of a flat-laid garment that is straight by construction — a stiff band with a sewn
-    edge. Hems are cut, legs splay, the crotch is a curve. Returns (angle_deg, inlier_fraction)."""
-    m = np.asarray(mask, bool)
-    cols = np.nonzero(m.any(axis=0))[0]
-    if len(cols) < 20: return None, 0.0
-    x0, x1 = cols.min(), cols.max()
-    lo, hi = int(x0 + span[0] * (x1 - x0)), int(x0 + span[1] * (x1 - x0))
-    xs = np.array([x for x in range(lo, hi + 1) if m[:, x].any()])
-    if len(xs) < 20: return None, 0.0
-    ys = np.array([np.nonzero(m[:, x])[0].min() for x in xs], float)
-    pts = np.stack([xs.astype(np.float32), ys.astype(np.float32)], 1)
-    vx, vy, _, _ = cv2.fitLine(pts, cv2.DIST_L1, 0, 0.01, 0.01).ravel()
-    if abs(vx) < 1e-6: return None, 0.0
-    ang = _wrap(np.degrees(np.arctan2(vy, vx)))
-    # how much of the edge actually lies on that line: a waistband gives a high fraction, a jumbled top edge does not
-    d = np.abs(-vy * (xs - xs.mean()) + vx * (ys - ys.mean()))
-    H = np.ptp(np.nonzero(m.any(axis=1))[0]) + 1
-    return ang, float((d <= max(0.02 * H, 2.0)).mean())
 
 def flatten_top_angle(mask, lim=25, step=0.5, band_px=None):
     """Tilt as the rotation that makes the top edge FLATTEST — no feature definition at all, just the angle at which
@@ -114,16 +80,19 @@ def main():
         base_pca, _ = pca_angle(m0)
         base_wb, _ = waistband_angle(m0)
         base_flat, _ = flatten_top_angle(m0)
+        base_hybrid = base_wb if base_wb is not None else base_pca
         for t in TRUE_ANGLES:
             m = rotate(m0, t) if t else m0
             pa, el = pca_angle(m)
             wa, fr = waistband_angle(m)
             fa, fs = flatten_top_angle(m)
+            ha = wa if wa is not None else pa                     # waistband when it answers, principal axis otherwise
             rows.append({"subject": name, "true_delta_deg": t, "elongation": el,
                          "pca_deg": pa, "pca_err": _wrap(pa - (base_pca + t)),
                          "wb_deg": wa, "wb_err": _wrap(wa - (base_wb + t)) if (wa is not None and base_wb is not None) else None,
                          "wb_inlier_frac": fr,
                          "flat_deg": fa, "flat_err": _wrap(fa - (base_flat + t)), "flat_score": fs,
+                         "hybrid_deg": ha, "hybrid_err": _wrap(ha - (base_hybrid + t)), "hybrid_from": "waistband" if wa is not None else "pca",
                          "synthetic": name.startswith("synthetic")})
     real = [r for r in rows if not r["synthetic"]]
     def stats(key):
@@ -143,10 +112,13 @@ def main():
            "pca": {**stats("pca_err"), **harm("pca_err")},
            "waistband": {**stats("wb_err"), **harm("wb_err")},
            "flatten_top": {**stats("flat_err"), **harm("flat_err")},
+           "hybrid": {**stats("hybrid_err"), **harm("hybrid_err"),
+                      "n_from_waistband": sum(1 for r in real if r.get("hybrid_from") == "waistband"),
+                      "n_from_pca": sum(1 for r in real if r.get("hybrid_from") == "pca")},
            "waistband_unavailable": sum(1 for r in real if r["wb_deg"] is None)}
     (ROOT / a.out).parent.mkdir(parents=True, exist_ok=True)
     (ROOT / a.out).write_text(json.dumps(out, indent=1))
-    for k in ("pca", "waistband", "flatten_top"):
+    for k in ("pca", "waistband", "flatten_top", "hybrid"):
         d = out[k]
         print(f"{k:10s} n={d['n']:3d} median |err| {d['median_abs_err_deg']:.2f}°  p90 {d['p90_abs_err_deg']:.2f}°  "
               f">1° in {d['over_1deg']}  >3° in {d['over_3deg']}  correction worse than nothing in {d['correction_worse_than_nothing']}")
