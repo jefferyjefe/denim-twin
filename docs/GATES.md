@@ -9,4 +9,9 @@
 - **Gate 6** — Learned residual improves real-outcome similarity without degrading unchanged-region identity.
 - **Gate 7** — Full system beats generative + procedural baselines on physical matching AND identity.
 
-**Tuning rule (2026-08-29):** heuristic thresholds in `canon/autolm.py` and `canon/hemfit.py` change only when evaluated on ≥5 usable pairs with `tools/report_pairs.py` output attached to the commit.
+**Tuning rule (2026-08-29):** heuristic thresholds in `canon/autolm.py`, `canon/hemfit.py` and `canon/upright.py`
+change only when evaluated on ≥5 usable pairs with `tools/report_pairs.py` output attached to the commit.
+`canon/upright.py` was added to the rule by EXP_0022, which changed the upright deadband from 8° to 0°; that
+A/B (7 pairs, `tools/compare_upright_ab.py`) was **inconclusive on the pair metrics** and the change rests on a
+directly measured defect (EXP_0021 Part C) plus the absence of any regression. A future change to these
+thresholds needs the same two things, and saying which one is carrying the argument.

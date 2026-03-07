@@ -94,6 +94,10 @@ above the angle where a third of the subjects have already lost more than 5%, an
 every rendered output and every bench number, so it belongs in its own A/B (`docs/GATES.md` tuning rule), and the
 measured invariance above is now the test that A/B has to satisfy.
 
+> **Superseded by EXP_0022** (same day): the A/B was run, the deadband is now 0.0, and the invariance above is pinned
+> by `tests/test_upright.py`. EXP_0022 also measured the estimator itself — accurate to 0.41° in the band the deadband
+> was skipping, and unreliable (up to 10.5°) in the large-tilt, near-isotropic band it was acting in.
+
 ## Gate 1
 
 Still **not met**, and for a different reason than in EXP_0018 — which is the progress:

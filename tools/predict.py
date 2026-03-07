@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
 from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
 from denimtwin.canon.autolm import landmarks_from_mask
+from denimtwin.canon import upright as U
 from denimtwin.canon.warp import CanonicalMap
 from denimtwin.canon.cut2d import apply_cut, cut_mask_canon, cut_mask_canon_angled, backdrop_fill, texture_backdrop_fill
 from denimtwin.canon.rawedge_v1 import render_three
@@ -46,6 +47,11 @@ p.add_argument("--seg", choices=["coarse", "consensus"], default="coarse",
                     "opt-in because it changes every rendered output and has its own failure on plain studio "
                     "backdrops, where the vote can elect the backdrop instead of the garment.")
 p.add_argument("--min-agreement", type=float, default=0.5, help="--seg consensus: refuse below this prompt agreement")
+p.add_argument("--upright-deadband", type=float, default=0.0,
+               help="skip the upright rotation below this tilt (degrees). Was 8.0 until EXP_0022: the landmark "
+                    "heuristic loses more than 5%% of every shape ratio at 1-8 degrees of tilt (EXP_0021) and the "
+                    "tilt estimate is accurate to 0.41 degrees there, so the deadband skipped the correction exactly "
+                    "where it was needed. Pass 8.0 to reproduce the old behaviour.")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True); O = a.out
 FLAGS = []
 def FAIL(why):
@@ -75,18 +81,15 @@ else:
     FLAGS.append("mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a "
                  "back pocket returned at 0.906): look at diff.png, or use --seg consensus")
 
-# upright: flat-lays are often shot at an angle
-ys, xs = np.nonzero(mask); pts = np.stack([xs, ys], 1).astype(np.float32); pts -= pts.mean(0)
-cov = pts.T @ pts / len(pts); w_, v_ = np.linalg.eigh(cov); major = v_[:, np.argmax(w_)]
-ang = (np.degrees(np.arctan2(major[0], major[1])) + 90) % 180 - 90
-elong = float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))
-if 8 <= abs(ang) <= (80 if elong > 1.8 else 30):
-    h, w = img.shape[:2]; M = cv2.getRotationMatrix2D((w / 2, h / 2), -ang, 1.0)
-    cos, sin = abs(M[0, 0]), abs(M[0, 1]); nw, nh = int(h * sin + w * cos), int(h * cos + w * sin)
-    M[0, 2] += nw / 2 - w / 2; M[1, 2] += nh / 2 - h / 2
-    bgc = tuple(int(c) for c in np.median(img[~mask], axis=0)) if (~mask).any() else (128, 128, 128)
-    img = cv2.warpAffine(img, M, (nw, nh), borderValue=bgc); mask = cv2.warpAffine(mask.astype(np.uint8), M, (nw, nh)) > 0
-    FLAGS.append(f"rotated {ang:.1f}° to upright")
+# upright: flat-lays are often shot at an angle, and the landmark heuristic is not rotation-invariant (EXP_0021).
+# One implementation, shared with run_pair.py (canon/upright.py).
+_elong = U.tilt_angle(mask)[1]
+img, mask, _ang = U.upright(img, mask, deadband=a.upright_deadband)
+if _ang:
+    FLAGS.append(f"rotated {_ang:.1f}° to upright")
+    if U.unreliable(_ang, _elong):
+        FLAGS.append(f"tilt estimated from a near-isotropic silhouette (elongation {_elong:.2f}); the principal-axis "
+                     "estimate is off by up to 4.7° at this tilt (EXP_0022) — shoot from directly above")
 
 h, w = mask.shape; ys, xs = np.nonzero(mask)
 if mask.mean() < 0.02: FAIL(f"garment covers only {mask.mean():.1%} of the frame")

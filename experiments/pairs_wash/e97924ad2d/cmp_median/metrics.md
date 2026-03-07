@@ -1,9 +1,9 @@
-registration residual (leave-one-landmark-out): 28.17 px; lighting matched on kept region
+registration residual (leave-one-landmark-out): 27.45 px; lighting matched on kept region
 
-| system | sil_iou_vs_real | sil_chamfer | hem_chamfer | ssim_keep_vs_real | dE_keep_vs_real | feat_ret_keep_vs_real | ssim_keep_vs_before | ssim_keep_vs_before_aligned | feat_ret_keep_vs_before_aligned | align_scale | ssim_edge_band_vs_real | dE_edge_band_vs_real | fringe_iou_vs_real | fringe_profile_dist |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| prediction | 0.9069 | 3.1077 | 2.4331 | 0.5608 | 10.2869 | 0.0000 | 0.8056 | 0.9130 | 0.5088 | 1.0116 | 0.5345 | 11.5613 | 0.0408 | 0.0054 |
-| null:no-op | 0.5436 | 21.1563 | 128.4724 | 0.5830 | 9.5454 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.4618 | 18.3776 | 0.0072 | 0.9938 |
-| null:crop-only | 0.8968 | 3.5492 | 1.2835 | 0.5830 | 9.5454 | 0.0000 | 1.0000 | 0.9999 | 0.7632 | 1.0002 | 0.5415 | 11.0030 | 0.0000 | 0.0062 |
+| system | sil_iou_vs_real | sil_chamfer | hem_chamfer | ssim_keep_vs_real | dE_keep_vs_real | feat_ret_keep_vs_real | ssim_keep_vs_before | ssim_keep_vs_before_aligned | feat_ret_keep_vs_before_aligned | align_scale | ssim_edge_band_vs_real | dE_edge_band_vs_real | hem_rough_p90_pred | hem_rough_p90_real | hem_rough_rel_pred | hem_rough_rel_real | hem_rough_frac_pred | hem_rough_frac_real | hem_rough_err_rel | hem_rough_err_px | hem_rough_refused | fringe_iou_vs_real | fringe_profile_dist |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| prediction | 0.9014 | 3.3059 | 2.4219 | 0.5668 | 10.4977 | 0.0000 | 0.8261 | 0.9442 | 0.6742 | 1.0168 | 0.5362 | 11.9512 | 1.0000 | 0.0000 | 0.0076 | 0.0000 | 0.1879 | 0.0625 | 0.0076 | 1.0000 | 0.0000 | 0.0392 | 0.0065 |
+| null:no-op | 0.5455 | 24.0093 | 127.6953 | 0.5983 | 9.6375 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.4749 | 18.5560 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0274 | 0.0625 | 0.0000 | 0.0000 | 0.0000 | 0.0080 | 0.9932 |
+| null:crop-only | 0.8958 | 3.5616 | 1.4531 | 0.5983 | 9.6375 | 0.0000 | 1.0000 | 0.9999 | 0.7640 | 1.0002 | 0.5546 | 11.2482 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0529 | 0.0625 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0068 |
 
 (hem_chamfer in px)

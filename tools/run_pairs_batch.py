@@ -36,6 +36,7 @@ for line in (ROOT / "data/external/pairs_validation.jsonl").read_text().splitlin
     cmd = [sys.executable, str(ROOT / "tools/run_pair.py"), "--before", before_p, "--after", after_p, "--out", str(od), "--state", kind] + (["--cropped", cropped] if cropped else []) + (["--mm-per-px", str(mmpp)] if mmpp else []) + (["--coin", coin] if coin else [])
     if os.environ.get("PAIRS_REFINE"): cmd += ["--refine-landmarks"]
     if os.environ.get("PAIRS_SEG"): cmd += ["--seg", os.environ["PAIRS_SEG"]]
+    if os.environ.get("PAIRS_UPRIGHT"): cmd += ["--upright-deadband", os.environ["PAIRS_UPRIGHT"]]
     if os.environ.get("PAIRS_WASH"): cmd += ["--wash", os.environ["PAIRS_WASH"]]
     _hf = (rec or {}).get("hem_finish")
     if _hf in ("raw", "cuffed", "hemmed", "serged"): cmd += ["--edge-treatment", _hf]   # a cuffed hem must not be frayed
