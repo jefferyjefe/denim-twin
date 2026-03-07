@@ -1,9 +1,9 @@
-registration residual (leave-one-landmark-out): 42.31 px; lighting matched on kept region
+registration residual (leave-one-landmark-out): 58.27 px; lighting matched on kept region
 
-| system | sil_iou_vs_real | sil_chamfer | hem_chamfer | ssim_keep_vs_real | dE_keep_vs_real | feat_ret_keep_vs_real | ssim_keep_vs_before | ssim_keep_vs_before_aligned | feat_ret_keep_vs_before_aligned | align_scale | ssim_edge_band_vs_real | dE_edge_band_vs_real | hem_rough_p90_pred | hem_rough_p90_real | hem_rough_rel_pred | hem_rough_rel_real | hem_rough_frac_pred | hem_rough_frac_real | hem_rough_err_rel | hem_rough_err_px | hem_rough_refused | fringe_iou_vs_real | fringe_profile_dist |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| prediction | 0.7544 | 19.4887 | 23.3486 | 0.2373 | 13.1488 | 0.0000 | 0.5796 | 0.9600 | 0.7594 | 1.0152 | 0.2175 | 23.2215 | 1.0000 | 2.0000 | 0.0027 | 0.0054 | 0.3164 | 0.3588 | 0.0027 | 1.0000 | 0.0000 | 0.0050 | 0.0311 |
-| null:no-op | 0.2904 | 133.5943 | 525.4324 | 0.2390 | 12.4573 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.2413 | 19.4048 | 0.0000 | 2.0000 | 0.0000 | 0.0054 | 0.0776 | 0.3588 | 0.0054 | 2.0000 | 0.0000 | 0.0393 | 0.9687 |
-| null:crop-only | 0.7541 | 19.8143 | 21.6730 | 0.2390 | 12.4573 | 0.0000 | 1.0000 | 1.0000 | 0.8549 | 1.0000 | 0.2217 | 22.6532 | 0.0000 | 2.0000 | 0.0000 | 0.0054 | 0.0393 | 0.3588 | 0.0054 | 2.0000 | 0.0000 | 0.0000 | 0.0313 |
+| system | sil_iou_vs_real | sil_chamfer | hem_chamfer | ssim_keep_vs_real | dE_keep_vs_real | feat_ret_keep_vs_real | ssim_keep_vs_before | ssim_keep_vs_before_aligned | feat_ret_keep_vs_before_aligned | align_scale | ssim_edge_band_vs_real | dE_edge_band_vs_real | hem_rough_p90_pred | hem_rough_p90_real | hem_rough_rel_pred | hem_rough_rel_real | hem_rough_frac_pred | hem_rough_frac_real | hem_rough_real_is_resampled | hem_rough_valid_for_fray | hem_rough_err_rel | hem_rough_err_px | hem_rough_refused | fringe_iou_vs_real | fringe_profile_dist |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| prediction | 0.8064 | 15.2876 | 6.8552 | 0.2511 | 12.9729 | 0.0000 | 0.5631 | 0.9603 | 0.7669 | 1.0152 | 0.2160 | 19.9993 | 1.0000 | 2.0000 | 0.0027 | 0.0054 | 0.2919 | 0.4572 | 1.0000 | 0.0000 | 0.0027 | 1.0000 | 0.0000 | 0.0086 | 0.0073 |
+| null:no-op | 0.2994 | 131.2822 | 525.1393 | 0.2446 | 12.3769 | 0.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.2393 | 21.5262 | 0.0000 | 2.0000 | 0.0000 | 0.0054 | 0.0776 | 0.4572 | 1.0000 | 0.0000 | 0.0054 | 2.0000 | 0.0000 | 0.0084 | 0.9926 |
+| null:crop-only | 0.8050 | 15.6744 | 4.9262 | 0.2446 | 12.3769 | 0.0000 | 1.0000 | 1.0000 | 0.8523 | 1.0000 | 0.2173 | 19.6075 | 0.0000 | 2.0000 | 0.0000 | 0.0054 | 0.0550 | 0.4572 | 1.0000 | 0.0000 | 0.0054 | 2.0000 | 0.0000 | 0.0000 | 0.0074 |
 
 (hem_chamfer in px)

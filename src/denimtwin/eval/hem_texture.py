@@ -91,15 +91,26 @@ def hem_profile(garment_mask, hem_region=DEFAULTS["hem_region"], solid_px=0):
 
 def hem_roughness(garment_mask, waist_px=None, window_frac=DEFAULTS["window_frac"],
                   hem_region=DEFAULTS["hem_region"], min_columns=DEFAULTS["min_columns"],
-                  solid_frac=DEFAULTS["solid_frac"], max_compactness=DEFAULTS["max_compactness"]):
+                  solid_frac=DEFAULTS["solid_frac"], max_compactness=DEFAULTS["max_compactness"],
+                  resampled=False):
     """Roughness of the hem boundary. Returns p90/mean absolute residual in px (and relative to `waist_px`),
     plus the fraction of hem columns that deviate at all. Columns whose mask is not solid for `solid_frac` of the
-    waist width above the boundary are dropped (see `hem_profile`)."""
+    waist width above the boundary are dropped (see `hem_profile`).
+
+    `resampled` must be True when the mask has been rotated, warped or registered since it was segmented. It does not
+    change the arithmetic; it marks the result `valid_for_fray: False`, because on a resampled mask this statistic
+    measures the resampler (EXP_0024): rotating a finished-hem control by 8 degrees makes **12 of 12** of them read
+    as frayed, at a median p90/waist of 0.00194 — the same size as the entire quantity EXP_0017 compares, and five
+    times the margin between the systems it compares."""
     _w = waist_px if waist_px else 0.5 * np.asarray(garment_mask).shape[1]
     comp = mask_compactness(garment_mask)
     x, y = hem_profile(garment_mask, hem_region, solid_px=max(round(solid_frac * _w), 2))
     out = {"n_columns": int(len(y)), "ok": bool(len(y) >= min_columns), "compactness": comp,
-           "p90_px": 0.0, "mean_px": 0.0, "rough_fraction": 0.0}
+           "p90_px": 0.0, "mean_px": 0.0, "rough_fraction": 0.0,
+           "resampled": bool(resampled), "valid_for_fray": not bool(resampled)}
+    if resampled:
+        out["resampling_note"] = ("mask was rotated/warped since segmentation: a rotation alone makes a finished hem "
+                                  "read as frayed (EXP_0024), so this number is not evidence about fray")
     if max_compactness is not None and comp > max_compactness:
         out.update(ok=False, reason=f"mask outline too ragged to judge (compactness {comp:.2f} > {max_compactness})")
         return out

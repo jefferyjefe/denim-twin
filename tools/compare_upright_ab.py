@@ -49,7 +49,12 @@ def main():
            "honoured_exclude": not args.include_excluded,
            "n_a": len(A), "n_b": len(B), "n_both": len(both),
            "only_a": sorted(set(A) - set(B)), "only_b": sorted(set(B) - set(A)),
+           # "rotated in B only" = B applied a correction where A applied none at all. Pairs where BOTH arms rotate
+           # but by different angles are counted separately, because they are a different kind of change.
            "pairs_rotated_in_b_only": [p for p in both if B[p]["rotations"] and not A[p]["rotations"]],
+           "n_pairs_rotated_in_b_only": len([p for p in both if B[p]["rotations"] and not A[p]["rotations"]]),
+           "pairs_rotated_differently": [p for p in both if A[p]["rotations"] and B[p]["rotations"]
+                                         and A[p]["rotations"] != B[p]["rotations"]],
            "per_pair": {}, "means": {}, "sign_test": {}}
     for p in both:
         res["per_pair"][p] = {m: [A[p]["metrics"]["prediction"].get(m), B[p]["metrics"]["prediction"].get(m)]

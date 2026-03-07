@@ -18,10 +18,10 @@
    "waist_px": 241,
    "depth_px": 0.0,
    "depth_rel": 0.0,
-   "depth_px_measured": 0.0,
-   "depth_rel_measured": 0.0,
+   "depth_px_measured": 0.5,
+   "depth_rel_measured": 0.002074688796680498,
    "rule_applied": "finished hem -> 0 by rule",
-   "angle_l": 9.1,
+   "angle_l": 12.6,
    "angle_r": -9.5
   },
   {
@@ -44,37 +44,37 @@
    "waist_px": 337,
    "depth_px": 0.0,
    "depth_rel": 0.0,
-   "depth_px_measured": 1.887955182072829,
-   "depth_rel_measured": 0.0056022408963585435,
+   "depth_px_measured": 4.654696132596685,
+   "depth_rel_measured": 0.013812154696132596,
    "rule_applied": "finished hem -> 0 by rule",
-   "angle_l": 9.8,
-   "angle_r": -9.9
+   "angle_l": 25.4,
+   "angle_r": -8.6
   },
   {
    "pair": "4bfef03bd7",
    "kind": "after_wash",
    "hem_finish": "frayed",
    "waist_px": 372,
-   "depth_px": 2.2275449101796405,
-   "depth_rel": 0.005988023952095808,
-   "depth_px_measured": 2.2275449101796405,
-   "depth_rel_measured": 0.005988023952095808,
+   "depth_px": 2.505050505050505,
+   "depth_rel": 0.006734006734006735,
+   "depth_px_measured": 2.505050505050505,
+   "depth_rel_measured": 0.006734006734006735,
    "rule_applied": null,
-   "angle_l": -2.3,
-   "angle_r": 4.1
+   "angle_l": -10.3,
+   "angle_r": 1.9
   },
   {
    "pair": "8d9f0df4ad",
    "kind": "after_cut",
    "hem_finish": "cuffed",
-   "waist_px": 587,
+   "waist_px": 585,
    "depth_px": 0.0,
    "depth_rel": 0.0,
-   "depth_px_measured": 2.5689277899343543,
-   "depth_rel_measured": 0.00437636761487965,
+   "depth_px_measured": 3.193231441048035,
+   "depth_rel_measured": 0.0054585152838427945,
    "rule_applied": "finished hem -> 0 by rule",
-   "angle_l": 14.1,
-   "angle_r": -14.8
+   "angle_l": 21.4,
+   "angle_r": -14.4
   },
   {
    "pair": "e97924ad2d",
@@ -83,18 +83,18 @@
    "waist_px": 132,
    "depth_px": 1.32,
    "depth_rel": 0.01,
-   "depth_px_measured": 2.0359897172236505,
-   "depth_rel_measured": 0.015424164524421595,
+   "depth_px_measured": 2.0307692307692307,
+   "depth_rel_measured": 0.015384615384615384,
    "rule_applied": "unwashed raw cut -> capped at 0.01*waist (1.3px) by rule",
-   "angle_l": 24.0,
-   "angle_r": -21.3
+   "angle_l": 25.1,
+   "angle_r": -19.0
   }
  ],
- "depth_rel_mean": 0.0026646706586826345,
- "depth_rel_sd": 0.003942368419605323,
- "depth_px_mean": 0.5912574850299401,
- "depth_px_sd": 0.8762461455211129,
- "depth_rel_mean_after_wash": 0.005988023952095808,
+ "depth_rel_mean": 0.0027890011223344557,
+ "depth_rel_sd": 0.004055360303173873,
+ "depth_px_mean": 0.6375084175084176,
+ "depth_px_sd": 0.9642938814221584,
+ "depth_rel_mean_after_wash": 0.006734006734006735,
  "n_after_wash": 1,
  "depth_rel_mean_after_cut": 0.002,
  "n_after_cut": 5,
@@ -110,6 +110,6 @@
    }
   ]
  },
- "depth_rel_mean_after_wash_combined": 0.007570671014949506,
+ "depth_rel_mean_after_wash_combined": 0.00794366240590497,
  "n_after_wash_combined": 2
 }

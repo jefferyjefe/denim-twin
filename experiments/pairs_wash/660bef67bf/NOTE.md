@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-degenerate cut: removed fraction 0.00
+after: widest top row is not a single waistband run (legs-only crop?)

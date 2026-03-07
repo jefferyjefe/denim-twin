@@ -14,7 +14,8 @@ import json, glob, os
 import pytest
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
-BASE, WASH = os.path.join(ROOT, "experiments/pairs"), os.path.join(ROOT, "experiments/pairs_wash")
+BASE_DIR, WASH_DIR = "experiments/pairs", "experiments/pairs_wash"
+BASE, WASH = os.path.join(ROOT, BASE_DIR), os.path.join(ROOT, WASH_DIR)
 pytestmark = pytest.mark.skipif(not (os.path.isdir(BASE) and os.path.isdir(WASH)),
                                 reason="needs the EXP_0013 batch artefacts")
 
@@ -32,6 +33,21 @@ def test_null_baselines_are_unchanged_by_the_wash_switch():
       4c30342e20 0.2852 vs 0.2793 (+0.0059), e97924ad2d 0.5602 vs 0.5436 (+0.0166),
       f9c0e56308 0.4450 vs 0.4358 (+0.0092), 8d9f0df4ad 0.4285 vs 0.4207 (+0.0078)
     i.e. drift of the same size as the prediction deltas EXP_0013 Part B calls 'unchanged'."""
+    # Two batches are only comparable if the same code produced them (tools/run_pairs_batch.py writes
+    # provenance.json). Without this the test fails on ITS finding whenever one batch was regenerated and the other
+    # was not, which is a different problem wearing this test's clothes.
+    import json as _json, os as _os
+    _p = lambda d: _json.load(open(_os.path.join(ROOT, d, "provenance.json"))) if _os.path.exists(_os.path.join(ROOT, d, "provenance.json")) else None
+    _a, _b = _p(BASE_DIR), _p(WASH_DIR)
+    import pytest
+    if not (_a and _b):
+        pytest.skip(f"one of {BASE_DIR} / {WASH_DIR} predates provenance.json, so there is no way to tell whether the "
+                    "same code produced both; re-run both with tools/run_pairs_batch.py")
+    _k = lambda d: (d.get("commit"), sorted(d.get("dirty_paths", [])),
+                    {k: v for k, v in d.get("knobs", {}).items() if k != "PAIRS_WASH"})
+    if _k(_a) != _k(_b):
+        pytest.skip(f"the two batches were produced by different code ({BASE_DIR} vs {WASH_DIR}); "
+                    "re-run both with tools/run_pairs_batch.py before comparing them")
     w, n = _rows(WASH), _rows(BASE)
     common = sorted(set(w) & set(n))
     if len(common) < 5:

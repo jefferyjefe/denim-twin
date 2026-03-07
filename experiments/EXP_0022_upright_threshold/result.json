@@ -25,6 +25,8 @@
   "4bfef03bd7",
   "e97924ad2d"
  ],
+ "n_pairs_rotated_in_b_only": 3,
+ "pairs_rotated_differently": [],
  "per_pair": {
   "2691c1a8d0": {
    "sil_iou_vs_real": [

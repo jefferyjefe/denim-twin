@@ -93,3 +93,25 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `fit_fringe.py` now takes `--out-dir`, the test uses a temporary one, and
   `tests/test_tools_do_not_touch_tracked_data.py` fails if a tool given an explicit destination touches the tracked
   prior anyway. The committed prior has since been regenerated deliberately from the re-run pairs.
+- 2026-08-29: EXP_0023 — EXP_0022's fix did not fire on this project's own subject. Re-measuring EXP_0021's numbers
+  with uprighting on showed 8 of 16 photographs unchanged, because `tilt_angle` read the silhouette's **long** axis,
+  and a pair of shorts laid flat is **wider than tall** (9 of 16 photographs have height/width 0.60–0.85), so the
+  long axis runs sideways and the estimate came back at ~±88° — outside the correctable range, so uprighting silently
+  did nothing. Reading the near-vertical axis instead: the tilt term disappears from the repeatability suite (rise/waist
+  deviation at 8° of tilt **29.6% → 0.5%**; every geometric perturbation now ≤1.5%), and 11 of 16 masks never lose 5%
+  at any tilt up to 20°. On the pairs: silhouette IoU 0.8365 → **0.8566**, hem error 13.31 → **7.85 px**, fringe IoU
+  0.0746 → 0.1004 (4/2/1, p = 0.688) — with **one pair regressing past the bench tolerance** (443d1d4658, IoU −0.052,
+  hem +19.6 px), recorded and left visible rather than tuned away. Its cause is named: before and after are uprighted
+  independently and end up 8.4° apart. The fix is for `run_pair` to put the after photo in the before's frame using
+  the registration it already computes — the next experiment.
+- 2026-08-29: EXP_0024 — **hem roughness measures the resampler.** It counts pixel-scale deviations of the hem
+  boundary; a mask rotated by anything but a multiple of 90° has a boundary that steps by a pixel. Rotate the twelve
+  reference masks that read p90 = 0 and nothing else: at 3° **7 of 12** read frayed, at 8° **12 of 12**, median false
+  p90/waist **0.00194**. EXP_0017's headline is 0.00194 for the prediction against 0.00231 for the crop-only null —
+  the artefact is the size of the whole quantity and **five times the margin**, and it has a direction: `compare.py`
+  warps the real mask into the prediction's frame and synthesises the prediction there, so the real hem is measured
+  as rougher than it is and a system that renders *some* roughness scores closer. That is EXP_0017's exact comparison.
+  It does not prove the ordering wrong; it means the experiment cannot distinguish its result from its resampler.
+  `hem_roughness` now takes `resampled=` and marks such results `valid_for_fray: false`; every pair `metrics.json`
+  carries the flag. **EXP_0016's control result is unaffected** — those masks were measured in the frame they were
+  segmented in, which is why they read zero.

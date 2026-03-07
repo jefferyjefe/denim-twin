@@ -1,3 +1,3 @@
 # PAIR — rejected
 
-degenerate cut: removed fraction 0.87
+degenerate cut: removed fraction 0.86

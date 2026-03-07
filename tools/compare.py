@@ -62,7 +62,11 @@ for name, (im, sil) in systems.items():
     # has a perfectly smooth hem, so this is where a fringe renderer must show up if it is doing anything real.
     from denimtwin.eval.hem_texture import hem_roughness
     _ww = abs(lmb["waist_right"][0] - lmb["waist_left"][0]) if all(k in lmb for k in ("waist_left", "waist_right")) else None
-    _hp = hem_roughness(sil, waist_px=_ww); _hr = hem_roughness(rmask, waist_px=_ww)
+    # `rmask` is the real after-mask WARPED into the before frame (compare.py:28), so its hem boundary has been
+    # resampled and its roughness includes the resampler's staircase — EXP_0024: a rotation alone makes 12 of 12
+    # finished-hem controls read as frayed. `sil` is synthesised in this frame and carries no such artefact, so the
+    # comparison is biased toward whichever system renders SOME roughness. Marked, not silently dropped.
+    _hp = hem_roughness(sil, waist_px=_ww); _hr = hem_roughness(rmask, waist_px=_ww, resampled=True)
     # a refused measurement (broken mask) is UNKNOWN, not zero: reporting 0.0 would read as "this hem is smooth"
     # Compare roughness RELATIVE to waist width: the same fray photographed twice as large doubles the pixel value,
     # so a pixel-space error ranks photo size (review 6, finding on scale). `rough_fraction` accompanies it because a
@@ -73,6 +77,8 @@ for name, (im, sil) in systems.items():
     r["hem_rough_rel_real"] = _hr.get("p90_rel", float("nan")) if _hr["ok"] else float("nan")
     r["hem_rough_frac_pred"] = _hp["rough_fraction"] if _hp["ok"] else float("nan")
     r["hem_rough_frac_real"] = _hr["rough_fraction"] if _hr["ok"] else float("nan")
+    r["hem_rough_real_is_resampled"] = True          # see above; the real mask is registered into the before frame
+    r["hem_rough_valid_for_fray"] = False
     r["hem_rough_err_rel"] = abs(r["hem_rough_rel_pred"] - r["hem_rough_rel_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_err_px"] = abs(r["hem_rough_p90_pred"] - r["hem_rough_p90_real"]) if (_hp["ok"] and _hr["ok"]) else float("nan")
     r["hem_rough_refused"] = (not _hp["ok"]) or (not _hr["ok"])

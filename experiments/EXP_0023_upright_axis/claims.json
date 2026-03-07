@@ -1,0 +1,36 @@
+[
+ {
+  "claim": "pairs in the axis A/B after exclude.txt",
+  "note_regex": "`compare_upright_ab\\.py`, (\\d+) pairs after `exclude\\.txt`",
+  "source": "experiments/EXP_0023_upright_axis/result.json",
+  "path": "n_both"
+ },
+ {
+  "claim": "silhouette IoU, long-axis arm",
+  "note_regex": "\\| silhouette IoU \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0023_upright_axis/result.json",
+  "path": "means.sil_iou_vs_real.a",
+  "tol": 0.0001
+ },
+ {
+  "claim": "silhouette IoU, near-vertical-axis arm",
+  "note_regex": "\\| silhouette IoU \\| [0-9.]+ \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0023_upright_axis/result.json",
+  "path": "means.sil_iou_vs_real.b",
+  "tol": 0.0001
+ },
+ {
+  "claim": "hem chamfer, near-vertical-axis arm",
+  "note_regex": "\\| hem chamfer \\(px\\) \\| [0-9.]+ \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0023_upright_axis/result.json",
+  "path": "means.hem_chamfer.b",
+  "tol": 0.005
+ },
+ {
+  "claim": "pairs rotated only in the candidate arm",
+  "note_regex": "Three pairs gain a lot",
+  "claimed": "3",
+  "source": "experiments/EXP_0023_upright_axis/result.json",
+  "path": "n_pairs_rotated_in_b_only"
+ }
+]

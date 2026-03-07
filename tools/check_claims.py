@@ -39,7 +39,14 @@ def check_one(exp_dir, c):
         if not note.exists(): return "UNVERIFIABLE", "no NOTE.md", None, None
         m = re.search(c["note_regex"], note.read_text())
         if not m: return "FAIL", "the NOTE no longer states this claim in the expected form", None, None
-        claimed = m.group(1)
+        if not m.groups():
+            # A regex with no capture group can only confirm the sentence is still there; the number then has to come
+            # from `claimed`. Without this the tool raised IndexError and reported nothing at all.
+            if "claimed" not in c:
+                return "UNVERIFIABLE", "note_regex has no capture group and the claim carries no 'claimed' value", None, None
+            claimed = str(c["claimed"])
+        else:
+            claimed = m.group(1)
     else:
         claimed = str(c.get("claimed"))
     src = ROOT / c["source"]

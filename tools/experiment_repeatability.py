@@ -35,6 +35,7 @@ from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse
 from denimtwin.seg.validate import segment_garment_consensus
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.eval.hem_texture import hem_roughness, mask_compactness
+from denimtwin.canon import upright as U
 
 ROOT = Path(__file__).resolve().parents[1]
 UNPAIRED = ROOT / "data/external/unpaired_images"
@@ -106,10 +107,17 @@ def warp_mask_forward(mask, M, shape):
                           borderMode=cv2.BORDER_CONSTANT, borderValue=0) > 0
 
 # ---------------------------------------------------------------- measurement
-def measure(mask):
+def measure(mask, image_bgr=None, upright=False):
     """Scale-free shape statistics from a garment mask. Ratios only: a re-capture from a different distance must not
-    change them, and a px measurement would."""
+    change them, and a px measurement would.
+
+    `upright=True` applies `canon/upright.py` first, which is what `run_pair`/`predict` now do on every photograph
+    (EXP_0022). The first run of this experiment measured the raw mask and found the ratios swinging 30% at 8 degrees
+    of tilt; this is how that number is re-measured after the fix."""
     m = np.asarray(mask, bool)
+    if upright:
+        _img = image_bgr if image_bgr is not None else np.zeros((*m.shape, 3), np.uint8)
+        _, m, _ang = U.upright(_img, m, deadband=0.0)
     out = {"area_frac": float(m.mean())}
     if not m.any(): return out
     lm, conf = landmarks_from_mask(m)
@@ -167,6 +175,9 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--methods", default="best,consensus")
     ap.add_argument("--glob", default=None, help="extra images to include")
+    ap.add_argument("--upright", action="store_true",
+                    help="apply canon/upright.py before measuring, as run_pair and predict now do (EXP_0022). "
+                         "Without it this measures the raw mask, which is what the first run of EXP_0021 did.")
     a = ap.parse_args()
     outdir = ROOT / a.out; outdir.mkdir(parents=True, exist_ok=True)
     methods = [m for m in a.methods.split(",") if m in METHODS]
@@ -190,7 +201,7 @@ def main():
                          "verdict": (verdicts.get(s["id"], {}) or {}).get("verdict"),
                          "px": [int(img.shape[1]), int(img.shape[0])],
                          **{f"info_{k}": v for k, v in ri.items()},
-                         **({f"m_{k}": v for k, v in measure(rm).items()} if rm is not None else {})})
+                         **({f"m_{k}": v for k, v in measure(rm, img, a.upright).items()} if rm is not None else {})})
         if len(methods) == 2 and all(ref_masks.get(m) is not None for m in methods):
             x = iou(ref_masks[methods[0]], ref_masks[methods[1]])
             for r in refs[-2:]: r["iou_between_methods"] = x
@@ -206,7 +217,7 @@ def main():
                 if mask is not None and ref_mask is not None:
                     ref_in_p = warp_mask_forward(ref_mask, M, pimg.shape[:2])
                     row["iou_vs_ref"] = iou(mask, ref_in_p, valid)
-                    row.update({f"m_{k}": v for k, v in measure(mask).items()})
+                    row.update({f"m_{k}": v for k, v in measure(mask, pimg, a.upright).items()})
                 rows.append(row)
                 print(f"    {meth:9s} {name:12s} iou={row.get('iou_vs_ref', float('nan')):.3f}", flush=True)
     (outdir / "rows.json").write_text(json.dumps(rows, indent=1))
