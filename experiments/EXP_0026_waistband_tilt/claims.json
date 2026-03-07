@@ -1,0 +1,14 @@
+[
+ {"claim": "silhouette IoU, principal axis arm",
+  "note_regex": "\\| silhouette IoU \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0026_waistband_tilt/result.json", "path": "means.sil_iou_vs_real.a", "tol": 0.0001},
+ {"claim": "silhouette IoU, waistband-first arm",
+  "note_regex": "\\| silhouette IoU \\| \\*\\*[0-9.]+\\*\\* \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0026_waistband_tilt/result.json", "path": "means.sil_iou_vs_real.b", "tol": 0.0001},
+ {"claim": "hem chamfer, waistband-first arm",
+  "note_regex": "\\| hem chamfer \\(px\\) \\| \\*\\*[0-9.]+\\*\\* \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0026_waistband_tilt/result.json", "path": "means.hem_chamfer.b", "tol": 0.005},
+ {"claim": "pairs where the waistband arm is worse on silhouette IoU",
+  "note_regex": "\\| silhouette IoU \\| \\*\\*[0-9.]+\\*\\* \\| [0-9.]+ \\| \\d+ / (\\d+) / \\d+ \\|",
+  "source": "experiments/EXP_0026_waistband_tilt/result.json", "path": "sign_test.sil_iou_vs_real.b_worse"}
+]

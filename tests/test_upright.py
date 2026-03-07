@@ -140,3 +140,32 @@ def test_the_tilt_estimate_cannot_exceed_forty_five_degrees_by_construction():
     for d in (0, 10, 30, 44, 50, 70):
         ang, _ = tilt_angle(rotate(m, d))
         assert abs(ang) <= 45.001, f"{ang} at {d}°"
+
+
+def test_the_waistband_estimator_is_deterministic():
+    """RANSAC with an unseeded generator would give a different answer to the same photograph on every run, which is
+    the opposite of what a repeatability fix is for."""
+    from denimtwin.canon.upright import waistband_angle
+    m = wide_shorts()
+    a = [waistband_angle(m) for _ in range(4)]
+    assert len({(None if x[0] is None else round(x[0], 9), round(x[1], 9)) for x in a}) == 1, a
+
+
+def test_the_waistband_estimator_declines_rather_than_guessing():
+    """It answers about 60% of the time on real masks and must return None — not a number — for the rest, so the
+    caller can fall back rather than act on a line that explains nothing."""
+    from denimtwin.canon.upright import waistband_angle
+    noise = np.zeros((400, 400), bool)
+    rng = np.random.default_rng(0)
+    for x in range(60, 340):                       # a top edge that is not a line at all
+        noise[rng.integers(50, 300):380, x] = True
+    ang, frac = waistband_angle(noise)
+    assert ang is None, f"fitted a waistband to noise: {ang:.1f}° at inlier fraction {frac:.2f}"
+
+
+def test_the_hybrid_says_which_estimator_answered():
+    from denimtwin.canon.upright import tilt_estimate
+    for m in (silhouette(kind="jeans"), wide_shorts()):
+        ang, elong, src = tilt_estimate(m)
+        assert src in ("waistband", "principal_axis")
+        assert abs(ang) <= 45.001 and elong >= 1.0

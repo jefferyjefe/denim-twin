@@ -26,12 +26,65 @@ ISOTROPIC_ELONGATION = 1.2      # below this the principal axis is degenerate (E
 UNRELIABLE_TILT_DEG = 5.0       # ... and above this tilt its error grows past a degree
 
 
+def _wrap(d):
+    """Angles are defined modulo 180 degrees: a garment rotated by 180 is still a garment, and a principal axis has
+    no sign. Wrap into (-90, 90] or a 1-degree miss reads as 179."""
+    return (float(d) + 90.0) % 180.0 - 90.0
+
+
 def _axis_angle(v):
     a = np.degrees(np.arctan2(v[0], v[1]))
     return float((a + 90) % 180 - 90)
 
 
-def tilt_angle(mask):
+def waistband_angle(mask, min_inliers=0.45, min_span=0.45, tol_frac=0.01, iters=400, seed=0):
+    """Tilt from the WAISTBAND edge, by RANSAC on the mask's top-edge points.
+
+    The waistband is the one part of a flat-laid garment that is straight by construction: a stiff band with a sewn
+    edge, spanning most of the garment's width. The legs are not — they splay, and asymmetric splay is exactly what
+    biases the principal axis (EXP_0023: on 443d1d4658 the right leg hangs lower and the axis reads 4.8 degrees on a
+    garment whose waistband is level).
+
+    Returns (angle_deg, inlier_fraction), or (None, 0.0) when no line explains enough of the top edge — which is the
+    correct answer for a garment photographed folded, or a mask with a hole in the waistband.
+    """
+    m = np.asarray(mask, bool)
+    cols = np.nonzero(m.any(axis=0))[0]
+    if len(cols) < 40: return None, 0.0
+    xs = cols.astype(float)
+    ys = np.array([np.nonzero(m[:, int(x)])[0].min() for x in cols], float)
+    rows = np.nonzero(m.any(axis=1))[0]
+    H = float(np.ptp(rows) + 1); W = float(np.ptp(cols) + 1)
+    tol = max(tol_frac * H, 2.0)
+    rng = np.random.default_rng(seed)
+    best = (0, None)
+    n = len(xs)
+    for _ in range(iters):
+        i, j = rng.integers(0, n, 2)
+        if xs[j] == xs[i]: continue
+        slope = (ys[j] - ys[i]) / (xs[j] - xs[i])
+        if abs(slope) > 1.0: continue                       # a waistband is not steeper than 45 degrees
+        inter = ys[i] - slope * xs[i]
+        d = np.abs(ys - (slope * xs + inter))
+        k = int((d <= tol).sum())
+        if k > best[0]: best = (k, (slope, inter))
+    if best[1] is None: return None, 0.0
+    slope, inter = best[1]
+    inl = np.abs(ys - (slope * xs + inter)) <= tol
+    if inl.sum() < 3: return None, 0.0
+    # least squares on the inliers, then one re-fit
+    for _ in range(2):
+        A = np.stack([xs[inl], np.ones(int(inl.sum()))], 1)
+        sol, *_ = np.linalg.lstsq(A, ys[inl], rcond=None)
+        inl = np.abs(ys - (sol[0] * xs + sol[1])) <= tol
+        if inl.sum() < 3: return None, 0.0
+    span = (xs[inl].max() - xs[inl].min()) / W
+    frac = float(inl.mean())
+    if frac < min_inliers or span < min_span: return None, frac
+    # negated so the convention matches `tilt_angle`: the angle the GARMENT is tilted by, not the slope of its edge
+    return _wrap(-np.degrees(np.arctan(sol[0]))), frac
+
+def principal_axis_angle(mask):
     """(angle_deg, elongation) — the tilt of the garment, as the deviation from vertical of whichever principal axis
     is closer to vertical.
 
@@ -53,6 +106,34 @@ def tilt_angle(mask):
     angs = [_axis_angle(v_[:, i]) for i in (0, 1)]
     ang = min(angs, key=abs)
     return float(ang), float(np.sqrt(w_.max() / max(w_.min(), 1e-6)))
+
+
+def tilt_estimate(mask, prefer_waistband=False):
+    """(angle_deg, elongation, source). `prefer_waistband` takes the waistband-edge fit when it answers.
+
+    **It is off by default, and EXP_0026 is why.** Measured against known rotations of 16 real masks the waistband
+    estimator looks much better than the principal axis — p90 error 0.22° against 1.64°, never missing by a degree,
+    though it declines on 38% of cases — and on the one case with independent ground truth (443d1d4658, whose
+    cutting-mat grid shows the garment is square) it says -1.9° where the principal axis says +4.8°. Wired into the
+    pipeline it is worse: silhouette IoU 0.858 -> 0.831 and hem error 8.5 -> 23.3 px over the usable pairs, 1 better
+    and 4 worse. It fixes 443d1d4658 (IoU 0.857 -> 0.922) and breaks 2691c1a8d0 (0.736 -> 0.558, hem 11.5 -> 86.6 px)
+    by rotating a before-photo the principal axis had declined to touch.
+
+    Being more precise when it answers is not the same as answering about the waistband: on some photographs the
+    straight line it finds across the top of the mask is a fold, a belt, or a shadow. Keeping it available and off is
+    the honest state — the measurement is real, the improvement is not."""
+    a, elong = principal_axis_angle(mask)
+    if prefer_waistband:
+        w, frac = waistband_angle(mask)
+        if w is not None:
+            return float(w), elong, "waistband"
+    return float(a), elong, "principal_axis"
+
+
+def tilt_angle(mask, prefer_waistband=False):
+    """(angle_deg, elongation). See `tilt_estimate` for which estimator answered and why the waistband one is off."""
+    a, e, _ = tilt_estimate(mask, prefer_waistband)
+    return a, e
 
 
 def max_correctable_tilt(elongation):

@@ -125,3 +125,13 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   less texture, and a clean cut renders none. Both the original ordering and its reversal are that artefact seen from
   two sides. `hem_rough_*` is a diagnostic until an after-photo with ≥600 px of waistband exists — which is what
   `CONTRIBUTING_PAIRS.md` and the issue form already ask for.
+- 2026-08-29: EXP_0026 — a better tilt estimator that makes the pipeline worse, and is therefore not adopted. Fitting
+  a line to the waistband edge by RANSAC beats the principal axis on every measurement of the estimator itself
+  (p90 error **0.22° against 1.64°**, never missing by a degree, though it declines on 38% of masks) and gets the one
+  case with independent ground truth right (−1.9° against +4.8° on 443d1d4658, whose cutting-mat grid shows the
+  garment is square). Wired into `run_pair` it loses: silhouette IoU 0.858 → 0.831, hem error 8.5 → 23.3 px, 1 better
+  and 4 worse. It fixes 443d1d4658 (0.857 → **0.922**, better than before EXP_0023 touched it) and breaks 2691c1a8d0
+  (0.736 → 0.558, hem 11.5 → 86.6 px) by rotating a before-photo the principal axis had declined to touch. Being more
+  precise when it answers is not the same as answering about the waistband — sometimes the straight line across the
+  top of a mask is a fold, a belt or a shadow. `tilt_estimate(prefer_waistband=True)` is kept, tested and **off**.
+  The 443d1d4658 bench regression stands; what this rules out is the cheap fix.
