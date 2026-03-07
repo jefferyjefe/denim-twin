@@ -115,3 +115,13 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `hem_roughness` now takes `resampled=` and marks such results `valid_for_fray: false`; every pair `metrics.json`
   carries the flag. **EXP_0016's control result is unaffected** — those masks were measured in the frame they were
   segmented in, which is why they read zero.
+- 2026-08-29: EXP_0025 — **EXP_0017 retracted in full, for the second time and for a better reason.** Roughness is
+  scale-free, so the two sides never needed a shared frame; `run_pair` now keeps the after mask as segmented and
+  `compare.py` measures the real hem on it. The registration warp had been inflating the real garment's roughness
+  **six-fold** (mean 0.00043 native against 0.00260 warped, rougher on 5 of 7 pairs). Scored natively the ordering
+  reverses — prediction 0.00376 against the crop-only null's 0.00240, 1-3-3, p = 0.625 — but that is not the finding.
+  The finding is that **6 of the 7 real frayed hems measure exactly zero** at 241–389 px of waistband, below the
+  600–1000 px EXP_0016 established this statistic needs. A comparison against a floor measures which system renders
+  less texture, and a clean cut renders none. Both the original ordering and its reversal are that artefact seen from
+  two sides. `hem_rough_*` is a diagnostic until an after-photo with ≥600 px of waistband exists — which is what
+  `CONTRIBUTING_PAIRS.md` and the issue form already ask for.

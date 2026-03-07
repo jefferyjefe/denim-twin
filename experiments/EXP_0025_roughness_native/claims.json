@@ -1,0 +1,43 @@
+[
+ {
+  "claim": "pairs whose real hem measures exactly zero natively",
+  "note_regex": "on \\*\\*(\\d+) of 7 pairs the real frayed hem measures exactly zero\\*\\*",
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "real_hem_reads_zero_natively"
+ },
+ {
+  "claim": "mean real roughness, native",
+  "note_regex": "mean ([0-9.]+) native against",
+  "claimed": null,
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "warp_inflation.mean_real_native",
+  "tol": 1e-05
+ },
+ {
+  "claim": "mean real roughness, warped",
+  "note_regex": "native against ([0-9.]+) warped",
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "warp_inflation.mean_real_warped",
+  "tol": 1e-05
+ },
+ {
+  "claim": "pairs the warp makes rougher",
+  "note_regex": "rougher on (\\d+) of the 7 pairs",
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "warp_inflation.pairs_where_warped_reads_rougher"
+ },
+ {
+  "claim": "native comparison: prediction mean error",
+  "note_regex": "\\| \\*\\*the native mask\\*\\* \\| ([0-9.]+) \\|",
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "native.mean_err_prediction",
+  "tol": 1e-05
+ },
+ {
+  "claim": "native comparison: crop-only mean error",
+  "note_regex": "\\| \\*\\*the native mask\\*\\* \\| [0-9.]+ \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "experiments/EXP_0025_roughness_native/result.json",
+  "path": "native.mean_err_crop_only",
+  "tol": 1e-05
+ }
+]
