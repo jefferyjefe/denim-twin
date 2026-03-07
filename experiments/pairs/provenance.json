@@ -1,8 +1,7 @@
 {
- "commit": "8b410809c58d2707b2ace964df56740112f4ba4b",
+ "commit": "b6afd65f6faabccdf167e57db773a79c7d9008fd",
  "dirty_paths": [
-  "src/denimtwin/canon/upright.py",
-  "tools/experiment_upright.py"
+  "tools/weekly_scribe.py"
  ],
  "knobs": {},
  "n_pairs": 21
