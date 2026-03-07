@@ -169,3 +169,28 @@ def test_the_hybrid_says_which_estimator_answered():
         ang, elong, src = tilt_estimate(m)
         assert src in ("waistband", "principal_axis")
         assert abs(ang) <= 45.001 and elong >= 1.0
+
+
+def test_uprighting_a_mask_twice_changes_nothing():
+    """The invariant: a photograph that has already been corrected must be left alone. It holds for the mask path."""
+    for kind in ("jeans", "shorts"):
+        base = silhouette(kind=kind)
+        for tilt in (-20, -7, 0, 4, 15):
+            m = rotate(base, tilt)
+            i1, m1, a1 = upright(photo(m), m)
+            _, _, a2 = upright(i1, m1)
+            assert abs(a2) < 0.5, f"{kind} at {tilt}°: second pass rotated another {a2:.2f}°"
+
+
+def test_uprighting_is_idempotent_through_a_resegmentation():
+    """The invariant that actually matters, and the one that broke: the pipeline does not carry a mask between runs,
+    it segments the image again. EXP_0028 found run_pair rotating 2b0123d732 by -23.5° and predict, handed that same
+    output, rotating it back by +24.3°. Here segmentation is a colour threshold, so the only thing that can change
+    between passes is the geometry — which is exactly what this pins."""
+    seg = lambda im: (np.abs(im.astype(int) - np.array([115, 72, 44])).sum(axis=2) < 60)
+    base = silhouette(kind="jeans")
+    for tilt in (-15, -6, 3, 11):
+        img = photo(rotate(base, tilt))
+        i1, _, a1 = upright(img, seg(img))
+        _, _, a2 = upright(i1, seg(i1))
+        assert abs(a2) < 1.0, f"tilt {tilt}°: first pass {a1:.2f}°, second pass {a2:.2f}° after re-segmenting"

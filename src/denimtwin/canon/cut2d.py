@@ -10,6 +10,27 @@ def cut_mask_canon(canon_size, inseam_fraction=None, canon_y=None):
     m = np.zeros((H, W), bool); m[int(round(canon_y)):] = True
     return m
 
+def cut_mask_canon_path(canon_size, path):
+    """Boolean mask of canonical pixels to REMOVE, below an arbitrary cut LINE given as a polyline in canonical
+    [0,1]^2 coordinates (`modification.CutModification.cut_path_canonical`).
+
+    `cut_mask_canon` takes one height and `cut_mask_canon_angled` two, which between them can express a level cut and
+    a straight diagonal. A real cut is neither: it is whatever the scissors did, and on a garment cut flat with the
+    legs together it is often a shallow curve with a step between the legs. The polyline is interpolated across the
+    canonical width and everything below it is removed."""
+    W, H = canon_size
+    p = np.asarray(path, float)
+    if p.ndim != 2 or p.shape[1] != 2 or len(p) < 2:
+        raise ValueError("cut path must be a polyline of at least two [x, y] points in canonical coordinates")
+    order = np.argsort(p[:, 0]); p = p[order]
+    xs = np.arange(W)
+    ys = np.interp(xs / max(W - 1, 1), p[:, 0], p[:, 1]) * H
+    m = np.zeros((H, W), bool)
+    rows = np.arange(H)[:, None]
+    m[:] = rows >= ys[None, :]
+    return m
+
+
 def apply_cut(image, garment_mask, cmap, remove_canon_mask, background_fill=None):
     """Return (out_image, removed_mask_image, keep_mask_image).
     Every garment pixel is mapped into canonical space and looked up in `remove_canon_mask`, so an angled or

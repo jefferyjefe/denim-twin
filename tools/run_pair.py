@@ -83,6 +83,9 @@ def upright(img, mask, name):
                          "estimate is off by up to 4.7° there (EXP_0022) and the correction may be several degrees out")
     return img2, mask2, ang
 bf_pre_rot, af_pre_rot = bf, af
+# the photographs as they came in, before uprighting. `before_used.png` is overwritten with the uprighted version
+# later, and anything that re-runs a segmenter on THAT is correcting an already-corrected image (EXP_0028).
+cv2.imwrite(f"{O}/before_native.png", bf); cv2.imwrite(f"{O}/after_native.png", af)
 bmask = coarse(bf); amask = coarse(af)
 # The after mask AS SEGMENTED, before any rotation. Hem texture must be measured on it and not on the registered
 # copy: a warp alone makes 12 of 12 finished-hem controls read as frayed (EXP_0024).

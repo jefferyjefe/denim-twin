@@ -1,0 +1,59 @@
+{
+ "kind": "cut",
+ "target_inseam_cm": null,
+ "inseam_fraction": null,
+ "outer_fraction": null,
+ "cut_path_canonical": [
+  [
+   0.21875,
+   0.4752633571624756
+  ],
+  [
+   0.28125,
+   0.4994473159313202
+  ],
+  [
+   0.34375,
+   0.5250903367996216
+  ],
+  [
+   0.40625,
+   0.5508085489273071
+  ],
+  [
+   0.46875,
+   0.5671867728233337
+  ],
+  [
+   0.59375,
+   0.5598540306091309
+  ],
+  [
+   0.65625,
+   0.5406988263130188
+  ],
+  [
+   0.71875,
+   0.5208885669708252
+  ],
+  [
+   0.78125,
+   0.5090968012809753
+  ]
+ ],
+ "tool": "fabric_shears",
+ "garment_flat": true,
+ "legs_together": false,
+ "edge_treatment": "raw",
+ "wash": {
+  "cycles": 0,
+  "machine": null,
+  "cycle": null,
+  "water_temperature_c": null,
+  "detergent_type": null,
+  "detergent_amount_ml": null,
+  "dryer_method": null,
+  "dryer_setting": null
+ },
+ "seed": 1
+}

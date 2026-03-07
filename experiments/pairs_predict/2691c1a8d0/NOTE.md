@@ -1,4 +1,4 @@
-# PREDICTION — before_used.png
+# PREDICTION — before_native.png
 
 **This is a prediction, not a measurement.** No after-photo exists for this garment.
 

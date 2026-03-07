@@ -1,13 +1,13 @@
 {
  "kind": "cut",
  "target_inseam_cm": null,
- "inseam_fraction": 0.3439,
- "outer_fraction": 0.32028501358663575,
+ "inseam_fraction": 0.2458,
+ "outer_fraction": 0.2098316845342753,
  "cut_path_canonical": null,
  "tool": "fabric_shears",
  "garment_flat": true,
  "legs_together": false,
- "edge_treatment": "raw",
+ "edge_treatment": "cuffed",
  "wash": {
   "cycles": 0,
   "machine": null,

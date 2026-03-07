@@ -1,0 +1,83 @@
+{
+ "n_pairs": 7,
+ "excluded_honoured": true,
+ "frac_source": "canonical",
+ "wash": "none",
+ "angle_source": "fitted",
+ "mean_sil_iou": {
+  "product": 0.8168100497723636,
+  "evaluation": 0.8565655531979972,
+  "crop_only": 0.8172915260061374
+ },
+ "mean_hem_chamfer": {
+  "product": 22.529115043940475,
+  "evaluation": 7.848169971974946
+ },
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "state": "after_cut",
+   "product_sil_iou": 0.7222541323632651,
+   "evaluation_sil_iou": 0.7355278642013122,
+   "crop_only_sil_iou": 0.7222541323632651,
+   "product_hem": 16.244979919678716,
+   "evaluation_hem": 11.478927203065133
+  },
+  {
+   "pair": "26b1041d00",
+   "state": "after_cut",
+   "product_sil_iou": 0.8762362510398374,
+   "evaluation_sil_iou": 0.8992786492786493,
+   "crop_only_sil_iou": 0.8760245270228632,
+   "product_hem": 9.011029411764707,
+   "evaluation_hem": 2.9963503649635035
+  },
+  {
+   "pair": "2b0123d732",
+   "state": "after_cut",
+   "product_sil_iou": 0.714618325157294,
+   "evaluation_sil_iou": 0.8470038064165307,
+   "crop_only_sil_iou": 0.7146462458299034,
+   "product_hem": 45.625,
+   "evaluation_hem": 3.8185185185185184
+  },
+  {
+   "pair": "443d1d4658",
+   "state": "after_cut",
+   "product_sil_iou": 0.8565591825713758,
+   "evaluation_sil_iou": 0.8565523031605311,
+   "crop_only_sil_iou": 0.8560546847243736,
+   "product_hem": 27.825396825396826,
+   "evaluation_hem": 27.67218122977346
+  },
+  {
+   "pair": "4bfef03bd7",
+   "state": "after_wash",
+   "product_sil_iou": 0.7879470129326143,
+   "evaluation_sil_iou": 0.8065386705307009,
+   "crop_only_sil_iou": 0.7888848097061241,
+   "product_hem": 12.191666666666666,
+   "evaluation_hem": 4.459016393442623
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "state": "after_cut",
+   "product_sil_iou": 0.8778593930778706,
+   "evaluation_sil_iou": 0.958155392699601,
+   "crop_only_sil_iou": 0.8783029460514356,
+   "product_hem": 43.105732484076434,
+   "evaluation_hem": 3.1891191709844557
+  },
+  {
+   "pair": "e97924ad2d",
+   "state": "after_cut",
+   "product_sil_iou": 0.8821960512642882,
+   "evaluation_sil_iou": 0.8929021860986547,
+   "crop_only_sil_iou": 0.8848733363449978,
+   "product_hem": 3.7,
+   "evaluation_hem": 1.323076923076923
+  }
+ ],
+ "product_beats_crop_only_on": 2,
+ "product_loses_to_crop_only_on": 4
+}

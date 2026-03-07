@@ -1,8 +1,8 @@
-# PREDICTION — before_used.png
+# PREDICTION — before_native.png
 
 **This is a prediction, not a measurement.** No after-photo exists for this garment.
 
-- cut: inseam fraction **0.340** — removes 39% of the garment
+- cut: inseam fraction **0.340** — removes 40% of the garment
 - state: **after_cut**
 - scale: **unknown** — every length below is in pixels
 - fringe depth: **0.0 px** (80% interval 0.0–0.0 px) from edge treatment 'raw' does not fray
@@ -10,7 +10,7 @@
 - fringe depth provenance: **no validated measurement exists** (EXP_0015) — the number above is a placeholder and the
   three renders differ only in a quantity nobody has yet measured on real garments
 
-flags: mask score 0.996, area 0.43 of frame; mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus; rotated -0.2° to upright; legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem; fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 — the depth itself is a placeholder)
+flags: mask score 0.994, area 0.46 of frame; mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus; rotated -1.9° to upright; legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem; fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 — the depth itself is a placeholder)
 
 | file | what |
 |---|---|

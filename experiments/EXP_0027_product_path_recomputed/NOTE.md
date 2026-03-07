@@ -1,5 +1,10 @@
 # EXP_0027 — The product path, recomputed: it is a dead heat with cropping the photograph
 
+> **Numbers superseded the same day by EXP_0028** (the conclusion is not). `score_predict.py` was feeding `predict.py`
+> the photograph `run_pair` had *already uprighted*, so after EXP_0022 set the deadband to 0 every pair was corrected
+> twice — a 24° round trip on one of them. With the original photographs the product path scores **0.8232** against a
+> crop-only null of **0.8233**, and the evaluation path 0.8566. Still a dead heat; the table below reads 0.803/0.803.
+
 EXP_0014 answered "how much of our cut accuracy comes from looking at the answer?" and published mean silhouette IoU
 0.768 for the product path against 0.819 for the evaluation path and 0.771 for the crop-only null, **over 11 pairs**.
 Two things have changed since: the tilt correction was fixed (EXP_0022/0023), and — the reason this is a correction

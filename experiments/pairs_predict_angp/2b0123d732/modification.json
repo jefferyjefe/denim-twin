@@ -7,7 +7,7 @@
  "tool": "fabric_shears",
  "garment_flat": true,
  "legs_together": false,
- "edge_treatment": "raw",
+ "edge_treatment": "cuffed",
  "wash": {
   "cycles": 0,
   "machine": null,

@@ -57,17 +57,23 @@ for pid, t, k, ok, m, err in rows:
 # Which code and which knobs produced this batch. Two batches are only comparable if these match: review 4's
 # null-baseline test compares experiments/pairs against experiments/pairs_wash, and it fails — loudly, on an
 # unrelated finding — whenever one of them was regenerated and the other was not.
-import subprocess as _sp
+import subprocess as _sp, hashlib as _hl
 def _git(*a):
     try: return _sp.run(["git", "-C", str(ROOT), *a], capture_output=True, text=True).stdout.strip()
     except Exception: return ""
 KNOBS = ("PAIRS_REFINE", "PAIRS_SEG", "PAIRS_UPRIGHT", "PAIRS_WASH", "PAIRS_USE_PRIOR")
+# A content hash of the code that actually produces a pair result. The commit id is too strict — an edit to an
+# unrelated tool makes two batches look incomparable — and too loose, because uncommitted edits do not move it.
+PIPELINE = sorted([str(q.relative_to(ROOT)) for q in (ROOT / "src/denimtwin").rglob("*.py")] +
+                  ["tools/run_pair.py", "tools/compare.py", "tools/run_pairs_batch.py", "tools/null_baselines.py"])
+_h = _hl.sha256()
+for rel in PIPELINE:
+    f = ROOT / rel
+    _h.update(rel.encode()); _h.update(f.read_bytes() if f.exists() else b"")
 (OUT / "provenance.json").write_text(json.dumps({
+    "pipeline_sha256": _h.hexdigest()[:16],
+    "pipeline_files": len(PIPELINE),
     "commit": _git("rev-parse", "HEAD"),
-    # porcelain lines are two status characters, a space, then the path; a rename adds " -> ". Slicing a fixed
-    # number of characters loses the first letter of the path on some statuses.
-    "dirty_paths": sorted(l[2:].strip().split(" -> ")[-1]
-                          for l in _git("status", "--porcelain", "src", "tools").splitlines() if l.strip()),
     "knobs": {k: os.environ.get(k) for k in KNOBS if os.environ.get(k)},
     "n_pairs": len(rows),
 }, indent=1))

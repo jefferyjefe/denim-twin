@@ -40,10 +40,10 @@ def test_null_baselines_are_unchanged_by_the_wash_switch():
     _p = lambda d: _json.load(open(_os.path.join(ROOT, d, "provenance.json"))) if _os.path.exists(_os.path.join(ROOT, d, "provenance.json")) else None
     _a, _b = _p(BASE_DIR), _p(WASH_DIR)
     import pytest
-    if not (_a and _b):
-        pytest.skip(f"one of {BASE_DIR} / {WASH_DIR} predates provenance.json, so there is no way to tell whether the "
-                    "same code produced both; re-run both with tools/run_pairs_batch.py")
-    _k = lambda d: (d.get("commit"), sorted(d.get("dirty_paths", [])),
+    if not (_a and _b) or not (_a.get("pipeline_sha256") and _b.get("pipeline_sha256")):
+        pytest.skip(f"one of {BASE_DIR} / {WASH_DIR} has no pipeline hash in provenance.json, so there is no way to "
+                    "tell whether the same code produced both; re-run both with tools/run_pairs_batch.py")
+    _k = lambda d: (d.get("pipeline_sha256"),
                     {k: v for k, v in d.get("knobs", {}).items() if k != "PAIRS_WASH"})
     if _k(_a) != _k(_b):
         pytest.skip(f"the two batches were produced by different code ({BASE_DIR} vs {WASH_DIR}); "

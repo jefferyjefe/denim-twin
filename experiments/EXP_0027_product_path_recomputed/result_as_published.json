@@ -1,0 +1,15 @@
+{
+ "note": "the run EXP_0027 published, before the double-uprighting fix in EXP_0028",
+ "n_pairs": 7,
+ "mean_sil_iou": {
+  "product": 0.8025607571667993,
+  "evaluation": 0.8565655531979972,
+  "crop_only": 0.8025713946736046
+ },
+ "mean_hem_chamfer": {
+  "product": 32.2060926433011,
+  "evaluation": 7.848169971974946
+ },
+ "product_beats_crop_only_on": 2,
+ "product_loses_to_crop_only_on": 4
+}
