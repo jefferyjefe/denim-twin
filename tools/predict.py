@@ -30,6 +30,10 @@ p.add_argument("--out", required=True)
 g = p.add_mutually_exclusive_group(required=True)
 g.add_argument("--inseam-fraction", type=float, help="0 = at the crotch, 1 = the original hem")
 g.add_argument("--target-inseam-cm", type=float, help="finished inseam in cm (needs metric scale: --coin or --mm-per-px)")
+g.add_argument("--cut-canon-mask", help="PNG of the canonical region to REMOVE (an evaluation instrument, not a "
+                                        "user-facing option: it is how EXP_0028 hands the product path the exact cut "
+                                        "the evaluation path fitted, without the loss a polyline representation "
+                                        "introduces). Resized to canonical size with nearest-neighbour.")
 g.add_argument("--cut-path", help="JSON file holding the cut LINE as a polyline of [x, y] points in canonical "
                                   "[0,1]^2 coordinates — the whole line, not a height and an angle. This is what a "
                                   "user drawing on their own photo would supply, and what EXP_0028 uses to ask how "
@@ -127,12 +131,22 @@ if a.target_inseam_cm is not None:
     inseam_px = (hem_y - crotch_y); inseam_cm = inseam_px * mmpp_eff / 10.0
     frac = float(np.clip(a.target_inseam_cm / max(inseam_cm, 1e-6), 0.0, 1.0))
     FLAGS.append(f"target inseam {a.target_inseam_cm} cm of {inseam_cm:.1f} cm original -> inseam fraction {frac:.3f}")
-elif a.cut_path:
+elif a.cut_path or a.cut_canon_mask:
     frac = None                                  # the path IS the cut; a single fraction cannot express it
 else:
     frac = float(a.inseam_fraction)
 if frac is not None and not 0.0 <= frac <= 1.0: FAIL(f"cut fraction {frac:.3f} outside the garment")
-if a.cut_path:
+if a.cut_canon_mask:
+    _cm_img = cv2.imread(a.cut_canon_mask, 0)
+    if _cm_img is None: FAIL(f"cannot read --cut-canon-mask {a.cut_canon_mask}")
+    remove_canon = cv2.resize(_cm_img, (cmap.W, cmap.H), interpolation=cv2.INTER_NEAREST) > 127
+    frac = float(np.clip(np.median(np.nonzero(remove_canon.any(axis=1))[0]) / max(cmap.H, 1), 0.0, 1.0))
+    FLAGS.append(f"cut given as a canonical remove-mask ({remove_canon.mean():.1%} of canonical space) — evaluation "
+                 "instrument, not a user-supplied cut")
+    CUT_PATH = None
+    import hashlib as _hl
+    CUT_MASK_SHA = _hl.sha256(open(a.cut_canon_mask, "rb").read()).hexdigest()
+elif a.cut_path:
     from denimtwin.canon.cut2d import cut_mask_canon_path
     CUT_PATH = json.load(open(a.cut_path))
     if isinstance(CUT_PATH, dict): CUT_PATH = CUT_PATH.get("cut_path_canonical") or CUT_PATH.get("path")
@@ -172,8 +186,9 @@ if a.state == "after_wash" and a.wash != "none":
 keep = gm & ~rm
 
 # fringe depth: from the prior, conditional on the state and the edge treatment
-mod = CutModification(inseam_fraction=(None if a.cut_path else frac),
-                      cut_path_canonical=(CUT_PATH if a.cut_path else None), outer_fraction=(outer_f if a.angle_deg else None), edge_treatment=a.edge_treatment,
+mod = CutModification(inseam_fraction=(None if (a.cut_path or a.cut_canon_mask) else frac),
+                      cut_path_canonical=(CUT_PATH if a.cut_path else None),
+                      cut_canon_mask_sha256=(CUT_MASK_SHA if a.cut_canon_mask else None), outer_fraction=(outer_f if a.angle_deg else None), edge_treatment=a.edge_treatment,
                       wash=WashProtocol(cycles=1 if a.state == "after_wash" else 0), seed=a.seed).validate()
 ww = abs(lm["waist_right"][0] - lm["waist_left"][0])
 if not mod.expects_fringe():

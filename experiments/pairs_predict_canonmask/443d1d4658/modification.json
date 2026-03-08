@@ -1,0 +1,23 @@
+{
+ "kind": "cut",
+ "target_inseam_cm": null,
+ "inseam_fraction": null,
+ "outer_fraction": null,
+ "cut_path_canonical": null,
+ "cut_canon_mask_sha256": "30647cab72cd4926b19a5a68066e974e0044259d52abb0823612deb5ec29fd7a",
+ "tool": "fabric_shears",
+ "garment_flat": true,
+ "legs_together": false,
+ "edge_treatment": "cuffed",
+ "wash": {
+  "cycles": 0,
+  "machine": null,
+  "cycle": null,
+  "water_temperature_c": null,
+  "detergent_type": null,
+  "detergent_amount_ml": null,
+  "dryer_method": null,
+  "dryer_setting": null
+ },
+ "seed": 1
+}

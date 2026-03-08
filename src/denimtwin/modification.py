@@ -23,6 +23,11 @@ class CutModification:
     inseam_fraction: Optional[float] = None   # 0 = crotch, 1 = original hem (canonical inseam coordinate)
     outer_fraction: Optional[float] = None    # for angled cuts: outseam-side fraction (None = same as inseam side)
     cut_path_canonical: Optional[List[List[float]]] = None   # polyline in canonical [0,1]^2 coordinates (front panel)
+    # The cut given as a canonical REGION rather than a parameter, referenced by the content hash of the mask file.
+    # This is an evaluation instrument (EXP_0028 hands the product path the exact region the evaluation path removed,
+    # so the ablation cannot be blamed on a polyline losing structure). A prediction recorded this way is not
+    # reproducible from the record alone, and `validate` says so by requiring the hash.
+    cut_canon_mask_sha256: Optional[str] = None
     tool: str = "fabric_shears"               # fabric_shears | rotary_cutter | scissors | box_cutter
     garment_flat: bool = True                 # cut flat (vs worn)
     legs_together: bool = False
@@ -31,8 +36,12 @@ class CutModification:
     seed: int = 0
 
     def validate(self):
-        given = [x is not None for x in (self.target_inseam_cm, self.inseam_fraction, self.cut_path_canonical)]
-        assert sum(given) == 1, "give exactly one of target_inseam_cm, inseam_fraction, cut_path_canonical"
+        given = [x is not None for x in (self.target_inseam_cm, self.inseam_fraction, self.cut_path_canonical,
+                                         self.cut_canon_mask_sha256)]
+        assert sum(given) == 1, ("give exactly one of target_inseam_cm, inseam_fraction, cut_path_canonical, "
+                                 "cut_canon_mask_sha256")
+        if self.cut_canon_mask_sha256 is not None:
+            assert len(self.cut_canon_mask_sha256) == 64, "cut_canon_mask_sha256 must be a full sha256 hex digest"
         assert self.kind == "cut", "year-one modifications are cuts only (see docs/PLAN.md §14/§16)"
         assert self.edge_treatment in ("raw", "cuffed", "hemmed", "serged", "hand_frayed")
         if self.inseam_fraction is not None: assert 0.0 <= self.inseam_fraction <= 1.0
