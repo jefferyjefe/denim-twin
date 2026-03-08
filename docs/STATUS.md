@@ -157,3 +157,16 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `before_native.png`/`after_native.png` and the harness uses them; EXP_0027's headline is corrected 0.803 → **0.823**
   (the null moves with it, so the dead heat stands); and `tests/test_upright.py` pins the invariant that broke —
   uprighting an already-uprighted image, re-segmenting in between, must not rotate it again.
+- 2026-08-29: EXP_0029 — **canonical space does not give the garment back.** `docs/PLAN_PROGRESS.md` has recorded
+  `canon/warp.py` since Phase 1 as "sub-pixel round-trip; exact per-pixel maps". True — at the landmarks.
+  `CanonicalMap` fits **two independent** thin-plate splines, image→canonical and canonical→image, from the same
+  correspondences; two independent fits agree exactly where they were fitted and nowhere in particular between.
+  Measured on the seven usable pairs: median **0.00 px at the landmarks and 10.7 px over the garment**, worst case
+  **835 px**; send the removed *region* on the same journey and it returns with a median IoU of **0.638** with itself,
+  and **0.074** on 2b0123d732 — 93% of it gone. This reframes EXP_0028: handing the product path the exact canonical
+  *region* (rather than a polyline) and restricting to the two pairs whose round-trip is faithful, the product path
+  scores **0.8735 against the evaluation path's 0.8750** — it matches. e97924ad2d reproduces it exactly, 0.893 vs
+  0.893 and 1.3 px vs 1.3 px of hem. So the product path's gap is not the cut interface and not the renderer: it is
+  that the representation the cut is expressed in does not survive being used. The fix — one TPS inverted numerically
+  instead of two fitted independently — changes every canonical coordinate in the project and is the most valuable
+  experiment on the board.

@@ -27,7 +27,7 @@ p.add_argument("--frac-source", default="recorded", choices=["recorded", "canoni
                help="recorded = the inseam_fraction run_pair wrote (image-space y between crotch and hem); "
                     "canonical = the canonical-space fraction of the real fitted cut (isolates cut PLACEMENT from the "
                     "parameterisation mismatch between the two paths)")
-p.add_argument("--path-source", default="none", choices=["none", "fitted"],
+p.add_argument("--path-source", default="none", choices=["none", "fitted", "mask"],
                help="fitted = hand the product path the whole cut LINE the evaluation path fitted, as a canonical "
                     "polyline, instead of one height. Isolates the cut line from everything else (EXP_0028).")
 p.add_argument("--path-points", type=int, default=16, help="--path-source fitted: samples along the canonical width")
@@ -62,6 +62,17 @@ for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
     state = "after_wash" if mod.get("wash", {}).get("cycles", 0) >= 1 else "after_cut"
     od = os.path.join(a.out, pid); os.makedirs(od, exist_ok=True)
     cutpath = []
+    if a.path_source == "mask":
+        # the exact canonical region the evaluation path removed, with no polyline in between: a 16-sample median
+        # curve loses real structure (EXP_0028 measured up to 0.57 of canonical height of spread inside one bin), so
+        # this is the version of the ablation that cannot be blamed on the representation.
+        import numpy as np, cv2
+        from denimtwin.canon.warp import CanonicalMap
+        lm = json.load(open(f"{src}/before_lm.json"))["landmarks"]; rm = cv2.imread(f"{src}/removed_mask.png", 0) > 127
+        cm = CanonicalMap(lm)
+        canon = cm.image_to_canon(rm.astype(np.uint8) * 255)
+        cv2.imwrite(f"{od}/cut_canon_mask.png", (np.asarray(canon) > 127).astype(np.uint8) * 255)
+        cutpath = ["--cut-canon-mask", f"{od}/cut_canon_mask.png"]
     if a.path_source == "fitted":
         # The cut LINE the evaluation path fitted, as a canonical polyline: the richest thing a user could specify
         # (they drew it on their own photo). If the product path reaches the evaluation path with this, then the

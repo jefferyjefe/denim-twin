@@ -1,0 +1,41 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/26b1041d00/before_native.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.678,
+  "angle_deg": 0.0,
+  "removed_fraction_of_garment": 0.27324053737215853
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "below_render_resolution": true,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'cuffed' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
+ },
+ "changed_fraction_of_kept_region": 0.013924167979975897,
+ "segmentation": {
+  "method": "coarse",
+  "score": 1.0035568475723267,
+  "area": 0.4441616766467066
+ },
+ "flags": [
+  "mask score 1.004, area 0.44 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut",
+  "cut given as a canonical remove-mask (28.1% of canonical space) \u2014 evaluation instrument, not a user-supplied cut",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
+ ]
+}

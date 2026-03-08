@@ -1,0 +1,17 @@
+[
+ {"claim": "median point round-trip error over the garment",
+  "note_regex": "\\*\\*Median 0\\.00 px at the landmarks and ([0-9.]+) px over the garment\\*\\*",
+  "source": "reports/canonical_roundtrip.json", "path": "median_point_err_over_garment_px", "tol": 0.05},
+ {"claim": "worst point round-trip error",
+  "note_regex": "with a worst case of (\\d+) px", "claimed": "835",
+  "source": "reports/canonical_roundtrip.json", "path": "worst_point_err_px", "tol": 1.0},
+ {"claim": "median region round-trip IoU",
+  "note_regex": "comes back with a median IoU of \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/canonical_roundtrip.json", "path": "median_region_roundtrip_iou", "tol": 0.001},
+ {"claim": "worst region round-trip IoU",
+  "note_regex": "on 2b0123d732, \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/canonical_roundtrip.json", "path": "worst_region_roundtrip_iou", "tol": 0.001},
+ {"claim": "pairs with a faithful region round-trip",
+  "note_regex": "restricting to the two pairs whose region round-trip is faithful", "claimed": "2",
+  "source": "reports/canonical_roundtrip.json", "path": "n_pairs_with_faithful_region_roundtrip"}
+]
