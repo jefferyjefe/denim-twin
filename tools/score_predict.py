@@ -27,6 +27,8 @@ p.add_argument("--frac-source", default="recorded", choices=["recorded", "canoni
                help="recorded = the inseam_fraction run_pair wrote (image-space y between crotch and hem); "
                     "canonical = the canonical-space fraction of the real fitted cut (isolates cut PLACEMENT from the "
                     "parameterisation mismatch between the two paths)")
+p.add_argument("--canonical-inverse", default="exact", choices=["exact", "approx"],
+               help="passed through to predict.py: which canonical->image map to use (EXP_0030)")
 p.add_argument("--path-source", default="none", choices=["none", "fitted", "mask"],
                help="fitted = hand the product path the whole cut LINE the evaluation path fitted, as a canonical "
                     "polyline, instead of one height. Isolates the cut line from everything else (EXP_0028).")
@@ -107,7 +109,8 @@ for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
     before_img = f"{src}/before_native.png" if os.path.exists(f"{src}/before_native.png") else f"{src}/before_used.png"
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/predict.py"), "--image", before_img,
                         "--out", od, "--state", state, "--wash", a.wash,
-                        "--edge-treatment", mod.get("edge_treatment", "raw")]
+                        "--edge-treatment", mod.get("edge_treatment", "raw"),
+                        "--canonical-inverse", a.canonical_inverse]
                        + (cutpath if cutpath else ["--inseam-fraction", f"{frac:.4f}"] + angle),
                        capture_output=True, text=True)
     if r.returncode != 0:
@@ -143,7 +146,8 @@ open(os.path.join(a.out, "SUMMARY.md"), "w").write(md); print(md)
 if ok:
     mean = lambda f: sum(f(r) for r in ok) / len(ok)
     json.dump({"n_pairs": len(ok), "excluded_honoured": not a.include_excluded, "frac_source": a.frac_source,
-               "wash": a.wash, "angle_source": a.angle_source,
+               "wash": a.wash, "angle_source": a.angle_source, "path_source": a.path_source,
+               "canonical_inverse": a.canonical_inverse,
                "mean_sil_iou": {"product": mean(lambda r: r[2]["sil_iou_vs_real"]),
                                 "evaluation": mean(lambda r: r[3]["sil_iou_vs_real"]),
                                 "crop_only": mean(lambda r: r[4]["sil_iou_vs_real"])},
