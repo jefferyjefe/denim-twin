@@ -1,0 +1,67 @@
+{
+ "n_pairs": 5,
+ "excluded_honoured": true,
+ "frac_source": "canonical",
+ "wash": "none",
+ "angle_source": "none",
+ "path_source": "none",
+ "canonical_inverse": "approx",
+ "mean_sil_iou": {
+  "product": 0.8387002567374087,
+  "evaluation": 0.8684832790877497,
+  "crop_only": 0.8387107654495377
+ },
+ "mean_hem_chamfer": {
+  "product": 20.801062292546412,
+  "evaluation": 9.331930978372696
+ },
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "state": "after_cut",
+   "product_sil_iou": 0.7191817892390958,
+   "evaluation_sil_iou": 0.7355278642013122,
+   "crop_only_sil_iou": 0.7191817892390958,
+   "product_hem": 19.0,
+   "evaluation_hem": 11.478927203065133
+  },
+  {
+   "pair": "26b1041d00",
+   "state": "after_cut",
+   "product_sil_iou": 0.8768639508070715,
+   "evaluation_sil_iou": 0.8992786492786493,
+   "crop_only_sil_iou": 0.8770106104874673,
+   "product_hem": 8.894927536231885,
+   "evaluation_hem": 2.9963503649635035
+  },
+  {
+   "pair": "443d1d4658",
+   "state": "after_cut",
+   "product_sil_iou": 0.8514661590043757,
+   "evaluation_sil_iou": 0.8565523031605311,
+   "crop_only_sil_iou": 0.8508623629027675,
+   "product_hem": 30.1859756097561,
+   "evaluation_hem": 27.67218122977346
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "state": "after_cut",
+   "product_sil_iou": 0.8824201898188093,
+   "evaluation_sil_iou": 0.958155392699601,
+   "crop_only_sil_iou": 0.8827453201704699,
+   "product_hem": 38.462287104622874,
+   "evaluation_hem": 3.1891191709844557
+  },
+  {
+   "pair": "e97924ad2d",
+   "state": "after_cut",
+   "product_sil_iou": 0.8635691948176913,
+   "evaluation_sil_iou": 0.8929021860986547,
+   "crop_only_sil_iou": 0.8637537444478877,
+   "product_hem": 7.462121212121212,
+   "evaluation_hem": 1.323076923076923
+  }
+ ],
+ "product_beats_crop_only_on": 1,
+ "product_loses_to_crop_only_on": 3
+}

@@ -55,6 +55,10 @@ p.add_argument("--seg", choices=["coarse", "consensus"], default="coarse",
                     "opt-in because it changes every rendered output and has its own failure on plain studio "
                     "backdrops, where the vote can elect the backdrop instead of the garment.")
 p.add_argument("--min-agreement", type=float, default=0.5, help="--seg consensus: refuse below this prompt agreement")
+p.add_argument("--canonical-inverse", choices=["exact", "approx"], default="exact",
+               help="'approx' uses the second, independently fitted TPS as the canonical->image map, which is what "
+                    "this project did until EXP_0030 and which is off by a median of 10.7 px over the garment; "
+                    "'exact' corrects it against the forward map. Kept switchable so the A/B is reproducible.")
 p.add_argument("--upright-deadband", type=float, default=0.0,
                help="skip the upright rotation below this tilt (degrees). Was 8.0 until EXP_0022: the landmark "
                     "heuristic loses more than 5%% of every shape ratio at 1-8 degrees of tilt (EXP_0021) and the "
@@ -125,7 +129,16 @@ mmpp_eff = mmpp or 1.0
 unit = "mm" if metric else "px"
 
 # the cut, in canonical space (so 'inseam fraction' means the same thing on every garment)
-cmap = CanonicalMap(lm)
+cmap = CanonicalMap(lm, exact=(a.canonical_inverse == "exact"))
+# ... but canonical space is only a representation of this garment if the map is injective. Where it folds there is
+# no inverse, and the cut is rendered through a coordinate system that has turned inside out (EXP_0030).
+FOLD = float(cmap.fold_fraction(mask))
+if FOLD > 0.20:
+    FAIL(f"the canonical map folds over {FOLD:.0%} of this garment, so the cut cannot be placed on it. This means the "
+         "landmarks are wrong — usually a garment photographed folded, at a steep angle, or with the legs crossed. "
+         "Re-shoot it laid flat and square to the camera.")
+if FOLD > 0.02:
+    FLAGS.append(f"the canonical map folds over {FOLD:.1%} of the garment: the cut placement is unreliable there (EXP_0030)")
 if a.target_inseam_cm is not None:
     crotch_y, hem_y = lm["crotch"][1], np.mean([lm["hem_left_inner"][1], lm["hem_right_inner"][1]])
     inseam_px = (hem_y - crotch_y); inseam_cm = inseam_px * mmpp_eff / 10.0
@@ -255,6 +268,7 @@ pred = {"image": os.path.abspath(a.image), "state": a.state, "wash_preset": a.wa
                          "assumed_depth_mm_sourced": (json.load(open(a.prior)).get("assumed_depth") or {}).get("value_mm")},
         "changed_fraction_of_kept_region": changed_outside,
         "segmentation": SEG_PROVENANCE,
+        "canonical_map": {"fold_fraction": FOLD, "exact_inverse": bool(getattr(cmap, "exact", False))},
         "flags": FLAGS}
 json.dump(pred, open(f"{O}/prediction.json", "w"), indent=1)
 

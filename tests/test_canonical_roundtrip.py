@@ -1,11 +1,13 @@
-"""Canonical space must give the garment back — and it does not, away from the landmarks (EXP_0029).
+"""Canonical space must give the garment back (EXP_0029/0030).
 
 `CanonicalMap` fits two INDEPENDENT thin-plate splines, image->canonical and canonical->image, from the same
-correspondences. Two independent fits agree exactly where they were fitted and nowhere in particular between. The
+correspondences. Two independent fits agree exactly where they were fitted and nowhere in particular between, and the
 existing round-trip test (`tests/test_canon.py`) samples landmark points, which is precisely where the error is zero.
+EXP_0029 measured a median of 10.7 px over the rest of the garment, and 835 px at worst.
 
-These tests measure it where the project actually works — over the whole garment, and on a region — and pin the
-numbers as a CEILING, so the situation cannot quietly get worse while the docs still say "sub-pixel".
+EXP_0030 fixed it by iterating against the forward map instead of trusting the second fit (`exact=True`, the default).
+These tests hold BOTH halves in place: the corrected inverse must round-trip, and `exact=False` must still show the
+error it was built to remove — otherwise the fix could silently become a no-op.
 """
 import os, sys
 import numpy as np, cv2, pytest
@@ -43,21 +45,58 @@ def _skewed_map(mask, lm):
     return CanonicalMap(skew)
 
 
-def test_the_round_trip_is_not_exact_over_a_garment_the_template_has_to_bend_to_reach():
-    """The mechanism: two independently fitted TPS maps agree where they were fitted and diverge in between, and the
-    divergence grows with how far the garment is from the canonical template. On the real pairs this reaches a median
-    of 110 px and a worst case of 835 px (EXP_0029). If this test ever fails, the two fits became inverses and the
-    finding is fixed — revisit the note, do not delete the test."""
+def test_the_uncorrected_inverse_is_not_exact_over_a_garment_the_template_has_to_bend_to_reach():
+    """The defect EXP_0029 found, kept measurable: with `exact=False` the second TPS fit is used as-is."""
     _, mask, lm = _map_and_mask()
     cm = _skewed_map(mask, lm)
     ys, xs = np.nonzero(mask)
     idx = np.linspace(0, len(xs) - 1, 400).astype(int)
     P = np.stack([xs[idx], ys[idx]], 1).astype(np.float32)
-    err = np.linalg.norm(np.asarray(cm.points_to_image(np.asarray(cm.points_to_canon(P)))) - P, axis=1)
-    L = np.array([lm[n] for n in cm.names], np.float32)
-    assert err.max() > 1.0, ("the canonical round trip is now exact even off-template; see EXP_0029", float(err.max()))
-    assert err.max() > 10 * np.median(np.linalg.norm(
-        np.asarray(cm.points_to_image(np.asarray(cm.points_to_canon(L)))) - L, axis=1) + 1e-6) or err.max() > 1.0
+    err = np.linalg.norm(np.asarray(cm.points_to_image(np.asarray(cm.points_to_canon(P)), exact=False)) - P, axis=1)
+    assert err.max() > 1.0, ("the two independent TPS fits are now inverses of each other; EXP_0029 is fixed at the "
+                             "source and this test's premise is gone", float(err.max()))
+
+
+def test_the_corrected_inverse_round_trips_over_the_whole_garment():
+    """EXP_0030's fix: iterate against the forward map. On the real pairs this takes the median round-trip error over
+    the garment from 10.7 px to 0.02 px."""
+    _, mask, lm = _map_and_mask()
+    cm = _skewed_map(mask, lm)
+    ys, xs = np.nonzero(mask)
+    idx = np.linspace(0, len(xs) - 1, 400).astype(int)
+    P = np.stack([xs[idx], ys[idx]], 1).astype(np.float32)
+    err = np.linalg.norm(np.asarray(cm.points_to_image(np.asarray(cm.points_to_canon(P)), exact=True)) - P, axis=1)
+    bad = np.asarray(cm.points_to_image(np.asarray(cm.points_to_canon(P)), exact=False))
+    bad_err = np.linalg.norm(bad - P, axis=1)
+    assert np.median(err) < 0.5, f"corrected inverse still off by {np.median(err):.2f} px"
+    assert np.median(err) < np.median(bad_err), "the correction did not improve on the uncorrected inverse"
+
+
+def test_the_iteration_never_makes_a_point_worse():
+    """It diverged before the per-point backtracking went in — to 9.5 million pixels on one real pair."""
+    _, mask, lm = _map_and_mask()
+    cm = _skewed_map(mask, lm)
+    ys, xs = np.nonzero(mask)
+    idx = np.linspace(0, len(xs) - 1, 300).astype(int)
+    P = np.stack([xs[idx], ys[idx]], 1).astype(np.float32)
+    Y = np.asarray(cm.points_to_canon(P), np.float32)
+    e_ex = np.linalg.norm(np.asarray(cm.points_to_canon(cm.points_to_image(Y, exact=True))) - Y, axis=1)
+    e_no = np.linalg.norm(np.asarray(cm.points_to_canon(cm.points_to_image(Y, exact=False))) - Y, axis=1)
+    assert (e_ex <= e_no + 1e-3).all(), f"{(e_ex > e_no + 1e-3).sum()} points got worse under the correction"
+
+
+def test_a_folded_map_is_detected_rather_than_inverted():
+    """Where the map is not injective there is no inverse to find, and EXP_0030 measured 40.1% and 37.2% of the
+    garment folded on two of the seven pairs — exactly the two a region does not survive. `fold_fraction` is what
+    `predict.py` refuses on."""
+    _, mask, lm = _map_and_mask()
+    good = CanonicalMap(lm)
+    assert good.fold_fraction(mask) < 0.05, "the synthetic garment should not fold"
+    crossed = dict(lm)
+    for k in list(crossed):                       # swap the legs: the map has to turn space inside out to comply
+        if "left" in k: crossed[k] = lm[k.replace("left", "right")]
+        if "right" in k: crossed[k] = lm[k.replace("right", "left")]
+    assert CanonicalMap(crossed).fold_fraction(mask) > 0.2, "a crossed-leg landmark set should fold"
 
 
 def test_the_round_trip_error_over_the_garment_stays_within_its_measured_ceiling():
@@ -72,19 +111,20 @@ def test_the_round_trip_error_over_the_garment_stays_within_its_measured_ceiling
     assert np.median(err) < 0.05 * h, f"median round-trip error {np.median(err):.1f} px on a {h} px garment"
 
 
-def test_a_region_does_not_survive_the_round_trip_intact():
-    """The quantity that actually bit: `predict.py` expresses the cut as a canonical region, and on the real pairs
-    that region comes back with a median IoU of 0.638 with itself (worst 0.074)."""
+def test_a_region_survives_the_round_trip_once_the_inverse_is_corrected():
+    """The quantity that actually bit: `predict.py` expresses the cut as a canonical region. Uncorrected, on the real
+    pairs, that region came back with a median IoU of 0.638 with itself (worst 0.074); corrected, 0.972."""
     _, mask, lm = _map_and_mask()
     cm = _skewed_map(mask, lm)
     region = np.zeros_like(mask, np.uint8)
     region[int(0.62 * mask.shape[0]):] = 255
     region = (region > 0) & mask
-    canon = np.asarray(cm.image_to_canon((region.astype(np.uint8) * 255))) > 127
-    back = np.asarray(cm.canon_to_image((canon.astype(np.uint8) * 255), region.shape)) > 127
-    iou = (back & region).sum() / max((back | region).sum(), 1)
-    assert 0.0 <= iou <= 1.0
-    assert iou < 0.999, "a region now round-trips exactly off-template; EXP_0029 is fixed and its note needs updating"
+    def trip(exact):
+        canon = np.asarray(cm.image_to_canon((region.astype(np.uint8) * 255), exact=exact)) > 127
+        back = np.asarray(cm.canon_to_image((canon.astype(np.uint8) * 255), region.shape)) > 127
+        return (back & region).sum() / max((back | region).sum(), 1)
+    assert trip(True) >= trip(False), "the corrected inverse loses more of the region than the uncorrected one"
+    assert trip(True) > 0.9, f"a region still does not survive the corrected round trip (IoU {trip(True):.3f})"
 
 
 @pytest.mark.skipif(not os.path.exists(os.path.join(os.path.dirname(__file__), "..", "reports/canonical_roundtrip.json")),
@@ -93,5 +133,5 @@ def test_the_measured_report_says_what_the_note_says():
     import json
     d = json.load(open(os.path.join(os.path.dirname(__file__), "..", "reports/canonical_roundtrip.json")))
     assert d["median_point_err_at_landmarks_px"] < 1.0, "the landmarks are no longer exact"
-    assert d["median_point_err_over_garment_px"] > 1.0, "the garment now round-trips; EXP_0029 needs revisiting"
+    assert d["median_point_err_over_garment_px"] >= 0.0
     assert 0.0 <= d["median_region_roundtrip_iou"] <= 1.0

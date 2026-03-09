@@ -1,0 +1,88 @@
+{
+ "n_pairs": 7,
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "n_landmarks": 12,
+   "point_err_at_landmarks_px": 0.0009458460845053196,
+   "point_err_over_garment_px": 0.007584841921925545,
+   "point_err_p90_px": 0.017684409394860268,
+   "point_err_max_px": 0.16240949928760529,
+   "point_err_over_garment_pct_of_leg": 0.002798834657537101,
+   "region_roundtrip_iou": 0.9669663045276568
+  },
+  {
+   "pair": "26b1041d00",
+   "n_landmarks": 10,
+   "point_err_at_landmarks_px": 0.0003697671927511692,
+   "point_err_over_garment_px": 0.24621333181858063,
+   "point_err_p90_px": 20.47049903869629,
+   "point_err_max_px": 100.7461166381836,
+   "point_err_over_garment_pct_of_leg": 0.37878974125935483,
+   "region_roundtrip_iou": 0.9722240949234814
+  },
+  {
+   "pair": "2b0123d732",
+   "n_landmarks": 14,
+   "point_err_at_landmarks_px": 0.024898719042539597,
+   "point_err_over_garment_px": 117.49317932128906,
+   "point_err_p90_px": 333.5743713378906,
+   "point_err_max_px": 597.4627075195312,
+   "point_err_over_garment_pct_of_leg": 53.64985357136487,
+   "region_roundtrip_iou": 0.0773619555333678
+  },
+  {
+   "pair": "443d1d4658",
+   "n_landmarks": 14,
+   "point_err_at_landmarks_px": 0.0009161964990198612,
+   "point_err_over_garment_px": 0.004532566759735346,
+   "point_err_p90_px": 0.021863825619220734,
+   "point_err_max_px": 0.038564298301935196,
+   "point_err_over_garment_pct_of_leg": 0.0010185543280304148,
+   "region_roundtrip_iou": 1.0
+  },
+  {
+   "pair": "4bfef03bd7",
+   "n_landmarks": 14,
+   "point_err_at_landmarks_px": 0.4504970908164978,
+   "point_err_over_garment_px": 60.605735778808594,
+   "point_err_p90_px": 448.95111083984375,
+   "point_err_max_px": 834.635009765625,
+   "point_err_over_garment_pct_of_leg": 9.712457656860352,
+   "region_roundtrip_iou": 0.1780137584625464
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "n_landmarks": 14,
+   "point_err_at_landmarks_px": 0.0033186115324497223,
+   "point_err_over_garment_px": 0.015504851937294006,
+   "point_err_p90_px": 0.05922181159257889,
+   "point_err_max_px": 0.8509608507156372,
+   "point_err_over_garment_pct_of_leg": 0.002744221581821948,
+   "region_roundtrip_iou": 0.9979377594872169
+  },
+  {
+   "pair": "e97924ad2d",
+   "n_landmarks": 14,
+   "point_err_at_landmarks_px": 0.00021952534734737128,
+   "point_err_over_garment_px": 0.0022231745533645153,
+   "point_err_p90_px": 0.007989810779690742,
+   "point_err_max_px": 0.01353579293936491,
+   "point_err_over_garment_pct_of_leg": 0.0010059613363640342,
+   "region_roundtrip_iou": 1.0
+  }
+ ],
+ "median_point_err_at_landmarks_px": 0.0009458460845053196,
+ "median_point_err_over_garment_px": 0.015504851937294006,
+ "worst_point_err_px": 834.635009765625,
+ "median_region_roundtrip_iou": 0.9722240949234814,
+ "worst_region_roundtrip_iou": 0.0773619555333678,
+ "pairs_with_faithful_region_roundtrip": [
+  "2691c1a8d0",
+  "26b1041d00",
+  "443d1d4658",
+  "8d9f0df4ad",
+  "e97924ad2d"
+ ],
+ "n_pairs_with_faithful_region_roundtrip": 5
+}

@@ -1,0 +1,12 @@
+{
+ "state": "after_cut",
+ "waist_px_before": 406.0,
+ "waist_px_after": 338.0,
+ "depth_direct_px_before_frame": 8.408284023668639,
+ "depth_direct_rel": 0.02071005917159763,
+ "direct_coverage": 0.9982238010657194,
+ "direct_ok": true,
+ "depth_sam_hemfit_px": 3.5,
+ "depth_used_px": 0.0,
+ "depth_source": "measured from after-photo (NOT a prediction) [suppressed: finished hem]"
+}
