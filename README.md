@@ -62,11 +62,13 @@ Put a coin in the frame if you want any answer in centimetres.
   IoU is dominated by the kept region both systems copy pixel-for-pixel, so it is the wrong metric for what the
   product does, and it is the one that was being quoted. (EXP_0027/0028, recomputed twice: EXP_0014's 0.768/0.819/0.771
   was over 11 pairs, four of which `exclude.txt` bans, and the harness was uprighting each photo a second time.)
-  The remaining 0.857-against-0.823 gap is **not** the cut specification and **not** the renderer: it is the canonical
-  representation itself. `canon/warp.py` fits two independent TPS maps, so image→canonical→image is sub-pixel at the
-  landmarks and a median of 10.7 px (worst 835 px) over the rest of the garment; a *region* returns with a median IoU
-  of 0.638 with itself. Hand the product path the exact canonical cut region and restrict to the two pairs whose
-  round-trip is faithful, and it **matches** the evaluation path — 0.8735 against 0.8750 (EXP_0028/0029). **Fringe DEPTH is not measurable here** (EXP_0015/0016): SAM's prompted mask returns the bottom third of the fabric;
+  The remaining 0.857-against-0.823 gap is **not** the cut specification and **not** the renderer: hand the product
+  path the exact cut region and it **matches** the evaluation path (0.8735 against 0.8750, EXP_0028/0029). What it
+  lacks is knowledge of where the cut goes. Separately, `canon/warp.py` fitted two independent TPS maps, so
+  image→canonical→image was off by a median of 10.7 px over the garment — fixed by iteration (0.02 px), though **no
+  production path used that direction**, so it changed 0 pixels (EXP_0030). What *does* reach the pipeline is the
+  forward map **folding** — over 40.1% and 37.2% of two of the seven garments — which `predict.py` now detects and
+  refuses above 20%, with a re-shoot instruction. On the found-pair set that is 2 of 7 garments refused. **Fringe DEPTH is not measurable here** (EXP_0015/0016): SAM's prompted mask returns the bottom third of the fabric;
   a direct thread measurement returns garment-mask error, displaced shadows and patterned floors as "fringe"; and
   resolution does not help, because the mask-error floor scales with the image. Depth is therefore no longer used as
   evidence anywhere. **Hem roughness** (`eval/hem_texture.py`) is the fray signal that does survive its control —

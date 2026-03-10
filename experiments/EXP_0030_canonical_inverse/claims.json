@@ -1,0 +1,36 @@
+[
+ {
+  "claim": "point round trip over the garment, corrected",
+  "note_regex": "point round trip, median over the garment \\| 10\\.7 px \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/canonical_roundtrip_exact.json",
+  "path": "median_point_err_over_garment_px",
+  "tol": 0.02
+ },
+ {
+  "claim": "region round trip, corrected",
+  "note_regex": "region round trip, median IoU with itself \\| 0\\.638 \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/canonical_roundtrip_exact.json",
+  "path": "median_region_roundtrip_iou",
+  "tol": 0.001
+ },
+ {
+  "claim": "pairs whose region survives, corrected",
+  "note_regex": "pairs whose region survives \\(IoU . 0\\.90\\) \\| 2 of 7 \\| \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/canonical_roundtrip_exact.json",
+  "path": "n_pairs_with_faithful_region_roundtrip"
+ },
+ {
+  "claim": "pairs the A/B could score after the fold refusal",
+  "note_regex": "the A/B above\\nscores (\\d+) pairs and not 7",
+  "source": "experiments/pairs_predict_exact/result.json",
+  "path": "n_pairs"
+ },
+ {
+  "claim": "product path mean IoU, exact inverse arm",
+  "note_regex": "matched the evaluation path\\n\\(([0-9.]+) against",
+  "claimed": "0.8735",
+  "source": "experiments/pairs_predict_exact/result.json",
+  "path": "mean_sil_iou.product",
+  "tol": 0.05
+ }
+]

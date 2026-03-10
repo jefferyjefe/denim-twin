@@ -170,3 +170,15 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   that the representation the cut is expressed in does not survive being used. The fix — one TPS inverted numerically
   instead of two fitted independently — changes every canonical coordinate in the project and is the most valuable
   experiment on the board.
+- 2026-08-29: EXP_0030 — the canonical inverse is fixed (round trip over the garment **10.7 px → 0.02 px**, region
+  IoU 0.638 → 0.972, faithful on 5 of 7 pairs instead of 2) **and nothing in the pipeline uses it**. Grepping every
+  caller of the canonical→image direction finds `run_baseline.py`, the measurement tools, and tests — not `run_pair`
+  and not `predict`, because `apply_cut` maps garment pixels *forward* into canonical space and looks the cut up
+  there. Switching `--canonical-inverse approx|exact` changes **0 pixels** in every rendered prediction, with the flag
+  verifiably recorded either way. **EXP_0029's causal claim is corrected**: the round-trip error is real and no
+  production path pays it. What does reach the pipeline is the **forward map folding** — two garment pixels landing on
+  one canonical coordinate — over **40.1% and 37.2%** of two of the seven garments, which are exactly the two whose
+  region does not survive. `predict.py` now refuses above 20% fold with a re-shoot instruction, flags above 2%, and
+  records the fraction; on the found-pair set that is **2 of 7 garments refused outright**. That refusal is why the
+  A/B scores 5 pairs, and its numbers are **not comparable** with the seven-pair means in EXP_0027/0028 — a mistake
+  made once here before it was caught.
