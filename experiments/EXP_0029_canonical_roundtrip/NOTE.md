@@ -1,5 +1,15 @@
 # EXP_0029 — Canonical space does not give the garment back
 
+> **Corrected by EXP_0030.** The measurement below is right: the round trip is off by a median of 10.7 px over the
+> garment. The *attribution* is wrong. **No production path uses the canonical→image direction** — `canon/cut2d.apply_cut`
+> maps every garment pixel *forward* into canonical space and looks the cut up there, and neither `run_pair.py` nor
+> `predict.py` calls `canon_to_image`, `points_to_image` or `image_to_canon` at all. Switching the inverse between
+> approximate and corrected changes **zero pixels** of every rendered prediction. What does reach the pipeline is the
+> **forward** map folding, which makes two garment pixels land on one canonical coordinate — 40.1% and 37.2% of the
+> garment on two of the seven pairs, and those are exactly the two whose region does not survive. Read the section
+> below headed "Why it matters here" as a measurement of the `--cut-canon-mask` instrument's own fidelity, not of the
+> product path's representation.
+
 `docs/PLAN_PROGRESS.md` has recorded `canon/warp.py` since Phase 1 as **"sub-pixel round-trip; exact per-pixel maps"**.
 That is true, and it is true only at the landmarks.
 
