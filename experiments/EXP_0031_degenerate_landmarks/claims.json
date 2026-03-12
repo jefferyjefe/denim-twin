@@ -1,0 +1,17 @@
+[
+ {"claim": "region round trip after dropping degenerate correspondences",
+  "note_regex": "\\+ degenerate dropped \\(this\\) \\| \\*\\*[0-9.]+ px\\*\\* \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/canonical_roundtrip_dropdegen.json", "path": "median_region_roundtrip_iou", "tol": 0.001},
+ {"claim": "pairs faithful after dropping degenerate correspondences",
+  "note_regex": "\\+ degenerate dropped \\(this\\) \\| \\*\\*[0-9.]+ px\\*\\* \\| \\*\\*[0-9.]+\\*\\* \\| \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/canonical_roundtrip_dropdegen.json", "path": "n_pairs_with_faithful_region_roundtrip"},
+ {"claim": "worst point error after dropping degenerate correspondences",
+  "note_regex": "\\*\\*[0-9.]+\\*\\* \\| \\*\\*6 of 7\\*\\* \\| \\*\\*(\\d+) px\\*\\*",
+  "source": "reports/canonical_roundtrip_dropdegen.json", "path": "worst_point_err_px", "tol": 1.0},
+ {"claim": "product path unchanged by the fix",
+  "note_regex": "product path: ([0-9.]+) both arms",
+  "source": "experiments/pairs_predict_dropdegen/result.json", "path": "mean_sil_iou.product", "tol": 0.0005},
+ {"claim": "product path scores all seven pairs again",
+  "note_regex": "\\*\\*accepts all seven again\\*\\*", "claimed": "7",
+  "source": "experiments/pairs_predict_dropdegen/result.json", "path": "n_pairs"}
+]

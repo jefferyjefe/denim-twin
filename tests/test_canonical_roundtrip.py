@@ -135,3 +135,35 @@ def test_the_measured_report_says_what_the_note_says():
     assert d["median_point_err_at_landmarks_px"] < 1.0, "the landmarks are no longer exact"
     assert d["median_point_err_over_garment_px"] >= 0.0
     assert 0.0 <= d["median_region_roundtrip_iou"] <= 1.0
+
+
+def test_coincident_landmarks_are_dropped_rather_than_forcing_a_fold():
+    """EXP_0031: a garment photographed with its legs touching gives `hem_left_inner` and `hem_right_inner` within a
+    pixel of each other, and the canonical template wants them 160 px apart. A TPS asked to pull two coincident
+    points apart turns space inside out — 37.2% and 40.1% of the garment on two real pairs, against 1.5x stretch and
+    no fold on one that works."""
+    _, mask, lm = _map_and_mask()
+    touching = dict(lm)
+    for k in ("hem_right_inner", "knee_right_inner"):
+        if k in touching and k.replace("right", "left") in touching:
+            touching[k] = tuple(np.array(touching[k.replace("right", "left")]) + 1.0)
+    kept = CanonicalMap(touching, drop_degenerate=True)
+    all_of_them = CanonicalMap(touching, drop_degenerate=False)
+    assert kept.dropped, "a coincident correspondence was kept"
+    assert all_of_them.fold_fraction(mask) >= kept.fold_fraction(mask), \
+        "dropping the degenerate correspondence made the fold worse"
+
+
+def test_a_garment_with_well_separated_landmarks_loses_none_of_them():
+    """The rule must fire only where it should: on the real pairs it drops nothing on five of seven."""
+    _, mask, lm = _map_and_mask()
+    cm = CanonicalMap(lm, drop_degenerate=True)
+    assert cm.dropped == [], f"dropped landmarks from a clean garment: {cm.dropped}"
+
+
+def test_dropping_never_leaves_too_few_correspondences_to_fit():
+    """Four points is the minimum this map is built on; below that the drop is abandoned rather than fitted."""
+    _, mask, lm = _map_and_mask()
+    collapsed = {k: (100.0, 100.0) for k in lm}      # every landmark on top of every other
+    cm = CanonicalMap(collapsed, drop_degenerate=True)
+    assert len(cm.names) >= 4, f"only {len(cm.names)} correspondences left"

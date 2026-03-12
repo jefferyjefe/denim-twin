@@ -18,12 +18,33 @@ from .landmarks import CANONICAL, LANDMARKS
 
 class CanonicalMap:
     """Bidirectional TPS map between image pixels and a canonical WxH raster."""
-    def __init__(self, image_landmarks, canon_size=(1000, 1500), exact=True, iters=6, tol=0.05):
+    def __init__(self, image_landmarks, canon_size=(1000, 1500), exact=True, iters=6, tol=0.05,
+                 drop_degenerate=True, min_sep_frac=0.01):
         self.W, self.H = canon_size
         self.exact, self.iters, self.tol = exact, iters, tol
         names = [n for n in LANDMARKS if n in image_landmarks]
         src = np.array([image_landmarks[n] for n in names], np.float32)
         dst = np.array([(CANONICAL[n][0] * self.W, CANONICAL[n][1] * self.H) for n in names], np.float32)
+        # A thin-plate spline asked to pull two COINCIDENT source points apart has to turn space inside out, and that
+        # is where this project's folds come from (EXP_0031). When a garment is photographed with its legs touching,
+        # `landmarks_from_mask` puts hem_left_inner and hem_right_inner within a pixel or two of each other — and the
+        # canonical template wants them 160 px apart. Measured on the two folding pairs: stretch ratios of 135x and
+        # 106x for the inner hems and 101x and 80x for the inner knees, against 1.5x on a garment that does not fold.
+        # Two points a pixel apart carry no information about how space should stretch between them, so the second is
+        # dropped: it is a degenerate correspondence, not a measurement.
+        self.dropped = []
+        if drop_degenerate and len(src) > 3:
+            span = float(np.linalg.norm(src.max(axis=0) - src.min(axis=0)))
+            keep = []
+            for i in range(len(src)):
+                if any(np.linalg.norm(src[i] - src[j]) < min_sep_frac * span for j in keep):
+                    self.dropped.append(names[i]); continue
+                keep.append(i)
+            if len(keep) >= 4 and len(keep) < len(src):
+                src, dst = src[keep], dst[keep]
+                names = [names[i] for i in keep]
+            else:
+                self.dropped = []
         m = [cv2.DMatch(i, i, 0) for i in range(len(names))]
         # NB: OpenCV TPS applyTransformation maps the *second* shape onto the first.
         self.to_canon = cv2.createThinPlateSplineShapeTransformer()
