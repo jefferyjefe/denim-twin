@@ -1,5 +1,11 @@
 # EXP_0033 — How well can this bench measure anything? (and a wrong answer I nearly published)
 
+> **Followed up by EXP_0034.** Every measurement below stands. Its *interpretation* does not: the
+> crop-only null it compares against is built from the model's own cut line, so the null this note
+> calls "real and precisely measured" is a comparison of the prediction with itself. The 132×
+> cancellation reported here is the fingerprint of that — a genuine comparison cannot cancel that
+> well. Against an independent null the product path wins by 0.095 (4.8σ). Read EXP_0034 next.
+
 Every number this project reports is a comparison against `real_mask.png`: the real after-photo's garment mask
 warped into the before frame by `register.warp_after_to_before`. Three consecutive canonical-layer fixes
 (EXP_0029, 0030, 0031) were each correct and each changed **zero pixels** of the pair scores. The product path

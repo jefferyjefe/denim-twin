@@ -27,6 +27,11 @@ def main():
     ap.add_argument("--draws", type=int, default=40)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--scale", type=float, default=1.0)
+    ap.add_argument("--null-dir", default=None,
+                    help="compare against <dir>/<pid>/pred_median_mask.png instead of the crop-only "
+                         "keep mask. Use experiments/pairs_loonull for the INDEPENDENT null (EXP_0034); "
+                         "the default crop-only null is built from the model's own cut line and so "
+                         "cannot differ from it by more than the fringe.")
     a = ap.parse_args()
     rng = np.random.default_rng(a.seed)
     rows = []
@@ -38,7 +43,8 @@ def main():
             lma = json.load(open(src / "after_lm.json"))["landmarks"]
             amask = cv2.imread(str(src / "amask.png"), cv2.IMREAD_GRAYSCALE) > 127
             pred = cv2.imread(str(od.parent / "pred_median_mask.png"), cv2.IMREAD_GRAYSCALE) > 127
-            keep = cv2.imread(str(od / "keep_mask.png"), cv2.IMREAD_GRAYSCALE) > 127
+            kp = (Path(a.null_dir) / pid / "pred_median_mask.png") if a.null_dir else (od / "keep_mask.png")
+            keep = cv2.imread(str(kp), cv2.IMREAD_GRAYSCALE) > 127
         except Exception:
             continue
         if pred.shape != keep.shape:
@@ -66,7 +72,7 @@ def main():
         base_t = warp_mask(_tps(B, A), amask, pred.shape)
         rows.append({"pair": pid,
                      "iou_product_baseline": round(iou(pred, base_t), 4),
-                     "iou_croponly_baseline": round(iou(keep, base_t), 4),
+                     "iou_null_baseline": round(iou(keep, base_t), 4),
                      "diff_baseline": round(iou(pred, base_t) - iou(keep, base_t), 5),
                      "diff_mean": round(float(d.mean()), 5),
                      "diff_sd": round(float(d.std()), 5),
@@ -78,7 +84,7 @@ def main():
     sd = np.array([r["diff_sd"] for r in rows], float)
     db = np.array([r["diff_baseline"] for r in rows], float)
     unp = np.array([r["product_sd_unpaired"] for r in rows], float)
-    summary = {"n_pairs": len(rows), "draws": a.draws, "scale": a.scale,
+    summary = {"n_pairs": len(rows), "draws": a.draws, "scale": a.scale, "null": a.null_dir or "crop-only",
                "bench_diff": round(float(db.mean()), 5),
                "sd_of_bench_diff_paired": round(float(np.sqrt((sd ** 2).sum()) / len(sd)), 5) if len(sd) else None,
                "sd_of_bench_diff_unpaired": round(float(np.sqrt((unp ** 2).sum()) / len(unp)), 5) if len(unp) else None}
