@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "n_failed": 0,
+    "mean_iou_product": 0.8232,
+    "mean_iou_loo_null": 0.7278,
+    "mean_advantage": 0.0954,
+    "n_pairs_product_wins": 6
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "own_frac": 0.1797,
+      "loo_frac": 0.2926,
+      "iou_product": 0.7192,
+      "iou_loo_null": 0.7033,
+      "advantage": 0.0159
+    },
+    {
+      "pair": "26b1041d00",
+      "own_frac": 0.3921,
+      "loo_frac": 0.2128,
+      "iou_product": 0.8769,
+      "iou_loo_null": 0.8576,
+      "advantage": 0.0193
+    },
+    {
+      "pair": "2b0123d732",
+      "own_frac": 0.4612,
+      "loo_frac": 0.2128,
+      "iou_product": 0.7802,
+      "iou_loo_null": 0.6717,
+      "advantage": 0.1085
+    },
+    {
+      "pair": "443d1d4658",
+      "own_frac": 0.2458,
+      "loo_frac": 0.2596,
+      "iou_product": 0.8515,
+      "iou_loo_null": 0.8583,
+      "advantage": -0.0068
+    },
+    {
+      "pair": "4bfef03bd7",
+      "own_frac": 0.0,
+      "loo_frac": 0.2926,
+      "iou_product": 0.7887,
+      "iou_loo_null": 0.5286,
+      "advantage": 0.2601
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "own_frac": 0.0831,
+      "loo_frac": 0.2926,
+      "iou_product": 0.8824,
+      "iou_loo_null": 0.6958,
+      "advantage": 0.1866
+    },
+    {
+      "pair": "e97924ad2d",
+      "own_frac": 0.3395,
+      "loo_frac": 0.2128,
+      "iou_product": 0.8636,
+      "iou_loo_null": 0.7794,
+      "advantage": 0.0841
+    }
+  ]
+}
