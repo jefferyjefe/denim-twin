@@ -1,0 +1,83 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "draws": 40,
+    "scale": 1.0,
+    "bench_diff": -0.0001,
+    "sd_of_bench_diff_paired": 0.00023,
+    "sd_of_bench_diff_unpaired": 0.03041,
+    "cancellation_factor": 132.2
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "iou_product_baseline": 0.7192,
+      "iou_croponly_baseline": 0.7192,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.06819,
+      "draws": 40
+    },
+    {
+      "pair": "26b1041d00",
+      "iou_product_baseline": 0.8769,
+      "iou_croponly_baseline": 0.877,
+      "diff_baseline": -0.00015,
+      "diff_mean": 3e-05,
+      "diff_sd": 0.00032,
+      "product_sd_unpaired": 0.0278,
+      "draws": 40
+    },
+    {
+      "pair": "2b0123d732",
+      "iou_product_baseline": 0.7802,
+      "iou_croponly_baseline": 0.7802,
+      "diff_baseline": 4e-05,
+      "diff_mean": 1e-05,
+      "diff_sd": 2e-05,
+      "product_sd_unpaired": 0.13172,
+      "draws": 40
+    },
+    {
+      "pair": "443d1d4658",
+      "iou_product_baseline": 0.8515,
+      "iou_croponly_baseline": 0.8509,
+      "diff_baseline": 0.0006,
+      "diff_mean": 0.0006,
+      "diff_sd": 2e-05,
+      "product_sd_unpaired": 0.01696,
+      "draws": 40
+    },
+    {
+      "pair": "4bfef03bd7",
+      "iou_product_baseline": 0.7887,
+      "iou_croponly_baseline": 0.7893,
+      "diff_baseline": -0.00066,
+      "diff_mean": 0.00061,
+      "diff_sd": 0.00104,
+      "product_sd_unpaired": 0.10879,
+      "draws": 40
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "iou_product_baseline": 0.8824,
+      "iou_croponly_baseline": 0.8827,
+      "diff_baseline": -0.00033,
+      "diff_mean": -0.00025,
+      "diff_sd": 0.0001,
+      "product_sd_unpaired": 0.02973,
+      "draws": 40
+    },
+    {
+      "pair": "e97924ad2d",
+      "iou_product_baseline": 0.8636,
+      "iou_croponly_baseline": 0.8638,
+      "diff_baseline": -0.00018,
+      "diff_mean": 0.00073,
+      "diff_sd": 0.00119,
+      "product_sd_unpaired": 0.09758,
+      "draws": 40
+    }
+  ]
+}

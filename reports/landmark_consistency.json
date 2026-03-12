@@ -1,0 +1,243 @@
+{
+  "summary": {
+    "n_sets": 14,
+    "n_inverted": 0,
+    "n_degenerate": 4,
+    "n_clean": 10,
+    "median_fold_flagged": 0.3863,
+    "median_fold_clean": 0.0157,
+    "max_fold_clean": 0.502,
+    "median_fold_flagged_after_drop": 0.0263,
+    "median_fold_clean_after_drop": 0.0157,
+    "max_fold_after_drop": 0.8207,
+    "n_flagged_where_warp_dropped_nothing": 1
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "which": "after",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.2573,
+      "fold_fraction_dropped": 0.2573,
+      "warp_dropped": []
+    },
+    {
+      "pair": "2691c1a8d0",
+      "which": "before",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    },
+    {
+      "pair": "26b1041d00",
+      "which": "after",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.502,
+      "fold_fraction_dropped": 0.502,
+      "warp_dropped": []
+    },
+    {
+      "pair": "26b1041d00",
+      "which": "before",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0313,
+      "fold_fraction_dropped": 0.0313,
+      "warp_dropped": []
+    },
+    {
+      "pair": "2b0123d732",
+      "which": "after",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0453,
+      "fold_fraction_dropped": 0.0453,
+      "warp_dropped": []
+    },
+    {
+      "pair": "2b0123d732",
+      "which": "before",
+      "severity": "degenerate",
+      "rejected": false,
+      "excluded": false,
+      "findings": [
+        {
+          "pair": [
+            "hem_left_inner",
+            "hem_right_inner"
+          ],
+          "axis": "x",
+          "why": "legs swapped at the hem",
+          "severity": "degenerate",
+          "gap_px": 1.0
+        },
+        {
+          "pair": [
+            "hip_left",
+            "crotch"
+          ],
+          "axis": "y",
+          "why": "crotch above the hips",
+          "severity": "degenerate",
+          "gap_px": 0.0
+        }
+      ],
+      "fold_fraction_undropped": 0.4007,
+      "fold_fraction_dropped": 0.0527,
+      "warp_dropped": [
+        "hem_right_inner",
+        "knee_right_inner"
+      ]
+    },
+    {
+      "pair": "443d1d4658",
+      "which": "after",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    },
+    {
+      "pair": "443d1d4658",
+      "which": "before",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    },
+    {
+      "pair": "4bfef03bd7",
+      "which": "after",
+      "severity": "degenerate",
+      "rejected": false,
+      "excluded": false,
+      "findings": [
+        {
+          "pair": [
+            "hem_left_inner",
+            "hem_right_inner"
+          ],
+          "axis": "x",
+          "why": "legs swapped at the hem",
+          "severity": "degenerate",
+          "gap_px": 2.0
+        },
+        {
+          "pair": [
+            "crotch",
+            "hem_right_outer"
+          ],
+          "axis": "y",
+          "why": "right hem above the crotch",
+          "severity": "degenerate",
+          "gap_px": 3.0
+        }
+      ],
+      "fold_fraction_undropped": 0.8627,
+      "fold_fraction_dropped": 0.8207,
+      "warp_dropped": [
+        "hem_right_inner"
+      ]
+    },
+    {
+      "pair": "4bfef03bd7",
+      "which": "before",
+      "severity": "degenerate",
+      "rejected": false,
+      "excluded": false,
+      "findings": [
+        {
+          "pair": [
+            "hem_left_inner",
+            "hem_right_inner"
+          ],
+          "axis": "x",
+          "why": "legs swapped at the hem",
+          "severity": "degenerate",
+          "gap_px": 1.0
+        }
+      ],
+      "fold_fraction_undropped": 0.372,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": [
+        "hem_right_inner",
+        "knee_right_inner"
+      ]
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "which": "after",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.4747,
+      "fold_fraction_dropped": 0.4747,
+      "warp_dropped": []
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "which": "before",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    },
+    {
+      "pair": "e97924ad2d",
+      "which": "after",
+      "severity": "degenerate",
+      "rejected": false,
+      "excluded": false,
+      "findings": [
+        {
+          "pair": [
+            "hip_left",
+            "crotch"
+          ],
+          "axis": "y",
+          "why": "crotch above the hips",
+          "severity": "degenerate",
+          "gap_px": 0.0
+        }
+      ],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    },
+    {
+      "pair": "e97924ad2d",
+      "which": "before",
+      "severity": null,
+      "rejected": false,
+      "excluded": false,
+      "findings": [],
+      "fold_fraction_undropped": 0.0,
+      "fold_fraction_dropped": 0.0,
+      "warp_dropped": []
+    }
+  ]
+}
