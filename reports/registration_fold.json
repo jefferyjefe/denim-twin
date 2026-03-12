@@ -1,0 +1,109 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "median_fold": 0.0,
+    "max_fold": 0.0,
+    "n_over_20pct": 0,
+    "n_zero": 7
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 47.58
+    },
+    {
+      "pair": "26b1041d00",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 11.21
+    },
+    {
+      "pair": "2b0123d732",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 76.77
+    },
+    {
+      "pair": "443d1d4658",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 7.88
+    },
+    {
+      "pair": "4bfef03bd7",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 58.27
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 27.94
+    },
+    {
+      "pair": "e97924ad2d",
+      "n_landmarks": 6,
+      "names": [
+        "waist_left",
+        "waist_center",
+        "waist_right",
+        "hip_left",
+        "hip_right",
+        "crotch"
+      ],
+      "fold_fraction": 0.0,
+      "heldout_resid_px": 27.48
+    }
+  ]
+}

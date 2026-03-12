@@ -1,0 +1,20 @@
+[
+ {"claim": "no landmark set is inverted",
+  "note_regex": "\\| inverted \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/landmark_consistency.json", "path": "summary.n_inverted"},
+ {"claim": "four scored landmark sets are degenerate",
+  "note_regex": "\\| degenerate \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/landmark_consistency.json", "path": "summary.n_degenerate"},
+ {"claim": "ten scored landmark sets are clean",
+  "note_regex": "\\| clean \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/landmark_consistency.json", "path": "summary.n_clean"},
+ {"claim": "median fold of flagged sets",
+  "note_regex": "\\| flagged sets \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "reports/landmark_consistency.json", "path": "summary.median_fold_flagged", "tol": 0.0001},
+ {"claim": "median fold of clean sets",
+  "note_regex": "\\| clean sets \\| ([0-9.]+) \\|",
+  "source": "reports/landmark_consistency.json", "path": "summary.median_fold_clean", "tol": 0.0001},
+ {"claim": "worst fold surviving the degenerate drop",
+  "note_regex": "the worst fold left after the drop, \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/landmark_consistency.json", "path": "summary.max_fold_after_drop", "tol": 0.0001}
+]
