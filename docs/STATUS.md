@@ -182,3 +182,18 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   records the fraction; on the found-pair set that is **2 of 7 garments refused outright**. That refusal is why the
   A/B scores 5 pairs, and its numbers are **not comparable** with the seven-pair means in EXP_0027/0028 — a mistake
   made once here before it was caught.
+- 2026-08-29: EXP_0031 — **the fold was two landmarks sitting on top of each other.** Both folding garments were
+  photographed with their legs touching, so `landmarks_from_mask` puts the two legs' inner hem landmarks 1–2 px apart
+  while the canonical template wants them 160 px apart — a **135×** and **106×** stretch, against 1.5× on a garment
+  that does not fold. A thin-plate spline asked to pull two coincident points apart can only tear.
+  `CanonicalMap(drop_degenerate=True)` drops a landmark lying within 1% of the garment's span of one already kept:
+  fold **37.2% → 0.0%** and **40.1% → 5.3%**, nothing dropped on the other five, region round-trip IoU median
+  0.972 → **0.998** and faithful on **6 of 7** pairs (from 2 before EXP_0030). `predict.py` accepts all seven again.
+  Both A/Bs are identical **at the pixel** — 0 differing pixels across all 11 scored runs. That is the third
+  canonical-layer fix in a row that is correct, measurable at its own layer, and invisible in the pair scores: the
+  honest reading is that **the canonical layer was not what limited the scores**, and it took three experiments to
+  establish that rather than assume it. Caveat recorded: the fold refusal's 20% threshold was set before this fix, no
+  pair now comes within 15 points of it, and it has never been shown to prevent an actual error — it is insurance
+  against a latent failure, not a validated gate.
+  Still open: `2b0123d732` folds 5.3% and has the worst round trip (0.603); its landmark set puts the **crotch above
+  the hips**, a physically impossible garment, which is a landmark-extraction failure and cheap to detect.
