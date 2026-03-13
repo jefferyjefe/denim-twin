@@ -33,6 +33,10 @@ p.add_argument("--path-source", default="none", choices=["none", "fitted", "mask
                help="fitted = hand the product path the whole cut LINE the evaluation path fitted, as a canonical "
                     "polyline, instead of one height. Isolates the cut line from everything else (EXP_0028).")
 p.add_argument("--path-points", type=int, default=16, help="--path-source fitted: samples along the canonical width")
+p.add_argument("--loo-null", action="store_true",
+               help="also score the INDEPENDENT null: the cut placed at the leave-one-out median inseam "
+                    "fraction of the other pairs. The crop-only null cannot serve this purpose -- it is "
+                    "built from the model's own keep mask (EXP_0034).")
 p.add_argument("--include-excluded", action="store_true",
                help="also score pairs data/priors/exclude.txt bans (they are banned for reasons the pipeline cannot see)")
 a = p.parse_args(); os.makedirs(a.out, exist_ok=True)
@@ -141,6 +145,25 @@ if ok:
     md += (f"\n**mean over {len(ok)} pairs** — product IoU {mean(lambda r: r[2]['sil_iou_vs_real']):.3f}, "
            f"evaluation IoU {mean(lambda r: r[3]['sil_iou_vs_real']):.3f}, crop-only IoU {mean(lambda r: r[4]['sil_iou_vs_real']):.3f}; "
            f"product hem {mean(lambda r: r[2]['hem_chamfer']):.1f} px, evaluation hem {mean(lambda r: r[3]['hem_chamfer']):.1f} px\n")
+md += ("\n> **crop-only IoU is not an independent baseline.** `compare.py` builds it from the `--keep` mask "
+       "this script hands it, which is predict's OWN keep mask, so it crops at the cut line the model "
+       "predicted. With `--wash none` the fringe is 0.0 px and the two masks are the same object "
+       "(median IoU 0.99954). Do not report the product path as beating or tying it. "
+       "Use `--loo-null` for a baseline that does not see the model (EXP_0034).\n")
+
+LOO = None
+if a.loo_null and ok:
+    _r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/experiment_independent_null.py"),
+                         "--pairs", a.pairs, "--product", a.out,
+                         "--out", os.path.join(a.out, "_loonull")], capture_output=True, text=True)
+    try:
+        LOO = json.loads(_r.stdout)["summary"]
+    except Exception:
+        print("leave-one-out null failed:", (_r.stdout + _r.stderr).strip().splitlines()[-1:] or "no output")
+    if LOO:
+        md += (f"\n**independent (leave-one-out) null** — product IoU {LOO['mean_iou_product']:.4f}, "
+               f"LOO-null IoU {LOO['mean_iou_loo_null']:.4f}, advantage **{LOO['mean_advantage']:+.4f}**, "
+               f"product wins {LOO['n_pairs_product_wins']} of {LOO['n_pairs']}\n")
 open(os.path.join(a.out, "SUMMARY.md"), "w").write(md); print(md)
 # machine-readable, so a note quoting these numbers can be checked against them (tools/check_claims.py)
 if ok:
@@ -157,6 +180,10 @@ if ok:
                           "product_sil_iou": r[2]["sil_iou_vs_real"], "evaluation_sil_iou": r[3]["sil_iou_vs_real"],
                           "crop_only_sil_iou": r[4]["sil_iou_vs_real"],
                           "product_hem": r[2]["hem_chamfer"], "evaluation_hem": r[3]["hem_chamfer"]} for r in ok],
+               "crop_only_is_independent_of_the_model": False,
+               "crop_only_caveat": "built from predict's own keep mask (compare.py:42, score_predict --keep); "
+                                   "not a baseline the product path can beat or tie -- see EXP_0034",
+               "loo_null": LOO,
                "product_beats_crop_only_on": sum(1 for r in ok if r[2]["sil_iou_vs_real"] > r[4]["sil_iou_vs_real"]),
                "product_loses_to_crop_only_on": sum(1 for r in ok if r[2]["sil_iou_vs_real"] < r[4]["sil_iou_vs_real"]),
                },
