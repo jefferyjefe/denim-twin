@@ -53,3 +53,23 @@ def test_the_inseam_fraction_is_measured_from_the_after_photo():
     fitted to the ground truth. If this ever stops being true, EXP_0034's caveat is obsolete."""
     src = open(os.path.join(ROOT, "tools", "run_pair.py")).read()
     assert "mod.inseam_fraction = float(np.clip((float(np.median(_cy))" in src
+
+
+def test_score_predict_always_warns_that_crop_only_is_not_independent():
+    """The caveat is unconditional -- a future run must not be able to publish a crop-only
+    comparison without it."""
+    src = open(os.path.join(ROOT, "tools", "score_predict.py")).read()
+    assert "crop-only IoU is not an independent baseline" in src
+    assert '"crop_only_is_independent_of_the_model": False' in src
+
+
+def test_a_generated_summary_carries_the_caveat():
+    import glob
+    outs = glob.glob(os.path.join(ROOT, "experiments", "pairs_predict*", "SUMMARY.md"))
+    fresh = [p for p in outs if "crop-only IoU is not an independent baseline" in open(p).read()]
+    if not fresh:
+        pytest.skip("no SUMMARY.md regenerated since the caveat was added")
+    r = json.load(open(os.path.join(os.path.dirname(fresh[0]), "result.json")))
+    assert r["crop_only_is_independent_of_the_model"] is False
+    if r.get("loo_null"):
+        assert r["loo_null"]["mean_advantage"] > 0.05

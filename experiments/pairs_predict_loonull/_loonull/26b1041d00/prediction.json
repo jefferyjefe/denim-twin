@@ -1,0 +1,45 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/26b1041d00/before_native.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.2128,
+  "angle_deg": 0.0,
+  "removed_fraction_of_garment": 0.24474148734049292
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "below_render_resolution": true,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
+ },
+ "changed_fraction_of_kept_region": 0.00983050847457627,
+ "segmentation": {
+  "method": "coarse",
+  "score": 1.0035568475723267,
+  "area": 0.4441616766467066
+ },
+ "canonical_map": {
+  "fold_fraction": 0.03133333333333333,
+  "exact_inverse": true
+ },
+ "flags": [
+  "mask score 1.004, area 0.44 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "landmark heuristic calls this 'shorts', not full-length jeans: a shorter->shorter cut",
+  "the canonical map folds over 3.1% of the garment: the cut placement is unreliable there (EXP_0030)",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
+ ]
+}
