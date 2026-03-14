@@ -57,10 +57,18 @@ Put a coin in the frame if you want any answer in centimetres.
 - Evaluation path (`tools/run_pair.py`): before + after photo → mask → landmarks → canonical warp → cut → fringe →
   register the real after-photo → score against null baselines. One command per pair; bad inputs rejected with a reason.
 - On the 7 pairs `data/priors/exclude.txt` allows, mean silhouette IoU: **0.823 product path** (what a user gets),
-  0.857 evaluation path (which reads the real after-photo), and **0.823 crop-only null**. The product path is a dead
-  heat with cropping the photograph at the same height — it wins on 2 pairs and loses on 4, by thousandths. Silhouette
-  IoU is dominated by the kept region both systems copy pixel-for-pixel, so it is the wrong metric for what the
-  product does, and it is the one that was being quoted. (EXP_0027/0028, recomputed twice: EXP_0014's 0.768/0.819/0.771
+  0.857 evaluation path (which reads the real after-photo), and 0.823 crop-only null. **That last comparison is
+  void** (EXP_0034): `compare.py` builds the crop-only null from the `--keep` mask it is handed, and `score_predict.py`
+  hands it *predict's own* keep mask, so the "null" crops at the cut line the model predicted. The bench runs
+  `--wash none`, every prediction records `fringe_depth.median = 0.0`, and the two masks are consequently the same
+  object — median IoU 0.99954, the null never keeps a pixel the prediction drops, and on one pair they are
+  bit-identical. The "dead heat with cropping" reported here for months was the prediction compared with itself.
+  Against a null that does **not** see the model — the cut placed at the leave-one-out median inseam fraction of the
+  other pairs — the product path scores **0.8232 against 0.7278, an advantage of +0.0954 (±0.0197, 4.8σ), winning 6
+  of 7**. That is not evidence the system predicts where to cut: its only per-garment input is the inseam fraction,
+  and `run_pair.py:263` measures that from the real after-photo. It shows the pipeline renders a *supplied* cut
+  height far better than not knowing it. Silhouette IoU is still dominated by the kept region both systems copy
+  pixel-for-pixel. (EXP_0027/0028, recomputed twice: EXP_0014's 0.768/0.819/0.771
   was over 11 pairs, four of which `exclude.txt` bans, and the harness was uprighting each photo a second time.)
   The remaining 0.857-against-0.823 gap is **not** the cut specification and **not** the renderer: hand the product
   path the exact cut region and it **matches** the evaluation path (0.8735 against 0.8750, EXP_0028/0029). What it
@@ -80,8 +88,8 @@ Put a coin in the frame if you want any answer in centimetres.
   comparison measured the real hem on a mask warped into the prediction's frame, and that warp inflates its roughness
   six-fold. Measured where nothing resampled it, **6 of the 7 real hems read exactly zero** — at 241-389 px of
   waistband they are below the resolution the statistic needs, so there was never a signal to score against
-  (EXP_0025). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only) but does beat it on the
-  fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
+  (EXP_0025). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only — and that crop-only
+  figure is one of the void comparisons above) but does beat it on the fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).

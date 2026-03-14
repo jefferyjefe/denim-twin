@@ -16,6 +16,9 @@ data underneath it changed. This makes that mistake fail loudly. Each experiment
 `note_regex` pulls the number the NOTE claims (first capture group); `source` + `path` (dotted, may index lists) or
 `count` pulls what the artefact says. A claim whose source is missing is reported as UNVERIFIABLE, not as a pass.
 
+A claim may add `"note": "README.md"` to check a document other than its own experiment's NOTE.md;
+`docs/claims/*.json` holds claims that belong to no single experiment (the README's headline numbers).
+
     check_claims.py [--experiments experiments] [--quiet]     # exit 1 if any claim fails
 """
 import argparse, json, os, re, sys, glob
@@ -33,7 +36,11 @@ def dig(obj, path):
     return obj
 
 def check_one(exp_dir, c):
-    note = Path(exp_dir) / "NOTE.md"
+    # A claim normally quotes its own experiment's NOTE.md. `"note"` points at any other document,
+    # repo-relative, so the numbers in README.md and docs/ are checked by the same machinery -- those
+    # are the most-read documents and the ones a stale number does the most damage in (EXP_0034 sat
+    # wrong in the README for months).
+    note = (ROOT / c["note"]) if c.get("note") else (Path(exp_dir) / "NOTE.md")
     claimed = None
     if c.get("note_regex"):
         if not note.exists(): return "UNVERIFIABLE", "no NOTE.md", None, None
@@ -77,8 +84,11 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
     rows, bad = [], 0
-    for cf in sorted(glob.glob(os.path.join(a.experiments, "*", "claims.json"))):
-        exp = os.path.basename(os.path.dirname(cf))
+    files = [(os.path.basename(os.path.dirname(cf)), cf)
+             for cf in sorted(glob.glob(os.path.join(a.experiments, "*", "claims.json")))]
+    files += [(f"docs:{Path(cf).stem}", cf)
+              for cf in sorted(glob.glob(str(ROOT / "docs" / "claims" / "*.json")))]
+    for exp, cf in files:
         for c in json.load(open(cf)):
             status, why, claimed, actual = check_one(os.path.dirname(cf), c)
             rows.append((exp, c["claim"], status, claimed, actual, why))
