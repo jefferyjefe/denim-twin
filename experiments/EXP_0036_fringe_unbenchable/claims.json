@@ -1,0 +1,20 @@
+[
+ {"claim": "pairs with a raw edge",
+  "note_regex": "\\| raw edge \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/fringe_capable_pairs.json", "path": "summary.n_raw_edge"},
+ {"claim": "after-wash captures",
+  "note_regex": "\\| after-wash capture \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/fringe_capable_pairs.json", "path": "summary.n_after_wash"},
+ {"claim": "pairs that can show a fringe at all",
+  "note_regex": "can show a fringe\\*\\* \\| \\*\\*(\\d+)\\*\\* \\|",
+  "source": "reports/fringe_capable_pairs.json", "path": "summary.n_can_show_a_fringe"},
+ {"claim": "the bench-mean effect of turning wash on",
+  "note_regex": "bench mean moves \\+([0-9.]+) ±",
+  "source": "reports/wash_effect_paired.json", "path": "summary.bench_diff", "tol": 0.00001},
+ {"claim": "paired SD of the wash effect",
+  "note_regex": "bench mean moves \\+[0-9.]+ ± ([0-9.]+)",
+  "source": "reports/wash_effect_paired.json", "path": "summary.sd_of_bench_diff_paired", "tol": 0.00001},
+ {"claim": "cancellation factor of the wash A/B",
+  "note_regex": "cancellation factor is ([0-9.]+): high",
+  "source": "reports/wash_effect_paired.json", "path": "summary.cancellation_factor", "tol": 0.05}
+]

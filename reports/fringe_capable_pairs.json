@@ -1,0 +1,52 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "n_raw_edge": 3,
+    "n_after_wash": 1,
+    "n_can_show_a_fringe": 1
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "edge_treatment": "raw",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    },
+    {
+      "pair": "26b1041d00",
+      "edge_treatment": "cuffed",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    },
+    {
+      "pair": "2b0123d732",
+      "edge_treatment": "cuffed",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    },
+    {
+      "pair": "443d1d4658",
+      "edge_treatment": "cuffed",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    },
+    {
+      "pair": "4bfef03bd7",
+      "edge_treatment": "raw",
+      "state": "after_wash",
+      "can_show_a_fringe": true
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "edge_treatment": "cuffed",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    },
+    {
+      "pair": "e97924ad2d",
+      "edge_treatment": "raw",
+      "state": "after_cut",
+      "can_show_a_fringe": false
+    }
+  ]
+}

@@ -13,6 +13,25 @@ Good photos (any phone is fine):
 
 Photos are released under CC BY 4.0 with your GitHub username as credit (or anonymously). Only submit photos you took.
 
+## Leave the cut edge RAW, if you have the choice (added 2026-08-29)
+
+The single most useful thing a contribution can do right now. A **raw** (unfinished) cut edge is the
+only kind that frays; a cuffed or hemmed edge does not, however it is washed and however good the
+photograph is.
+
+Of the seven pairs currently in the bench, three have a raw edge and only **one** is also an
+after-wash capture — so every measurement of the fray render rests on a single garment, at 1.9σ
+(EXP_0036). Six of the seven are structurally incapable of showing a fringe, and no amount of work
+on our side changes that.
+
+So, in order of usefulness to us:
+
+1. **Raw edge, photographed after washing** — the only kind that answers the open question.
+2. Raw edge, photographed before washing — still useful; it is the baseline the fray is measured from.
+3. Cuffed or hemmed — welcome for cut-placement work, but it cannot tell us anything about fraying.
+
+If you were going to cuff them anyway, a photograph of the raw edge *before* you cuff is enough.
+
 ## Please also send one close-up of the hem (added 2026-08-29)
 
 We found (EXP_0015) that at ordinary flat-lay distance the fringe is only a few pixels deep, which is the same size as
