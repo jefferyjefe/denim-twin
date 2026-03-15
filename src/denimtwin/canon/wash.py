@@ -25,7 +25,7 @@ class WashParams:
     shrink_across_frac: float = 0.01     # across the leg (weft)
     hem_roll_mm: float = 5.0             # width of the roll shading strip on the fabric side of the cut
     roll_strength: float = 0.35          # peak darkening of L* inside the strip (0 = none)
-    lightness_shift: float = 1.5         # Lab L* added inside the garment (dye loss)
+    lightness_shift: float = 1.5         # Lab L* added inside the garment (dye loss)  scope-ok: names the cause of observed lightening; models no treatment
     chroma_scale: float = 0.97           # multiplier on Lab a*, b*
     # (no seed: every term here is deterministic — the randomness in the pipeline lives in the fringe renderer)
 

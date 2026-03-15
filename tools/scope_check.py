@@ -19,8 +19,14 @@ for f in files:
     for pat, gate in RULES:
         if re.search(pat, f) and gate not in passed: viol.append(f"{f}: requires {gate} (not passed)")
     if f.startswith("src/") and f.endswith(".py"):
-        t = (ROOT / f).read_text(errors="ignore")
-        if BANNED.search(t): viol.append(f"{f}: mentions year-two-banned treatment ({BANNED.search(t).group(0)})")
+        # Line-by-line, so one legitimate mention does not condemn the file -- and a line may opt out with
+        # `scope-ok: <reason>`. The check used to flag the very line DECLARING the ban ("bleach/dye/patch are
+        # banned in year one"), which is why CI ran it with `|| true` and it caught nothing for months. An
+        # explicit, greppable marker is auditable; a silent `|| true` is not.
+        for i, line in enumerate((ROOT / f).read_text(errors="ignore").splitlines(), 1):
+            m = BANNED.search(line)
+            if m and "scope-ok:" not in line:
+                viol.append(f"{f}:{i}: mentions year-two-banned treatment ({m.group(0)})")
 print("gates passed:", sorted(passed) or "none")
 if viol: print("SCOPE VIOLATIONS:"); [print(" -", v) for v in viol]; sys.exit(1)
 print("scope: OK")
