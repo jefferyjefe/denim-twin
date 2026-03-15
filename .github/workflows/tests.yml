@@ -8,5 +8,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - run: pip install numpy opencv-contrib-python-headless pillow pyyaml jsonschema scikit-image scipy pytest
-      - run: python -m pytest -q tests
-      - run: python tools/sentinel.py && python tools/scope_check.py && python tools/protocol_audit.py || true
+      # One gate, one exit code. This previously ran sentinel/scope_check/protocol_audit with
+      # `|| true`, so three checks could not fail the build and caught nothing for months
+      # (scope_check was flagging the line that declares its own ban). tools/verify.py runs the
+      # required checks blocking and the advisory ones as warnings; the bench needs pair
+      # artefacts that are untracked here, so it is skipped in CI.
+      - run: python tools/verify.py --no-bench

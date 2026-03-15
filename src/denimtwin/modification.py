@@ -17,7 +17,7 @@ class WashProtocol:
 
 @dataclass
 class CutModification:
-    kind: str = "cut"                         # only 'cut' in v1; bleach/dye/patch are banned in year one
+    kind: str = "cut"                         # only 'cut' in v1; bleach/dye/patch are banned in year one  scope-ok: this line declares the ban
     # cut geometry — exactly one of target_inseam_cm / inseam_fraction / cut_path must be given
     target_inseam_cm: Optional[float] = None
     inseam_fraction: Optional[float] = None   # 0 = crotch, 1 = original hem (canonical inseam coordinate)

@@ -1,0 +1,22 @@
+[
+ {"claim": "BACKLOG: the baseline the open question must beat",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "user intent, and beat\\n0\\.7278\\?", "claimed": "0.7278",
+  "source": "reports/independent_null.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
+ {"claim": "BACKLOG: advantage of rendering a supplied cut height",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "renders a supplied cut height well\" \\(\\+([0-9.]+),",
+  "source": "reports/independent_null.json", "path": "summary.mean_advantage", "tol": 0.0005},
+ {"claim": "BACKLOG: registration TPS does not fold",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "does not fold \\(([0-9.]+) on all 7\\)",
+  "source": "reports/registration_fold.json", "path": "summary.max_fold", "tol": 0.0001},
+ {"claim": "BACKLOG: paired resolution of the bench",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "paired, it resolves to ([0-9.]+)",
+  "source": "reports/paired_uncertainty.json", "path": "summary.sd_of_bench_diff_paired", "tol": 0.00001},
+ {"claim": "BACKLOG: most pixels the prediction adds over the crop",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "the crop plus ≤(\\d+) px",
+  "source": "reports/prediction_vs_croponly_masks.json", "path": "summary.max_pred_only_px"}
+]
