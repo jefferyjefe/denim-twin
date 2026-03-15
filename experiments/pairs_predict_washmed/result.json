@@ -1,0 +1,95 @@
+{
+ "n_pairs": 7,
+ "excluded_honoured": true,
+ "frac_source": "canonical",
+ "wash": "median",
+ "angle_source": "none",
+ "path_source": "none",
+ "canonical_inverse": "exact",
+ "mean_sil_iou": {
+  "product": 0.8247790931909026,
+  "evaluation": 0.8565655531979972,
+  "crop_only": 0.8248020159580645
+ },
+ "mean_hem_chamfer": {
+  "product": 20.713182188547172,
+  "evaluation": 7.848169971974946
+ },
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "state": "after_cut",
+   "product_sil_iou": 0.7191817892390958,
+   "evaluation_sil_iou": 0.7355278642013122,
+   "crop_only_sil_iou": 0.7191817892390958,
+   "product_hem": 19.0,
+   "evaluation_hem": 11.478927203065133
+  },
+  {
+   "pair": "26b1041d00",
+   "state": "after_cut",
+   "product_sil_iou": 0.8768639508070715,
+   "evaluation_sil_iou": 0.8992786492786493,
+   "crop_only_sil_iou": 0.8770106104874673,
+   "product_hem": 8.894927536231885,
+   "evaluation_hem": 2.9963503649635035
+  },
+  {
+   "pair": "2b0123d732",
+   "state": "after_cut",
+   "product_sil_iou": 0.7802271852137082,
+   "evaluation_sil_iou": 0.8470038064165307,
+   "crop_only_sil_iou": 0.7801844008043469,
+   "product_hem": 30.79876160990712,
+   "evaluation_hem": 3.8185185185185184
+  },
+  {
+   "pair": "443d1d4658",
+   "state": "after_cut",
+   "product_sil_iou": 0.8514661590043757,
+   "evaluation_sil_iou": 0.8565523031605311,
+   "crop_only_sil_iou": 0.8508623629027675,
+   "product_hem": 30.1859756097561,
+   "evaluation_hem": 27.67218122977346
+  },
+  {
+   "pair": "4bfef03bd7",
+   "state": "after_wash",
+   "product_sil_iou": 0.7997251834355663,
+   "evaluation_sil_iou": 0.8065386705307009,
+   "crop_only_sil_iou": 0.799875883654417,
+   "product_hem": 10.188202247191011,
+   "evaluation_hem": 4.459016393442623
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "state": "after_cut",
+   "product_sil_iou": 0.8824201898188093,
+   "evaluation_sil_iou": 0.958155392699601,
+   "crop_only_sil_iou": 0.8827453201704699,
+   "product_hem": 38.462287104622874,
+   "evaluation_hem": 3.1891191709844557
+  },
+  {
+   "pair": "e97924ad2d",
+   "state": "after_cut",
+   "product_sil_iou": 0.8635691948176913,
+   "evaluation_sil_iou": 0.8929021860986547,
+   "crop_only_sil_iou": 0.8637537444478877,
+   "product_hem": 7.462121212121212,
+   "evaluation_hem": 1.323076923076923
+  }
+ ],
+ "crop_only_is_independent_of_the_model": false,
+ "crop_only_caveat": "built from predict's own keep mask (compare.py:42, score_predict --keep); not a baseline the product path can beat or tie -- see EXP_0034",
+ "loo_null": {
+  "n_pairs": 7,
+  "n_failed": 0,
+  "mean_iou_product": 0.8248,
+  "mean_iou_loo_null": 0.7278,
+  "mean_advantage": 0.097,
+  "n_pairs_product_wins": 6
+ },
+ "product_beats_crop_only_on": 2,
+ "product_loses_to_crop_only_on": 4
+}

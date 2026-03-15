@@ -36,6 +36,7 @@ most found pairs lack — so it is **blocked on data**, not on code.
 | "The bench is too noisy to resolve the difference" | **wrong** — paired, it resolves to 0.00023 | EXP_0033 |
 | Landmark consistency as a fold gate | rejected; degeneracy is one cause of folding, not the cause | EXP_0032 |
 | Predicting the cut height from the garment | **not predictable**; worse than a constant on MAE and on IoU | EXP_0035 |
+| Benching the fringe render | impossible on this data: 6 of 7 pairs cannot show a fringe | EXP_0036 |
 
 ## Open, unblocked (code only)
 
@@ -46,15 +47,21 @@ most found pairs lack — so it is **blocked on data**, not on code.
   cut region closes it (0.8735 vs 0.8750), so the gap is knowledge of where the cut goes. EXP_0035
   now shows that knowledge cannot come from the garment, so this gap closes only with a user input,
   not with a better model. Not independently actionable.
-- **Fringe rendering is invisible in the bench** — with `--wash none` the fringe is 0.0 px and the
-  prediction is the crop plus ≤256 px. Any fringe claim needs a run with wash enabled *and* an
-  independent null; none has been done.
+- ~~**Fringe rendering is invisible in the bench**~~ — done, and the answer is structural
+  (EXP_0036). With `--wash none` the prediction is the crop plus ≤256 px; turning wash on moves
+  **six of seven pairs by exactly zero**: a fringe needs a raw
+  edge *and* an after-wash capture, and only 1 of 7 pairs has both. That pair gains +0.01106 ±
+  0.00576 (**1.9σ**, not significant). The fringe render is **not benchable on this data** and no
+  code change alters that. Moved to "blocked on data".
 
 ## Blocked on data
 
 - **Gate 1 repeatability** — needs a repeat capture of one garment. Nothing in the found-pair set
   is a re-capture.
 - **Fray observables** — need an after-photo with ≥600 px of waistband. Found pairs give 241–389 px.
+- **Any fringe-render claim** — needs after-wash captures of **raw-edge** cuts. Only 1 of 7 current
+  pairs qualifies, so the claim rests on n=1 (EXP_0036). `CONTRIBUTING_PAIRS.md` now asks for raw
+  edges specifically; a cuffed contribution cannot help here however good the photograph.
 - **Predicting the cut height at all** — EXP_0035's negative result holds at n=7; a genuine
   r² ≈ 0.3 would need roughly 25 pairs to separate from noise.
 - **Any heuristic threshold change** — the tuning rule (`docs/GATES.md`) requires ≥5 usable pairs

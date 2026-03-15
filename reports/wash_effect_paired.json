@@ -1,0 +1,84 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "draws": 40,
+    "scale": 1.0,
+    "null": "experiments/pairs_predict_dropdegen",
+    "bench_diff": 0.00158,
+    "sd_of_bench_diff_paired": 0.00082,
+    "sd_of_bench_diff_unpaired": 0.03039,
+    "cancellation_factor": 37.1
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "iou_product_baseline": 0.7192,
+      "iou_null_baseline": 0.7192,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.06819,
+      "draws": 40
+    },
+    {
+      "pair": "26b1041d00",
+      "iou_product_baseline": 0.8769,
+      "iou_null_baseline": 0.8769,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.0278,
+      "draws": 40
+    },
+    {
+      "pair": "2b0123d732",
+      "iou_product_baseline": 0.7802,
+      "iou_null_baseline": 0.7802,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.13172,
+      "draws": 40
+    },
+    {
+      "pair": "443d1d4658",
+      "iou_product_baseline": 0.8515,
+      "iou_null_baseline": 0.8515,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.01696,
+      "draws": 40
+    },
+    {
+      "pair": "4bfef03bd7",
+      "iou_product_baseline": 0.7997,
+      "iou_null_baseline": 0.7887,
+      "diff_baseline": 0.01106,
+      "diff_mean": 0.00161,
+      "diff_sd": 0.00576,
+      "product_sd_unpaired": 0.10856,
+      "draws": 40
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "iou_product_baseline": 0.8824,
+      "iou_null_baseline": 0.8824,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.02973,
+      "draws": 40
+    },
+    {
+      "pair": "e97924ad2d",
+      "iou_product_baseline": 0.8636,
+      "iou_null_baseline": 0.8636,
+      "diff_baseline": 0.0,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.09758,
+      "draws": 40
+    }
+  ]
+}
