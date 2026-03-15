@@ -1,0 +1,45 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/8d9f0df4ad/before_native.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.5624,
+  "angle_deg": 0.0,
+  "removed_fraction_of_garment": 0.24250907219181317
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "below_render_resolution": true,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
+ },
+ "changed_fraction_of_kept_region": 0.0018273627562011973,
+ "segmentation": {
+  "method": "coarse",
+  "score": 0.9104191064834595,
+  "area": 0.4500980851939971
+ },
+ "canonical_map": {
+  "fold_fraction": 0.0,
+  "exact_inverse": true
+ },
+ "flags": [
+  "mask score 0.910, area 0.45 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "rotated -1.2\u00b0 to upright",
+  "legs reach the frame bottom: the original hem is out of frame, so an inseam fraction is measured against the frame, not the hem",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
+ ]
+}

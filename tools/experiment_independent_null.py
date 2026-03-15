@@ -34,6 +34,10 @@ def main():
     ap.add_argument("--pairs", default=str(ROOT / "experiments/pairs"))
     ap.add_argument("--product", default=str(ROOT / "experiments/pairs_predict_dropdegen"))
     ap.add_argument("--out", default=str(ROOT / "experiments/pairs_loonull"))
+    ap.add_argument("--fracs-json", default=None,
+                    help="JSON mapping pair id -> inseam fraction to render instead of the leave-one-out "
+                         "median. Used by EXP_0035 to score a candidate PREDICTOR on the bench's own "
+                         "metric rather than on MAE.")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     ex = ROOT / "data/priors/exclude.txt"
@@ -50,10 +54,11 @@ def main():
         if f is not None:
             fracs[pid] = float(f)
 
+    override = json.load(open(a.fracs_json)) if a.fracs_json else None
     rows = []
     for pid, own in sorted(fracs.items()):
         others = [v for k, v in fracs.items() if k != pid]
-        loo = float(np.median(others))
+        loo = float(override[pid]) if override else float(np.median(others))
         src = Path(a.pairs) / pid
         od = Path(a.out) / pid
         before = src / "before_native.png"
