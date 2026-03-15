@@ -1,18 +1,34 @@
 [
- {"claim": "GATES: independent-null product IoU",
+ {
+  "claim": "GATES: independent-null product IoU",
   "note": "docs/GATES.md",
   "note_regex": "Current standing: product ([0-9.]+)",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_product", "tol": 0.0005},
- {"claim": "GATES: independent-null baseline IoU",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_product",
+  "tol": 0.0005
+ },
+ {
+  "claim": "GATES: independent-null baseline IoU",
   "note": "docs/GATES.md",
   "note_regex": "Current standing: product [0-9.]+\\nagainst ([0-9.]+),",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
- {"claim": "GATES: Gate 1 restatement quotes the baseline to beat",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_loo_null",
+  "tol": 0.0005
+ },
+ {
+  "claim": "GATES: Gate 1 restatement quotes the baseline to beat",
   "note": "docs/GATES.md",
-  "note_regex": "user intent and beat ([0-9.]+)\\.",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
- {"claim": "GATES: prediction and crop-only masks are the same object",
+  "note_regex": "from the before photo and beat ([0-9.]+)\\. It cannot",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_loo_null",
+  "tol": 0.0005
+ },
+ {
+  "claim": "GATES: prediction and crop-only masks are the same object",
   "note": "docs/GATES.md",
   "note_regex": "median IoU ([0-9.]+), one",
-  "source": "reports/prediction_vs_croponly_masks.json", "path": "summary.median_iou_pred_vs_keep", "tol": 0.00001}
+  "source": "reports/prediction_vs_croponly_masks.json",
+  "path": "summary.median_iou_pred_vs_keep",
+  "tol": 1e-05
+ }
 ]

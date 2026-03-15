@@ -30,9 +30,13 @@ Two things a baseline claim must also state, because the numbers above do not ca
   computes it, and its cancellation factor is a warning sign in its own right: a factor in the hundreds means the
   two arms are the same object, not that the comparison is precise.
 
-**Gate 1 restatement (EXP_0034):** the first genuinely predictive question this bench can pose is whether the
-pipeline can **choose** an inseam fraction from the before photo and user intent and beat 0.7278. No experiment in
-this repository has asked it; every product-path run so far has been handed the answer.
+**Gate 1 restatement (EXP_0034), answered (EXP_0035):** the first genuinely predictive question this bench could
+pose was whether the pipeline can **choose** an inseam fraction from the before photo and beat 0.7278. It cannot:
+nested leave-one-out over six shape features scores 0.6738 against the constant's 0.7278, losing on 6 of 7 pairs,
+and the seven folds pick four different features. The cut height is a style choice, not a garment property, so
+this gate should not be pursued as posed. What remains open is converting **stated user intent** into a fraction
+(a named length, a length in mm, a line marked on the photo) — not a garment feature, untested here, and blocked
+on the mm/px scale most found pairs lack.
 
 **Tuning rule (2026-08-29):** heuristic thresholds in `canon/autolm.py`, `canon/hemfit.py`, `canon/upright.py` and `canon/warp.py`
 change only when evaluated on ≥5 usable pairs with `tools/report_pairs.py` output attached to the commit.

@@ -5,17 +5,21 @@ experiment closes a line. Run `tools/verify.py` before and after any change here
 
 ## The one question that matters now
 
-**Can the pipeline choose an inseam fraction from the before photo and user intent, and beat
-0.7278?** (Gate 1 restatement, EXP_0034.) No experiment in this repository has asked it. Every
-product-path run so far has been handed the answer: the only per-garment input is the inseam
-fraction, and `run_pair.py:263` measures it from the real after-photo.
+**Answered, negatively (EXP_0035).** Gate 1's restatement asked whether the pipeline could *choose*
+an inseam fraction from the before photo and beat the constant baseline (0.7278 IoU). It cannot,
+and the reason is not a modelling failure: the cut height is a style choice, not a property of the
+garment. Six shape features, nested leave-one-out with the feature chosen inside the fold — MAE
+0.2586 against a constant's 0.1690 (53% worse), and on the bench's own metric **0.6738 against
+0.7278**, losing on 6 of 7 pairs. The seven folds pick four different features.
 
-Blocked on: nothing in code. Blocked on **judgement** — the inseam fraction is a style choice, and
-with 7 pairs spanning 0.000–0.461 there is little reason to believe it is predictable *from the
-garment*. The honest framing may be that it is a user input, not a prediction target, in which case
-the product claim is "renders a supplied cut height well" (+0.0954, 4.8σ) and Gate 1 should be
-rewritten rather than attempted. **Decide this before building a predictor** — fitting one on 7
-style-driven samples would be overfitting with a number attached.
+So the supportable product claim is EXP_0034's: given a cut height, the pipeline places and renders
+it far better than not knowing it (**+0.0954, 4.8σ**), and the inseam fraction belongs in the
+interface as a **user input** — which is how `score_predict.py`'s docstring already describes it.
+
+**What is now open in its place:** converting *stated user intent* into a fraction ("just above the
+knee", a length in mm, a line marked on the photo). That is not a garment feature and EXP_0035 says
+nothing about it. It is a conversion problem with a checkable answer, and it needs the mm/px scale
+most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Closed
 
@@ -31,6 +35,7 @@ style-driven samples would be overfitting with a number attached.
 | "Product path ties crop-only" | **void** — the null is built from the model's own keep mask | EXP_0034 |
 | "The bench is too noisy to resolve the difference" | **wrong** — paired, it resolves to 0.00023 | EXP_0033 |
 | Landmark consistency as a fold gate | rejected; degeneracy is one cause of folding, not the cause | EXP_0032 |
+| Predicting the cut height from the garment | **not predictable**; worse than a constant on MAE and on IoU | EXP_0035 |
 
 ## Open, unblocked (code only)
 
@@ -38,8 +43,9 @@ style-driven samples would be overfitting with a number attached.
   cheap waistband fix was ruled out (EXP_0026); what is named is an "is this line the waistband"
   test. This is the one pair the independent null *beats* the product path on (−0.0068, −3.6σ).
 - **The eval-vs-product gap (0.857 vs 0.823)** — EXP_0028 showed handing the product path the exact
-  cut region closes it (0.8735 vs 0.8750), so the gap is knowledge of where the cut goes, which is
-  the same question as the one at the top. Not independently actionable.
+  cut region closes it (0.8735 vs 0.8750), so the gap is knowledge of where the cut goes. EXP_0035
+  now shows that knowledge cannot come from the garment, so this gap closes only with a user input,
+  not with a better model. Not independently actionable.
 - **Fringe rendering is invisible in the bench** — with `--wash none` the fringe is 0.0 px and the
   prediction is the crop plus ≤256 px. Any fringe claim needs a run with wash enabled *and* an
   independent null; none has been done.
@@ -49,6 +55,8 @@ style-driven samples would be overfitting with a number attached.
 - **Gate 1 repeatability** — needs a repeat capture of one garment. Nothing in the found-pair set
   is a re-capture.
 - **Fray observables** — need an after-photo with ≥600 px of waistband. Found pairs give 241–389 px.
+- **Predicting the cut height at all** — EXP_0035's negative result holds at n=7; a genuine
+  r² ≈ 0.3 would need roughly 25 pairs to separate from noise.
 - **Any heuristic threshold change** — the tuning rule (`docs/GATES.md`) requires ≥5 usable pairs
   with a report attached.
 - **Found-pair channel is exhausted** (EXP_0005/0007): 32 tutorial pages → 6 cut pairs + 1 fray

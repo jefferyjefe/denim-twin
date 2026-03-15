@@ -1,0 +1,44 @@
+{
+ "image": "/Users/jefferyhuang/denim-twin/experiments/pairs/443d1d4658/before_native.png",
+ "state": "after_cut",
+ "wash_preset": "none",
+ "scale": {
+  "mm_per_px": null,
+  "source": "UNKNOWN \u2014 all lengths are pixels"
+ },
+ "cut": {
+  "inseam_fraction": 0.1917,
+  "angle_deg": 0.0,
+  "removed_fraction_of_garment": 0.45830415685275955
+ },
+ "fringe_depth": {
+  "unit": "px",
+  "median": 0.0,
+  "lo": 0.0,
+  "hi": 0.0,
+  "below_render_resolution": true,
+  "nominal_coverage": 0.8,
+  "calibrated": false,
+  "n": 0,
+  "source": "edge treatment 'raw' does not fray",
+  "prior_validated": false,
+  "prior_validation_note": "",
+  "assumed_depth_mm_sourced": 12.7
+ },
+ "changed_fraction_of_kept_region": 0.005724694249284413,
+ "segmentation": {
+  "method": "coarse",
+  "score": 0.9880238175392151,
+  "area": 0.514355821299639
+ },
+ "canonical_map": {
+  "fold_fraction": 0.0,
+  "exact_inverse": true
+ },
+ "flags": [
+  "mask score 0.988, area 0.51 of frame",
+  "mask chosen by SAM's own score, which does not detect a confidently wrong object (EXP_0018 found a back pocket returned at 0.906): look at diff.png, or use --seg consensus",
+  "rotated -3.6\u00b0 to upright",
+  "fringe depth 0.0 px is below the renderer's resolution: the three renders differ by less than a pixel of fringe and must not be read as an interval (EXP_0015 \u2014 the depth itself is a placeholder)"
+ ]
+}

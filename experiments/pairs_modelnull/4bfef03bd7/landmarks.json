@@ -1,0 +1,64 @@
+{
+ "landmarks": {
+  "waist_left": [
+   56,
+   118
+  ],
+  "waist_right": [
+   428,
+   118
+  ],
+  "waist_center": [
+   242,
+   118
+  ],
+  "hip_left": [
+   65,
+   285
+  ],
+  "hip_right": [
+   440,
+   285
+  ],
+  "crotch": [
+   252,
+   341
+  ],
+  "hem_left_outer": [
+   119,
+   965
+  ],
+  "hem_left_inner": [
+   251,
+   965
+  ],
+  "knee_left_outer": [
+   90,
+   634
+  ],
+  "knee_left_inner": [
+   251,
+   634
+  ],
+  "hem_right_outer": [
+   402,
+   965
+  ],
+  "hem_right_inner": [
+   252,
+   965
+  ],
+  "knee_right_outer": [
+   410,
+   634
+  ],
+  "knee_right_inner": [
+   252,
+   634
+  ]
+ },
+ "conf": {
+  "crotch": "prior_legs_touching",
+  "garment_type": "jeans"
+ }
+}
