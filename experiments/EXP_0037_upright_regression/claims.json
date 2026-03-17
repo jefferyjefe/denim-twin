@@ -1,0 +1,51 @@
+[
+ {
+  "claim": "uprighting off restores the IoU",
+  "note_regex": "\\*\\*uprighting off\\*\\* \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/upright_regression.json",
+  "path": "summary.arms.upright_off.sil_iou",
+  "tol": 0.0005
+ },
+ {
+  "claim": "uprighting off restores the hem chamfer",
+  "note_regex": "\\*\\*uprighting off\\*\\* \\| \\*\\*[0-9.]+\\*\\* \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/upright_regression.json",
+  "path": "summary.arms.upright_off.hem_chamfer",
+  "tol": 0.01
+ },
+ {
+  "claim": "uprighting on gives the regressed IoU",
+  "note_regex": "\\| uprighting on \\(current\\) \\| ([0-9.]+) \\|",
+  "source": "reports/upright_regression.json",
+  "path": "summary.arms.upright_on.sil_iou",
+  "tol": 0.0005
+ },
+ {
+  "claim": "correlation of rotation difference with hem error",
+  "note_regex": "\\*\\*r = \\+([0-9.]+)\\.\\*\\* The pair with the largest",
+  "source": "reports/upright_regression.json",
+  "path": "summary.corr_rotation_difference_vs_hem",
+  "tol": 0.001
+ },
+ {
+  "claim": "correlation of angle asymmetry with hem error",
+  "note_regex": "\\*\\*r = \\+([0-9.]+)\\*\\*, and the most asymmetric",
+  "source": "reports/upright_regression.json",
+  "path": "summary.corr_angle_asymmetry_vs_hem",
+  "tol": 0.001
+ },
+ {
+  "claim": "the largest rotation difference is not the worst pair",
+  "note_regex": "has the second-\\*best\\* hem error in the set",
+  "claimed": "2b0123d732",
+  "source": "reports/upright_regression.json",
+  "path": "summary.largest_rotation_difference_pair"
+ },
+ {
+  "claim": "the worst hem pair is the regressing one",
+  "note_regex": "and neither points at\\n`443d1d4658`",
+  "claimed": "443d1d4658",
+  "source": "reports/upright_regression.json",
+  "path": "summary.worst_hem_pair"
+ }
+]

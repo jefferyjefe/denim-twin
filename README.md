@@ -98,8 +98,14 @@ Put a coin in the frame if you want any answer in centimetres.
   than 8°, and it reads the **near-vertical** principal axis — reading the long axis meant a flat-laid pair of shorts
   (wider than tall) came back at ~±88° and was never corrected at all. Effect on repeatability: the shape ratios' swing
   at 8° of tilt goes **29.6% → 0.5%**. On the pairs: IoU 0.8365 → 0.8566, hem error 13.3 → 7.9 px, with **one pair
-  regressing past the bench tolerance** (443d1d4658) because before and after are uprighted independently — recorded,
-  not tuned away, and the named next step.
+  regressing past the bench tolerance** (443d1d4658) — recorded, not tuned away. EXP_0037 confirmed the cause exactly
+  (disabling uprighting on that pair reproduces the frozen baseline: IoU 0.9180 against 0.918, hem 8.92 against
+  8.916 px) and **disconfirmed the mechanism this line used to give**. "Because before and after are uprighted
+  independently" predicts that the relative rotation between the two photos drives the error; it does not
+  (**r = +0.092**, and `2b0123d732` at 23.5° of relative rotation — nearly three times this pair's 8.4° — has the
+  second-*best* hem error in the set). A hem-angle-symmetry diagnostic was tried and fails the same way
+  (r = +0.213). The mechanism is **currently unknown**, and uprighting stays on: it is justified by a directly
+  measured defect and improves the mean, and one pair does not outweigh that.
 - **Fray scores are not trustworthy at the precision they were quoted (EXP_0024).** Hem roughness counts pixel-scale
   deviations of the hem boundary, and rotating a mask creates them: at 8°, 12 of 12 finished-hem controls read as
   frayed, median false p90/waist 0.00194 — the size of EXP_0017's whole quantity and five times its margin. The real

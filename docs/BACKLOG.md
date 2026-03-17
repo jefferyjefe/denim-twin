@@ -40,9 +40,13 @@ most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Open, unblocked (code only)
 
-- **`443d1d4658` bench regression** — two documented metrics (IoU 0.918→0.857, hem 8.9→27.7). The
-  cheap waistband fix was ruled out (EXP_0026); what is named is an "is this line the waistband"
-  test. This is the one pair the independent null *beats* the product path on (−0.0068, −3.6σ).
+- **`443d1d4658` bench regression** — cause confirmed, **mechanism unknown** (EXP_0037). Disabling
+  uprighting on this pair reproduces the frozen baseline exactly (IoU 0.9180 / hem 8.92 against
+  0.918 / 8.916). Three explanations are now dead: the waistband fix (EXP_0026), independent
+  uprighting of before and after (r = +0.092), and hem-angle asymmetry (r = +0.213) — the last two
+  both point at `2b0123d732`, which has nearly the best hem error in the set. Uprighting stays on;
+  one pair does not outweigh a directly measured defect and a better mean. Still the one pair the
+  independent null beats the product path on (−0.0068, −3.6σ).
 - **The eval-vs-product gap (0.857 vs 0.823)** — EXP_0028 showed handing the product path the exact
   cut region closes it (0.8735 vs 0.8750), so the gap is knowledge of where the cut goes. EXP_0035
   now shows that knowledge cannot come from the garment, so this gap closes only with a user input,
@@ -82,6 +86,14 @@ most found pairs lack — so it is **blocked on data**, not on code.
 - **`lmcheck`'s "crotch above the hips" rule is unreachable for auto landmarks** — `autolm` searches
   `range(hip_y, bot)`, so an auto crotch can never sit above the hips. Kept for manual landmarks.
 
+## A pattern worth naming
+
+Three causal claims in this project have survived their number and failed their explanation:
+EXP_0029's canonical-inverse attribution, EXP_0033's reading of the null, and EXP_0037's uprighting
+mechanism. In each the measurement was right and the story about *why* was wrong, and in each the
+story was only caught because something downstream was checked against it. A real effect plus a
+plausible mechanism is not a finding until the mechanism predicts something that is then tested.
+
 ## Standing rules
 
 - `tools/verify.py` is the gate; CI runs it blocking (`--no-bench`).
@@ -89,3 +101,5 @@ most found pairs lack — so it is **blocked on data**, not on code.
 - Quote the **paired** uncertainty on a method difference, never the unpaired one; a cancellation
   factor in the hundreds means the two arms are the same object (EXP_0033/0034).
 - Every number in a NOTE, the README or `docs/` is checked by `tools/check_claims.py`.
+- State a mechanism only with a prediction it makes that has been checked; otherwise write
+  "mechanism unknown" (EXP_0037).

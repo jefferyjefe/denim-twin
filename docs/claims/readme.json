@@ -1,38 +1,98 @@
 [
- {"claim": "README: product path mean IoU",
+ {
+  "claim": "README: product path mean IoU",
   "note": "README.md",
   "note_regex": "mean silhouette IoU: \\*\\*([0-9.]+) product path\\*\\*",
-  "source": "experiments/pairs_predict_dropdegen/result.json", "path": "mean_sil_iou.product", "tol": 0.0005},
- {"claim": "README: evaluation path mean IoU",
+  "source": "experiments/pairs_predict_dropdegen/result.json",
+  "path": "mean_sil_iou.product",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: evaluation path mean IoU",
   "note": "README.md",
   "note_regex": "\\*\\* \\(what a user gets\\),\\n  ([0-9.]+) evaluation path",
-  "source": "experiments/pairs_predict_dropdegen/result.json", "path": "mean_sil_iou.evaluation", "tol": 0.0005},
- {"claim": "README: the crop-only null is not independent",
+  "source": "experiments/pairs_predict_dropdegen/result.json",
+  "path": "mean_sil_iou.evaluation",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: the crop-only null is not independent",
   "note": "README.md",
-  "note_regex": "\\*\\*That last comparison is\\n  void\\*\\*", "claimed": "False",
-  "source": "experiments/pairs_predict_loonull/result.json", "path": "crop_only_is_independent_of_the_model"},
- {"claim": "README: prediction and crop-only masks are the same object",
+  "note_regex": "\\*\\*That last comparison is\\n  void\\*\\*",
+  "claimed": "False",
+  "source": "experiments/pairs_predict_loonull/result.json",
+  "path": "crop_only_is_independent_of_the_model"
+ },
+ {
+  "claim": "README: prediction and crop-only masks are the same object",
   "note": "README.md",
   "note_regex": "median IoU ([0-9.]+), the null never keeps a pixel",
-  "source": "reports/prediction_vs_croponly_masks.json", "path": "summary.median_iou_pred_vs_keep", "tol": 0.00001},
- {"claim": "README: product IoU against the independent null",
+  "source": "reports/prediction_vs_croponly_masks.json",
+  "path": "summary.median_iou_pred_vs_keep",
+  "tol": 1e-05
+ },
+ {
+  "claim": "README: product IoU against the independent null",
   "note": "README.md",
   "note_regex": "the product path scores \\*\\*([0-9.]+) against",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_product", "tol": 0.0005},
- {"claim": "README: independent null IoU",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_product",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: independent null IoU",
   "note": "README.md",
   "note_regex": "scores \\*\\*[0-9.]+ against ([0-9.]+),",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
- {"claim": "README: advantage over the independent null",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_loo_null",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: advantage over the independent null",
   "note": "README.md",
   "note_regex": "an advantage of \\+([0-9.]+) \\(",
-  "source": "reports/independent_null.json", "path": "summary.mean_advantage", "tol": 0.0005},
- {"claim": "README: paired SD of that advantage",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_advantage",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: paired SD of that advantage",
   "note": "README.md",
-  "note_regex": "an advantage of \\+[0-9.]+ \\(±([0-9.]+),",
-  "source": "reports/paired_uncertainty_loonull.json", "path": "summary.sd_of_bench_diff_paired", "tol": 0.0001},
- {"claim": "README: pairs won against the independent null",
+  "note_regex": "an advantage of \\+[0-9.]+ \\(\u00b1([0-9.]+),",
+  "source": "reports/paired_uncertainty_loonull.json",
+  "path": "summary.sd_of_bench_diff_paired",
+  "tol": 0.0001
+ },
+ {
+  "claim": "README: pairs won against the independent null",
   "note": "README.md",
-  "note_regex": "winning 6\\n  of 7\\*\\*", "claimed": "6",
-  "source": "reports/independent_null.json", "path": "summary.n_pairs_product_wins"}
+  "note_regex": "winning 6\\n  of 7\\*\\*",
+  "claimed": "6",
+  "source": "reports/independent_null.json",
+  "path": "summary.n_pairs_product_wins"
+ },
+ {
+  "claim": "README: uprighting off restores this pair's IoU",
+  "note": "README.md",
+  "note_regex": "reproduces the frozen baseline: IoU ([0-9.]+) against 0\\.918",
+  "source": "reports/upright_regression.json",
+  "path": "summary.arms.upright_off.sil_iou",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: uprighting off restores this pair's hem",
+  "note": "README.md",
+  "note_regex": "hem ([0-9.]+) against\\n  8\\.916 px",
+  "source": "reports/upright_regression.json",
+  "path": "summary.arms.upright_off.hem_chamfer",
+  "tol": 0.01
+ },
+ {
+  "claim": "README: the disconfirmed mechanism's correlation",
+  "note": "README.md",
+  "note_regex": "it does not\\n  \\(\\*\\*r = \\+([0-9.]+)\\*\\*,",
+  "source": "reports/upright_regression.json",
+  "path": "summary.corr_rotation_difference_vs_hem",
+  "tol": 0.001
+ }
 ]
