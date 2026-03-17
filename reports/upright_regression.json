@@ -1,0 +1,134 @@
+{
+  "summary": {
+    "pair": "443d1d4658",
+    "arms": {
+      "upright_on": {
+        "sil_iou": 0.8566,
+        "hem_chamfer": 27.67,
+        "left_angle": 25.4,
+        "right_angle": -8.6
+      },
+      "upright_off": {
+        "sil_iou": 0.918,
+        "hem_chamfer": 8.92,
+        "left_angle": 11.4,
+        "right_angle": -11.3
+      }
+    },
+    "upright_off_restores_baseline": true,
+    "corr_rotation_difference_vs_hem": 0.092,
+    "corr_angle_asymmetry_vs_hem": 0.213,
+    "worst_hem_pair": "443d1d4658",
+    "largest_rotation_difference_pair": "2b0123d732",
+    "largest_asymmetry_pair": "2b0123d732"
+  },
+  "rotation": [
+    {
+      "pair": "2691c1a8d0",
+      "before_deg": 0.0,
+      "after_deg": -8.8,
+      "hem_chamfer": 11.48,
+      "sil_iou": 0.7355,
+      "abs_rotation_difference": 8.8
+    },
+    {
+      "pair": "26b1041d00",
+      "before_deg": 0.0,
+      "after_deg": 2.1,
+      "hem_chamfer": 3.0,
+      "sil_iou": 0.8993,
+      "abs_rotation_difference": 2.1
+    },
+    {
+      "pair": "2b0123d732",
+      "before_deg": -23.5,
+      "after_deg": 0.0,
+      "hem_chamfer": 3.82,
+      "sil_iou": 0.847,
+      "abs_rotation_difference": 23.5
+    },
+    {
+      "pair": "443d1d4658",
+      "before_deg": -3.6,
+      "after_deg": 4.8,
+      "hem_chamfer": 27.67,
+      "sil_iou": 0.8566,
+      "abs_rotation_difference": 8.4
+    },
+    {
+      "pair": "4bfef03bd7",
+      "before_deg": 0.5,
+      "after_deg": -4.8,
+      "hem_chamfer": 4.46,
+      "sil_iou": 0.8065,
+      "abs_rotation_difference": 5.3
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "before_deg": -1.2,
+      "after_deg": 1.1,
+      "hem_chamfer": 3.19,
+      "sil_iou": 0.9582,
+      "abs_rotation_difference": 2.3
+    },
+    {
+      "pair": "e97924ad2d",
+      "before_deg": -1.9,
+      "after_deg": 2.2,
+      "hem_chamfer": 1.32,
+      "sil_iou": 0.8929,
+      "abs_rotation_difference": 4.1
+    }
+  ],
+  "asymmetry": [
+    {
+      "pair": "2691c1a8d0",
+      "left_angle": -20.9,
+      "right_angle": 6.5,
+      "abs_angle_sum": 14.4,
+      "hem_chamfer": 11.48
+    },
+    {
+      "pair": "26b1041d00",
+      "left_angle": 12.6,
+      "right_angle": -9.5,
+      "abs_angle_sum": 3.1,
+      "hem_chamfer": 3.0
+    },
+    {
+      "pair": "2b0123d732",
+      "left_angle": -20.0,
+      "right_angle": 54.9,
+      "abs_angle_sum": 34.9,
+      "hem_chamfer": 3.82
+    },
+    {
+      "pair": "443d1d4658",
+      "left_angle": 25.4,
+      "right_angle": -8.6,
+      "abs_angle_sum": 16.8,
+      "hem_chamfer": 27.67
+    },
+    {
+      "pair": "4bfef03bd7",
+      "left_angle": -10.3,
+      "right_angle": 1.9,
+      "abs_angle_sum": 8.4,
+      "hem_chamfer": 4.46
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "left_angle": 21.4,
+      "right_angle": -14.4,
+      "abs_angle_sum": 7.0,
+      "hem_chamfer": 3.19
+    },
+    {
+      "pair": "e97924ad2d",
+      "left_angle": 25.1,
+      "right_angle": -19.0,
+      "abs_angle_sum": 6.1,
+      "hem_chamfer": 1.32
+    }
+  ]
+}
