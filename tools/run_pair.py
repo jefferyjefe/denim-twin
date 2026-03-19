@@ -156,6 +156,14 @@ mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.
 use = [n for n in SURVIVING if n in lma and n in lmb]
 if not a.after_lm: use = [n for n in use if not n.startswith("knee")]     # auto knees on a cut garment are meaningless
 real, rmask, resid = warp_after_to_before(af, amask, lma, lmb, bf.shape, use=use)
+from denimtwin.modification import CutModification as _CM, WashProtocol as _WP
+# A finished hem cannot fray, so a fringe mask on one is a segmentation error, not a measurement.
+# This used to be computed AFTER estimate_hems and used only to suppress RENDERING, so a spurious
+# SAM fringe on a cuffed garment still drove the hem fit -- which is what regressed 443d1d4658
+# (EXP_0037): uprighting changed whether SAM produced a fringe mask at all, switching estimate_hems
+# onto its fringe-mask branch and moving the fitted hem by 14 degrees on one leg.
+_expects = _CM(inseam_fraction=0.5, edge_treatment=a.edge_treatment,
+               wash=_WP(cycles=1 if a.state == "after_wash" else 0)).expects_fringe()
 fr_after = segment_fringe(seg, af, amask); fr_before = None
 if fr_after is not None and fr_after.sum() > 50:
     # plausibility: a fringe is a thin band. Median column depth (tip - first fringe row) must be < 15% of garment height,
@@ -165,7 +173,10 @@ if fr_after is not None and fr_after.sum() > 50:
     if dcols and np.median(dcols) > 0.15 * gh_: FLAGS.append(f"SAM fringe mask rejected: median depth {np.median(dcols):.0f}px > 15% of garment height {gh_}px"); fr_after = None
 if fr_after is not None and fr_after.sum() > 50:
     _, fr_before, _ = warp_after_to_before(af, fr_after, lma, lmb, bf.shape, use=use); cv2.imwrite(f"{O}/fringe_mask.png", fr_before.astype(np.uint8) * 255)
-legs = estimate_hems(rmask, bmask, lmb, real_img=real, fringe_mask=fr_before)
+legs = estimate_hems(rmask, bmask, lmb, real_img=real,
+                     fringe_mask=fr_before if _expects else None)
+if fr_before is not None and not _expects:
+    FLAGS.append(f"fringe mask ignored for the hem fit: edge_treatment '{a.edge_treatment}' cannot fray")
 fringe_src = "SAM" if fr_before is not None else "colour split"
 if not all(legs.get(s) and legs[s]["line"] for s in ("left", "right")): FAIL("hem fit failed on at least one leg (refusing to cut one leg only)")
 removed = cut_mask_from_lines(bmask, lmb, legs); keep = bmask & ~removed
@@ -213,9 +224,6 @@ if a.prior:
     depth_px = rel * ww; depth_source = f"prior[{a.state}] (n={n_eff}{' after excluding self' if a.exclude else ''}{', INSUFFICIENT' if n_eff < 5 else ''})"
 else:
     depth_px = depth_measured_px; depth_source = "measured from after-photo (NOT a prediction)"
-from denimtwin.modification import CutModification as _CM, WashProtocol as _WP
-_expects = _CM(inseam_fraction=0.5, edge_treatment=a.edge_treatment,
-               wash=_WP(cycles=1 if a.state == "after_wash" else 0)).expects_fringe()
 if not _expects:
     FLAGS.append(f"no fringe rendered: edge_treatment '{a.edge_treatment}' with {'a wash' if a.state == 'after_wash' else 'no wash'} does not fray (EXP_0017)")
     depth_px = 0.0; depth_source += " [suppressed: finished hem]"

@@ -1,0 +1,44 @@
+[
+ {
+  "claim": "pairs whose fringe mask is now ignored",
+  "note_regex": "Four pairs are gated",
+  "claimed": "4",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.n_gated"
+ },
+ {
+  "claim": "mean silhouette IoU before the gate",
+  "note_regex": "mean silhouette IoU ([0-9.]+) \u2192",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.mean_sil_iou_before",
+  "tol": 0.0005
+ },
+ {
+  "claim": "mean silhouette IoU after the gate",
+  "note_regex": "mean silhouette IoU [0-9.]+ \u2192 ([0-9.]+) ",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.mean_sil_iou_after",
+  "tol": 0.0005
+ },
+ {
+  "claim": "mean hem chamfer after the gate",
+  "note_regex": "mean hem chamfer [0-9.]+ \u2192 ([0-9.]+) px",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.mean_hem_after",
+  "tol": 0.01
+ },
+ {
+  "claim": "the big hem improvement",
+  "note_regex": "\\*\\*(-[0-9.]+) px\\*\\* \\|",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.best_hem_improvement_px",
+  "tol": 0.01
+ },
+ {
+  "claim": "pairs that worsened",
+  "note_regex": "one improves, three worsen slightly",
+  "claimed": "3",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.n_worsened"
+ }
+]

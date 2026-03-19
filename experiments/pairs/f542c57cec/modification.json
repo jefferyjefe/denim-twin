@@ -4,6 +4,7 @@
  "inseam_fraction": 0.0,
  "outer_fraction": null,
  "cut_path_canonical": null,
+ "cut_canon_mask_sha256": null,
  "tool": "fabric_shears",
  "garment_flat": true,
  "legs_together": false,
