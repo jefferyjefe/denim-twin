@@ -40,7 +40,14 @@ most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Open, unblocked (code only)
 
-- **`443d1d4658` bench regression** — cause confirmed, **mechanism unknown** (EXP_0037). Disabling
+- **`443d1d4658` bench regression** — ~~open~~ **closed** (EXP_0038). The mechanism was a branch,
+  not a geometry: uprighting changed whether SAM produced a fringe mask, which switched
+  `estimate_hems` onto its fringe-mask path and moved the left leg's fitted line 14°. The garment is
+  `cuffed` and cannot fray, so that path should never have run — `expects_fringe()` was computed
+  after the hem fit and gated only rendering. Gated now; the whole bench is green with **no baseline
+  re-freeze**. Residual: this pair's IoU is 0.898 against the 0.918 uprighting-off gives, so
+  uprighting still costs it something outside the hem line.
+  Historical detail (EXP_0037), cause confirmed, mechanism was then unknown: Disabling
   uprighting on this pair reproduces the frozen baseline exactly (IoU 0.9180 / hem 8.92 against
   0.918 / 8.916). Three explanations are now dead: the waistband fix (EXP_0026), independent
   uprighting of before and after (r = +0.092), and hem-angle asymmetry (r = +0.213) — the last two
@@ -85,6 +92,13 @@ most found pairs lack — so it is **blocked on data**, not on code.
   ignored via `experiments/**/*.png|jpg|jpeg`; removing them from history is the owner's call.
 - **`lmcheck`'s "crotch above the hips" rule is unreachable for auto landmarks** — `autolm` searches
   `range(hip_y, bot)`, so an auto crotch can never sit above the hips. Kept for manual landmarks.
+
+## Now open, found by EXP_0038
+
+- **The colour split in `hemfit.fabric_vs_fringe` is weaker than a spurious fringe mask.** Three
+  pairs got slightly worse when the bogus fringe was removed (Δ IoU −0.0018 to −0.0092, Δ hem +0.77
+  to +3.38 px), which means SAM's artefact was landing closer to the true hem than the colour split
+  does. Unblocked, and now visible because the thing masking it is gone.
 
 ## A pattern worth naming
 
