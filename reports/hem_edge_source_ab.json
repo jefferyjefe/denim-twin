@@ -1,0 +1,90 @@
+{
+  "summary": {
+    "n_pairs": 7,
+    "mean_sil_iou_colour": 0.8606,
+    "mean_sil_iou_mask": 0.8592,
+    "mean_hem_colour": 5.7,
+    "mean_hem_mask": 7.85,
+    "median_hem_colour": 4.46,
+    "median_hem_mask": 4.46,
+    "n_hem_improved": 5,
+    "n_hem_worsened": 1,
+    "worst_regression_pair": "2b0123d732",
+    "worst_regression_hem_px": 20.08,
+    "adopted": false,
+    "mean_hem_delta": 2.15,
+    "median_hem_delta": 0.0
+  },
+  "rows": [
+    {
+      "pair": "2691c1a8d0",
+      "edge_treatment": "raw",
+      "sil_iou_colour": 0.7328,
+      "sil_iou_mask": 0.7359,
+      "hem_colour": 12.45,
+      "hem_mask": 11.44,
+      "d_sil_iou": 0.0031,
+      "d_hem": -1.01
+    },
+    {
+      "pair": "26b1041d00",
+      "edge_treatment": "cuffed",
+      "sil_iou_colour": 0.8993,
+      "sil_iou_mask": 0.8994,
+      "hem_colour": 3.0,
+      "hem_mask": 2.97,
+      "d_sil_iou": 0.0001,
+      "d_hem": -0.03
+    },
+    {
+      "pair": "2b0123d732",
+      "edge_treatment": "cuffed",
+      "sil_iou_colour": 0.8378,
+      "sil_iou_mask": 0.817,
+      "hem_colour": 7.2,
+      "hem_mask": 27.27,
+      "d_sil_iou": -0.0208,
+      "d_hem": 20.08
+    },
+    {
+      "pair": "443d1d4658",
+      "edge_treatment": "cuffed",
+      "sil_iou_colour": 0.8984,
+      "sil_iou_mask": 0.9028,
+      "hem_colour": 7.54,
+      "hem_mask": 4.95,
+      "d_sil_iou": 0.0044,
+      "d_hem": -2.59
+    },
+    {
+      "pair": "4bfef03bd7",
+      "edge_treatment": "raw",
+      "sil_iou_colour": 0.8065,
+      "sil_iou_mask": 0.8065,
+      "hem_colour": 4.46,
+      "hem_mask": 4.46,
+      "d_sil_iou": 0.0,
+      "d_hem": 0.0
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "edge_treatment": "cuffed",
+      "sil_iou_colour": 0.9563,
+      "sil_iou_mask": 0.9595,
+      "hem_colour": 3.96,
+      "hem_mask": 2.59,
+      "d_sil_iou": 0.0031,
+      "d_hem": -1.36
+    },
+    {
+      "pair": "e97924ad2d",
+      "edge_treatment": "raw",
+      "sil_iou_colour": 0.8929,
+      "sil_iou_mask": 0.8934,
+      "hem_colour": 1.32,
+      "hem_mask": 1.27,
+      "d_sil_iou": 0.0005,
+      "d_hem": -0.05
+    }
+  ]
+}

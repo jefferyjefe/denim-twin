@@ -1,0 +1,20 @@
+[
+ {"claim": "mean hem chamfer with the colour split",
+  "note_regex": "Mean hem chamfer ([0-9.]+) →",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.mean_hem_colour", "tol": 0.01},
+ {"claim": "mean hem chamfer with the mask edge",
+  "note_regex": "Mean hem chamfer [0-9.]+ → ([0-9.]+) px — worse",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.mean_hem_mask", "tol": 0.01},
+ {"claim": "pairs improved by the mask edge",
+  "note_regex": "Better on (\\d+) of 7 pairs",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.n_hem_improved"},
+ {"claim": "the deciding regression",
+  "note_regex": "alone costs \\+([0-9.]+) px",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.worst_regression_hem_px", "tol": 0.01},
+ {"claim": "the pair that decides it",
+  "note_regex": "`(2b0123d732)` alone costs",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.worst_regression_pair"},
+ {"claim": "the change was not adopted",
+  "note_regex": "\\*\\*It is not adopted\\.\\*\\*", "claimed": "False",
+  "source": "reports/hem_edge_source_ab.json", "path": "summary.adopted"}
+]
