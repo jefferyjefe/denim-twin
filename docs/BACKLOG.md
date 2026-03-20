@@ -37,6 +37,8 @@ most found pairs lack — so it is **blocked on data**, not on code.
 | Landmark consistency as a fold gate | rejected; degeneracy is one cause of folding, not the cause | EXP_0032 |
 | Predicting the cut height from the garment | **not predictable**; worse than a constant on MAE and on IoU | EXP_0035 |
 | Benching the fringe render | impossible on this data: 6 of 7 pairs cannot show a fringe | EXP_0036 |
+| `443d1d4658` bench regression | fixed: a cuffed garment's hem was measured from a spurious fringe | EXP_0038 |
+| Mask edge instead of the colour split | tested, **not adopted**; one pair decides it either way | EXP_0039 |
 
 ## Open, unblocked (code only)
 
@@ -93,12 +95,14 @@ most found pairs lack — so it is **blocked on data**, not on code.
 - **`lmcheck`'s "crotch above the hips" rule is unreachable for auto landmarks** — `autolm` searches
   `range(hip_y, bot)`, so an auto crotch can never sit above the hips. Kept for manual landmarks.
 
-## Now open, found by EXP_0038
+## The hem edge source (EXP_0038 → EXP_0039)
 
-- **The colour split in `hemfit.fabric_vs_fringe` is weaker than a spurious fringe mask.** Three
-  pairs got slightly worse when the bogus fringe was removed (Δ IoU −0.0018 to −0.0092, Δ hem +0.77
-  to +3.38 px), which means SAM's artefact was landing closer to the true hem than the colour split
-  does. Unblocked, and now visible because the thing masking it is gone.
+EXP_0038 found that SAM's spurious fringe had been landing closer to the true hem than
+`hemfit.fabric_vs_fringe`'s colour split does. The principled follow-up — a garment that cannot
+fray has no fringe to exclude, so take the fabric edge from the mask — was tested on all seven
+pairs and **not adopted** (EXP_0039): better on 5 of 7, but mean hem 5.70 → 7.85 px because
+`2b0123d732` alone costs +20.08 px, the same size as EXP_0038's win. Neither edge source is right
+in general and there is no principled per-garment rule available at n=7. **Blocked on data.**
 
 ## A pattern worth naming
 
