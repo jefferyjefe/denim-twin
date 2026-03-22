@@ -92,6 +92,29 @@ Put a coin in the frame if you want any answer in centimetres.
   figure is one of the void comparisons above) but does beat it on the fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
+- **The cut height is not predictable from the garment (EXP_0035).** With the crop-only null void, the first
+  genuinely predictive question this bench could pose was whether the pipeline can *choose* an inseam fraction and
+  beat the constant baseline. It cannot. Six shape features, nested leave-one-out with the feature chosen inside the
+  fold: MAE **0.2586** against a constant's **0.1690**, and on the bench's own metric **0.6738 against 0.7278**,
+  losing on 6 of 7 pairs — and the seven folds pick four different features. In-sample the best feature reaches
+  r² = 0.32, which with 7 points and 6 candidates is roughly what noise produces. How short someone cuts their jeans
+  is a style choice, not a fact about the jeans, so the inseam fraction belongs in the interface as a **user input**.
+  What remains open is converting *stated* intent (a named length, mm, a marked line) — untested, and blocked on the
+  mm/px scale most found pairs lack.
+- **The fringe render is unbenchable here, and that is the data's fault (EXP_0036).** A fringe needs a raw cut edge
+  *and* an after-wash capture; of the 7 scored pairs, 3 have a raw edge and **1** has both. Turning wash on moves six
+  of seven pairs by *exactly* zero. The whole effect is one garment: +0.01106 ± 0.00576, **1.9σ** — not significant.
+  No code change alters this; `CONTRIBUTING_PAIRS.md` now asks specifically for raw (unfinished) hems.
+- **A cuffed garment was having its hem measured from a fringe (EXP_0037/0038).** The long-open `443d1d4658`
+  regression turned out to be a branch, not a geometry: uprighting changed whether SAM produced a fringe mask, which
+  switched `hemfit.estimate_hems` onto its fringe-mask path and moved one leg's fitted line 14°. That path should
+  never have run — the garment is `cuffed` and cannot fray, and `expects_fringe()` was computed *after* the hem fit
+  and gated only rendering. Gated now: mean hem chamfer **7.85 → 5.70 px**, mean IoU 0.8566 → 0.8606, and the whole
+  bench is green for the first time **with no baseline re-freeze**. Bench tolerances are coarse (0.03 IoU, 5 px hem),
+  so "green" means no coarse regression, not precision. Three pairs got slightly *worse*, which is its own finding:
+  SAM's artefact had been landing closer to the true hem than the colour split does. Taking the mask edge instead was
+  tested on all seven pairs and **not adopted** (EXP_0039) — better on 5 of 7, but `2b0123d732` alone costs +20.08 px
+  and the mean worsens.
 - Data: 32 found tutorial pages → 6 cut pairs + 1 fray pair; that channel is exhausted (EXP_0005/0007).
   Contributed after-wash photos with a coin in frame are the only lever left (`CONTRIBUTING_PAIRS.md`).
 - Camera tilt (EXP_0022/0023): the pipeline now uprights every photo (`canon/upright.py`), not only those tilted more
