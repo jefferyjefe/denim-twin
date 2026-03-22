@@ -36,3 +36,32 @@ def test_one_pair_decides_the_result():
     s = _r()
     assert s["worst_regression_hem_px"] > 15
     assert s["worst_regression_pair"] == "2b0123d732"
+
+
+def test_the_regression_is_localised_to_one_band_on_one_pair():
+    """Not spread across the hem: 78 columns of a garment spanning 156-425. If a future change
+    spreads it, the 'one deciding pair' framing in EXP_0039 no longer holds."""
+    p = os.path.join(ROOT, "reports", "hem_edge_localisation.json")
+    if not os.path.exists(p):
+        pytest.skip("hem_edge_localisation.json not generated")
+    s = json.load(open(p))["summary"]
+    assert s["n_pairs_systematically_affected"] == 1
+    assert s["affected_pair"] == "2b0123d732"
+
+
+def test_gap_fraction_does_not_explain_the_band():
+    """Falsified directly: the pair with the LEAST between-leg gap near the hem has the smallest
+    shift. Kept as a test so the explanation is not quietly revived."""
+    p = os.path.join(ROOT, "reports", "hem_edge_localisation.json")
+    if not os.path.exists(p):
+        pytest.skip("hem_edge_localisation.json not generated")
+    d = json.load(open(p))
+    rows = {r["pair"]: r for r in d["rows"]}
+    least_gap = min((r for r in d["rows"] if r["gap_pct_near_hem"] is not None),
+                    key=lambda r: r["gap_pct_near_hem"])
+    assert least_gap["n_cols_shift_over_40"] < rows["2b0123d732"]["n_cols_shift_over_40"]
+
+
+def test_the_note_records_the_band_as_unexplained():
+    note = open(os.path.join(ROOT, "experiments", "EXP_0039_hem_edge_source", "NOTE.md")).read()
+    assert "localised but unexplained" in note

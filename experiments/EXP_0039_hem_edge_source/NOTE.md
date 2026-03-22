@@ -54,6 +54,36 @@ pass, so the discriminator would need to be measured on far more than one negati
 n=7 with one deciding pair, anything fitted here would be fitted to that pair. Blocked on data, like
 most of what is left.
 
+
+## Addendum — where the 20 px lives, and three explanations that do not
+
+The regression is not spread across `2b0123d732`'s hem. Comparing the two arms' fitted cut lines
+column by column, the shift is **≈0 px on six of seven pairs** and on `2b0123d732` is confined to
+**78 columns, x = 281–363** — the middle of a garment spanning x = 156–425 — where the mask edge
+sits up to **120 px** below the colour-split edge. Everywhere else on that garment the two agree.
+(One isolated column on `2691c1a8d0` shifts 195 px; a single column is not a systematic shift, and
+it moves that pair's score by 4 px at the 90th percentile.)
+
+So the colour split is not generally better on this pair. It rescues one central band.
+
+Three explanations for that band were tested and none survives:
+
+- **The rolled cuff.** The garment is cuffed, and a cuff gives two candidate edges — the fold and
+  the bottom. But the cuff is roughly 30 px of a 757 px frame, and the shift reaches 120 px.
+- **The legs were photographed touching** (true of this pair, EXP_0031, and the cause of its
+  canonical fold). But the between-leg gap is present on 74.5% of rows from crotch to hem, and near
+  the hem specifically it is 21.4% — against 9.1% on `8d9f0df4ad` and **0.0%** on `2691c1a8d0`,
+  neither of which shows the shift.
+- **Gap fraction near the hem as a discriminator.** Directly falsified by the line above: the pair
+  with the *least* gap near the hem has the *smallest* shift.
+
+So the band is **localised but unexplained**. Recording it that way rather than attaching the most
+appealing of three dead stories — the standing rule from EXP_0037.
+
+This sharpens what "blocked on data" means here. There may well be a principled rule for when the
+mask can be trusted at the hem, but the only positive example of it failing is 78 columns of one
+garment, and nothing measured so far separates that garment from the six that are fine.
+
 ## Files
 
 - `reports/hem_edge_source_ab.json`

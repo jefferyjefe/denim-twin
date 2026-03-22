@@ -1,20 +1,67 @@
 [
- {"claim": "mean hem chamfer with the colour split",
-  "note_regex": "Mean hem chamfer ([0-9.]+) →",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.mean_hem_colour", "tol": 0.01},
- {"claim": "mean hem chamfer with the mask edge",
-  "note_regex": "Mean hem chamfer [0-9.]+ → ([0-9.]+) px — worse",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.mean_hem_mask", "tol": 0.01},
- {"claim": "pairs improved by the mask edge",
+ {
+  "claim": "mean hem chamfer with the colour split",
+  "note_regex": "Mean hem chamfer ([0-9.]+) \u2192",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.mean_hem_colour",
+  "tol": 0.01
+ },
+ {
+  "claim": "mean hem chamfer with the mask edge",
+  "note_regex": "Mean hem chamfer [0-9.]+ \u2192 ([0-9.]+) px \u2014 worse",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.mean_hem_mask",
+  "tol": 0.01
+ },
+ {
+  "claim": "pairs improved by the mask edge",
   "note_regex": "Better on (\\d+) of 7 pairs",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.n_hem_improved"},
- {"claim": "the deciding regression",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.n_hem_improved"
+ },
+ {
+  "claim": "the deciding regression",
   "note_regex": "alone costs \\+([0-9.]+) px",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.worst_regression_hem_px", "tol": 0.01},
- {"claim": "the pair that decides it",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.worst_regression_hem_px",
+  "tol": 0.01
+ },
+ {
+  "claim": "the pair that decides it",
   "note_regex": "`(2b0123d732)` alone costs",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.worst_regression_pair"},
- {"claim": "the change was not adopted",
-  "note_regex": "\\*\\*It is not adopted\\.\\*\\*", "claimed": "False",
-  "source": "reports/hem_edge_source_ab.json", "path": "summary.adopted"}
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.worst_regression_pair"
+ },
+ {
+  "claim": "the change was not adopted",
+  "note_regex": "\\*\\*It is not adopted\\.\\*\\*",
+  "claimed": "False",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.adopted"
+ },
+ {
+  "claim": "columns carrying the regression",
+  "note_regex": "\\*\\*(\\d+) columns, x = 281\u2013363\\*\\*",
+  "source": "reports/hem_edge_localisation.json",
+  "path": "summary.affected_cols"
+ },
+ {
+  "claim": "the largest shift in that band",
+  "note_regex": "sits up to \\*\\*(\\d+) px\\*\\* below",
+  "source": "reports/hem_edge_localisation.json",
+  "path": "summary.affected_max_shift_px"
+ },
+ {
+  "claim": "pairs systematically affected",
+  "note_regex": "shift is \\*\\*\u22480 px on six of seven pairs\\*\\*",
+  "claimed": "1",
+  "source": "reports/hem_edge_localisation.json",
+  "path": "summary.n_pairs_systematically_affected"
+ },
+ {
+  "claim": "the isolated single-column outlier",
+  "note_regex": "on `2691c1a8d0` shifts (\\d+) px",
+  "source": "reports/hem_edge_localisation.json",
+  "path": "summary.largest_single_column_outlier_px"
+ }
 ]
