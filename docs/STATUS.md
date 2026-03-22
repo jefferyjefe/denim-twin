@@ -1,5 +1,16 @@
 # Status — 2026-08-29 (end of first autonomous hour)
 
+> **Correction (EXP_0034).** Entries below dated 2026-08-29 report the product path as "a dead heat with
+> crop-only". That comparison is **void**: the crop-only null is built from predict's own keep mask
+> (`compare.py:42` + `score_predict.py --keep`), so it crops at the cut line the model predicted — the
+> prediction compared with itself. Any "dead heat", "0.768 against 0.771", or "0.8026 against 0.8026" below
+> should be read with that in mind. Entries are left as written because this file is a dated log; the current
+> position is in README.md, docs/BACKLOG.md and EXP_0034.
+>
+> **Correction (EXP_0037).** Any entry attributing 443d1d4658's bench regression to before and after being
+> uprighted independently states a mechanism that was later disconfirmed (r = +0.092 across pairs). EXP_0038
+> found the actual cause: a spurious SAM fringe mask driving the hem fit on a garment that cannot fray.
+
 ## Gates
 gate_0 ✔, **gate_2 ✔ for the pixel-copy configuration (nothing outside the cut changes). It does NOT cover `predict.py --wash median`, whose shrink/dye-loss terms alter kept pixels by design — that run reports `changed_fraction_of_kept_region` instead**. Phase 3 started: template v0 (EXP_0010) and v1 boundary-Chamfer refinement (EXP_0011, mixed A/B on 7 pairs, opt-in only).
 

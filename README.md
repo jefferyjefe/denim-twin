@@ -61,10 +61,10 @@ Put a coin in the frame if you want any answer in centimetres.
   void** (EXP_0034): `compare.py` builds the crop-only null from the `--keep` mask it is handed, and `score_predict.py`
   hands it *predict's own* keep mask, so the "null" crops at the cut line the model predicted. The bench runs
   `--wash none`, every prediction records `fringe_depth.median = 0.0`, and the two masks are consequently the same
-  object — median IoU 0.99954, the null never keeps a pixel the prediction drops, and on one pair they are
+  object — median IoU 0.99959, the null never keeps a pixel the prediction drops, and on one pair they are
   bit-identical. The "dead heat with cropping" reported here for months was the prediction compared with itself.
   Against a null that does **not** see the model — the cut placed at the leave-one-out median inseam fraction of the
-  other pairs — the product path scores **0.8232 against 0.7278, an advantage of +0.0954 (±0.0197, 4.8σ), winning 6
+  other pairs — the product path scores **0.8255 against 0.7302, an advantage of +0.0953 (±0.0204, 4.7σ), winning 7
   of 7**. That is not evidence the system predicts where to cut: its only per-garment input is the inseam fraction,
   and `run_pair.py:263` measures that from the real after-photo. It shows the pipeline renders a *supplied* cut
   height far better than not knowing it. Silhouette IoU is still dominated by the kept region both systems copy
@@ -95,8 +95,8 @@ Put a coin in the frame if you want any answer in centimetres.
 - **The cut height is not predictable from the garment (EXP_0035).** With the crop-only null void, the first
   genuinely predictive question this bench could pose was whether the pipeline can *choose* an inseam fraction and
   beat the constant baseline. It cannot. Six shape features, nested leave-one-out with the feature chosen inside the
-  fold: MAE **0.2586** against a constant's **0.1690**, and on the bench's own metric **0.6738 against 0.7278**,
-  losing on 6 of 7 pairs — and the seven folds pick four different features. In-sample the best feature reaches
+  fold: MAE **0.3066** against a constant's **0.1804**, and on the bench's own metric **0.6584 against 0.7302**,
+  losing on 7 of 7 pairs — and the seven folds pick four different features. In-sample the best feature reaches
   r² = 0.32, which with 7 points and 6 candidates is roughly what noise produces. How short someone cuts their jeans
   is a style choice, not a fact about the jeans, so the inseam fraction belongs in the interface as a **user input**.
   What remains open is converting *stated* intent (a named length, mm, a marked line) — untested, and blocked on the

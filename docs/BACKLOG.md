@@ -6,14 +6,14 @@ experiment closes a line. Run `tools/verify.py` before and after any change here
 ## The one question that matters now
 
 **Answered, negatively (EXP_0035).** Gate 1's restatement asked whether the pipeline could *choose*
-an inseam fraction from the before photo and beat the constant baseline (0.7278 IoU). It cannot,
+an inseam fraction from the before photo and beat the constant baseline (0.7302 IoU). It cannot,
 and the reason is not a modelling failure: the cut height is a style choice, not a property of the
 garment. Six shape features, nested leave-one-out with the feature chosen inside the fold — MAE
-0.2586 against a constant's 0.1690 (53% worse), and on the bench's own metric **0.6738 against
-0.7278**, losing on 6 of 7 pairs. The seven folds pick four different features.
+0.3066 against a constant's 0.1804 (70% worse), and on the bench's own metric **0.6584 against
+0.7302**, losing on 7 of 7 pairs. The seven folds pick four different features.
 
 So the supportable product claim is EXP_0034's: given a cut height, the pipeline places and renders
-it far better than not knowing it (**+0.0954, 4.8σ**), and the inseam fraction belongs in the
+it far better than not knowing it (**+0.0953, 4.7σ**), and the inseam fraction belongs in the
 interface as a **user input** — which is how `score_predict.py`'s docstring already describes it.
 
 **What is now open in its place:** converting *stated user intent* into a fraction ("just above the

@@ -2,7 +2,7 @@
 
 **This is a prediction, not a measurement.** No after-photo exists for this garment.
 
-- cut: inseam fraction **0.022** — removes 63% of the garment
+- cut: inseam fraction **0.068** — removes 60% of the garment
 - state: **after_cut**
 - scale: **unknown** — every length below is in pixels
 - fringe depth: **0.0 px** (80% interval 0.0–0.0 px) from edge treatment 'raw' does not fray
@@ -21,4 +21,4 @@ flags: mask score 0.994, area 0.46 of frame; mask chosen by SAM's own score, whi
 | `modification.json` | the modification as structured parameters (§4.5) |
 | `prediction.json` | machine-readable prediction + provenance |
 
-Outside the cut region, 1.9% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).
+Outside the cut region, 1.8% of kept pixels differ from the input photo (a strict pixel copy: only the abraded band at the cut edge).

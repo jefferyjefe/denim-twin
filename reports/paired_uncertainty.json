@@ -4,20 +4,20 @@
     "draws": 40,
     "scale": 1.0,
     "null": "crop-only",
-    "bench_diff": -0.0001,
+    "bench_diff": -0.00017,
     "sd_of_bench_diff_paired": 0.00023,
-    "sd_of_bench_diff_unpaired": 0.03041,
-    "cancellation_factor": 132.2
+    "sd_of_bench_diff_unpaired": 0.03046,
+    "cancellation_factor": 132.4
   },
   "rows": [
     {
       "pair": "2691c1a8d0",
-      "iou_product_baseline": 0.7192,
-      "iou_null_baseline": 0.7192,
+      "iou_product_baseline": 0.7189,
+      "iou_null_baseline": 0.7189,
       "diff_baseline": 0.0,
       "diff_mean": 0.0,
       "diff_sd": 0.0,
-      "product_sd_unpaired": 0.06819,
+      "product_sd_unpaired": 0.06817,
       "draws": 40
     },
     {
@@ -32,22 +32,22 @@
     },
     {
       "pair": "2b0123d732",
-      "iou_product_baseline": 0.7802,
-      "iou_null_baseline": 0.7802,
-      "diff_baseline": 4e-05,
-      "diff_mean": 1e-05,
-      "diff_sd": 2e-05,
-      "product_sd_unpaired": 0.13172,
+      "iou_product_baseline": 0.7791,
+      "iou_null_baseline": 0.7791,
+      "diff_baseline": 1e-05,
+      "diff_mean": 0.0,
+      "diff_sd": 0.0,
+      "product_sd_unpaired": 0.1317,
       "draws": 40
     },
     {
       "pair": "443d1d4658",
-      "iou_product_baseline": 0.8515,
-      "iou_null_baseline": 0.8509,
-      "diff_baseline": 0.0006,
-      "diff_mean": 0.0006,
-      "diff_sd": 2e-05,
-      "product_sd_unpaired": 0.01696,
+      "iou_product_baseline": 0.8717,
+      "iou_null_baseline": 0.8716,
+      "diff_baseline": 0.00011,
+      "diff_mean": 7e-05,
+      "diff_sd": 8e-05,
+      "product_sd_unpaired": 0.02067,
       "draws": 40
     },
     {
@@ -62,12 +62,12 @@
     },
     {
       "pair": "8d9f0df4ad",
-      "iou_product_baseline": 0.8824,
-      "iou_null_baseline": 0.8827,
-      "diff_baseline": -0.00033,
-      "diff_mean": -0.00025,
-      "diff_sd": 0.0001,
-      "product_sd_unpaired": 0.02973,
+      "iou_product_baseline": 0.8797,
+      "iou_null_baseline": 0.88,
+      "diff_baseline": -0.00034,
+      "diff_mean": -0.00028,
+      "diff_sd": 8e-05,
+      "product_sd_unpaired": 0.03043,
       "draws": 40
     },
     {

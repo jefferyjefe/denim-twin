@@ -66,8 +66,7 @@
  {
   "claim": "README: pairs won against the independent null",
   "note": "README.md",
-  "note_regex": "winning 6\\n  of 7\\*\\*",
-  "claimed": "6",
+  "note_regex": "winning (\\d)\\n  of 7\\*\\*",
   "source": "reports/independent_null.json",
   "path": "summary.n_pairs_product_wins"
  },
@@ -106,7 +105,7 @@
  {
   "claim": "README: predictor IoU vs constant",
   "note": "README.md",
-  "note_regex": "\\*\\*([0-9.]+) against 0\\.7278\\*\\*",
+  "note_regex": "metric \\*\\*([0-9.]+) against 0\\.7302\\*\\*",
   "source": "reports/frac_predictor_vs_constant.json",
   "path": "summary.mean_iou_predictor",
   "tol": 0.0005

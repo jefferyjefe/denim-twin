@@ -4,7 +4,7 @@
 > crop-only null it compares against is built from the model's own cut line, so the null this note
 > calls "real and precisely measured" is a comparison of the prediction with itself. The 132×
 > cancellation reported here is the fingerprint of that — a genuine comparison cannot cancel that
-> well. Against an independent null the product path wins by 0.095 (4.8σ). Read EXP_0034 next.
+> well. Against an independent null the product path wins by 0.095 (4.7σ). Read EXP_0034 next.
 
 Every number this project reports is a comparison against `real_mask.png`: the real after-photo's garment mask
 warped into the before frame by `register.warp_after_to_before`. Three consecutive canonical-layer fixes
@@ -64,12 +64,12 @@ that same perturbed truth; take the difference.
 
 | | SD of the bench difference |
 |---|---|
-| unpaired (wrong) | 0.03041 |
+| unpaired (wrong) | 0.03046 |
 | **paired (correct)** | **0.00023** |
 
-Pairing cancels **132×** of the registration noise. So:
+Pairing cancels **132.4×** of the registration noise. So:
 
-**product − crop-only = -0.00010 ± 0.00023.**
+**product − crop-only = -0.00017 ± 0.00023.**
 
 The bench is not blunt. It resolves method differences to about 0.0005 at 2σ — and against that ruler, the product
 path being no better than cropping is a **real, precisely measured null**, not a measurement floor. Every pair

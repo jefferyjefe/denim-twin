@@ -82,6 +82,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--experiments", default=str(ROOT / "experiments"))
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--allow-unverifiable", action="store_true",
+                    help="do not fail on claims whose artefact is missing (deliberate partial runs only)")
     a = ap.parse_args()
     rows, bad = [], 0
     files = [(os.path.basename(os.path.dirname(cf)), cf)
@@ -101,8 +103,16 @@ def main():
         line = f"{status:13s} {exp:{w}s}  {claim}"
         if status != "OK": line += f"   [note says {claimed}, artefact says {actual}] {why}"
         print(line)
+    unver = sum(1 for r in rows if r[2] == "UNVERIFIABLE")
     print(f"\n{sum(1 for r in rows if r[2]=='OK')} ok, {bad} failed, "
-          f"{sum(1 for r in rows if r[2]=='UNVERIFIABLE')} unverifiable, {len(rows)} claims")
+          f"{unver} unverifiable, {len(rows)} claims")
+    # An UNVERIFIABLE claim is one nobody is checking -- a missing artefact silently converts a
+    # checked number into an unchecked one. This used to exit 0, so the repo could lose an artefact
+    # and stay green; review 7 found it. --allow-unverifiable is for a deliberate partial run.
+    if unver and not a.allow_unverifiable:
+        print(f"FAIL: {unver} claim(s) could not be checked at all (missing artefact). "
+              f"Regenerate the artefact or delete the claim; pass --allow-unverifiable to override.")
+        return 1
     return 1 if bad else 0
 
 if __name__ == "__main__": sys.exit(main())

@@ -2,7 +2,7 @@
 
 **This is a prediction, not a measurement.** No after-photo exists for this garment.
 
-- cut: inseam fraction **0.205** — removes 41% of the garment
+- cut: inseam fraction **0.223** — removes 40% of the garment
 - state: **after_cut**
 - scale: **unknown** — every length below is in pixels
 - fringe depth: **0.0 px** (80% interval 0.0–0.0 px) from edge treatment 'raw' does not fray
