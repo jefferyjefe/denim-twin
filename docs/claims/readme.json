@@ -94,5 +94,44 @@
   "source": "reports/upright_regression.json",
   "path": "summary.corr_rotation_difference_vs_hem",
   "tol": 0.001
+ },
+ {
+  "claim": "README: predictor LOO MAE",
+  "note": "README.md",
+  "note_regex": "MAE \\*\\*([0-9.]+)\\*\\* against a constant",
+  "source": "reports/frac_predictable.json",
+  "path": "summary.loo_mae_model",
+  "tol": 0.0001
+ },
+ {
+  "claim": "README: predictor IoU vs constant",
+  "note": "README.md",
+  "note_regex": "\\*\\*([0-9.]+) against 0\\.7278\\*\\*",
+  "source": "reports/frac_predictor_vs_constant.json",
+  "path": "summary.mean_iou_predictor",
+  "tol": 0.0005
+ },
+ {
+  "claim": "README: pairs that can show a fringe",
+  "note": "README.md",
+  "note_regex": "3 have a raw edge and \\*\\*(\\d+)\\*\\* has both",
+  "source": "reports/fringe_capable_pairs.json",
+  "path": "summary.n_can_show_a_fringe"
+ },
+ {
+  "claim": "README: mean hem after the fringe gate",
+  "note": "README.md",
+  "note_regex": "mean hem chamfer \\*\\*[0-9.]+ \u2192 ([0-9.]+) px\\*\\*",
+  "source": "reports/fringe_gate_ab.json",
+  "path": "summary.mean_hem_after",
+  "tol": 0.01
+ },
+ {
+  "claim": "README: the not-adopted regression",
+  "note": "README.md",
+  "note_regex": "`2b0123d732` alone costs \\+([0-9.]+) px",
+  "source": "reports/hem_edge_source_ab.json",
+  "path": "summary.worst_regression_hem_px",
+  "tol": 0.01
  }
 ]
