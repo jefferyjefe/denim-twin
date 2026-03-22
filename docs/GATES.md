@@ -12,18 +12,18 @@
 **Baseline rule (2026-08-29, EXP_0034):** a baseline a gate is claimed against must not be derived from the
 model's own output. `null:crop-only` fails this: `compare.py` builds it from the `--keep` mask it is handed and
 `score_predict.py` hands it predict's own keep mask, so it crops at the cut line the model predicted. With
-`--wash none` the fringe is 0.0 px and the null and the prediction are the same object (median IoU 0.99954, one
+`--wash none` the fringe is 0.0 px and the null and the prediction are the same object (median IoU 0.99959, one
 pair bit-identical, and the null never keeps a pixel the prediction drops). It stays in the metrics table — it was
 written to catch a gamed metric and it still does that — but **Gate 4's "beats 2D baseline" and Gate 7's baseline
 comparison may not be claimed against it.**
 
 The independent baseline is `score_predict.py --loo-null`: the cut placed at the leave-one-out median inseam
-fraction of the other pairs, which sees nothing about the garment being scored. Current standing: product 0.8232
-against 0.7278, +0.0954 (±0.0197, 4.8σ), winning 6 of 7.
+fraction of the other pairs, which sees nothing about the garment being scored. Current standing: product 0.8255
+against 0.7302, +0.0953 (±0.0204, 4.7σ), winning 7 of 7.
 
 Two things a baseline claim must also state, because the numbers above do not carry them:
 - **Where the model's input came from.** The product path's only per-garment input is the inseam fraction, and
-  `run_pair.py:263` measures it from the real after-photo. So +0.0954 says the pipeline renders a *supplied* cut
+  `run_pair.py:263` measures it from the real after-photo. So +0.0953 says the pipeline renders a *supplied* cut
   height well. It is not evidence about choosing one.
 - **The paired uncertainty**, not the unpaired one (EXP_0033). Registration error is common to both arms and
   cancels; quoting the unpaired ±0.030 on a paired difference overstates it by ~130×. `tools/experiment_paired_uncertainty.py`
@@ -31,8 +31,8 @@ Two things a baseline claim must also state, because the numbers above do not ca
   two arms are the same object, not that the comparison is precise.
 
 **Gate 1 restatement (EXP_0034), answered (EXP_0035):** the first genuinely predictive question this bench could
-pose was whether the pipeline can **choose** an inseam fraction from the before photo and beat 0.7278. It cannot:
-nested leave-one-out over six shape features scores 0.6738 against the constant's 0.7278, losing on 6 of 7 pairs,
+pose was whether the pipeline can **choose** an inseam fraction from the before photo and beat 0.7302. It cannot:
+nested leave-one-out over six shape features scores 0.6584 against the constant's 0.7302, losing on 7 of 7 pairs,
 and the seven folds pick four different features. The cut height is a style choice, not a garment property, so
 this gate should not be pursued as posed. What remains open is converting **stated user intent** into a fraction
 (a named length, a length in mm, a line marked on the photo) — not a garment feature, untested here, and blocked

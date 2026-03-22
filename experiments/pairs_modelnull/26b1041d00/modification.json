@@ -1,7 +1,7 @@
 {
  "kind": "cut",
  "target_inseam_cm": null,
- "inseam_fraction": 0.1772,
+ "inseam_fraction": 0.1985,
  "outer_fraction": null,
  "cut_path_canonical": null,
  "cut_canon_mask_sha256": null,

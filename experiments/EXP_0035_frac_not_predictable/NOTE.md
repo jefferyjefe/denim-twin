@@ -1,7 +1,7 @@
 # EXP_0035 — The cut height is a style choice, not a garment property
 
 EXP_0034 restated Gate 1: can the pipeline **choose** an inseam fraction, instead of being handed
-one measured off the after-photo, and beat the leave-one-out median baseline (0.7278 IoU)? The
+one measured off the after-photo, and beat the leave-one-out median baseline (0.7302 IoU)? The
 backlog said to decide whether that is even a prediction target before building a predictor on
 seven samples. This decides it by measurement.
 
@@ -10,7 +10,7 @@ seven samples. This decides it by measurement.
 Six features computable from the before mask and landmarks alone — no after-photo:
 `aspect`, `waist_w_over_h`, `hip_over_waist`, `crotch_frac`, `leg_over_h`, `area_frac`.
 
-Fitted on all seven pairs, the best is `area_frac` at **r² = 0.3217**. That number is the trap. With
+Fitted on all seven pairs, the best is `area_frac` at **r² = 0.2523**. That number is the trap. With
 7 points and 6 candidate features, the best in-sample r² is close to what noise alone produces, and
 reporting it as a finding is the standard way a null result gets published as a discovery.
 
@@ -21,10 +21,10 @@ six. Choosing the feature on all seven leaks the held-out pair into the model se
 
 | | mean absolute error on the fraction |
 |---|---|
-| predictor (feature chosen in-fold) | **0.2586** |
-| predict the median of the other six | **0.1690** |
+| predictor (feature chosen in-fold) | **0.3066** |
+| predict the median of the other six | **0.1804** |
 
-The predictor is **53%** worse than a constant. Its folds do not even agree on what to look at: over
+The predictor is **70%** worse than a constant. Its folds do not even agree on what to look at: over
 seven folds they choose **four different features** (`area_frac` 3, `waist_w_over_h` 2,
 `hip_over_waist` 1, `leg_over_h` 1). That disagreement is the signature — each fold is fitting its
 own six points' noise.
@@ -36,10 +36,10 @@ truth:
 
 | baseline | mean IoU |
 |---|---|
-| constant: median fraction of the other six | **0.7278** |
-| predictor: feature chosen and fitted in-fold | **0.6738** |
+| constant: median fraction of the other six | **0.7302** |
+| predictor: feature chosen and fitted in-fold | **0.6584** |
 
-The predictor is **worse than a constant** on the metric the gate uses, losing on **6** of 7 pairs.
+The predictor is **worse than a constant** on the metric the gate uses, losing on **7** of 7 pairs.
 The one it improves (`4bfef03bd7`, 0.5286 → 0.5784) is the pair whose true fraction is 0.000 — a
 garment cut at the crotch — which every method mispredicts.
 
@@ -52,7 +52,7 @@ how they want to look, not a fact about the jeans.
 
 So Gate 1's restatement should not be attempted as posed. The supportable product claim is the one
 EXP_0034 measured — given a cut height, the pipeline places and renders it far better than not
-knowing it (**+0.0954, 4.8σ**) — and the inseam fraction belongs in the interface as a **user
+knowing it (**+0.0953, 4.7σ**) — and the inseam fraction belongs in the interface as a **user
 input**, which is how `score_predict.py`'s own docstring already describes it ("what a user actually
 supplies").
 

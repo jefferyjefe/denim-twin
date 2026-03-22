@@ -1,23 +1,50 @@
 [
- {"claim": "best in-sample r2 across six features",
-  "note_regex": "best is `area_frac` at \\*\\*r² = ([0-9.]+)\\*\\*",
-  "source": "reports/frac_predictable.json", "path": "summary.best_in_sample_r2", "tol": 0.0001},
- {"claim": "leave-one-out MAE of the predictor",
+ {
+  "claim": "best in-sample r2 across six features",
+  "note_regex": "best is `area_frac` at \\*\\*r\u00b2 = ([0-9.]+)\\*\\*",
+  "source": "reports/frac_predictable.json",
+  "path": "summary.best_in_sample_r2",
+  "tol": 0.0001
+ },
+ {
+  "claim": "leave-one-out MAE of the predictor",
   "note_regex": "\\| predictor \\(feature chosen in-fold\\) \\| \\*\\*([0-9.]+)\\*\\* \\|",
-  "source": "reports/frac_predictable.json", "path": "summary.loo_mae_model", "tol": 0.0001},
- {"claim": "leave-one-out MAE of the constant baseline",
+  "source": "reports/frac_predictable.json",
+  "path": "summary.loo_mae_model",
+  "tol": 0.0001
+ },
+ {
+  "claim": "leave-one-out MAE of the constant baseline",
   "note_regex": "\\| predict the median of the other six \\| \\*\\*([0-9.]+)\\*\\* \\|",
-  "source": "reports/frac_predictable.json", "path": "summary.loo_mae_median_baseline", "tol": 0.0001},
- {"claim": "the predictor does not beat the constant",
-  "note_regex": "The predictor is \\*\\*53%\\*\\* worse than a constant", "claimed": "False",
-  "source": "reports/frac_predictable.json", "path": "summary.model_beats_baseline"},
- {"claim": "constant baseline mean IoU",
+  "source": "reports/frac_predictable.json",
+  "path": "summary.loo_mae_median_baseline",
+  "tol": 0.0001
+ },
+ {
+  "claim": "the predictor does not beat the constant",
+  "note_regex": "The predictor is \\*\\*\\d+%\\*\\* worse than a constant",
+  "claimed": "False",
+  "source": "reports/frac_predictable.json",
+  "path": "summary.model_beats_baseline"
+ },
+ {
+  "claim": "constant baseline mean IoU",
   "note_regex": "\\| constant: median fraction of the other six \\| \\*\\*([0-9.]+)\\*\\* \\|",
-  "source": "reports/independent_null.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
- {"claim": "predictor mean IoU",
+  "source": "reports/independent_null.json",
+  "path": "summary.mean_iou_loo_null",
+  "tol": 0.0005
+ },
+ {
+  "claim": "predictor mean IoU",
   "note_regex": "\\| predictor: feature chosen and fitted in-fold \\| \\*\\*([0-9.]+)\\*\\* \\|",
-  "source": "reports/frac_predictor_scored.json", "path": "summary.mean_iou_loo_null", "tol": 0.0005},
- {"claim": "pairs the predictor loses on",
+  "source": "reports/frac_predictor_scored.json",
+  "path": "summary.mean_iou_loo_null",
+  "tol": 0.0005
+ },
+ {
+  "claim": "pairs the predictor loses on",
   "note_regex": "losing on \\*\\*(\\d+)\\*\\* of 7 pairs",
-  "source": "reports/frac_predictor_vs_constant.json", "path": "summary.n_pairs_predictor_worse"}
+  "source": "reports/frac_predictor_vs_constant.json",
+  "path": "summary.n_pairs_predictor_worse"
+ }
 ]

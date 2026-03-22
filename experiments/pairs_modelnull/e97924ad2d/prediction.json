@@ -7,9 +7,9 @@
   "source": "UNKNOWN \u2014 all lengths are pixels"
  },
  "cut": {
-  "inseam_fraction": 0.0223,
+  "inseam_fraction": 0.0679,
   "angle_deg": 0.0,
-  "removed_fraction_of_garment": 0.6319361881498454
+  "removed_fraction_of_garment": 0.5977172996692679
  },
  "fringe_depth": {
   "unit": "px",
@@ -25,7 +25,7 @@
   "prior_validation_note": "",
   "assumed_depth_mm_sourced": 12.7
  },
- "changed_fraction_of_kept_region": 0.019439713396370472,
+ "changed_fraction_of_kept_region": 0.017624932831810856,
  "segmentation": {
   "method": "coarse",
   "score": 0.9937549233436584,

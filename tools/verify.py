@@ -27,6 +27,9 @@ CHECKS = [
     ("scope", [PY_, "tools/scope_check.py"], True,
      "a file reaches past its phase gate, or names a treatment banned in year one"),
     ("sentinel", [PY_, "tools/sentinel.py"], True, "a sentinel invariant broke"),
+    ("reports", [PY_, "tools/make_reports.py", "--check", "--all"], True,
+     "a report no longer matches the data it is derived from: run tools/make_reports.py --write and "
+     "update any NOTE quoting it (review 7 found four experiments publishing numbers that no longer reproduced)"),
     ("index", [PY_, "tools/experiment_index.py", "--check"], True,
      "experiments/README.md is stale: run tools/experiment_index.py"),
     ("protocol", [PY_, "tools/protocol_audit.py"], False, "a capture protocol drifted from its spec"),

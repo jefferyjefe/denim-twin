@@ -20,7 +20,7 @@ differ by anything at all. Measured directly:
 
 | | |
 |---|---|
-| median IoU(prediction, crop-only) | **0.99954** |
+| median IoU(prediction, crop-only) | **0.99959** |
 | pixels the null keeps that the prediction drops | **0** on every pair |
 | most pixels the prediction adds | 256 |
 | pairs where the two masks are bit-identical | **1** |
@@ -30,7 +30,7 @@ The prediction is the crop-only mask plus, at most, a quarter-percent sliver. "T
 ties the crop-only null" was a statement that a cut rendered without fringe equals the same cut
 rendered without fringe.
 
-EXP_0033's ±0.00023 was correct and is now explained: pairing cancelled **132×** of the
+EXP_0033's ±0.00023 was correct and is now explained: pairing cancelled **132.4×** of the
 registration noise precisely *because* the two masks are the same object. In hindsight that
 cancellation factor was the evidence, sitting in plain sight — a genuine comparison cannot cancel
 that well.
@@ -43,12 +43,12 @@ ground truth:
 
 | | mean IoU |
 |---|---|
-| product path | **0.8232** |
-| leave-one-out null | **0.7278** |
-| advantage | **+0.0954** |
+| product path | **0.8255** |
+| leave-one-out null | **0.7302** |
+| advantage | **+0.0953** |
 
-Product wins on **6** of 7 pairs. Paired against the same perturbed ground truths (EXP_0033's
-harness), the difference is **+0.09539 ± 0.01974** — **4.8σ**. Real.
+Product wins on **7** of 7 pairs. Paired against the same perturbed ground truths (EXP_0033's
+harness), the difference is **+0.09527 ± 0.02036** — **4.7σ**. Real.
 
 The cancellation factor for this comparison is **1.5**, against 132 for crop-only. That is the
 method checking itself: noise cancels almost perfectly between two identical masks and barely at
@@ -63,7 +63,7 @@ after-photo**. The model is handed a measurement of the ground truth and asked t
 So the honest reading is narrower than the number looks:
 
 - **Supported:** given a cut height, the pipeline places and renders that cut substantially better
-  than not knowing it (+0.095, 4.8σ). Under this project's own framing — the inseam fraction is
+  than not knowing it (+0.095, 4.7σ). Under this project's own framing — the inseam fraction is
   "what a user actually supplies" (`score_predict.py` docstring) — that is a legitimate product
   claim: the system correctly uses what the user asks for.
 - **Not supported, and never yet benched:** that the system can choose the cut height itself. No
@@ -80,7 +80,7 @@ regression already documented against that pair in the bench.
   no longer a baseline the product path can be said to "beat" or "tie". Reported alongside it now:
   the leave-one-out null.
 - Gate 1's real question is restated: **can the pipeline choose an inseam fraction from the before
-  photo and user intent, and beat 0.7278?** That is the first genuinely predictive question this
+  photo and user intent, and beat 0.7302?** That is the first genuinely predictive question this
   bench has been able to pose.
 
 ## Files

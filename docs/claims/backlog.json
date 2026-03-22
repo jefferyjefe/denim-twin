@@ -2,8 +2,7 @@
  {
   "claim": "BACKLOG: the baseline the open question must beat",
   "note": "docs/BACKLOG.md",
-  "note_regex": "beat the constant baseline \\(0\\.7278 IoU\\)",
-  "claimed": "0.7278",
+  "note_regex": "beat the constant baseline \\(([0-9.]+) IoU\\)",
   "source": "reports/independent_null.json",
   "path": "summary.mean_iou_loo_null",
   "tol": 0.0005
