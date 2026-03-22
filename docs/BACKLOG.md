@@ -119,5 +119,8 @@ plausible mechanism is not a finding until the mechanism predicts something that
 - Quote the **paired** uncertainty on a method difference, never the unpaired one; a cancellation
   factor in the hundreds means the two arms are the same object (EXP_0033/0034).
 - Every number in a NOTE, the README or `docs/` is checked by `tools/check_claims.py`.
+- A note whose conclusion has been overturned carries a banner naming the note that overturned it,
+  and `experiments/README.md` (generated, gate-checked) flags it. Five notes were still asserting
+  the voided crop-only comparison after EXP_0034; a test now enforces the pointer.
 - State a mechanism only with a prediction it makes that has been checked; otherwise write
   "mechanism unknown" (EXP_0037).

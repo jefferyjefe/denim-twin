@@ -1,5 +1,12 @@
 # EXP_0014 — How much of our cut accuracy comes from *looking at the answer*?
 
+> **Superseded by EXP_0034.** The crop-only comparison below is void: the null is built from
+> predict's own keep mask, so it crops at the cut line the model predicted. This note's own table
+> says so — "crop-only null **on the product path's own mask**" — and the implication was not
+> drawn for twenty experiments. Against a null that does not see the model the product path wins
+> by +0.0954 (4.8σ).
+
+
 **Question.** `run_pair.py` fits the cut by reading the real after-photo (per-leg hem lines, fabric/fringe split). That is
 an evaluation path. A user of `predict.py` supplies one scalar — the inseam fraction — and the cut is placed in canonical
 space. The headline "silhouette IoU 0.6–0.95" comes from the evaluation path. What does the *product* path score?

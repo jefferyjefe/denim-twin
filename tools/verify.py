@@ -27,6 +27,8 @@ CHECKS = [
     ("scope", [PY_, "tools/scope_check.py"], True,
      "a file reaches past its phase gate, or names a treatment banned in year one"),
     ("sentinel", [PY_, "tools/sentinel.py"], True, "a sentinel invariant broke"),
+    ("index", [PY_, "tools/experiment_index.py", "--check"], True,
+     "experiments/README.md is stale: run tools/experiment_index.py"),
     ("protocol", [PY_, "tools/protocol_audit.py"], False, "a capture protocol drifted from its spec"),
     ("bench", [PY_, "tools/bench.py"], False,
      "a pair metric moved; two regressions against 443d1d4658 are documented and expected"),
