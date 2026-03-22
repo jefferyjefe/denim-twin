@@ -1,5 +1,9 @@
 # EXP_0028 — The product path's gap is not the cut specification
 
+> **Partly superseded by EXP_0034.** The eval-vs-product analysis stands; the "dead heat" framing
+> against the crop-only null does not — that null crops at the model's own predicted cut line.
+
+
 EXP_0027 left one number as the research problem: the product path scores 0.803 silhouette IoU where the evaluation
 path, which may look at the real after-photo, scores 0.857. The obvious hypothesis is that the difference is what the
 user can say about the cut — one height against a fitted, per-leg, angled line. This tests it by handing the product

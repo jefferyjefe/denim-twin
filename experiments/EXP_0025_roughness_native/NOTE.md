@@ -1,5 +1,9 @@
 # EXP_0025 — Scored where nothing resampled the boundary, the fray comparison has no signal to score against
 
+> **Partly superseded by EXP_0034.** The native-resolution roughness result stands; any comparison
+> here against the crop-only null does not — that null is built from the model's own keep mask.
+
+
 EXP_0017 scored the fringe renderer on hem roughness against the real garment's, using the real mask **warped into
 the prediction's frame**. EXP_0024 showed the warp manufactures exactly that quantity. Roughness is scale-free —
 p90 divided by waist width — so the two sides never needed a shared frame. `run_pair` now keeps `amask_native.png`,

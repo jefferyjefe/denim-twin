@@ -1,5 +1,9 @@
 # EXP_0024 — Hem roughness measures the resampler
 
+> **Partly superseded by EXP_0034.** The resampling result stands; any margin quoted here against
+> the crop-only null does not — that null is built from the model's own keep mask.
+
+
 Hem roughness is the only fray observable in this project that has ever passed a negative control: 0 false positives
 on 9 high-resolution finished-hem garments (EXP_0016), and it is what EXP_0017 scores the fringe renderer on. It works
 by measuring how far the garment's lower boundary deviates from its own local median, **in pixels**.

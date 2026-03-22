@@ -1,5 +1,12 @@
 # EXP_0027 — The product path, recomputed: it is a dead heat with cropping the photograph
 
+> **Superseded by EXP_0034.** The headline of this note — the product path is "a dead heat with
+> cropping" — is void. The crop-only null is built from predict's own keep mask, so with
+> `--wash none` the two masks are the same object (median IoU 0.99954, one pair bit-identical).
+> The comparison was the prediction against itself. Against an independent null the product path
+> scores 0.8232 vs 0.7278, +0.0954 (4.8σ), winning 6 of 7.
+
+
 > **Numbers superseded the same day by EXP_0028** (the conclusion is not). `score_predict.py` was feeding `predict.py`
 > the photograph `run_pair` had *already uprighted*, so after EXP_0022 set the deadband to 0 every pair was corrected
 > twice — a 24° round trip on one of them. With the original photographs the product path scores **0.8232** against a
