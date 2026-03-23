@@ -33,8 +33,23 @@ impossible garment" of EXP_0031 was equality read as inversion. What it means is
 was placed *below* the true crotch, so the search began past the thing it was looking for and returned its own
 first row.
 
-That makes the `crotch above the hips` rule **structurally unreachable for automatic landmarks**. It is kept for
-manual ones (`--before-lm`), where a mis-click can genuinely invert it, but it will never fire on the auto path.
+That makes the `crotch above the hips` rule **structurally unreachable for automatic landmarks**.
+
+> **Corrected by review 7 — this undercounts badly.** It is not one rule, it is **eight of the nine**.
+> Most of these landmarks come from `_row_extent`, which returns `(min_x, max_x)` in that order, so
+> every left/right and inside-out ordering is true by construction too. Measured
+> (`tools/experiment_lmcheck_reachability.py`): over 400 fuzzed garments **no rule fires at all**, and
+> only one — `left hem above the crotch` — can be made to fire by a deliberately constructed case
+> (shorts with no between-leg gap and a short left leg, so the crotch falls back to the longer leg's
+> tip). The right-hem twin stays unreachable because `autolm` slices the left leg as `slice(0, cyx)`
+> and the right as `slice(cyx, W)`, so the right sub-mask absorbs the crotch column and takes the
+> longer leg's hem row.
+>
+> So `lmcheck`'s "inverted" severity is **1-of-9 live on the auto path**. The rules are kept for
+> manual landmarks (`--before-lm`), where a mis-click can genuinely invert any of them, but counting
+> nine rules as coverage of the automatic path was wrong. What actually does the work on that path is
+> the `degenerate` severity, which fires on real data.
+
 A check that cannot fail on the path it is aimed at is worth stating plainly rather than counting as coverage.
 
 ## It is not a fold gate

@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "n_rules": 9,
+    "n_reachable_on_auto_path": 1,
+    "n_unreachable_on_auto_path": 8,
+    "reachable": [
+      "left hem above the crotch"
+    ],
+    "n_fuzz_garments": 400,
+    "n_reached_by_fuzz_alone": 0
+  },
+  "unreachable_rules": [
+    "waist left/right swapped",
+    "hip left/right swapped",
+    "left leg inside-out",
+    "right leg inside-out",
+    "legs swapped at the hem",
+    "hips above the waist",
+    "crotch above the hips",
+    "right hem above the crotch"
+  ]
+}

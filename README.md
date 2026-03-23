@@ -146,5 +146,8 @@ Put a coin in the frame if you want any answer in centimetres.
   the 9 finished-hem controls. Every number comes from a *simulated* re-capture and therefore **bounds our error from
   above**; two real photographs of one garment would settle it, and we have never had a pair.
 - Automation: local launchd jobs work (`ops/`); cloud routines never executed in this environment (`tools/agents/README.md`).
-- Tests: 247 + 6 xfail (`pytest -q tests`), CI green; fresh-clone verified without ML deps (`reports/repro/`).
+- Tests: run `tools/verify.py`; the current counts are written to `reports/suite.json`. This line used to
+  carry a hard-coded number and was stale by 136 until review 7 noticed. It is deliberately not claim-checked:
+  the count depends on whether the count-checking test passes, so a claim on it can never settle. CI green via
+  `tools/verify.py`; fresh-clone verified without ML deps (`reports/repro/`).
   Reviews 2–6's findings are all in the suite; the review-5/6 files were local-only until EXP_0021 and are now tracked.

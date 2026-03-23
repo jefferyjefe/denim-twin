@@ -1,20 +1,68 @@
 [
- {"claim": "no landmark set is inverted",
+ {
+  "claim": "no landmark set is inverted",
   "note_regex": "\\| inverted \\| \\*\\*(\\d+)\\*\\* \\|",
-  "source": "reports/landmark_consistency.json", "path": "summary.n_inverted"},
- {"claim": "four scored landmark sets are degenerate",
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.n_inverted"
+ },
+ {
+  "claim": "four scored landmark sets are degenerate",
   "note_regex": "\\| degenerate \\| \\*\\*(\\d+)\\*\\* \\|",
-  "source": "reports/landmark_consistency.json", "path": "summary.n_degenerate"},
- {"claim": "ten scored landmark sets are clean",
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.n_degenerate"
+ },
+ {
+  "claim": "ten scored landmark sets are clean",
   "note_regex": "\\| clean \\| \\*\\*(\\d+)\\*\\* \\|",
-  "source": "reports/landmark_consistency.json", "path": "summary.n_clean"},
- {"claim": "median fold of flagged sets",
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.n_clean"
+ },
+ {
+  "claim": "median fold of flagged sets",
   "note_regex": "\\| flagged sets \\| \\*\\*([0-9.]+)\\*\\* \\|",
-  "source": "reports/landmark_consistency.json", "path": "summary.median_fold_flagged", "tol": 0.0001},
- {"claim": "median fold of clean sets",
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.median_fold_flagged",
+  "tol": 0.0001
+ },
+ {
+  "claim": "median fold of clean sets",
   "note_regex": "\\| clean sets \\| ([0-9.]+) \\|",
-  "source": "reports/landmark_consistency.json", "path": "summary.median_fold_clean", "tol": 0.0001},
- {"claim": "worst fold surviving the degenerate drop",
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.median_fold_clean",
+  "tol": 0.0001
+ },
+ {
+  "claim": "worst fold surviving the degenerate drop",
   "note_regex": "the worst fold left after the drop, \\*\\*([0-9.]+)\\*\\*",
-  "source": "reports/landmark_consistency.json", "path": "summary.max_fold_after_drop", "tol": 0.0001}
+  "source": "reports/landmark_consistency.json",
+  "path": "summary.max_fold_after_drop",
+  "tol": 0.0001
+ },
+ {
+  "claim": "lmcheck rules reachable on the auto path",
+  "note_regex": "\\*\\*1-of-9 live on the auto path\\*\\*",
+  "claimed": "1",
+  "source": "reports/lmcheck_reachability.json",
+  "path": "summary.n_reachable_on_auto_path"
+ },
+ {
+  "claim": "lmcheck rules unreachable on the auto path",
+  "note_regex": "it is \\*\\*eight of the nine\\*\\*",
+  "claimed": "8",
+  "source": "reports/lmcheck_reachability.json",
+  "path": "summary.n_unreachable_on_auto_path"
+ },
+ {
+  "claim": "no rule fires under fuzzing",
+  "note_regex": "over (\\d+) fuzzed garments",
+  "source": "reports/lmcheck_reachability.json",
+  "path": "summary.n_fuzz_garments"
+ },
+ {
+  "claim": "the fuzz reaches nothing",
+  "note_regex": "\\*\\*no rule fires at all\\*\\*",
+  "claimed": "0",
+  "source": "reports/lmcheck_reachability.json",
+  "path": "summary.n_reached_by_fuzz_alone"
+ }
 ]
