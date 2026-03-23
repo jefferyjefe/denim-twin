@@ -87,9 +87,9 @@
   "tol": 0.01
  },
  {
-  "claim": "README: the disconfirmed mechanism's correlation",
+  "claim": "README: the inconclusive mechanism's correlation",
   "note": "README.md",
-  "note_regex": "it does not\\n  \\(\\*\\*r = \\+([0-9.]+)\\*\\*,",
+  "note_regex": "confirms nor disconfirms it \\(\\*\\*r = \\+([0-9.]+)\\*\\*",
   "source": "reports/upright_regression.json",
   "path": "summary.corr_rotation_difference_vs_hem",
   "tol": 0.001

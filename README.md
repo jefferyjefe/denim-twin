@@ -89,7 +89,7 @@ Put a coin in the frame if you want any answer in centimetres.
   six-fold. Measured where nothing resampled it, **6 of the 7 real hems read exactly zero** — at 241-389 px of
   waistband they are below the resolution the statistic needs, so there was never a signal to score against
   (EXP_0025). The **fringe render** is invisible to silhouette IoU (0.768 vs 0.771 crop-only — and that crop-only
-  figure is one of the void comparisons above) but does beat it on the fringe-specific metric (fringe IoU 0.17 vs 0.00) — that measures overlap with a fringe whose depth was read off the
+  figure is one of the void comparisons above) but the fringe-specific comparison it was said to win (fringe IoU 0.17 vs 0.00) is **not a comparison**: the crop-only null's mask IS `keep`, `fringe_iou` scores `pred & ~keep`, so the null's fringe set is empty and its score is identically 0.00 for any input (review 7) — that measures overlap with a fringe whose depth was read off the
   after-photo, and held out through the prior it is still not predictive (EXP_0008); wash shrinkage cannot even be measured from found photos (EXP_0013). Appearance parameters stay frozen
   until ≥5 new pairs (`docs/GATES.md` tuning rule).
 - **The cut height is not predictable from the garment (EXP_0035).** With the crop-only null void, the first
@@ -124,10 +124,11 @@ Put a coin in the frame if you want any answer in centimetres.
   regressing past the bench tolerance** (443d1d4658) — recorded, not tuned away. EXP_0037 confirmed the cause exactly
   (disabling uprighting on that pair reproduces the frozen baseline: IoU 0.9180 against 0.918, hem 8.92 against
   8.916 px) and **disconfirmed the mechanism this line used to give**. "Because before and after are uprighted
-  independently" predicts that the relative rotation between the two photos drives the error; it does not
-  (**r = +0.092**, and `2b0123d732` at 23.5° of relative rotation — nearly three times this pair's 8.4° — has the
-  second-*best* hem error in the set). A hem-angle-symmetry diagnostic was tried and fails the same way
-  (r = +0.213). The mechanism is **currently unknown**, and uprighting stays on: it is justified by a directly
+  independently" predicts that the relative rotation between the two photos drives the error; the data neither
+  confirms nor disconfirms it (**r = +0.459**, p = 0.30, n = 7 — corrected by review 7 from a stale +0.092; a
+  strict dose-response fails, since `2b0123d732` has the largest applied rotation and only the 5th-best of 7 hem
+  errors, but a weak one cannot be ruled out at this sample size). A hem-angle-symmetry diagnostic was tried and
+  is equally inconclusive (r = +0.269). EXP_0038 later found the actual cause, which is not geometric at all. The mechanism is **currently unknown**, and uprighting stays on: it is justified by a directly
   measured defect and improves the mean, and one pair does not outweigh that.
 - **Fray scores are not trustworthy at the precision they were quoted (EXP_0024).** Hem roughness counts pixel-scale
   deviations of the hem boundary, and rotating a mask creates them: at 8°, 12 of 12 finished-hem controls read as

@@ -22,28 +22,28 @@
  },
  {
   "claim": "correlation of rotation difference with hem error",
-  "note_regex": "\\*\\*r = \\+([0-9.]+)\\.\\*\\* The pair with the largest",
+  "note_regex": "\\*\\*r = \\+([0-9.]+) \\(p = 0\\.300",
   "source": "reports/upright_regression.json",
   "path": "summary.corr_rotation_difference_vs_hem",
   "tol": 0.001
  },
  {
   "claim": "correlation of angle asymmetry with hem error",
-  "note_regex": "\\*\\*r = \\+([0-9.]+)\\*\\*, and the most asymmetric",
+  "note_regex": "\\*\\*r = \\+([0-9.]+)\\*\\* \\(corrected from",
   "source": "reports/upright_regression.json",
   "path": "summary.corr_angle_asymmetry_vs_hem",
   "tol": 0.001
  },
  {
   "claim": "the largest rotation difference is not the worst pair",
-  "note_regex": "has the second-\\*best\\* hem error in the set",
+  "note_regex": "has the largest \\*applied\\* rotation difference",
   "claimed": "2b0123d732",
   "source": "reports/upright_regression.json",
   "path": "summary.largest_rotation_difference_pair"
  },
  {
-  "claim": "the worst hem pair is the regressing one",
-  "note_regex": "and neither points at\\n`443d1d4658`",
+  "claim": "the worst hem pair after EXP_0038",
+  "note_regex": "`(2691c1a8d0)` and `26b1041d00` are recorded as",
   "claimed": "443d1d4658",
   "source": "reports/upright_regression.json",
   "path": "summary.worst_hem_pair"

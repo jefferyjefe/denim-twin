@@ -147,6 +147,34 @@ def unreliable(angle_deg, elongation):
     return bool(elongation < ISOTROPIC_ELONGATION and abs(angle_deg) >= UNRELIABLE_TILT_DEG)
 
 
+def upright_decision(mask, deadband=0.0):
+    """What upright() will do and why, without doing it.
+
+    upright() returns an applied angle of 0.0 for THREE different situations -- a garment that is
+    already straight, a correction skipped by the deadband, and a correction REFUSED because the
+    estimate is beyond what max_correctable_tilt allows. Review 7 found that a refusal is therefore
+    indistinguishable from a well-aligned photograph in the logs, and that two of the seven scored
+    pairs are refusals (estimates -40.1 and -36.1 degrees against a 30 degree ceiling) recorded as
+    "0.0 rotated" in their NOTE and in EXP_0037's and EXP_0040's rotation tables.
+
+    Returns {status, angle_deg, elongation, ceiling_deg} where status is one of
+    'applied' | 'straight' | 'below_deadband' | 'refused'.
+    """
+    m = np.asarray(mask, bool)
+    ang, elong = tilt_angle(m)
+    ceiling = max_correctable_tilt(elong)
+    if abs(ang) > ceiling:
+        status = "refused"
+    elif abs(ang) < 0.05:
+        status = "straight"
+    elif abs(ang) < deadband:
+        status = "below_deadband"
+    else:
+        status = "applied"
+    return {"status": status, "angle_deg": float(ang), "elongation": float(elong),
+            "ceiling_deg": float(ceiling)}
+
+
 def upright(image_bgr, mask, deadband=0.0):
     """Rotate image and mask so the garment's principal axis is vertical.
 

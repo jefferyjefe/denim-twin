@@ -45,7 +45,7 @@ A row marked **superseded/corrected** does not state current belief — follow i
 - **0034** [EXP_0034 — The null was built out of the model, so the tie meant nothing](EXP_0034_independent_null/NOTE.md) ✓
 - **0035** [EXP_0035 — The cut height is a style choice, not a garment property](EXP_0035_frac_not_predictable/NOTE.md) ✓
 - **0036** [EXP_0036 — The fringe render rests on one garment](EXP_0036_fringe_unbenchable/NOTE.md) ✓
-- **0037** [EXP_0037 — The regression is uprighting's fault; the reason given for it is not](EXP_0037_upright_regression/NOTE.md) ✓
+- **0037** [EXP_0037 — The regression is uprighting's fault; the reason given for it is not](EXP_0037_upright_regression/NOTE.md) ✓ — **superseded/corrected** (see EXP_0038)
 - **0038** [EXP_0038 — A garment that cannot fray was having its hem measured from a fringe](EXP_0038_fringe_gate/NOTE.md) ✓
 - **0039** [EXP_0039 — Should a garment that cannot fray use the mask edge? Tested, not adopted](EXP_0039_hem_edge_source/NOTE.md) ✓
 - **0040** [EXP_0040 — The waistband is the one region registration has no landmarks for, and it always lands low](EXP_0040_upright_waistband/NOTE.md) ✓
