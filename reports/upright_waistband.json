@@ -1,0 +1,266 @@
+{
+  "summary": {
+    "pair": "443d1d4658",
+    "iou_upright_off": 0.918,
+    "iou_upright_on": 0.8984,
+    "band_iou_deltas_on_minus_off": [
+      -0.1951,
+      -0.0052,
+      0.0045,
+      0.0054,
+      0.0119,
+      -0.0089
+    ],
+    "worst_band": 0,
+    "worst_band_delta": -0.1951,
+    "n_bands_worse_by_over_0_05": 1,
+    "waist_frac_before_off": 0.0471,
+    "waist_frac_before_on": 0.0642,
+    "waist_frac_after_off": 0.0667,
+    "waist_frac_after_on": 0.105,
+    "waist_pct_before_off": 4.71,
+    "waist_pct_before_on": 6.42,
+    "waist_pct_after_off": 6.67,
+    "waist_pct_after_on": 10.5,
+    "smear_fraction_before": 0.614,
+    "smear_fraction_after": 0.627,
+    "crosspair_corr_mismatch_vs_band0_iou": 0.177,
+    "top_offset_median_px": 14.0,
+    "top_offset_min_px": 1.0,
+    "top_offset_max_px": 30.0,
+    "top_offset_n_positive": 7,
+    "top_offset_n_pairs": 7,
+    "top_offset_sign_test_p": 0.0156,
+    "corr_resid_vs_abs_top_offset": 0.781,
+    "corr_top_offset_vs_band0_iou": -0.646,
+    "corr_pct_above_landmark_vs_band0_iou": -0.187,
+    "extrapolation_amount_explains_band0": false,
+    "crosspair_generalises": false,
+    "crosspair_smallest_mismatch_pair": "4bfef03bd7",
+    "crosspair_worst_band0_pair": "4bfef03bd7"
+  },
+  "bands": {
+    "upright_on": {
+      "overall_iou": 0.8984,
+      "bands": [
+        {
+          "band": 0,
+          "union_px": 17474,
+          "iou": 0.6815,
+          "pred_only": 3784,
+          "real_only": 1782
+        },
+        {
+          "band": 1,
+          "union_px": 26250,
+          "iou": 0.9798,
+          "pred_only": 465,
+          "real_only": 65
+        },
+        {
+          "band": 2,
+          "union_px": 26961,
+          "iou": 0.9921,
+          "pred_only": 177,
+          "real_only": 37
+        },
+        {
+          "band": 3,
+          "union_px": 27558,
+          "iou": 0.9664,
+          "pred_only": 229,
+          "real_only": 697
+        },
+        {
+          "band": 4,
+          "union_px": 26967,
+          "iou": 0.8933,
+          "pred_only": 1210,
+          "real_only": 1668
+        },
+        {
+          "band": 5,
+          "union_px": 17584,
+          "iou": 0.7503,
+          "pred_only": 2993,
+          "real_only": 1397
+        }
+      ]
+    },
+    "upright_off": {
+      "overall_iou": 0.918,
+      "bands": [
+        {
+          "band": 0,
+          "union_px": 18110,
+          "iou": 0.8766,
+          "pred_only": 2166,
+          "real_only": 69
+        },
+        {
+          "band": 1,
+          "union_px": 25542,
+          "iou": 0.985,
+          "pred_only": 336,
+          "real_only": 48
+        },
+        {
+          "band": 2,
+          "union_px": 26292,
+          "iou": 0.9876,
+          "pred_only": 278,
+          "real_only": 47
+        },
+        {
+          "band": 3,
+          "union_px": 27230,
+          "iou": 0.961,
+          "pred_only": 282,
+          "real_only": 780
+        },
+        {
+          "band": 4,
+          "union_px": 26410,
+          "iou": 0.8814,
+          "pred_only": 1236,
+          "real_only": 1897
+        },
+        {
+          "band": 5,
+          "union_px": 18852,
+          "iou": 0.7592,
+          "pred_only": 3006,
+          "real_only": 1533
+        }
+      ]
+    }
+  },
+  "waist": {
+    "upright_on": {
+      "before": {
+        "top": 37,
+        "bottom": 754,
+        "height": 717,
+        "waist_y": 83,
+        "depth_px": 46,
+        "waist_width": 337,
+        "depth_frac": 0.0642
+      },
+      "after": {
+        "top": 36,
+        "bottom": 493,
+        "height": 457,
+        "waist_y": 84,
+        "depth_px": 48,
+        "waist_width": 362,
+        "depth_frac": 0.105
+      }
+    },
+    "upright_off": {
+      "before": {
+        "top": 31,
+        "bottom": 731,
+        "height": 700,
+        "waist_y": 64,
+        "depth_px": 33,
+        "waist_width": 336,
+        "depth_frac": 0.0471
+      },
+      "after": {
+        "top": 24,
+        "bottom": 459,
+        "height": 435,
+        "waist_y": 53,
+        "depth_px": 29,
+        "waist_width": 357,
+        "depth_frac": 0.0667
+      }
+    }
+  },
+  "smear": {
+    "before": {
+      "rotation_deg": -3.6,
+      "observed_shift_px": 13,
+      "predicted_full_smear_px": 21.2,
+      "fraction_of_full_smear": 0.614
+    },
+    "after": {
+      "rotation_deg": 4.8,
+      "observed_shift_px": 19,
+      "predicted_full_smear_px": 30.3,
+      "fraction_of_full_smear": 0.627
+    }
+  },
+  "crosspair": [
+    {
+      "pair": "2691c1a8d0",
+      "waist_frac_before": 0.0891,
+      "waist_frac_after": 0.0286,
+      "mismatch_pp": 6.05,
+      "band0_iou": 0.446,
+      "top_offset_px": 30,
+      "heldout_resid_px": 47.58,
+      "pct_above_top_landmark": 8.91
+    },
+    {
+      "pair": "26b1041d00",
+      "waist_frac_before": 0.1154,
+      "waist_frac_after": 0.0855,
+      "mismatch_pp": 2.99,
+      "band0_iou": 0.5799,
+      "top_offset_px": 14,
+      "heldout_resid_px": 11.21,
+      "pct_above_top_landmark": 11.54
+    },
+    {
+      "pair": "2b0123d732",
+      "waist_frac_before": 0.0898,
+      "waist_frac_after": 0.0353,
+      "mismatch_pp": 5.45,
+      "band0_iou": 0.771,
+      "top_offset_px": 24,
+      "heldout_resid_px": 76.77,
+      "pct_above_top_landmark": 8.98
+    },
+    {
+      "pair": "443d1d4658",
+      "waist_frac_before": 0.0642,
+      "waist_frac_after": 0.105,
+      "mismatch_pp": 4.08,
+      "band0_iou": 0.6815,
+      "top_offset_px": 1,
+      "heldout_resid_px": 7.88,
+      "pct_above_top_landmark": 6.42
+    },
+    {
+      "pair": "4bfef03bd7",
+      "waist_frac_before": 0.0619,
+      "waist_frac_after": 0.0787,
+      "mismatch_pp": 1.68,
+      "band0_iou": 0.138,
+      "top_offset_px": 28,
+      "heldout_resid_px": 58.27,
+      "pct_above_top_landmark": 6.19
+    },
+    {
+      "pair": "8d9f0df4ad",
+      "waist_frac_before": 0.0485,
+      "waist_frac_after": 0.0717,
+      "mismatch_pp": 2.32,
+      "band0_iou": 0.8212,
+      "top_offset_px": 11,
+      "heldout_resid_px": 27.94,
+      "pct_above_top_landmark": 4.85
+    },
+    {
+      "pair": "e97924ad2d",
+      "waist_frac_before": 0.0449,
+      "waist_frac_after": 0.0724,
+      "mismatch_pp": 2.75,
+      "band0_iou": 0.798,
+      "top_offset_px": 4,
+      "heldout_resid_px": 27.48,
+      "pct_above_top_landmark": 4.49
+    }
+  ]
+}

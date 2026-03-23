@@ -1,0 +1,105 @@
+[
+ {
+  "claim": "IoU with uprighting off",
+  "note_regex": "against the ([0-9.]+)\\nuprighting \\*\\*off\\*\\* gives",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.iou_upright_off",
+  "tol": 0.0005
+ },
+ {
+  "claim": "the waistband band's IoU delta",
+  "note_regex": "\\| \\*\\*(-[0-9.]+)\\*\\* \\| \u22120\\.0052",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.band_iou_deltas_on_minus_off.0",
+  "tol": 0.0005
+ },
+ {
+  "claim": "only one band is materially worse",
+  "note_regex": "\\*\\*Exactly one band is worse by more than 0\\.05\\*\\*",
+  "claimed": "1",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.n_bands_worse_by_over_0_05"
+ },
+ {
+  "claim": "the after photo's waist depth with uprighting on",
+  "note_regex": "after 6\\.67% \u2192 \\*\\*([0-9.]+)%\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.waist_pct_after_on",
+  "tol": 0.01
+ },
+ {
+  "claim": "smear fraction, before photo",
+  "note_regex": "\\*\\*([0-9.]+)\\*\\* and \\*\\*0\\.627\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.smear_fraction_before",
+  "tol": 0.001
+ },
+ {
+  "claim": "smear fraction, after photo",
+  "note_regex": "\\*\\*0\\.614\\*\\* and \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.smear_fraction_after",
+  "tol": 0.001
+ },
+ {
+  "claim": "the cross-pair correlation that fails",
+  "note_regex": "r = \\*\\*\\+([0-9.]+)\\*\\*, the wrong sign",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.crosspair_corr_mismatch_vs_band0_iou",
+  "tol": 0.001
+ },
+ {
+  "claim": "the pair that falsifies the cross-pair claim",
+  "note_regex": "`(4bfef03bd7)` is simultaneously the pair",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.crosspair_smallest_mismatch_pair"
+ },
+ {
+  "claim": "and it is also the worst band-0 pair",
+  "note_regex": "smallest waist mismatch and the worst band-0 IoU",
+  "claimed": "4bfef03bd7",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.crosspair_worst_band0_pair"
+ },
+ {
+  "claim": "pairs displaced downward",
+  "note_regex": "pairs displaced \\*\\*downward\\*\\* \\| \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.top_offset_n_positive"
+ },
+ {
+  "claim": "sign test p value",
+  "note_regex": "exact binomial sign test \\| \\*\\*p = ([0-9.]+)\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.top_offset_sign_test_p",
+  "tol": 0.0001
+ },
+ {
+  "claim": "median downward displacement",
+  "note_regex": "median displacement \\| \\*\\*\\+([0-9.]+) px\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.top_offset_median_px",
+  "tol": 0.01
+ },
+ {
+  "claim": "residual predicts the displacement",
+  "note_regex": "residual vs \\\\\\|top offset\\\\\\| \\| \\*\\*\\+([0-9.]+)\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.corr_resid_vs_abs_top_offset",
+  "tol": 0.001
+ },
+ {
+  "claim": "displacement predicts band-0 IoU",
+  "note_regex": "vs band-0 IoU \\| \\*\\*(-[0-9.]+)\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.corr_top_offset_vs_band0_iou",
+  "tol": 0.001
+ },
+ {
+  "claim": "the extrapolation-amount account fails",
+  "note_regex": "Also false:\\n  r = \\*\\*(-[0-9.]+)\\*\\*",
+  "source": "reports/upright_waistband.json",
+  "path": "summary.corr_pct_above_landmark_vs_band0_iou",
+  "tol": 0.001
+ }
+]
