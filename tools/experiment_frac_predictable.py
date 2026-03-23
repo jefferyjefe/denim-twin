@@ -22,6 +22,25 @@ import cv2, numpy as np
 FEATURES = ("aspect", "waist_w_over_h", "hip_over_waist", "crotch_frac", "leg_over_h", "area_frac")
 
 
+def choose_feature(X, y, tr):
+    """Best-correlating feature, computed ONLY on the rows `tr` selects.
+
+    Extracted so the leave-one-out discipline is testable behaviourally. It previously lived inline
+    and was guarded by a test that grepped the source for `X[k][tr], y[tr]` -- a substring that also
+    appears in the polyfit line below, so the guard passed even with the selection reading all rows
+    (review 7). tests/test_frac_predictable.py now feeds this a case where including the held-out
+    point flips the answer.
+    """
+    r2 = {}
+    for k in X:
+        xk, yk = X[k][tr], y[tr]
+        if np.std(xk) < 1e-12:
+            r2[k] = -1.0
+            continue
+        r2[k] = float(np.corrcoef(xk, yk)[0, 1] ** 2)
+    return max(r2, key=r2.get)
+
+
 def features(d):
     lm = json.load(open(d / "before_lm.json"))["landmarks"]
     m = cv2.imread(str(d / "bmask.png"), cv2.IMREAD_GRAYSCALE) > 127
@@ -59,14 +78,7 @@ def main():
     pred_model, pred_base, chosen = [], [], []
     for i in range(n):
         tr = np.arange(n) != i
-        # feature choice happens INSIDE the fold
-        r2 = {}
-        for k in FEATURES:
-            xk, yk = X[k][tr], y[tr]
-            if np.std(xk) < 1e-12:
-                r2[k] = -1; continue
-            r2[k] = float(np.corrcoef(xk, yk)[0, 1] ** 2)
-        k = max(r2, key=r2.get)
+        k = choose_feature(X, y, tr)          # feature choice happens INSIDE the fold
         chosen.append(k)
         b, a = np.polyfit(X[k][tr], y[tr], 1)
         pred_model.append(float(np.clip(b * X[k][i] + a, 0.0, 1.0)))

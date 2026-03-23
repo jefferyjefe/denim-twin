@@ -73,3 +73,25 @@ def test_a_generated_summary_carries_the_caveat():
     assert r["crop_only_is_independent_of_the_model"] is False
     if r.get("loo_null"):
         assert r["loo_null"]["mean_advantage"] > 0.05
+
+
+def test_the_product_path_holds_out_the_prior():
+    """run_pair.py (evaluation) has always excluded the pair from its own fringe prior; predict.py
+    (product) passed exclude=None, so every benched prediction read a prior containing the pair it
+    was predicting. On the one fringe-capable pair the after-wash prior held exactly one paired
+    row -- that pair itself -- so it was half its own answer (review 7)."""
+    pred = open(os.path.join(ROOT, "tools", "predict.py")).read()
+    sp = open(os.path.join(ROOT, "tools", "score_predict.py")).read()
+    assert 'p.add_argument("--exclude"' in pred, "predict.py lost its prior hold-out"
+    assert "predict_depth_rel(pr, a.state, a.exclude" in pred, "predict.py is not passing --exclude through"
+    assert '"--exclude", pid' in sp, "score_predict no longer holds the scored pair out of the prior"
+
+
+def test_the_hold_out_is_alias_aware():
+    """Excluding by page id alone is not enough: two records can share a photograph (review 5,
+    finding 4). predict.py must pass pairs.jsonl so aliases_for() can widen the exclusion."""
+    pred = open(os.path.join(ROOT, "tools", "predict.py")).read()
+    i = pred.index("predict_depth_rel(pr,")          # the CALL, not the import
+    assert "data/external/pairs.jsonl" in pred[i:i + 300], (
+        "predict.py calls predict_depth_rel without pairs.jsonl, so the hold-out cannot widen to "
+        "pair ids that share a photograph")

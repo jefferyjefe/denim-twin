@@ -67,6 +67,22 @@ This does not retract anything. `--wash none` remains the right default for the 
 is the configuration in which six of seven pairs are meaningful, and turning wash on changes only
 the one pair that can respond.
 
+
+## Re-derived after two corrections (review 7)
+
+Both corrections that review 7 forced were applied and this note's numbers survive them:
+
+- **EXP_0038 regenerated `experiments/pairs`**, moving every pair's ground-truth inseam fraction.
+- **The product path was not holding the fringe prior out.** `run_pair.py` has always excluded a
+  pair from the prior that predicts it; `predict.py` passed `exclude=None`, and for the one
+  fringe-capable pair the after-wash prior held exactly one paired row — `4bfef03bd7` itself — so
+  its "predicted" depth was half its own measurement. Fixed; with the pair held out the prior for
+  it is **n = 1** (a single unpaired sample), which is worth stating plainly.
+
+Re-run with current pairs and a held-out prior on both arms: **+0.01104 ± 0.00577, still 1.9σ**,
+still six pairs moving by exactly zero. The conclusion is unchanged, and it was not resting on the
+leak.
+
 ## Files
 
 - `reports/fringe_capable_pairs.json` — which pairs can show a fringe and why

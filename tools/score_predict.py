@@ -114,6 +114,8 @@ for d in sorted(glob.glob(os.path.join(a.pairs, "*", "modification.json"))):
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools/predict.py"), "--image", before_img,
                         "--out", od, "--state", state, "--wash", a.wash,
                         "--edge-treatment", mod.get("edge_treatment", "raw"),
+                        # leave-one-out: the pair must not appear in the prior that predicts it
+                        "--exclude", pid,
                         "--canonical-inverse", a.canonical_inverse]
                        + (cutpath if cutpath else ["--inseam-fraction", f"{frac:.4f}"] + angle),
                        capture_output=True, text=True)

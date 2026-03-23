@@ -1,5 +1,5 @@
 """The inseam fraction is not predictable from the garment (EXP_0035)."""
-import json, os
+import json, os, sys
 import pytest
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
@@ -12,15 +12,36 @@ def _r(name):
     return json.load(open(p))
 
 
-def test_feature_selection_happens_inside_the_fold():
-    """The whole result turns on this. Choosing the feature on all seven pairs and then reporting
-    leave-one-out error leaks the held-out pair into model selection and would make a null result
-    look like a discovery."""
+def test_feature_selection_ignores_the_held_out_point():
+    """BEHAVIOURAL guard on the leave-one-out discipline.
+
+    The previous version of this test grepped the source for `X[k][tr], y[tr]` -- a substring that
+    also occurs in the polyfit line -- so it passed even when feature selection was changed to read
+    all rows including the held-out one. Review 7 demonstrated exactly that. This constructs a case
+    where the two answers differ and asserts the in-fold one is returned.
+    """
+    import numpy as np
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    from experiment_frac_predictable import choose_feature
+
+    # 'clean' correlates perfectly with y on the first five rows and is the right in-fold answer.
+    # 'trap' is flat over those five (r2 = 0) but the sixth row makes it look strong overall.
+    y = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 40.0])
+    X = {"clean": np.array([0.0, 1.0, 2.0, 3.0, 4.0, 0.0]),
+         "trap":  np.array([1.0, 1.0, 1.0, 1.0, 1.0, 99.0])}
+    tr = np.array([True, True, True, True, True, False])      # hold out the sixth row
+
+    assert choose_feature(X, y, tr) == "clean", "feature selection is reading the held-out point"
+    # sanity: with the held-out point included the answer really does flip, so the test has teeth
+    allrows = np.ones(len(y), dtype=bool)
+    assert choose_feature(X, y, allrows) == "trap"
+
+
+def test_the_fold_loop_uses_the_extracted_selector():
+    """Keeps the behavioural test wired to the real code path."""
     src = open(os.path.join(ROOT, "tools", "experiment_frac_predictable.py")).read()
-    assert "# feature choice happens INSIDE the fold" in src
     body = src.split("for i in range(n):")[1]
-    assert "tr = np.arange(n) != i" in body
-    assert "X[k][tr], y[tr]" in body, "feature r2 must be computed on the training rows only"
+    assert "choose_feature(X, y, tr)" in body
 
 
 def test_predictor_does_not_beat_a_constant_on_mae():
