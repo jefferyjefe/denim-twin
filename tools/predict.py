@@ -44,6 +44,9 @@ p.add_argument("--coin", help="coin lying in frame (see util/coins.py) to recove
 p.add_argument("--wash", choices=["none", "conservative", "median", "aggressive"], default="median",
                help="wash appearance model (shrink/hem-roll/dye loss). PRIOR parameters, never fitted (EXP_0013)")
 p.add_argument("--prior", default=os.path.join(os.path.dirname(__file__), "..", "data/priors/fringe.json"))
+p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict "
+                                 "itself). run_pair.py has always done this; the PRODUCT path did not, so every "
+                                 "benched prediction read a prior containing the pair it was predicting (review 7).")
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="predict the just-cut garment or the washed one")
 p.add_argument("--edge-treatment", choices=["raw", "cuffed", "hemmed", "serged", "hand_frayed"], default="raw")
 p.add_argument("--seed", type=int, default=1)
@@ -208,10 +211,13 @@ if not mod.expects_fringe():
     depth_px, sd_rel, n_eff, src = 0.0, 0.0, 0, f"edge treatment '{a.edge_treatment}' does not fray"
 else:
     from denimtwin.prior import predict_depth_rel
-    pr = json.load(open(a.prior)); rel, n_eff, sd_rel = predict_depth_rel(pr, a.state, None)
+    pr = json.load(open(a.prior))
+    rel, n_eff, sd_rel = predict_depth_rel(pr, a.state, a.exclude,
+                                           os.path.join(os.path.dirname(__file__), "..", "data/external/pairs.jsonl"))
     depth_px = rel * ww
     prior_validated = bool(pr.get("validated", False)); prior_note = pr.get("validation_note", "")
-    src = f"prior[{a.state}] n={n_eff}" + ("" if prior_validated else " — UNVALIDATED")
+    src = (f"prior[{a.state}] n={n_eff}" + (" after excluding self" if a.exclude else "")
+           + ("" if prior_validated else " — UNVALIDATED"))
     if n_eff == 0:
         FLAGS.append(f"the prior has NO observations for state '{a.state}' (every row for it was a rule output, not a "
                      f"measurement), so the predicted fringe depth is 0 by absence of evidence, not by measurement")
