@@ -1,5 +1,17 @@
 # EXP_0037 — The regression is uprighting's fault; the reason given for it is not
 
+> **Corrected by review 7 — the headline conclusion is WEAKENED, not confirmed.** Two defects were
+> found in this note's evidence. (1) Its correlation was computed on hem values that EXP_0038 later
+> changed; recomputed, **r = +0.459 (p = 0.300, n = 7)**, not +0.092. (2) `upright()` returns an
+> applied angle of 0.0 for a *refused* correction as well as for a straight photograph, so this
+> note's rotation table silently recorded two refusals (`2691c1a8d0` at −40.1° and `26b1041d00` at
+> −36.1°, both beyond the 30° ceiling) as "0.0° rotated". With both fixed, the independent-uprighting
+> mechanism is **neither confirmed nor disconfirmed** — a moderate positive correlation that n=7
+> cannot resolve. The word "disconfirmed" below is too strong and should be read as "not supported,
+> and underpowered". What still stands: the *cause* is uprighting (the controlled toggle is
+> unambiguous), and EXP_0038 later found the actual mechanism — a spurious SAM fringe mask driving
+> the hem fit on a garment that cannot fray — which is independent of this correlation.
+
 `443d1d4658` is the last unblocked item on the backlog: two bench metrics past tolerance
 (IoU 0.918 → 0.857, hem 8.9 → 27.7 px) and the one pair where the independent null beats the product
 path (−0.0068, −3.6σ). The README says it regressed "because before and after are uprighted
@@ -40,9 +52,20 @@ does not hold:
 | 8d9f0df4ad | −1.2 | 1.1 | 2.3 | 3.2 |
 | 26b1041d00 | 0.0 | 2.1 | 2.1 | 3.0 |
 
-**r = +0.092.** The pair with the largest independent rotation by a factor of nearly three
-(`2b0123d732`, 23.5°) has the second-*best* hem error in the set. Whatever is wrong with
-`443d1d4658` at 8.4° is not a thing that 23.5° does more of.
+**r = +0.459 (p = 0.300, n = 7)** — corrected; this note originally reported +0.092, computed on hem
+values EXP_0038 later changed. That is a moderate positive correlation in the direction the mechanism
+predicts, and it is not significant at this sample size. The counterexample is weaker than originally
+claimed but survives: `2b0123d732` has the largest *applied* rotation difference (23.5°, nearly three
+times `443d1d4658`'s 8.4°) and the **5th-best of 7** hem errors — not the second-best, as this note
+first said. A strict dose-response does not hold; a weak one cannot be ruled out.
+
+Two of the seven rows in that table were also wrong. `2691c1a8d0` and `26b1041d00` are recorded as
+0.0° because their corrections were **refused** — estimated at −40.1° and −36.1°, beyond the 30°
+ceiling `max_correctable_tilt` sets for their elongation — and `upright()` returns 0.0 for a refusal
+exactly as it does for a straight photograph. Nothing was rotated, so 0.0 is the right *applied*
+value and the correlation above is computed correctly; but the log gave no way to tell a refused
+correction from a photograph that needed none. `canon/upright.upright_decision()` now reports
+`applied | straight | below_deadband | refused`, and `run_pair.py` flags a refusal.
 
 ## A diagnostic that would have been useful, and does not work either
 
@@ -56,9 +79,10 @@ The angle symmetry above looks like a ground-truth-free way to catch a bad hem f
 | 2691c1a8d0 | −20.9 | 6.5 | 14.4 | 11.5 |
 | 26b1041d00 | 12.6 | −9.5 | 3.1 | 3.0 |
 
-**r = +0.213**, and the most asymmetric fit in the set is again the pair with nearly the best hem.
-Both candidate diagnostics point at `2b0123d732`, which is fine, and neither points at
-`443d1d4658`, which is not.
+**r = +0.269** (corrected from +0.213 for the same reason), and the most asymmetric fit in the set is
+again a pair with a good hem. Neither candidate diagnostic isolates the pair that was actually
+broken — and EXP_0038 later showed why: the defect was a code branch, not a geometric property, so no
+geometric diagnostic could have found it.
 
 The hem fit is also not unstable in the obvious way: rotating the real mask through ±6° moves the
 fitted angles smoothly at a slope of ≈ −1.0 per degree on both legs, which is the rigid response a

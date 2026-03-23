@@ -75,6 +75,14 @@ def coarse(img):
     print(f"coarse mask score {sc:.3f} area {info['area']:.2f} border {info['border_frac']:.2f}"); return m
 def upright(img, mask, name):
     """Rotate image+mask so the garment is upright (canon/upright.py — one implementation, shared with predict.py)."""
+    dec = U.upright_decision(mask, deadband=a.upright_deadband)
+    if dec["status"] == "refused":
+        # A refused correction used to be logged as "0.0 rotated", indistinguishable from a photo
+        # that needed none -- two of the seven scored pairs are in this state, and it corrupted the
+        # rotation column of EXP_0037 and EXP_0040 (review 7).
+        FLAGS.append(f"{name}: tilt correction REFUSED — estimate {dec['angle_deg']:.1f}° exceeds the "
+                     f"{dec['ceiling_deg']:.0f}° ceiling for elongation {dec['elongation']:.2f}; "
+                     f"the photograph is used UNCORRECTED")
     img2, mask2, ang = U.upright(img, mask, deadband=a.upright_deadband)
     if ang:
         FLAGS.append(f"{name}: rotated {ang:.1f}° to upright")

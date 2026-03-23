@@ -135,4 +135,6 @@ plausible mechanism is not a finding until the mechanism predicts something that
   and `experiments/README.md` (generated, gate-checked) flags it. Five notes were still asserting
   the voided crop-only comparison after EXP_0034; a test now enforces the pointer.
 - State a mechanism only with a prediction it makes that has been checked; otherwise write
-  "mechanism unknown" (EXP_0037).
+  "mechanism unknown" (EXP_0037). And check the prediction on CURRENT data — EXP_0037 disconfirmed a
+  mechanism on a correlation that a later commit invalidated, and on a rotation column in which a
+  refused tilt correction was indistinguishable from a straight photograph (review 7).
