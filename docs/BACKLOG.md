@@ -95,6 +95,18 @@ most found pairs lack — so it is **blocked on data**, not on code.
 - **`lmcheck`'s "crotch above the hips" rule is unreachable for auto landmarks** — `autolm` searches
   `range(hip_y, bot)`, so an auto crotch can never sit above the hips. Kept for manual landmarks.
 
+## Now open, and the first unblocked lead in a while (EXP_0040)
+
+**Registration has no landmark above the waistband, and the waistband is where it fails on every
+pair.** `register.SURVIVING` tops out at the waist, so band 0 is pure TPS extrapolation. Measured:
+the registered after-garment's top lands **below** the prediction's on **7 of 7** pairs (exact
+binomial p = 0.0156, median +14 px), and that displacement tracks registration quality
+(residual vs |offset| r = +0.781) and waistband IoU (r = −0.646). The magnitude is **unexplained** —
+two accounts were tested and both fail. The lead: add a **waistband-edge correspondence** to
+`SURVIVING`, the one feature that survives cutting unchanged and is trivially visible in both
+photos, putting the failing region inside the landmark hull. Testable with the existing A/B
+machinery and not fitted to one pair.
+
 ## The hem edge source (EXP_0038 → EXP_0039)
 
 EXP_0038 found that SAM's spurious fringe had been landing closer to the true hem than
