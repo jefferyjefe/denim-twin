@@ -12,7 +12,7 @@ ignored. This is the gate: every check, one exit code, and a table saying which 
     --no-bench  same, kept explicit for CI
 Exit 1 if any REQUIRED check fails. Advisory checks are reported but never fail the run.
 """
-import argparse, subprocess, sys, time
+import argparse, json, re, subprocess, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +55,16 @@ def main():
         ok = r.returncode == 0
         if not ok and required:
             failed += 1
+        if name == "tests":
+            # Record what the suite actually did, so README's test count is claim-checked against a
+            # fact rather than a memory. Review 7 found it stale by 136.
+            m = re.search(r"(?:(\d+) failed, )?(\d+) passed(?:, (\d+) skipped)?(?:, (\d+) xfailed)?",
+                          r.stdout + r.stderr)
+            if m:
+                (ROOT / "reports").mkdir(exist_ok=True)
+                (ROOT / "reports/suite.json").write_text(json.dumps({
+                    "failed": int(m.group(1) or 0), "passed": int(m.group(2)),
+                    "skipped": int(m.group(3) or 0), "xfailed": int(m.group(4) or 0)}, indent=1) + "\n")
         tail = (r.stdout + r.stderr).strip().splitlines()
         rows.append((name, "OK" if ok else ("FAIL" if required else "WARN"), dt, required,
                      "" if ok else (meaning + " | " + (tail[-1][:100] if tail else "no output"))))

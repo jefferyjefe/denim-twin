@@ -83,6 +83,16 @@ most found pairs lack — so it is **blocked on data**, not on code.
   pair. Contributed after-wash photos with a coin in frame are the only lever
   (`CONTRIBUTING_PAIRS.md`).
 
+## Environment hazards
+
+- **Stale bytecode can silently mask a source edit.** `.venv/bin/python` here is macOS's system
+  Python, which sets a `pycache_prefix` and writes `.pyc` files to
+  `~/Library/Caches/com.apple.python/<absolute path>/` — outside the repository and outside any
+  `__pycache__`, so `rm -rf src/**/__pycache__` does not clear it. Review 7 hit this live: a
+  threshold edited back to 0.6 on disk kept importing as 0.9. Any experiment run in that state uses
+  old code and reports it as current. `tests/test_tuning_rule_thresholds.py` now compares the
+  imported defaults against an AST parse of the file and names the cache directory when they differ.
+
 ## Known defects accepted, not fixed
 
 - **`run_pair.py` writes `*_used.png` before the `sane()` gates** (line 110 vs 129), so a directory
