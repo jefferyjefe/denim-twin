@@ -1,5 +1,19 @@
 # EXP_0040 — The waistband is the one region registration has no landmarks for, and it always lands low
 
+> **Corrected by EXP_0041.** The headline sign test below — the registered after-garment's top
+> lands below the prediction's on 7 of 7 pairs, p = 0.0156 — **does not survive matched
+> segmentation**. It was measured with `before_lm.json` (from the coarse before mask) against masks
+> derived from `bmask.png` (the refined one), and those two disagree by up to **45 px**. Recompute
+> both from one segmentation and the offsets are 30, 14, 23, 0, **−1**, 10, 4: five positive, one
+> negative, one zero, **p = 0.2188**. `4bfef03bd7`, the extreme case named throughout this note, is
+> the pair that flips, and it is the pair with the largest provenance disagreement.
+>
+> What stands: the band decomposition (all of the uprighting loss is in band 0, −0.1951 against
+> −0.0089 for the hem band) — that measurement never touched the landmark set. What does not stand:
+> the sign test, its 14 px median, and the correlations built on the per-pair offsets. The lead this
+> note ends on was acted on and closed negatively — the waistband sits 16.6 px from an existing
+> landmark, so a correspondence there is redundant rather than missing (EXP_0041).
+
 EXP_0038 left a residual: with uprighting **on**, `443d1d4658` scores IoU 0.898 against the 0.918
 uprighting **off** gives, even though its hem is now *better* with uprighting on. Chasing that
 turned up something bigger than the one pair.

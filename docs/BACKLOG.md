@@ -39,6 +39,7 @@ most found pairs lack — so it is **blocked on data**, not on code.
 | Benching the fringe render | impossible on this data: 6 of 7 pairs cannot show a fringe | EXP_0036 |
 | `443d1d4658` bench regression | fixed: a cuffed garment's hem was measured from a spurious fringe | EXP_0038 |
 | Mask edge instead of the colour split | tested, **not adopted**; one pair decides it either way | EXP_0039 |
+| Waistband edge as a registration landmark | tested, **not adopted**; outside the hull is fitted better than inside | EXP_0041 |
 
 ## Open, unblocked (code only)
 
@@ -83,6 +84,17 @@ most found pairs lack — so it is **blocked on data**, not on code.
   pair. Contributed after-wash photos with a coin in frame are the only lever
   (`CONTRIBUTING_PAIRS.md`).
 
+## Guards that are currently not running
+
+- **`tests/test_review4_wash_null_baselines.py` skips.** It compares the null baselines between
+  `experiments/pairs` and `experiments/pairs_wash` to check that `--wash median` leaves them
+  untouched. EXP_0038 regenerated `pairs` and not `pairs_wash`, and `pairs_wash/provenance.json`
+  predates the `pipeline_sha256` field, so there is no way to tell whether the same code produced
+  both. Re-running both with `tools/run_pairs_batch.py` is the fix and needs a full segmentation
+  pass. This is the **only** skip in the suite, and `tests/test_guards_are_not_optional.py` now
+  fails if a second one appears — a skip is a guard that stopped running, and review 7 found several
+  that had.
+
 ## Environment hazards
 
 - **Stale bytecode can silently mask a source edit.** `.venv/bin/python` here is macOS's system
@@ -95,6 +107,20 @@ most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Known defects accepted, not fixed
 
+- **The before-photo landmarks and `bmask.png` come from different segmentations.**
+  `run_pair.py:150` refines the before mask with landmark prompts once there are ≥14 landmarks and
+  deliberately keeps the landmarks from the *coarse* mask (EXP_0004: recomputing them on the refined
+  mask regressed pair 1). So registration fits landmarks describing one segmentation while the
+  prediction lives on another. EXP_0041 measured the disagreement for the first time, over all six
+  `SURVIVING` landmarks and both coordinates: up to **45 px** (`4bfef03bd7`, crotch y; 32 px in x),
+  non-zero on **5 of 7** pairs, and **0 px on every after photo** — the after mask is never refined.
+  It is not a footnote: it is what carried EXP_0040's headline sign test, and one pair with a 45 px
+  disagreement can carry a 1.6σ band-0 result on its own. Any experiment that reads a new
+  correspondence off `bmask.png` and joins it to `before_lm.json` must use `--landmarks recomputed`
+  or it is measuring this instead of its own treatment. **The fix is a real experiment and not a
+  large one**: either refine the landmarks with the mask, or stop refining the mask. EXP_0004 chose
+  the latter on one pair; there are seven now.
+
 - **`run_pair.py` writes `*_used.png` before the `sane()` gates** (line 110 vs 129), so a directory
   re-run and then rejected keeps fresh images beside stale masks. Two directories are in that state
   (`660bef67bf`, `85d48013a2`); both are rejected and nothing scores them
@@ -105,17 +131,37 @@ most found pairs lack — so it is **blocked on data**, not on code.
 - **`lmcheck`'s "crotch above the hips" rule is unreachable for auto landmarks** — `autolm` searches
   `range(hip_y, bot)`, so an auto crotch can never sit above the hips. Kept for manual landmarks.
 
-## Now open, and the first unblocked lead in a while (EXP_0040)
+## The waistband lead (EXP_0040 → EXP_0041): closed, and EXP_0040 corrected on the way
 
-**Registration has no landmark above the waistband, and the waistband is where it fails on every
-pair.** `register.SURVIVING` tops out at the waist, so band 0 is pure TPS extrapolation. Measured:
-the registered after-garment's top lands **below** the prediction's on **7 of 7** pairs (exact
-binomial p = 0.0156, median +14 px), and that displacement tracks registration quality
-(residual vs |offset| r = +0.781) and waistband IoU (r = −0.646). The magnitude is **unexplained** —
-two accounts were tested and both fail. The lead: add a **waistband-edge correspondence** to
-`SURVIVING`, the one feature that survives cutting unchanged and is trivially visible in both
-photos, putting the failing region inside the landmark hull. Testable with the existing A/B
-machinery and not fitted to one pair.
+EXP_0040 measured that `register.SURVIVING` has no landmark above the waist, that the registered
+after-garment's top lands below the prediction's on 7 of 7 pairs (p = 0.0156, median +14 px), and
+that band 0 is where uprighting costs IoU. The lead was to add a waistband-edge correspondence.
+
+EXP_0041 added it — three arms plus a displaced null, seven pairs,
+`reports/waistband_landmark.json` — and the answer is no. Two of the three things that answer rests
+on also overturn something:
+
+- **EXP_0040's sign test does not survive matched segmentation.** It compared landmarks from the
+  *coarse* before mask against masks derived from the *refined* one. Recompute both from one
+  segmentation and the offsets are 30, 14, 23, 0, **-1**, 10, 4 — five positive, one negative, one
+  zero, **p = 0.2188**. The pair that flips is `4bfef03bd7`, which is the pair with the largest
+  provenance disagreement. EXP_0040's band decomposition stands; its headline does not.
+- **The waistband is not an unconstrained region.** A held-out `SURVIVING` landmark sits a median of
+  **136.0 px** from its nearest support; a waistband corner sits **16.6 px** from its. Matched on
+  cardinality the waistband gap beats the leave-one-out error (12.03 px against 28.82, 7 of 7);
+  matched on *reach* it loses by the same margin (**118.94 px**, 7 of 7). The correspondence is
+  redundant with a landmark 16.6 px away, not missing from a region nothing constrains.
+- **Neither treatment helps.** Δ IoU -0.00204 (−0.58σ) adding the corners, -0.00234 (−0.69σ) moving
+  the waist landmarks onto them. On the prediction-independent residual, `add` is a coin flip
+  (0.24σ, better on 4 of 7, sign reverses when normalised by garment height) and `replace` is
+  genuinely worse (2.15σ, worse on 6 of 7). Displacing the correspondence costs **+12.134 px** of
+  residual against `add`'s +1.586, so it is a real correspondence carrying no new information.
+- **The band-0 column cannot carry a claim at all.** `pred_median_mask.png` is a strict pixel subset
+  of `bmask.png` on 7 of 7 pairs and shares its top row on 7 of 7, so a correspondence read off
+  `bmask.png` is read off the artefact defining the scoring target — `docs/GATES.md`'s baseline rule.
+
+**Now open in its place:** the before photo is segmented twice and the two results differ by up to
+45 px, with everything downstream mixing them. See the defect below.
 
 ## The hem edge source (EXP_0038 → EXP_0039)
 

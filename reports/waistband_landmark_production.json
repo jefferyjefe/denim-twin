@@ -1,0 +1,1231 @@
+{
+ "summary": {
+  "n_pairs": 7,
+  "skipped": [],
+  "landmarks": "production",
+  "gap": {
+   "median_px": 6.65,
+   "jackknife_median_px": 9.85,
+   "reach_matched_median_px": 133.25,
+   "loo_median_px": 27.94,
+   "reach_waistband_median_px": 23.3,
+   "reach_loo_median_px": 137.0,
+   "n_loo_gt_jackknife": 7,
+   "sign_test_loo_gt_jackknife_p": 0.0078,
+   "n_reach_matched_gt_loo": 7,
+   "sign_test_reach_matched_gt_loo_p": 0.0078,
+   "median_dy_px": 3.86,
+   "n_dy_positive": 7,
+   "sign_test_dy_p": 0.0156,
+   "construction_dy_median_px": 4.0,
+   "corr_construction_vs_dy": 0.986,
+   "height_px_range": [
+    312,
+    1030
+   ]
+  },
+  "control_top_offset": {
+   "per_pair_px": [
+    30,
+    14,
+    24,
+    1,
+    28,
+    11,
+    4
+   ],
+   "median_px": 14.0,
+   "n_positive": 7,
+   "n_negative": 0,
+   "n_zero": 0,
+   "sign_test_p": 0.0156
+  },
+  "add": {
+   "d_iou": {
+    "n": 7,
+    "mean": 0.00584,
+    "median": 0.0027,
+    "sem_paired": 0.00714,
+    "n_positive": 4,
+    "n_negative": 3,
+    "sign_test_p": 1.0,
+    "sigma": 0.82
+   },
+   "d_iou_sem_unpaired": 0.03856,
+   "cancellation_factor": 5.4,
+   "d_band0": {
+    "n": 7,
+    "mean": -0.01024,
+    "median": 0.0148,
+    "sem_paired": 0.04239,
+    "n_positive": 4,
+    "n_negative": 3,
+    "sign_test_p": 1.0,
+    "sigma": -0.24
+   },
+   "d_loo_common": {
+    "n": 7,
+    "mean": 10.13,
+    "median": 2.08,
+    "sem_paired": 8.41227,
+    "n_positive": 4,
+    "n_negative": 3,
+    "sign_test_p": 1.0,
+    "sigma": 1.2
+   },
+   "d_loo_common_frac_h": {
+    "n": 7,
+    "mean": 0.00608,
+    "median": 0.00623,
+    "sem_paired": 0.01156,
+    "n_positive": 4,
+    "n_negative": 3,
+    "sign_test_p": 1.0,
+    "sigma": 0.53
+   }
+  },
+  "replace": {
+   "d_iou": {
+    "n": 7,
+    "mean": 0.01234,
+    "median": 0.0008,
+    "sem_paired": 0.01313,
+    "n_positive": 4,
+    "n_negative": 3,
+    "sign_test_p": 1.0,
+    "sigma": 0.94
+   },
+   "d_iou_sem_unpaired": 0.04006,
+   "cancellation_factor": 3.1,
+   "d_band0": {
+    "n": 7,
+    "mean": 0.12004,
+    "median": 0.0473,
+    "sem_paired": 0.07537,
+    "n_positive": 6,
+    "n_negative": 1,
+    "sign_test_p": 0.125,
+    "sigma": 1.59
+   },
+   "d_loo_common": {
+    "n": 7,
+    "mean": 8.62286,
+    "median": 2.97,
+    "sem_paired": 5.5909,
+    "n_positive": 6,
+    "n_negative": 1,
+    "sign_test_p": 0.125,
+    "sigma": 1.54
+   },
+   "d_loo_common_frac_h": {
+    "n": 7,
+    "mean": 0.01226,
+    "median": 0.00534,
+    "sem_paired": 0.00637,
+    "n_positive": 6,
+    "n_negative": 1,
+    "sign_test_p": 0.125,
+    "sigma": 1.92
+   }
+  },
+  "null": {
+   "d_iou": {
+    "n": 7,
+    "mean": -0.0039,
+    "median": -0.0024,
+    "sem_paired": 0.00477,
+    "n_positive": 2,
+    "n_negative": 5,
+    "sign_test_p": 0.4531,
+    "sigma": -0.82
+   },
+   "d_loo_common": {
+    "n": 7,
+    "mean": 21.48429,
+    "median": 5.76,
+    "sem_paired": 12.74599,
+    "n_positive": 5,
+    "n_negative": 2,
+    "sign_test_p": 0.4531,
+    "sigma": 1.69
+   },
+   "add_minus_null_loo_common": {
+    "n": 7,
+    "mean": -11.35429,
+    "median": -6.07,
+    "sem_paired": 5.10155,
+    "n_positive": 0,
+    "n_negative": 7,
+    "sign_test_p": 0.0156,
+    "sigma": -2.23
+   },
+   "displacement_px": [
+    22.59,
+    1.22,
+    4.36,
+    6.65,
+    42.12,
+    12.35,
+    2.76
+   ]
+  },
+  "landmark_provenance": {
+   "before_max_abs_px": [
+    0,
+    0,
+    28,
+    2,
+    45,
+    3,
+    2
+   ],
+   "after_max_abs_px": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "before_max_px": 45,
+   "after_max_px": 0,
+   "n_before_nonzero": 5
+  },
+  "scoring_target": {
+   "n_pred_subset_of_bmask": 7,
+   "n_pred_top_equals_bmask_top": 7
+  }
+ },
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 449,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 0,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     7.54,
+     21.99,
+     38.23
+    ],
+    "mean_px": 22.59,
+    "mean_dy_px": 3.21,
+    "jackknife_mean_px": 24.82,
+    "reach_matched_mean_px": 133.25,
+    "reach_waistband_px": 35.9,
+    "reach_loo_px": 136.0,
+    "waist_depth_before_px": 8.0,
+    "waist_depth_after_px": 6.0,
+    "construction_dy_px": 2.0,
+    "loo_control_mean_px": 47.58,
+    "loo_control_per_landmark": {
+     "waist_left": 48.57,
+     "waist_center": 13.79,
+     "waist_right": 36.4,
+     "hip_left": 71.23,
+     "hip_right": 49.77,
+     "crotch": 65.71
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.7328,
+     "band0_iou": 0.446,
+     "loo_common_mean_px": 62.24,
+     "loo_common": {
+      "hip_left": 71.23,
+      "hip_right": 49.77,
+      "crotch": 65.71
+     },
+     "real_top_row": 46,
+     "pred_top_row": 16,
+     "top_offset_px": 30
+    },
+    "add": {
+     "iou": 0.7355,
+     "band0_iou": 0.5494,
+     "loo_common_mean_px": 54.0,
+     "loo_common": {
+      "hip_left": 33.71,
+      "hip_right": 64.81,
+      "crotch": 63.49
+     },
+     "real_top_row": 42,
+     "pred_top_row": 16,
+     "top_offset_px": 26
+    },
+    "replace": {
+     "iou": 0.7208,
+     "band0_iou": 0.5219,
+     "loo_common_mean_px": 65.21,
+     "loo_common": {
+      "hip_left": 69.32,
+      "hip_right": 52.37,
+      "crotch": 73.95
+     },
+     "real_top_row": 44,
+     "pred_top_row": 16,
+     "top_offset_px": 28
+    },
+    "null": {
+     "iou_mean": 0.7207,
+     "iou_sd": 0.0207,
+     "band0_iou_mean": 0.4331,
+     "loo_common_mean_px": 68.0,
+     "draws": 25,
+     "displacement_px": 22.59
+    }
+   }
+  },
+  {
+   "pair": "26b1041d00",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 312,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 0,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     1.39,
+     1.2,
+     1.07
+    ],
+    "mean_px": 1.22,
+    "mean_dy_px": 1.11,
+    "jackknife_mean_px": 2.09,
+    "reach_matched_mean_px": 25.16,
+    "reach_waistband_px": 5.4,
+    "reach_loo_px": 110.6,
+    "waist_depth_before_px": 5.0,
+    "waist_depth_after_px": 4.0,
+    "construction_dy_px": 1.0,
+    "loo_control_mean_px": 11.21,
+    "loo_control_per_landmark": {
+     "waist_left": 6.8,
+     "waist_center": 2.38,
+     "waist_right": 7.71,
+     "hip_left": 13.28,
+     "hip_right": 13.83,
+     "crotch": 23.29
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.8993,
+     "band0_iou": 0.5799,
+     "loo_common_mean_px": 16.8,
+     "loo_common": {
+      "hip_left": 13.28,
+      "hip_right": 13.83,
+      "crotch": 23.29
+     },
+     "real_top_row": 76,
+     "pred_top_row": 62,
+     "top_offset_px": 14
+    },
+    "add": {
+     "iou": 0.8971,
+     "band0_iou": 0.5947,
+     "loo_common_mean_px": 12.04,
+     "loo_common": {
+      "hip_left": 5.93,
+      "hip_right": 5.19,
+      "crotch": 25.0
+     },
+     "real_top_row": 72,
+     "pred_top_row": 62,
+     "top_offset_px": 10
+    },
+    "replace": {
+     "iou": 0.9001,
+     "band0_iou": 0.5944,
+     "loo_common_mean_px": 17.78,
+     "loo_common": {
+      "hip_left": 14.28,
+      "hip_right": 14.83,
+      "crotch": 24.22
+     },
+     "real_top_row": 74,
+     "pred_top_row": 62,
+     "top_offset_px": 12
+    },
+    "null": {
+     "iou_mean": 0.8969,
+     "iou_sd": 0.0044,
+     "band0_iou_mean": 0.5983,
+     "loo_common_mean_px": 12.68,
+     "draws": 25,
+     "displacement_px": 1.22
+    }
+   }
+  },
+  {
+   "pair": "2b0123d732",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 401,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      -28,
+      4
+     ],
+     "waist_center": [
+      -12,
+      4
+     ],
+     "waist_right": [
+      4,
+      4
+     ],
+     "hip_left": [
+      5,
+      18
+     ],
+     "hip_right": [
+      9,
+      18
+     ],
+     "crotch": [
+      -2,
+      3
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 28,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     2.37,
+     5.48,
+     5.24
+    ],
+    "mean_px": 4.36,
+    "mean_dy_px": 3.86,
+    "jackknife_mean_px": 9.85,
+    "reach_matched_mean_px": 153.84,
+    "reach_waistband_px": 29.2,
+    "reach_loo_px": 137.0,
+    "waist_depth_before_px": 11.0,
+    "waist_depth_after_px": 7.0,
+    "construction_dy_px": 4.0,
+    "loo_control_mean_px": 76.77,
+    "loo_control_per_landmark": {
+     "waist_left": 50.47,
+     "waist_center": 18.25,
+     "waist_right": 41.25,
+     "hip_left": 101.12,
+     "hip_right": 83.95,
+     "crotch": 165.59
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.8378,
+     "band0_iou": 0.771,
+     "loo_common_mean_px": 116.89,
+     "loo_common": {
+      "hip_left": 101.12,
+      "hip_right": 83.95,
+      "crotch": 165.59
+     },
+     "real_top_row": 134,
+     "pred_top_row": 110,
+     "top_offset_px": 24
+    },
+    "add": {
+     "iou": 0.8527,
+     "band0_iou": 0.8403,
+     "loo_common_mean_px": 102.1,
+     "loo_common": {
+      "hip_left": 89.62,
+      "hip_right": 48.23,
+      "crotch": 168.47
+     },
+     "real_top_row": 127,
+     "pred_top_row": 110,
+     "top_offset_px": 17
+    },
+    "replace": {
+     "iou": 0.8454,
+     "band0_iou": 0.8183,
+     "loo_common_mean_px": 126.73,
+     "loo_common": {
+      "hip_left": 118.66,
+      "hip_right": 93.81,
+      "crotch": 167.72
+     },
+     "real_top_row": 128,
+     "pred_top_row": 110,
+     "top_offset_px": 18
+    },
+    "null": {
+     "iou_mean": 0.8487,
+     "iou_sd": 0.0037,
+     "band0_iou_mean": 0.8322,
+     "loo_common_mean_px": 102.27,
+     "draws": 25,
+     "displacement_px": 4.36
+    }
+   }
+  },
+  {
+   "pair": "443d1d4658",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 717,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      -1,
+      1
+     ],
+     "waist_center": [
+      -1,
+      1
+     ],
+     "waist_right": [
+      0,
+      1
+     ],
+     "hip_left": [
+      0,
+      1
+     ],
+     "hip_right": [
+      -1,
+      1
+     ],
+     "crotch": [
+      0,
+      2
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 2,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     6.76,
+     6.61,
+     6.59
+    ],
+    "mean_px": 6.65,
+    "mean_dy_px": 6.5,
+    "jackknife_mean_px": 6.97,
+    "reach_matched_mean_px": 23.59,
+    "reach_waistband_px": 14.1,
+    "reach_loo_px": 152.3,
+    "waist_depth_before_px": 14.0,
+    "waist_depth_after_px": 8.0,
+    "construction_dy_px": 6.0,
+    "loo_control_mean_px": 7.88,
+    "loo_control_per_landmark": {
+     "waist_left": 3.53,
+     "waist_center": 2.48,
+     "waist_right": 11.52,
+     "hip_left": 3.95,
+     "hip_right": 15.06,
+     "crotch": 10.74
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.8984,
+     "band0_iou": 0.6815,
+     "loo_common_mean_px": 9.91,
+     "loo_common": {
+      "hip_left": 3.95,
+      "hip_right": 15.06,
+      "crotch": 10.74
+     },
+     "real_top_row": 38,
+     "pred_top_row": 37,
+     "top_offset_px": 1
+    },
+    "add": {
+     "iou": 0.8804,
+     "band0_iou": 0.4962,
+     "loo_common_mean_px": 29.76,
+     "loo_common": {
+      "hip_left": 31.79,
+      "hip_right": 40.48,
+      "crotch": 17.02
+     },
+     "real_top_row": 16,
+     "pred_top_row": 37,
+     "top_offset_px": -21
+    },
+    "replace": {
+     "iou": 0.8964,
+     "band0_iou": 0.6664,
+     "loo_common_mean_px": 9.28,
+     "loo_common": {
+      "hip_left": 2.5,
+      "hip_right": 14.98,
+      "crotch": 10.34
+     },
+     "real_top_row": 30,
+     "pred_top_row": 37,
+     "top_offset_px": -7
+    },
+    "null": {
+     "iou_mean": 0.8755,
+     "iou_sd": 0.0116,
+     "band0_iou_mean": 0.4338,
+     "loo_common_mean_px": 35.83,
+     "draws": 25,
+     "displacement_px": 6.65
+    }
+   }
+  },
+  {
+   "pair": "4bfef03bd7",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 905,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      -32,
+      31
+     ],
+     "waist_center": [
+      -20,
+      31
+     ],
+     "waist_right": [
+      -9,
+      31
+     ],
+     "hip_left": [
+      3,
+      41
+     ],
+     "hip_right": [
+      -2,
+      41
+     ],
+     "crotch": [
+      0,
+      45
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 45,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     41.93,
+     41.37,
+     43.06
+    ],
+    "mean_px": 42.12,
+    "mean_dy_px": 41.63,
+    "jackknife_mean_px": 44.79,
+    "reach_matched_mean_px": 159.45,
+    "reach_waistband_px": 62.5,
+    "reach_loo_px": 167.4,
+    "waist_depth_before_px": 48.0,
+    "waist_depth_after_px": 5.0,
+    "construction_dy_px": 43.0,
+    "loo_control_mean_px": 58.27,
+    "loo_control_per_landmark": {
+     "waist_left": 42.51,
+     "waist_center": 11.08,
+     "waist_right": 41.79,
+     "hip_left": 69.98,
+     "hip_right": 70.72,
+     "crotch": 113.53
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.8065,
+     "band0_iou": 0.138,
+     "loo_common_mean_px": 84.74,
+     "loo_common": {
+      "hip_left": 69.98,
+      "hip_right": 70.72,
+      "crotch": 113.53
+     },
+     "real_top_row": 90,
+     "pred_top_row": 62,
+     "top_offset_px": 28
+    },
+    "add": {
+     "iou": 0.8466,
+     "band0_iou": 0.0061,
+     "loo_common_mean_px": 118.88,
+     "loo_common": {
+      "hip_left": 36.93,
+      "hip_right": 194.28,
+      "crotch": 125.43
+     },
+     "real_top_row": 5,
+     "pred_top_row": 62,
+     "top_offset_px": -57
+    },
+    "replace": {
+     "iou": 0.8958,
+     "band0_iou": 0.6992,
+     "loo_common_mean_px": 125.92,
+     "loo_common": {
+      "hip_left": 117.87,
+      "hip_right": 104.3,
+      "crotch": 155.59
+     },
+     "real_top_row": 43,
+     "pred_top_row": 62,
+     "top_offset_px": -19
+    },
+    "null": {
+     "iou_mean": 0.8187,
+     "iou_sd": 0.0228,
+     "band0_iou_mean": 0.0937,
+     "loo_common_mean_px": 153.85,
+     "draws": 25,
+     "displacement_px": 42.12
+    }
+   }
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 1030,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      -3,
+      1
+     ],
+     "waist_center": [
+      -1,
+      1
+     ],
+     "waist_right": [
+      2,
+      1
+     ],
+     "hip_left": [
+      1,
+      3
+     ],
+     "hip_right": [
+      1,
+      3
+     ],
+     "crotch": [
+      0,
+      3
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 3,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     12.39,
+     11.54,
+     13.13
+    ],
+    "mean_px": 12.35,
+    "mean_dy_px": 11.26,
+    "jackknife_mean_px": 13.42,
+    "reach_matched_mean_px": 80.58,
+    "reach_waistband_px": 23.3,
+    "reach_loo_px": 292.0,
+    "waist_depth_before_px": 21.0,
+    "waist_depth_after_px": 16.0,
+    "construction_dy_px": 5.0,
+    "loo_control_mean_px": 27.94,
+    "loo_control_per_landmark": {
+     "waist_left": 16.67,
+     "waist_center": 9.24,
+     "waist_right": 18.81,
+     "hip_left": 35.68,
+     "hip_right": 37.15,
+     "crotch": 50.07
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.9563,
+     "band0_iou": 0.8212,
+     "loo_common_mean_px": 40.97,
+     "loo_common": {
+      "hip_left": 35.68,
+      "hip_right": 37.15,
+      "crotch": 50.07
+     },
+     "real_top_row": 80,
+     "pred_top_row": 69,
+     "top_offset_px": 11
+    },
+    "add": {
+     "iou": 0.9682,
+     "band0_iou": 0.9097,
+     "loo_common_mean_px": 83.6,
+     "loo_common": {
+      "hip_left": 48.26,
+      "hip_right": 71.47,
+      "crotch": 131.07
+     },
+     "real_top_row": 53,
+     "pred_top_row": 69,
+     "top_offset_px": -16
+    },
+    "replace": {
+     "iou": 0.9656,
+     "band0_iou": 0.9432,
+     "loo_common_mean_px": 46.47,
+     "loo_common": {
+      "hip_left": 40.63,
+      "hip_right": 41.02,
+      "crotch": 57.76
+     },
+     "real_top_row": 68,
+     "pred_top_row": 69,
+     "top_offset_px": -1
+    },
+    "null": {
+     "iou_mean": 0.954,
+     "iou_sd": 0.0034,
+     "band0_iou_mean": 0.7852,
+     "loo_common_mean_px": 106.82,
+     "draws": 25,
+     "displacement_px": 12.35
+    }
+   }
+  },
+  {
+   "pair": "e97924ad2d",
+   "n_landmarks": 6,
+   "landmarks": [
+    "waist_left",
+    "waist_center",
+    "waist_right",
+    "hip_left",
+    "hip_right",
+    "crotch"
+   ],
+   "height_px": 334,
+   "landmark_provenance": {
+    "before": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      -1,
+      -2
+     ]
+    },
+    "after": {
+     "waist_left": [
+      0,
+      0
+     ],
+     "waist_center": [
+      0,
+      0
+     ],
+     "waist_right": [
+      0,
+      0
+     ],
+     "hip_left": [
+      0,
+      0
+     ],
+     "hip_right": [
+      0,
+      0
+     ],
+     "crotch": [
+      0,
+      0
+     ]
+    },
+    "before_max_abs_px": 2,
+    "after_max_abs_px": 0
+   },
+   "gap": {
+    "per_corner_px": [
+     2.87,
+     2.27,
+     3.15
+    ],
+    "mean_px": 2.76,
+    "mean_dy_px": 2.6,
+    "jackknife_mean_px": 5.06,
+    "reach_matched_mean_px": 146.25,
+    "reach_waistband_px": 6.1,
+    "reach_loo_px": 61.7,
+    "waist_depth_before_px": 6.0,
+    "waist_depth_after_px": 8.0,
+    "construction_dy_px": -2.0,
+    "loo_control_mean_px": 27.48,
+    "loo_control_per_landmark": {
+     "waist_left": 15.94,
+     "waist_center": 17.04,
+     "waist_right": 19.17,
+     "hip_left": 37.02,
+     "hip_right": 38.32,
+     "crotch": 37.4
+    }
+   },
+   "scoring_target": {
+    "pred_is_subset_of_bmask": true,
+    "pred_top_equals_bmask_top": true
+   },
+   "arms": {
+    "control": {
+     "iou": 0.8929,
+     "band0_iou": 0.798,
+     "loo_common_mean_px": 37.58,
+     "loo_common": {
+      "hip_left": 37.02,
+      "hip_right": 38.32,
+      "crotch": 37.4
+     },
+     "real_top_row": 22,
+     "pred_top_row": 18,
+     "top_offset_px": 4
+    },
+    "add": {
+     "iou": 0.8844,
+     "band0_iou": 0.7675,
+     "loo_common_mean_px": 39.66,
+     "loo_common": {
+      "hip_left": 47.12,
+      "hip_right": 46.6,
+      "crotch": 25.24
+     },
+     "real_top_row": 13,
+     "pred_top_row": 18,
+     "top_offset_px": -5
+    },
+    "replace": {
+     "iou": 0.8863,
+     "band0_iou": 0.8325,
+     "loo_common_mean_px": 38.1,
+     "loo_common": {
+      "hip_left": 37.75,
+      "hip_right": 39.18,
+      "crotch": 37.38
+     },
+     "real_top_row": 18,
+     "pred_top_row": 18,
+     "top_offset_px": 0
+    },
+    "null": {
+     "iou_mean": 0.8822,
+     "iou_sd": 0.0058,
+     "band0_iou_mean": 0.7675,
+     "loo_common_mean_px": 40.07,
+     "draws": 25,
+     "displacement_px": 2.76
+    }
+   }
+  }
+ ]
+}
