@@ -14,7 +14,9 @@ Usage: python tools/experiment_paired_uncertainty.py --product experiments/pairs
 """
 import argparse, glob, json, os, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 import cv2, numpy as np
 from denimtwin.canon.register import _tps, SURVIVING
 from experiment_groundtruth_uncertainty import per_landmark_heldout, warp_mask, iou
@@ -22,8 +24,8 @@ from experiment_groundtruth_uncertainty import per_landmark_heldout, warp_mask, 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pairs", default="experiments/pairs")
-    ap.add_argument("--product", default="experiments/pairs_predict_dropdegen")
+    ap.add_argument("--pairs", default=str(ROOT / "experiments/pairs"))
+    ap.add_argument("--product", default=str(ROOT / "experiments/pairs_predict_dropdegen"))
     ap.add_argument("--draws", type=int, default=40)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--scale", type=float, default=1.0)

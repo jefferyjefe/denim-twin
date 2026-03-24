@@ -1,24 +1,48 @@
 """EXP_0032: how many found-pair landmark sets are geometrically inconsistent, and does it
 predict which garments the canonical map folds?
 
-Usage: python tools/experiment_landmark_consistency.py [--pairs experiments/pairs]
+Usage: python tools/experiment_landmark_consistency.py [--all-pairs]
+The seven scored pairs are the default; --all-pairs is a diagnostic view, not a publishable one.
 """
 import argparse, glob, json, sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import cv2, numpy as np
 from denimtwin.canon.lmcheck import check_landmarks, worst_severity
 from denimtwin.canon.warp import CanonicalMap
 
 
+def build(pairs=None, all_pairs=False, tol_frac=0.01):
+    """The report as a value, so tools/make_reports.py --check can detect it going stale."""
+    return _run(argparse.Namespace(pairs=pairs or str(ROOT / "experiments/pairs"),
+                                   all_pairs=all_pairs, tol_frac=tol_frac, usable_only=False))
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pairs", default="experiments/pairs")
+    ap.add_argument("--pairs", default=str(ROOT / "experiments/pairs"))
     ap.add_argument("--tol-frac", type=float, default=0.01)
+    # The scored-pair filter is the DEFAULT, not an opt-in. It used to be `--usable-only`, so the
+    # invocation in this file's own usage line silently produced a report over every directory on
+    # disk, while the committed report and EXP_0032's NOTE described the seven scored pairs.
+    ap.add_argument("--all-pairs", action="store_true",
+                    help="include excluded and rejected directories (diagnostic only; not publishable)")
     ap.add_argument("--usable-only", action="store_true",
-                    help="only pairs the bench actually scores: accepted, not in exclude.txt, has modification.json")
+                    help=argparse.SUPPRESS)   # deprecated: this is now the default
     a = ap.parse_args()
-    ex = Path("data/priors/exclude.txt")
+    print(json.dumps(_run(a), indent=2))
+
+
+def _run(a):
+    # Resolved against the repository, never the working directory: a cwd-relative read of
+    # exclude.txt silently yields an EMPTY exclude set when the tool is run from anywhere else,
+    # and the excluded pairs (a legs-only crop, a back view, a TEST submission) then enter a
+    # published result with no error raised. Missing is a hard failure for the same reason.
+    ex = ROOT / "data/priors/exclude.txt"
+    if not ex.exists():
+        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
     EXCLUDE = {l.split()[0] for l in ex.read_text().splitlines()
                if l.strip() and not l.startswith("#")} if ex.exists() else set()
     rows = []
@@ -26,7 +50,7 @@ def main():
         p = Path(f); pid = p.parent.name; which = p.name.split("_")[0]
         note = p.parent / "NOTE.md"
         rejected = note.exists() and "rejected" in note.open().readline()
-        if a.usable_only and (rejected or pid in EXCLUDE or not (p.parent / "modification.json").exists()):
+        if not a.all_pairs and (rejected or pid in EXCLUDE or not (p.parent / "modification.json").exists()):
             continue
         lm = json.load(open(f))["landmarks"]
         fnd = check_landmarks(lm, tol_frac=a.tol_frac)
@@ -63,7 +87,7 @@ def main():
         "n_flagged_where_warp_dropped_nothing": int(sum(
             1 for r in rows if r["severity"] and not r["warp_dropped"])),
     }
-    print(json.dumps({"summary": summary, "rows": rows}, indent=2))
+    return {"summary": summary, "rows": rows}
 
 
 if __name__ == "__main__":

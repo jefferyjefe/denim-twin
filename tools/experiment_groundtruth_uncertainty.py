@@ -16,7 +16,9 @@ Usage: python tools/experiment_groundtruth_uncertainty.py [--draws 50] [--seed 0
 """
 import argparse, glob, json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 import cv2, numpy as np
 from denimtwin.canon.register import _tps, SURVIVING
 
@@ -53,7 +55,7 @@ def iou(a, b):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pairs", default="experiments/pairs")
+    ap.add_argument("--pairs", default=str(ROOT / "experiments/pairs"))
     ap.add_argument("--draws", type=int, default=50)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--scale", type=float, default=1.0,
@@ -62,7 +64,13 @@ def main():
                          "adds no noise")
     a = ap.parse_args()
     rng = np.random.default_rng(a.seed)
-    ex = Path("data/priors/exclude.txt")
+    # Resolved against the repository, never the working directory: a cwd-relative read of
+    # exclude.txt silently yields an EMPTY exclude set when the tool is run from anywhere else,
+    # and the excluded pairs (a legs-only crop, a back view, a TEST submission) then enter a
+    # published result with no error raised. Missing is a hard failure for the same reason.
+    ex = ROOT / "data/priors/exclude.txt"
+    if not ex.exists():
+        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
     EXCLUDE = {l.split()[0] for l in ex.read_text().splitlines()
                if l.strip() and not l.startswith("#")} if ex.exists() else set()
     rows = []
