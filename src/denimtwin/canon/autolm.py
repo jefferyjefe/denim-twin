@@ -11,6 +11,7 @@ hem_*              = leg outer/inner edges at the last row where each leg exists
 Returns dict name -> (x, y) and a 'confidence' dict; missing landmarks are omitted.
 """
 import numpy as np, cv2
+from .waistband import clean_mask, top_edge_row
 
 def _row_extent(mask, y):
     xs = np.nonzero(mask[y])[0]; return (int(xs.min()), int(xs.max())) if len(xs) else None
@@ -18,18 +19,12 @@ def _row_extent(mask, y):
 def landmarks_from_mask(mask):
     m0 = mask.astype(bool)
     if not m0.any(): return {}, {}
-    # remove thin protrusions (hanger hooks, loose threads) before measuring
-    k = max(int(0.03 * m0.shape[1]), 3)
-    m = cv2.morphologyEx(m0.astype(np.uint8), cv2.MORPH_OPEN, np.ones((k, k), np.uint8)).astype(bool)
-    if m.sum() < 0.5 * m0.sum(): m = m0
+    # remove thin protrusions (hanger hooks, loose threads) before measuring, then find the horizontal
+    # top edge. Both steps live in canon/waistband.py: the registration A/B (EXP_0041) needs the same
+    # top edge as a correspondence, and two copies of this rule would drift.
+    m = clean_mask(m0)
     ys, xs = np.nonzero(m); H, W = m.shape
-    widths = m.sum(axis=1); bot = int(ys.max()); y0 = int(ys.min())
-    n30 = max(int(0.30 * (bot - y0)), 3); top30 = widths[y0: y0 + n30].astype(int); wref = top30.max()
-    # garment top = a horizontal edge: the LAST row in the top 30% whose width jumps by >= 30% of the reference width
-    # relative to the row above (a hanger hook/triangle above the waistband narrows gradually and has no such jump).
-    prev = np.concatenate([[0], top30[:-1]]); jumps = np.nonzero(top30 - prev >= 0.3 * wref)[0]
-    if len(jumps): top = int(y0 + jumps.max())
-    else: top = int(y0 + np.nonzero(top30 >= 0.5 * wref)[0].min())      # tilted garment: no edge; take the first half-width row
+    bot = int(ys.max()); top = top_edge_row(m)
     h = bot - top; out = {}; conf = {}
     # waist: extents at 3% below the top edge; hips: extents at 18%
     def ext_at(frac):

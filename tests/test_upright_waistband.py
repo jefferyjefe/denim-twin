@@ -7,8 +7,10 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 def _r():
     p = os.path.join(ROOT, "reports", "upright_waistband.json")
-    if not os.path.exists(p):
-        pytest.skip("upright_waistband.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "upright_waistband.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     return json.load(open(p))["summary"]
 
 
@@ -89,7 +91,15 @@ def test_the_note_says_the_cross_pair_account_does_not_generalise():
 
 
 def test_autolm_still_detects_the_top_by_a_width_jump():
-    """The mechanism rests on this implementation detail. If autolm changes to a rotation-robust
-    detector, EXP_0040's account no longer describes the code and should be re-measured."""
+    """The mechanism rests on this implementation detail. If the detector changes to a
+    rotation-robust one, EXP_0040's account no longer describes the code and should be re-measured.
+
+    EXP_0041 moved the rule to canon/waistband.py so the registration A/B could use the same top
+    edge; autolm must still call it rather than carry a second copy, or the two can drift and only
+    one of them is the one EXP_0040 measured."""
+    wb = open(os.path.join(ROOT, "src", "denimtwin", "canon", "waistband.py")).read()
+    assert "jumps = np.nonzero(top30 - prev >= 0.3 * wref)[0]" in wb
     src = open(os.path.join(ROOT, "src", "denimtwin", "canon", "autolm.py")).read()
-    assert "jumps = np.nonzero(top30 - prev >= 0.3 * wref)[0]" in src
+    assert "from .waistband import clean_mask, top_edge_row" in src
+    assert "top = top_edge_row(m)" in src
+    assert "top30" not in src, "autolm has its own copy of the top-edge rule again"
