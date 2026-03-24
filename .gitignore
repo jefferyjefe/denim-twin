@@ -34,3 +34,9 @@ reports/repeatability/masks/
 experiments/**/*.png
 experiments/**/*.jpg
 experiments/**/*.jpeg
+
+# EXP_0042's two A/B arms: full batch runs kept locally so the comparison can be re-derived without
+# re-segmenting. Regenerate with PAIRS_OUT=<dir> [PAIRS_REFIT_LM=1] tools/run_pairs_batch.py. Only the
+# comparison's numbers enter the repository, for the reason above.
+experiments/pairs_lmprov_control/
+experiments/pairs_lmprov_refit/

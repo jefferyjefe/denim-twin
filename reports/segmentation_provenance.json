@@ -1,0 +1,507 @@
+{
+ "summary": {
+  "n_pairs": 7,
+  "skipped": [],
+  "reconstruction_landmark_exact_on": 7,
+  "refine_min_landmarks": 14,
+  "gate": {
+   "n_treated": 5,
+   "n_skipped_by_gate": 2,
+   "landmark_counts": {
+    "2691c1a8d0": 12,
+    "26b1041d00": 10,
+    "2b0123d732": 14,
+    "443d1d4658": 14,
+    "4bfef03bd7": 14,
+    "8d9f0df4ad": 14,
+    "e97924ad2d": 14
+   },
+   "mask_identical_on_untreated": true,
+   "mask_identical_on_treated": 0
+  },
+  "refinement_on_treated": {
+   "n": 5,
+   "iou_median": 0.9878,
+   "iou_min": 0.7857,
+   "area_ratio_range": [
+    1.0014,
+    1.1161
+   ],
+   "n_area_ratio_below_1": 0,
+   "anchor_row_shift_px": [
+    -4,
+    -1,
+    -31,
+    -2,
+    0
+   ],
+   "max_abs_displacement_px": [
+    28,
+    2,
+    45,
+    3,
+    2
+   ],
+   "max_displacement_over_all_pairs": 45
+  },
+  "drift_if_adopted": {
+   "median": 0.9696,
+   "min": 0.6941
+  },
+  "ab": {
+   "available": true,
+   "n_pairs": 7,
+   "pairs": [
+    "2691c1a8d0",
+    "26b1041d00",
+    "2b0123d732",
+    "443d1d4658",
+    "4bfef03bd7",
+    "8d9f0df4ad",
+    "e97924ad2d"
+   ],
+   "n_treated": 5,
+   "sil_iou_vs_real": {
+    "control_mean": 0.8606,
+    "refit_mean": 0.8832,
+    "all_pairs": {
+     "n": 7,
+     "mean": 0.02257,
+     "median": 0.0003,
+     "sem_paired": 0.01639,
+     "n_positive": 4,
+     "n_negative": 1,
+     "sign_test_p": 0.375,
+     "sigma": 1.38
+    },
+    "treated_only": {
+     "n": 5,
+     "mean": 0.0316,
+     "median": 0.00667,
+     "sem_paired": 0.0222,
+     "n_positive": 4,
+     "n_negative": 1,
+     "sign_test_p": 0.375,
+     "sigma": 1.42
+    },
+    "higher_is_better": true,
+    "n_better": 4,
+    "n_worse": 1,
+    "n_tied": 2,
+    "per_pair": {
+     "2691c1a8d0": 0.0,
+     "26b1041d00": 0.0,
+     "2b0123d732": 0.0375,
+     "443d1d4658": -0.0022,
+     "4bfef03bd7": 0.1157,
+     "8d9f0df4ad": 0.0003,
+     "e97924ad2d": 0.0067
+    }
+   },
+   "hem_chamfer": {
+    "control_mean": 5.7026,
+    "refit_mean": 5.8107,
+    "all_pairs": {
+     "n": 7,
+     "mean": 0.10806,
+     "median": 0.0893,
+     "sem_paired": 0.08367,
+     "n_positive": 4,
+     "n_negative": 1,
+     "sign_test_p": 0.375,
+     "sigma": 1.29
+    },
+    "treated_only": {
+     "n": 5,
+     "mean": 0.15128,
+     "median": 0.20247,
+     "sem_paired": 0.11431,
+     "n_positive": 4,
+     "n_negative": 1,
+     "sign_test_p": 0.375,
+     "sigma": 1.32
+    },
+    "higher_is_better": false,
+    "n_better": 1,
+    "n_worse": 4,
+    "n_tied": 2,
+    "per_pair": {
+     "2691c1a8d0": 0.0,
+     "26b1041d00": 0.0,
+     "2b0123d732": 0.4775,
+     "443d1d4658": 0.2025,
+     "4bfef03bd7": 0.2157,
+     "8d9f0df4ad": 0.0893,
+     "e97924ad2d": -0.2286
+    }
+   },
+   "ties_are_exactly_the_untreated_pairs": true,
+   "tied_pairs": [
+    "2691c1a8d0",
+    "26b1041d00"
+   ]
+  }
+ },
+ "pairs": [
+  {
+   "pair": "2691c1a8d0",
+   "n_landmarks": 12,
+   "refinement_ran": false,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": true,
+   "refinement": {
+    "iou_coarse_refined": 1.0,
+    "area_ratio": 1.0,
+    "anchor_row_shift_px": 0
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     0,
+     0
+    ],
+    "waist_center": [
+     0,
+     0
+    ],
+    "waist_right": [
+     0,
+     0
+    ],
+    "hip_left": [
+     0,
+     0
+    ],
+    "hip_right": [
+     0,
+     0
+    ],
+    "crotch": [
+     0,
+     0
+    ],
+    "knee_left_outer": [
+     0,
+     0
+    ],
+    "knee_left_inner": [
+     0,
+     0
+    ]
+   },
+   "max_abs_displacement_px": 0,
+   "drift_iou_if_adopted": 1.0
+  },
+  {
+   "pair": "26b1041d00",
+   "n_landmarks": 10,
+   "refinement_ran": false,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": true,
+   "refinement": {
+    "iou_coarse_refined": 1.0,
+    "area_ratio": 1.0,
+    "anchor_row_shift_px": 0
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     0,
+     0
+    ],
+    "waist_center": [
+     0,
+     0
+    ],
+    "waist_right": [
+     0,
+     0
+    ],
+    "hip_left": [
+     0,
+     0
+    ],
+    "hip_right": [
+     0,
+     0
+    ],
+    "crotch": [
+     0,
+     0
+    ]
+   },
+   "max_abs_displacement_px": 0,
+   "drift_iou_if_adopted": 1.0
+  },
+  {
+   "pair": "2b0123d732",
+   "n_landmarks": 14,
+   "refinement_ran": true,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": false,
+   "refinement": {
+    "iou_coarse_refined": 0.7857,
+    "area_ratio": 1.1161,
+    "anchor_row_shift_px": -4
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     -28,
+     4
+    ],
+    "waist_center": [
+     -12,
+     4
+    ],
+    "waist_right": [
+     4,
+     4
+    ],
+    "hip_left": [
+     5,
+     18
+    ],
+    "hip_right": [
+     9,
+     18
+    ],
+    "crotch": [
+     -2,
+     3
+    ],
+    "knee_left_outer": [
+     -2,
+     -4
+    ],
+    "knee_left_inner": [
+     -2,
+     -4
+    ],
+    "knee_right_inner": [
+     -2,
+     0
+    ],
+    "knee_right_outer": [
+     -16,
+     0
+    ]
+   },
+   "max_abs_displacement_px": 28,
+   "drift_iou_if_adopted": 0.8223
+  },
+  {
+   "pair": "443d1d4658",
+   "n_landmarks": 14,
+   "refinement_ran": true,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": false,
+   "refinement": {
+    "iou_coarse_refined": 0.9931,
+    "area_ratio": 1.0044,
+    "anchor_row_shift_px": -1
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     -1,
+     1
+    ],
+    "waist_center": [
+     -1,
+     1
+    ],
+    "waist_right": [
+     0,
+     1
+    ],
+    "hip_left": [
+     0,
+     1
+    ],
+    "hip_right": [
+     -1,
+     1
+    ],
+    "crotch": [
+     0,
+     2
+    ],
+    "knee_left_outer": [
+     0,
+     0
+    ],
+    "knee_left_inner": [
+     0,
+     0
+    ],
+    "knee_right_inner": [
+     2,
+     1
+    ],
+    "knee_right_outer": [
+     0,
+     1
+    ]
+   },
+   "max_abs_displacement_px": 2,
+   "drift_iou_if_adopted": 0.9866
+  },
+  {
+   "pair": "4bfef03bd7",
+   "n_landmarks": 14,
+   "refinement_ran": true,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": false,
+   "refinement": {
+    "iou_coarse_refined": 0.9383,
+    "area_ratio": 1.0606,
+    "anchor_row_shift_px": -31
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     -32,
+     31
+    ],
+    "waist_center": [
+     -20,
+     31
+    ],
+    "waist_right": [
+     -9,
+     31
+    ],
+    "hip_left": [
+     3,
+     41
+    ],
+    "hip_right": [
+     -2,
+     41
+    ],
+    "crotch": [
+     0,
+     45
+    ],
+    "knee_left_outer": [
+     1,
+     24
+    ],
+    "knee_left_inner": [
+     0,
+     24
+    ],
+    "knee_right_inner": [
+     0,
+     24
+    ],
+    "knee_right_outer": [
+     0,
+     24
+    ]
+   },
+   "max_abs_displacement_px": 45,
+   "drift_iou_if_adopted": 0.6941
+  },
+  {
+   "pair": "8d9f0df4ad",
+   "n_landmarks": 14,
+   "refinement_ran": true,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": false,
+   "refinement": {
+    "iou_coarse_refined": 0.9878,
+    "area_ratio": 1.007,
+    "anchor_row_shift_px": -2
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     -3,
+     1
+    ],
+    "waist_center": [
+     -1,
+     1
+    ],
+    "waist_right": [
+     2,
+     1
+    ],
+    "hip_left": [
+     1,
+     3
+    ],
+    "hip_right": [
+     1,
+     3
+    ],
+    "crotch": [
+     0,
+     3
+    ],
+    "knee_left_outer": [
+     2,
+     -1
+    ],
+    "knee_left_inner": [
+     -3,
+     -1
+    ]
+   },
+   "max_abs_displacement_px": 3,
+   "drift_iou_if_adopted": 0.9857
+  },
+  {
+   "pair": "e97924ad2d",
+   "n_landmarks": 14,
+   "refinement_ran": true,
+   "reconstruction_landmark_exact": true,
+   "reconstruction_mask_identical": false,
+   "refinement": {
+    "iou_coarse_refined": 0.9885,
+    "area_ratio": 1.0014,
+    "anchor_row_shift_px": 0
+   },
+   "landmark_displacement": {
+    "waist_left": [
+     0,
+     0
+    ],
+    "waist_center": [
+     0,
+     0
+    ],
+    "waist_right": [
+     0,
+     0
+    ],
+    "hip_left": [
+     0,
+     0
+    ],
+    "hip_right": [
+     0,
+     0
+    ],
+    "crotch": [
+     -1,
+     -2
+    ],
+    "knee_left_outer": [
+     0,
+     -2
+    ],
+    "knee_left_inner": [
+     0,
+     -2
+    ],
+    "knee_right_inner": [
+     -1,
+     -1
+    ],
+    "knee_right_outer": [
+     0,
+     -1
+    ]
+   },
+   "max_abs_displacement_px": 2,
+   "drift_iou_if_adopted": 0.9696
+  }
+ ]
+}

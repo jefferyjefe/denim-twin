@@ -169,6 +169,13 @@ def waistband_landmark_production():
     return build(landmarks="production")
 
 
+def segmentation_provenance():
+    # expensive: re-segments the seven before photographs with SAM, so it needs torch and the
+    # checkpoint. Raises FileNotFoundError without them, which --check treats as a legitimate skip.
+    from experiment_segmentation_provenance import build
+    return build()
+
+
 def registration_fold():
     from experiment_registration_fold import build
     return build()
@@ -181,6 +188,7 @@ def landmark_consistency():
 
 # report path -> (builder, expensive?)
 REPORTS = {
+    "reports/segmentation_provenance.json": (segmentation_provenance, True),
     "reports/registration_fold.json": (registration_fold, False),
     "reports/landmark_consistency.json": (landmark_consistency, False),
     "reports/waistband_landmark.json": (waistband_landmark, False),
