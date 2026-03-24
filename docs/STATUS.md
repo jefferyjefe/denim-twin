@@ -208,3 +208,42 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   against a latent failure, not a validated gate.
   Still open: `2b0123d732` folds 5.3% and has the worst round trip (0.603); its landmark set puts the **crotch above
   the hips**, a physically impossible garment, which is a landmark-extraction failure and cheap to detect.
+
+- 2026-08-30: EXP_0041 — the waistband correspondence EXP_0040 proposed was measured on seven pairs and
+  **not adopted**, and establishing why overturned EXP_0040's headline. The waistband corner sits a median
+  of **16.6 px** from an existing landmark (a held-out `SURVIVING` landmark sits **136.0 px** from its
+  nearest support), so it is redundant rather than missing: matched on cardinality it beats the
+  leave-one-out error 7 of 7, matched on *reach* it loses 7 of 7. Neither treatment moves IoU (−0.58σ,
+  −0.69σ); `add` is a coin flip on the held-out residual (0.24σ, sign reverses when scaled by garment
+  height) and `replace` is worse (2.15σ, 6 of 7). A displaced null costs +12.13 px against `add`'s +1.59,
+  so the correspondence is real and carries nothing new. **EXP_0040's 7-of-7 downward displacement
+  (p = 0.0156) does not survive matched segmentation**: 5 positive, 1 negative, 1 zero, p = 0.2188, and
+  the pair that flips is the one with the largest coarse-vs-refined disagreement. Its band decomposition
+  stands. Two controls the first draft lacked — matched reach, and the paired uncertainty on the primary
+  residual — are what caught both errors, in this note's own numbers.
+- 2026-08-30: EXP_0042 — **the before photograph is segmented twice and nothing recorded which one a
+  landmark came from.** `run_pair.py` refines the before mask with landmark prompts above 14 landmarks
+  and keeps the coarse landmarks; refinement **never shrinks the mask** (area ratio 1.0014–1.1161 on the
+  5 pairs it runs on, 0 below 1), so the landmarks are anchored on a systematically smaller silhouette
+  and land up to **45 px** away. A full A/B through the real pipeline: silhouette IoU **0.8606 → 0.8832**
+  (+0.0316 on the treated pairs, 1.42σ, 4 better / 1 worse / 2 tied), hem chamfer 5.70 → 5.81 (+0.15 px,
+  worse on 4 of 5). **The two ties are exactly the two pairs the refinement gate skips** — bit-identical
+  runs, asserted as a set equality — and the effect tracks the size of the defect across the rest.
+  `4bfef03bd7`, the pair EXP_0040 built its account on, goes **0.8065 → 0.9223**. Not adopted: 1.42σ is
+  not significance and there is a hem regression, so `--refit-landmarks-after-refine` stays off with the
+  A/B attached. `landmarks.json` now records `before_landmark_source` regardless. The reason the current
+  behaviour was chosen is **not recoverable** — `run_pair.py` cites EXP_0004 for a claim that note does
+  not make, on a pair that no longer exists.
+- 2026-08-30 (infrastructure): three experiment tools resolved `data/priors/exclude.txt` against the
+  *working directory*, so running them from anywhere else silently produced an empty exclude set and let
+  four banned pairs into the result — the fourth time a tool here has been caught ignoring that list. Two
+  more made the scored-pair filter an opt-in flag while their committed reports had been generated with
+  it. `make_reports.py --check` was swallowing builder exceptions as skips with exit 0, reopening one
+  level up the exact hole it was written to close. Ten `pytest.skip`s on committed reports became
+  assertions, and `tests/test_guards_are_not_optional.py` now fails if a new skip appears. Reports with
+  builders and staleness checks: 4 → 10.
+- 2026-08-30 (hazard): `com.denimtwin.pairs-daily` fired at 03:30 while `tools/run_pair.py` held an
+  uncommitted change, regenerated eight pair directories with code that is in no commit, and was on its
+  way to `git commit && git push` — it never runs `verify.py`. Stopped mid-batch, tracked files restored,
+  `experiments/pairs` verified byte-identical. **The job is unloaded**; `ops/pairs-daily.sh` is the same
+  sequence with the two guards it needed. Re-enabling it is the owner's call.
