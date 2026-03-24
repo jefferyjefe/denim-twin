@@ -22,9 +22,10 @@ from pathlib import Path
 import cv2, numpy as np
 from scipy import stats
 
+# Always the repository, never the working directory. The previous version fell back to Path.cwd()
+# when it could not see data/priors/exclude.txt, which turns "installed somewhere odd" into "read
+# the wrong repository" -- silently, and only for whoever runs it from the wrong place.
 ROOT = Path(__file__).resolve().parents[1]
-if not (ROOT / "data/priors/exclude.txt").exists():      # running from outside tools/
-    ROOT = Path.cwd()
 
 
 def _band_iou(d, nb=6):

@@ -10,11 +10,14 @@ itself is mangled: two before-pixels pull from the same after-pixel, duplicating
 
 Nobody has measured it. This does, over the before-frame garment, for every pair the bench scores.
 
-Usage: python tools/experiment_registration_fold.py [--usable-only]
+Usage: python tools/experiment_registration_fold.py [--all-pairs]
+The seven scored pairs are the default; --all-pairs is a diagnostic view, not a publishable one.
 """
 import argparse, glob, json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 import cv2, numpy as np
 from denimtwin.canon.register import _tps, SURVIVING, heldout_residual
 
@@ -37,12 +40,35 @@ def fold_fraction(t_b2a, mask, h=2.0, samples=1500):
     return float((det <= 0).mean())
 
 
+def build(pairs=None, all_pairs=False):
+    """The report as a value, so tools/make_reports.py --check can detect it going stale."""
+    return _run(argparse.Namespace(pairs=pairs or str(ROOT / "experiments/pairs"), all_pairs=all_pairs))
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pairs", default="experiments/pairs")
-    ap.add_argument("--usable-only", action="store_true")
+    ap.add_argument("--pairs", default=str(ROOT / "experiments/pairs"))
+    # The scored-pair filter is the DEFAULT, not an opt-in. It used to be `--usable-only`, so the
+    # obvious invocation silently produced a report over every directory on disk -- excluded pairs
+    # (a legs-only crop, a back view, a TEST submission) and rejected ones included -- while the
+    # committed report and the NOTE quoting it described the seven scored pairs. Regenerating the
+    # obvious way would have replaced one with the other and nothing would have said so.
+    ap.add_argument("--all-pairs", action="store_true",
+                    help="include excluded and rejected directories (diagnostic only; not publishable)")
+    ap.add_argument("--usable-only", action="store_true",
+                    help=argparse.SUPPRESS)   # deprecated: this is now the default, kept so old invocations still work
     a = ap.parse_args()
-    ex = Path("data/priors/exclude.txt")
+    print(json.dumps(_run(a), indent=2))
+
+
+def _run(a):
+    # Resolved against the repository, never the working directory: a cwd-relative read of
+    # exclude.txt silently yields an EMPTY exclude set when the tool is run from anywhere else,
+    # and the excluded pairs (a legs-only crop, a back view, a TEST submission) then enter a
+    # published result with no error raised. Missing is a hard failure for the same reason.
+    ex = ROOT / "data/priors/exclude.txt"
+    if not ex.exists():
+        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
     EXCLUDE = {l.split()[0] for l in ex.read_text().splitlines()
                if l.strip() and not l.startswith("#")} if ex.exists() else set()
     rows = []
@@ -50,7 +76,7 @@ def main():
         d = Path(d); pid = d.name
         note = d / "NOTE.md"
         rejected = note.exists() and "rejected" in note.open().readline()
-        if a.usable_only and (rejected or pid in EXCLUDE or not (d / "modification.json").exists()):
+        if not a.all_pairs and (rejected or pid in EXCLUDE or not (d / "modification.json").exists()):
             continue
         try:
             lmb = json.load(open(d / "before_lm.json"))["landmarks"]
@@ -68,13 +94,13 @@ def main():
                      "fold_fraction": round(fold_fraction(t, bmask), 4),
                      "heldout_resid_px": round(float(heldout_residual(A, B)), 2)})
     ff = np.array([r["fold_fraction"] for r in rows], float)
-    print(json.dumps({"summary": {
+    return {"summary": {
         "n_pairs": len(rows),
         "median_fold": round(float(np.nanmedian(ff)), 4) if len(ff) else None,
         "max_fold": round(float(np.nanmax(ff)), 4) if len(ff) else None,
         "n_over_20pct": int((ff > 0.20).sum()),
         "n_zero": int((ff == 0).sum()),
-    }, "rows": rows}, indent=2))
+    }, "rows": rows}
 
 
 if __name__ == "__main__":
