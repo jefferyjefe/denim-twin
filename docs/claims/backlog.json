@@ -79,24 +79,34 @@
   "tol": 0.005
  },
  {
-  "claim": "BACKLOG: the largest before-photo provenance disagreement",
+  "claim": "BACKLOG: refinement never shrinks the mask",
   "note": "docs/BACKLOG.md",
-  "note_regex": "`SURVIVING` landmarks and both coordinates: up to \\*\\*(\\d+) px\\*\\*",
-  "source": "reports/waistband_landmark.json",
-  "path": "summary.landmark_provenance.before_max_px"
+  "note_regex": "area ratio 1\\.0014\u2013([0-9.]+) on the five pairs",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refinement_on_treated.area_ratio_range.1",
+  "tol": 5e-05
  },
  {
-  "claim": "BACKLOG: how many pairs it affects",
+  "claim": "BACKLOG: the largest coarse-vs-refined landmark displacement",
   "note": "docs/BACKLOG.md",
-  "note_regex": "non-zero on \\*\\*(\\d+) of 7\\*\\* pairs",
-  "source": "reports/waistband_landmark.json",
-  "path": "summary.landmark_provenance.n_before_nonzero"
+  "note_regex": "as much as \\*\\*(\\d+) px\\*\\* from where the refined mask",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refinement_on_treated.max_displacement_over_all_pairs"
  },
  {
-  "claim": "BACKLOG: and that the after photo is clean",
+  "claim": "BACKLOG: what matching the two segmentations is worth",
   "note": "docs/BACKLOG.md",
-  "note_regex": "\\*\\*(\\d+) px on every after photo\\*\\*",
-  "source": "reports/waistband_landmark.json",
-  "path": "summary.landmark_provenance.after_max_px"
+  "note_regex": "\\*\\*\\+([0-9.]+) silhouette IoU\\*\\* on the treated pairs",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.treated_only.mean",
+  "tol": 5e-05
+ },
+ {
+  "claim": "BACKLOG: how many pairs refinement runs on",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "on the five pairs it runs on\\), so the landmarks",
+  "claimed": "5",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.gate.n_treated"
  }
 ]

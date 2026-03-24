@@ -1,0 +1,90 @@
+[
+ {
+  "claim": "how many pairs refinement actually runs on",
+  "note_regex": "The denominator is \\*\\*(\\d+)\\*\\*",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.gate.n_treated"
+ },
+ {
+  "claim": "the landmark-count gate",
+  "note_regex": "runs only above (\\d+) landmarks",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refine_min_landmarks"
+ },
+ {
+  "claim": "the worst coarse-vs-refined mask agreement",
+  "note_regex": "median / min \\| 0\\.9878 / \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refinement_on_treated.iou_min",
+  "tol": 5e-05
+ },
+ {
+  "claim": "refinement never shrinks the mask",
+  "note_regex": "pairs where refinement \\*\\*shrank\\*\\* the mask \\| \\*\\*(\\d+) of 5\\*\\*",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refinement_on_treated.n_area_ratio_below_1"
+ },
+ {
+  "claim": "the largest landmark displacement",
+  "note_regex": "largest landmark displacement \\(both coordinates\\) \\| 28, 2, \\*\\*(\\d+)\\*\\*",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.refinement_on_treated.max_displacement_over_all_pairs"
+ },
+ {
+  "claim": "the A/B silhouette IoU, control arm",
+  "note_regex": "\\| silhouette IoU \\| ([0-9.]+) \\|",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.control_mean",
+  "tol": 5e-05
+ },
+ {
+  "claim": "the A/B silhouette IoU, refit arm",
+  "note_regex": "\\| silhouette IoU \\| [0-9.]+ \\| \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.refit_mean",
+  "tol": 5e-05
+ },
+ {
+  "claim": "the paired IoU gain on the treated pairs",
+  "note_regex": "\\| \\*\\*\\+([0-9.]+)\\*\\* \\| 1\\.42 \\|",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.treated_only.mean",
+  "tol": 5e-05
+ },
+ {
+  "claim": "and its significance",
+  "note_regex": "\\| \\*\\*\\+[0-9.]+\\*\\* \\| ([0-9.]+) \\| 4 / 1 / 2 \\|",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.treated_only.sigma",
+  "tol": 0.005
+ },
+ {
+  "claim": "the hem regression on the treated pairs",
+  "note_regex": "hem gets \\*\\*worse\\*\\* \u2014 \\+([0-9.]+) px",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.hem_chamfer.treated_only.mean",
+  "tol": 0.005
+ },
+ {
+  "claim": "4bfef03bd7's gain, the largest in the set",
+  "note_regex": "\\| 4bfef03bd7 \\| 0\\.8065 \\| \\*\\*0\\.9223\\*\\* \\| \\*\\*\\+([0-9.]+)\\*\\* \\|",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.ab.sil_iou_vs_real.per_pair.4bfef03bd7",
+  "tol": 5e-05
+ },
+ {
+  "claim": "the reconstruction reproduces the stored landmarks on every pair",
+  "note_regex": "reproduces `before_lm.json` exactly on (\\d+) of 7 pairs",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.reconstruction_landmark_exact_on"
+ },
+ {
+  "claim": "how far the ground truth would move if adopted",
+  "note_regex": "drift_if_adopted",
+  "claimed": "0.6941",
+  "source": "reports/segmentation_provenance.json",
+  "path": "summary.drift_if_adopted.min",
+  "tol": 5e-05,
+  "note": "reports/segmentation_provenance.json"
+ }
+]

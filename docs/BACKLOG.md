@@ -97,6 +97,21 @@ most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Environment hazards
 
+- **`com.denimtwin.pairs-daily` regenerates the pair set and pushes, at 03:30, unattended, against
+  the WORKING TREE.** The whole job is one inline shell command in the plist: pull --rebase, ingest,
+  fetch, `run_pairs_batch.py`, `report_pairs.py`, `fit_fringe.py` (which rewrites the tracked prior),
+  `make_gallery.py`, `bench.py`, then `git add … && git commit && git push`. It never runs
+  `tools/verify.py`. On 2026-08-30 it fired while `tools/run_pair.py` held an uncommitted change and
+  regenerated eight pair directories with code that was not in any commit — the review-7 defect
+  (artefacts whose producer is not in history), automated and self-pushing. It was stopped
+  mid-batch and the tracked files restored; `experiments/pairs` verified byte-identical afterwards.
+  **The job is currently unloaded.** `ops/pairs-daily.sh` is the same sequence with the two guards it
+  needed: refuse to run when `git diff HEAD -- src tools` is non-empty, and refuse to commit when
+  `verify.py` fails. Re-enable with
+  `launchctl load ~/Library/LaunchAgents/com.denimtwin.pairs-daily.plist` after pointing the plist at
+  that script.
+
+
 - **Stale bytecode can silently mask a source edit.** `.venv/bin/python` here is macOS's system
   Python, which sets a `pycache_prefix` and writes `.pyc` files to
   `~/Library/Caches/com.apple.python/<absolute path>/` — outside the repository and outside any
@@ -107,19 +122,16 @@ most found pairs lack — so it is **blocked on data**, not on code.
 
 ## Known defects accepted, not fixed
 
-- **The before-photo landmarks and `bmask.png` come from different segmentations.**
-  `run_pair.py:150` refines the before mask with landmark prompts once there are ≥14 landmarks and
-  deliberately keeps the landmarks from the *coarse* mask (EXP_0004: recomputing them on the refined
-  mask regressed pair 1). So registration fits landmarks describing one segmentation while the
-  prediction lives on another. EXP_0041 measured the disagreement for the first time, over all six
-  `SURVIVING` landmarks and both coordinates: up to **45 px** (`4bfef03bd7`, crotch y; 32 px in x),
-  non-zero on **5 of 7** pairs, and **0 px on every after photo** — the after mask is never refined.
-  It is not a footnote: it is what carried EXP_0040's headline sign test, and one pair with a 45 px
-  disagreement can carry a 1.6σ band-0 result on its own. Any experiment that reads a new
-  correspondence off `bmask.png` and joins it to `before_lm.json` must use `--landmarks recomputed`
-  or it is measuring this instead of its own treatment. **The fix is a real experiment and not a
-  large one**: either refine the landmarks with the mask, or stop refining the mask. EXP_0004 chose
-  the latter on one pair; there are seven now.
+- **The before-photo landmarks and `bmask.png` come from different segmentations.** Measured
+  (EXP_0041) and acted on (EXP_0042). `run_pair.py` refines the before mask with landmark prompts
+  once `autolm` finds ≥14 landmarks and keeps the *coarse* landmarks; refinement **never shrinks the
+  mask** (area ratio 1.0014–1.1161 on the five pairs it runs on), so the landmarks are anchored on a
+  systematically smaller silhouette and end up as much as **45 px** from where the refined mask puts
+  them. Matching the two is worth **+0.0316 silhouette IoU** on the treated pairs (1.42σ) and costs
+  **+0.15 px** of hem error, so it is **not adopted** — `run_pair.py --refit-landmarks-after-refine`
+  is off by default with the A/B attached. The reason the current behaviour was chosen is *not
+  recoverable*: `run_pair.py` cites EXP_0004 for a claim that note does not make, on a pair that no
+  longer exists. `landmarks.json` now records `before_landmark_source` either way.
 
 - **`run_pair.py` writes `*_used.png` before the `sane()` gates** (line 110 vs 129), so a directory
   re-run and then rejected keeps fresh images beside stale masks. Two directories are in that state

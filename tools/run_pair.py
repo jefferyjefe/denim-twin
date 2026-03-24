@@ -25,6 +25,11 @@ p.add_argument("--prior", help="data/priors/fringe.json: predict fringe depth fr
 p.add_argument("--exclude", help="pair id to EXCLUDE from the prior (leave-one-out: never let a pair predict itself)")
 p.add_argument("--state", choices=["after_cut", "after_wash"], default="after_wash", help="what the after-photo shows; the fringe prior is conditional on it")
 p.add_argument("--refine-landmarks", action="store_true", help="refine heuristic landmarks with template_v1 (boundary-Chamfer fit); experimental (EXP_0011)")
+p.add_argument("--refit-landmarks-after-refine", action="store_true",
+               help="recompute the before landmarks on the REFINED mask (EXP_0042 arm). The default keeps them "
+                    "from the coarse mask, which is what EXP_0004 chose on one pair and what leaves the "
+                    "landmarks and the mask describing two different segmentations of the same photograph -- "
+                    "up to 45 px apart, and enough to have carried EXP_0040's headline result")
 p.add_argument("--coin", help="coin type in the BEFORE photo (see util/coins.py); metric scale is recovered with the garment masked out")
 p.add_argument("--seg", choices=["coarse", "consensus"], default="coarse",
                help="garment segmentation: 'coarse' takes SAM's best-scoring candidate; 'consensus' takes the object "
@@ -151,9 +156,19 @@ if a.refine_landmarks and len(lmb_auto) >= 14:
 lmb = _snap(_xform(json.load(open(a.before_lm))["landmarks"], note_b, rot_b, SHAPE_B0, bf.shape), bmask) if a.before_lm else lmb_auto
 lma = _snap(_xform(json.load(open(a.after_lm))["landmarks"], note_a, rot_a, SHAPE_A0, af.shape), amask) if a.after_lm else lma_auto
 if (a.before_lm and note_b) or (a.after_lm and note_a): FLAGS.append("manual landmarks + collage split: landmarks assumed to be in the kept (left/top) panel's frame")
+lmb_coarse = dict(lmb)
 if not a.before_lm and len(lmb) >= 14:
     bmask, _ = seg.segment(bf, landmarks=lmb)          # refine with landmark prompts (landmarks stay from the coarse mask:
     sane(bmask, "before (refined)")                    #  recomputing them on the refined mask regressed pair1 — see EXP_0004)
+    if a.refit_landmarks_after_refine:
+        # EXP_0042: keeping the coarse landmarks leaves registration fitting one segmentation of the
+        # before photo while everything downstream uses another. Refinement never shrinks the mask
+        # (area ratio 1.000-1.116 on the five pairs it runs on), so the coarse landmarks are anchored
+        # on a systematically smaller silhouette; on this set the two disagree by up to 45 px.
+        lmb, cb = landmarks_from_mask(bmask)
+        _dy = float(lmb_coarse["waist_left"][1]) - float(lmb["waist_left"][1])
+        FLAGS.append(f"landmarks recomputed on the refined before mask (EXP_0042); waist row moved "
+                     f"{_dy:+.1f} px")
 if a.coin and a.mm_per_px is None:
     cv2.imwrite(f"{O}/bmask.png", bmask.astype(np.uint8) * 255)
     r_ = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "scale_from_coin.py"), BEFORE_PATH, "--coin", a.coin, "--mask", f"{O}/bmask.png"], capture_output=True, text=True)
@@ -161,7 +176,12 @@ if a.coin and a.mm_per_px is None:
     except Exception: d_ = {}
     if r_.returncode == 0 and d_.get("accepted"): a.mm_per_px = d_["mm_per_px"]; FLAGS.append(f"scale from coin ({a.coin}): {a.mm_per_px:.4f} mm/px, edge support {d_['edge_support']:.2f}")
     else: FLAGS.append(f"coin scale rejected: {d_.get('reject_reason') or d_.get('error') or 'no result'}")
-json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma, "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
+json.dump({"before_auto": lmb_auto, "after_auto": lma_auto, "before_used": lmb, "after_used": lma,
+           # which segmentation the used landmarks came from. Without this a pair directory cannot say
+           # whether its landmarks describe bmask.png or the mask that preceded it (EXP_0042).
+           "before_landmark_source": "refined_mask" if a.refit_landmarks_after_refine else "coarse_mask",
+           "before_coarse": lmb_coarse,
+           "conf": {"before": cb, "after": ca}}, open(f"{O}/landmarks.json", "w"), indent=1, default=int)
 mmpp = a.mm_per_px or 1.0; scale_note = "given" if a.mm_per_px else "UNKNOWN (1.0 placeholder; mm values are px)"
 use = [n for n in SURVIVING if n in lma and n in lmb]
 if not a.after_lm: use = [n for n in use if not n.startswith("knee")]     # auto knees on a cut garment are meaningless
