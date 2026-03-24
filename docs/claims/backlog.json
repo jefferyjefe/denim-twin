@@ -37,5 +37,66 @@
   "note_regex": "the crop plus \u2264(\\d+) px",
   "source": "reports/prediction_vs_croponly_masks.json",
   "path": "summary.max_pred_only_px"
+ },
+ {
+  "claim": "BACKLOG: EXP_0040's sign test under matched segmentation",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "one\\n  zero, \\*\\*p = ([0-9.]+)\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.control_top_offset.sign_test_p",
+  "tol": 0.0001
+ },
+ {
+  "claim": "BACKLOG: reach of a held-out landmark",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "nearest support; a waistband corner sits \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.reach_waistband_median_px",
+  "tol": 0.05
+ },
+ {
+  "claim": "BACKLOG: the reach-matched gap",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "matched on \\*reach\\* it loses by the same margin \\(\\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.reach_matched_median_px",
+  "tol": 0.005
+ },
+ {
+  "claim": "BACKLOG: adding the corners does not move IoU",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "\u0394 IoU (-[0-9.]+) \\(\u22120\\.58\u03c3\\) adding",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.add.d_iou.mean",
+  "tol": 5e-06
+ },
+ {
+  "claim": "BACKLOG: the displaced correspondence costs residual",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "costs \\*\\*\\+([0-9.]+) px\\*\\* of\\n  residual",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.null.d_loo_common.mean",
+  "tol": 0.005
+ },
+ {
+  "claim": "BACKLOG: the largest before-photo provenance disagreement",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "`SURVIVING` landmarks and both coordinates: up to \\*\\*(\\d+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.before_max_px"
+ },
+ {
+  "claim": "BACKLOG: how many pairs it affects",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "non-zero on \\*\\*(\\d+) of 7\\*\\* pairs",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.n_before_nonzero"
+ },
+ {
+  "claim": "BACKLOG: and that the after photo is clean",
+  "note": "docs/BACKLOG.md",
+  "note_regex": "\\*\\*(\\d+) px on every after photo\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.after_max_px"
  }
 ]

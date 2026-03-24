@@ -1,0 +1,183 @@
+[
+ {
+  "claim": "largest before-photo landmark disagreement between the two segmentations",
+  "note_regex": "largest before-photo disagreement \\| \\*\\*(\\d+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.before_max_px"
+ },
+ {
+  "claim": "pairs with any before-photo disagreement",
+  "note_regex": "pairs with any disagreement \\| \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.n_before_nonzero"
+ },
+ {
+  "claim": "the after photo is never re-segmented",
+  "note_regex": "largest \\*\\*after\\*\\*-photo disagreement \\| \\*\\*(\\d+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.landmark_provenance.after_max_px"
+ },
+ {
+  "claim": "EXP_0040's sign test in its own configuration",
+  "note_regex": "EXP_0040's configuration\\) \\| 30, 14, 24, 1, 28, 11, 4 \\| 14 \\| \\*\\*(\\d+) of 7 positive",
+  "source": "reports/waistband_landmark_production.json",
+  "path": "summary.control_top_offset.n_positive"
+ },
+ {
+  "claim": "and its p value",
+  "note_regex": "EXP_0040's configuration\\)[^\\n]*p = ([0-9.]+)\\*\\*",
+  "source": "reports/waistband_landmark_production.json",
+  "path": "summary.control_top_offset.sign_test_p",
+  "tol": 0.0001
+ },
+ {
+  "claim": "the same statistic under matched segmentation is not significant",
+  "note_regex": "same segmentation \\|[^\\n]*\\*\\*p = ([0-9.]+)\\*\\* \\|",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.control_top_offset.sign_test_p",
+  "tol": 0.0001
+ },
+ {
+  "claim": "and only five of seven stay positive",
+  "note_regex": "same segmentation \\|[^\\n]*\\| (\\d+) positive, 1 negative, 1 zero",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.control_top_offset.n_positive"
+ },
+ {
+  "claim": "reach of a held-out landmark",
+  "note_regex": "under leave-one-out \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.reach_loo_median_px",
+  "tol": 0.05
+ },
+ {
+  "claim": "reach of a waistband corner",
+  "note_regex": "under the full six-landmark fit \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.reach_waistband_median_px",
+  "tol": 0.05
+ },
+ {
+  "claim": "the gap on matched cardinality",
+  "note_regex": "matched cardinality \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.jackknife_median_px",
+  "tol": 0.005
+ },
+ {
+  "claim": "the leave-one-out error it is compared against",
+  "note_regex": "the landmarks the fit was given \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.loo_median_px",
+  "tol": 0.005
+ },
+ {
+  "claim": "the gap on matched reach",
+  "note_regex": "matched reach \\| \\*\\*([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.reach_matched_median_px",
+  "tol": 0.005
+ },
+ {
+  "claim": "the reach-matched ordering is unanimous the other way",
+  "note_regex": "where it exceeds the LOO error \\| \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.n_reach_matched_gt_loo"
+ },
+ {
+  "claim": "the construction term in the vertical displacement",
+  "note_regex": "before depth . after depth\\) \\| \\*\\*\\+([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.construction_dy_median_px",
+  "tol": 0.005
+ },
+ {
+  "claim": "how strongly the construction term tracks the displacement",
+  "note_regex": "correlation between the two across pairs \\| \\*\\*r = \\+([0-9.]+)\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.gap.corr_construction_vs_dy",
+  "tol": 0.0005
+ },
+ {
+  "claim": "the add arm's paired IoU difference",
+  "note_regex": "\\| `add` \\| (-[0-9.]+) \u00b1 ",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.add.d_iou.mean",
+  "tol": 5e-06
+ },
+ {
+  "claim": "the add arm's residual difference is a coin flip",
+  "note_regex": "\\| `add` \\|[^\\n]*\\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.add.d_loo_common.sigma",
+  "tol": 0.005
+ },
+ {
+  "claim": "and its median has the other sign",
+  "note_regex": "\\| `add` \\|[^\\n]*\\| \\*\\*(-[0-9.]+) px\\*\\* \\|",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.add.d_loo_common.median",
+  "tol": 0.005
+ },
+ {
+  "claim": "the add arm's scale-free residual changes sign",
+  "note_regex": "normalised by garment height it changes sign \\((-[0-9.]+)\u03c3\\)",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.add.d_loo_common_frac_h.sigma",
+  "tol": 0.005
+ },
+ {
+  "claim": "the replace arm's residual degradation",
+  "note_regex": "\\| `replace` \\|[^\\n]*\\| \\*\\*\\+([0-9.]+) px\\*\\* \u00b1 ",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.replace.d_loo_common.mean",
+  "tol": 0.005
+ },
+ {
+  "claim": "and its significance",
+  "note_regex": "\\| `replace` \\|[^\\n]*\u00b1 2\\.598 \\| \\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.replace.d_loo_common.sigma",
+  "tol": 0.005
+ },
+ {
+  "claim": "a displaced correspondence does real damage",
+  "note_regex": "\\| `null` \\(displaced correspondence\\) \\| \\*\\*\\+([0-9.]+) px\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.null.d_loo_common.mean",
+  "tol": 0.005
+ },
+ {
+  "claim": "the true correspondence beats it on every pair",
+  "note_regex": "\\| `add` \u2212 `null` \\| \\*\\*(-[0-9.]+) px",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.null.add_minus_null_loo_common.mean",
+  "tol": 0.005
+ },
+ {
+  "claim": "the prediction is a subset of the before mask on every pair",
+  "note_regex": "subset\\*\\* of `bmask.png` on \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.scoring_target.n_pred_subset_of_bmask"
+ },
+ {
+  "claim": "and shares its top row on every pair",
+  "note_regex": "\\*\\*top row\\*\\* on \\*\\*(\\d+) of 7\\*\\*",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.scoring_target.n_pred_top_equals_bmask_top"
+ },
+ {
+  "claim": "replace's band-0 gain with matched landmarks",
+  "note_regex": "from the same mask \\| \\*\\*\\+([0-9.]+)\\*\\* \\|",
+  "source": "reports/waistband_landmark.json",
+  "path": "summary.replace.d_band0.mean",
+  "tol": 5e-06
+ },
+ {
+  "claim": "and with mixed segmentations",
+  "note_regex": "correspondence off `bmask.png` \\| \\*\\*\\+([0-9.]+)\\*\\* \\|",
+  "source": "reports/waistband_landmark_production.json",
+  "path": "summary.replace.d_band0.mean",
+  "tol": 5e-06
+ }
+]

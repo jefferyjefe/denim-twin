@@ -23,6 +23,9 @@ from pathlib import Path
 import cv2, numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(Path(__file__).resolve().parent))   # sibling tools are importable as builders
+# appended, not inserted: tools/ contains modules named `agents`, `compare`, `predict`, `bench`,
+# `sentinel` -- names a future dependency could also claim. Ahead of stdlib they would win silently.
 
 
 def _excluded():
@@ -156,8 +159,32 @@ def fringe_gate_ab():
     return {"summary": s, "rows": rows}
 
 
+def waistband_landmark():
+    from experiment_waistband_landmark import build
+    return build(landmarks="recomputed")
+
+
+def waistband_landmark_production():
+    from experiment_waistband_landmark import build
+    return build(landmarks="production")
+
+
+def registration_fold():
+    from experiment_registration_fold import build
+    return build()
+
+
+def landmark_consistency():
+    from experiment_landmark_consistency import build
+    return build()
+
+
 # report path -> (builder, expensive?)
 REPORTS = {
+    "reports/registration_fold.json": (registration_fold, False),
+    "reports/landmark_consistency.json": (landmark_consistency, False),
+    "reports/waistband_landmark.json": (waistband_landmark, False),
+    "reports/waistband_landmark_production.json": (waistband_landmark_production, False),
     "reports/fringe_capable_pairs.json": (fringe_capable_pairs, False),
     "reports/prediction_vs_croponly_masks.json": (prediction_vs_croponly_masks, False),
     "reports/frac_predictor_vs_constant.json": (frac_predictor_vs_constant, False),
@@ -178,8 +205,19 @@ def main():
             skipped.append(rel); continue
         try:
             fresh = fn()
+        except FileNotFoundError as e:
+            # A missing INPUT is a legitimate reason not to check a report: the expensive A/B arms
+            # are gitignored and absent in a fresh clone. Anything else is the builder being broken,
+            # and that must fail -- it used to be swallowed as a skip with exit 0, so a builder that
+            # raised left verify.py green while its report drifted arbitrarily far from the data.
+            # That is the exact hole this module was written to close, reopened one level up.
+            if expensive:
+                skipped.append(f"{rel} (input missing: {e})")
+                continue
+            stale.append(f"{rel}: builder could not find an input it needs ({e})")
+            continue
         except Exception as e:
-            skipped.append(f"{rel} (inputs unavailable: {type(e).__name__})")
+            stale.append(f"{rel}: builder raised {type(e).__name__}: {e}")
             continue
         p = ROOT / rel
         if a.write:
