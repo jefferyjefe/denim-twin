@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
 from denimtwin.seg.sam import SamSegmenter, segment_garment_coarse, segment_fringe
 from denimtwin.canon.autolm import landmarks_from_mask
+from denimtwin.canon.waistband import clean_mask
 from denimtwin.canon import upright as U
 from denimtwin.canon.register import warp_after_to_before, SURVIVING
 from denimtwin.canon.hemfit import estimate_hems, cut_mask_from_lines
@@ -129,8 +130,9 @@ def sane(mask, name):
         else: FAIL(f"{name}: garment touches the frame bottom (cropped photo)")
     if (ys.max() - ys.min()) < 0.25 * h: FAIL(f"{name}: garment too short in frame")
     # a whole garment has ONE waistband run near the top; two runs = a cropped pair of legs
-    k = max(int(0.03 * w), 3); mo = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_OPEN, np.ones((k, k), np.uint8)).astype(bool)   # drop hanger hooks/clips
-    if mo.sum() < 0.5 * mask.sum(): mo = mask
+    mo = clean_mask(mask)                                                # drop hanger hooks/clips -- canon/waistband.py, the same
+                                                                         # rule autolm cleans with. It used to be a second copy here,
+                                                                         # so tuning one moved the landmarks and left this gate behind.
     ys2 = np.nonzero(mo)[0]; top, hh = ys2.min(), ys2.max() - ys2.min(); band = range(top, top + int(0.15 * hh))
     widths = [(mo[y].sum(), y) for y in band]; yt = max(widths)[1]; row = np.nonzero(mo[yt])[0]
     if len(row) and (np.diff(row) > 5).sum() >= 1: FAIL(f"{name}: widest top row is not a single waistband run (legs-only crop?)")
