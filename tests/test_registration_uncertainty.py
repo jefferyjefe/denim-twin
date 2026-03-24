@@ -10,8 +10,10 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 def _report(name):
     p = os.path.join(ROOT, "reports", name)
-    if not os.path.exists(p):
-        pytest.skip(f"{name} not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), f"{name} is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     return json.load(open(p))
 
 
