@@ -18,8 +18,10 @@ def test_the_fringe_mask_is_gated_on_expects_fringe():
 def test_ab_report_is_present_and_covers_every_scored_pair():
     """The tuning rule requires the A/B attached, on >=5 usable pairs."""
     p = os.path.join(ROOT, "reports", "fringe_gate_ab.json")
-    if not os.path.exists(p):
-        pytest.skip("fringe_gate_ab.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "fringe_gate_ab.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     s = json.load(open(p))["summary"]
     assert s["n_pairs"] >= 5
     assert s["n_gated"] >= 1
@@ -27,8 +29,10 @@ def test_ab_report_is_present_and_covers_every_scored_pair():
 
 def test_the_gate_improves_both_means():
     p = os.path.join(ROOT, "reports", "fringe_gate_ab.json")
-    if not os.path.exists(p):
-        pytest.skip("fringe_gate_ab.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "fringe_gate_ab.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     s = json.load(open(p))["summary"]
     assert s["mean_sil_iou_delta"] > 0
     assert s["mean_hem_delta"] < 0

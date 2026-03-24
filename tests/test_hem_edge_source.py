@@ -7,8 +7,10 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 def _r():
     p = os.path.join(ROOT, "reports", "hem_edge_source_ab.json")
-    if not os.path.exists(p):
-        pytest.skip("hem_edge_source_ab.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "hem_edge_source_ab.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     return json.load(open(p))["summary"]
 
 
@@ -42,8 +44,10 @@ def test_the_regression_is_localised_to_one_band_on_one_pair():
     """Not spread across the hem: 78 columns of a garment spanning 156-425. If a future change
     spreads it, the 'one deciding pair' framing in EXP_0039 no longer holds."""
     p = os.path.join(ROOT, "reports", "hem_edge_localisation.json")
-    if not os.path.exists(p):
-        pytest.skip("hem_edge_localisation.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "hem_edge_localisation.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     s = json.load(open(p))["summary"]
     assert s["n_pairs_systematically_affected"] == 1
     assert s["affected_pair"] == "2b0123d732"
@@ -53,8 +57,10 @@ def test_gap_fraction_does_not_explain_the_band():
     """Falsified directly: the pair with the LEAST between-leg gap near the hem has the smallest
     shift. Kept as a test so the explanation is not quietly revived."""
     p = os.path.join(ROOT, "reports", "hem_edge_localisation.json")
-    if not os.path.exists(p):
-        pytest.skip("hem_edge_localisation.json not generated")
+    # A committed report is not an optional artefact. Skipping here turns the guard into a
+    # no-op exactly when the thing it guards has gone missing -- review 7's finding about
+    # tests that pass by not running. Every report named below is tracked in git.
+    assert os.path.exists(p), "hem_edge_localisation.json is missing; it is tracked in git -- restore it or run tools/make_reports.py --write --all"
     d = json.load(open(p))
     rows = {r["pair"]: r for r in d["rows"]}
     least_gap = min((r for r in d["rows"] if r["gap_pct_near_hem"] is not None),
