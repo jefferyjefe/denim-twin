@@ -7,7 +7,14 @@ Prompts derived from the 14 jeans landmarks:
              background out, which convex-hull GrabCut got wrong)
 """
 from pathlib import Path
-import numpy as np, cv2, torch
+import numpy as np, cv2
+# torch is imported inside SamSegmenter.__init__, not here. Ten tools do a module-level
+# `from denimtwin.seg.sam import ...` purely for a symbol they may never construct, and one of
+# them (tools/experiment_repeatability.py) is imported by tests/test_repeatability_harness.py --
+# which drives the harness with a *synthetic* segmenter and needs no torch at all. That single
+# module-level import aborted pytest COLLECTION on any machine without torch, so the whole clean-CI
+# suite could not run. Deferring it costs nothing: `segment_anything` was already imported lazily
+# one line below, and torch's only use in this file is the device probe next to it.
 
 DEFAULT_CKPT = Path(__file__).resolve().parents[3] / "models" / "sam_vit_b_01ec64.pth"
 
@@ -32,6 +39,7 @@ def prompts_from_landmarks(lm, pad_frac=0.04, image_shape=None):
 
 class SamSegmenter:
     def __init__(self, checkpoint=DEFAULT_CKPT, model_type="vit_b", device=None):
+        import torch
         from segment_anything import sam_model_registry, SamPredictor
         if device is None:
             device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
