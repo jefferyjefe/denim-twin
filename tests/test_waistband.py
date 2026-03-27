@@ -1,5 +1,12 @@
 """The top-edge rule moved out of autolm into canon/waistband.py, and must still be the same rule.
 
+Every test here compares the two implementations on REAL masks, and every real mask in this
+repository is gitignored -- it is traced from an all-rights-reserved photograph. Without them these
+tests used to fail with "assert 0 >= 7", which reads as a broken refactor and is nothing of the
+kind. They now declare the evidence they need, so a checkout without it reports UNAVAILABLE and a
+--profile full run refuses to pass at all. The thresholds themselves are untouched: they are what
+makes the comparison meaningful, and a run that has the masks must still clear them.
+
 EXP_0041 needed the garment's top edge as a registration correspondence. `autolm` already computed
 it, inline, to place the waist landmarks; copying the rule would have left two versions to drift, so
 it moved to `canon/waistband.py` and `autolm` calls it. Nothing about the landmarks may change as a
@@ -10,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import glob, json
 import numpy as np
 import cv2
+import pytest
 
 from denimtwin.canon.autolm import landmarks_from_mask
 from denimtwin.canon.waistband import clean_mask, top_edge_row, waistband_corners, NAMES
@@ -72,6 +80,7 @@ def _all_masks():
     return sorted(glob.glob(os.path.join(ROOT, "experiments", "**", "*mask*.png"), recursive=True))
 
 
+@pytest.mark.needs("experiment_masks")
 def test_the_moved_rule_is_the_old_rule_on_every_real_mask():
     n = 0
     for f in _all_masks():
@@ -84,6 +93,7 @@ def test_the_moved_rule_is_the_old_rule_on_every_real_mask():
     assert n > 3000, f"only {n} masks compared; this test is meant to cover the whole of experiments/"
 
 
+@pytest.mark.needs("experiment_masks")
 def test_the_fallback_branch_is_the_one_that_actually_runs():
     """EXP_0040 and the first draft of EXP_0041 both described the width-jump rule as *the* top-edge
     detector. It fires on a small minority of real masks; the half-width fallback does the work.
@@ -133,6 +143,7 @@ def test_the_moved_rule_is_the_old_rule_on_random_masks():
     assert checked > 200, "the generator produced too few usable masks to make this meaningful"
 
 
+@pytest.mark.needs("pair_masks")
 def test_autolm_landmarks_are_unchanged_by_the_move():
     """The point of the move: `landmarks_from_mask` must still return what it returned."""
     n = 0
@@ -152,7 +163,16 @@ def test_autolm_landmarks_are_unchanged_by_the_move():
     assert n >= 7, f"only {n} accepted pairs exercised this"
 
 
+@pytest.mark.needs("pair_masks")
 def test_waistband_corners_sit_on_the_top_edge_and_span_the_garment():
+    """Alone among the tests in this file, this one used to prove nothing at all.
+
+    `_pair_masks()` globs gitignored artefacts, every assertion here lives inside the loop over it,
+    and there was no count afterwards -- so on a checkout without the masks the body executed zero
+    times and the test reported PASSED. Its three siblings already got this right (`assert n > 3000`,
+    `assert n >= 7`); it now does the same, so absent masks say UNAVAILABLE and a run that HAS them
+    has to show it checked at least the seven-pair bench. No threshold below changed."""
+    n = 0
     for f in _pair_masks():
         m = cv2.imread(f, cv2.IMREAD_GRAYSCALE) > 127
         if not m.any():
@@ -164,12 +184,15 @@ def test_waistband_corners_sit_on_the_top_edge_and_span_the_garment():
         ys = {p[1] for p in c.values()}
         assert len(ys) == 1 and top <= ys.pop() <= top + 10, f"corners left the top edge on {f}"
         assert c["waistband_left"][0] < c["waistband_center"][0] < c["waistband_right"][0]
+        n += 1
+    assert n >= 7, f"only {n} masks exercised this"
 
 
 def test_waistband_corners_refuses_an_empty_mask():
     assert waistband_corners(np.zeros((20, 20), bool)) is None
 
 
+@pytest.mark.needs("pair_masks")
 def test_the_corners_are_above_the_waist_landmarks_they_would_join():
     """The whole premise of EXP_0041: the new correspondence is outside the existing hull."""
     n = 0
