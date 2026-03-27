@@ -50,7 +50,18 @@ def test_a_repo_relative_directory_default_is_always_joined_to_root():
     assert not bad, f"relative directory default never joined to ROOT in: {bad}"
 
 
-@pytest.mark.parametrize("tool", ["experiment_registration_fold.py", "experiment_landmark_consistency.py"])
+# Both parametrised tests below drive these two tools for real. registration_fold measures a TPS over
+# the before-frame GARMENT MASK, so in a checkout without masks it reports 0 pairs: the filter test
+# degenerates to "assert 0 < 0" (a red test saying nothing about the filter it guards) and the
+# foreign-cwd test degenerates to comparing two empty summaries (a green test saying nothing at all).
+# landmark_consistency reads committed JSON and is checkable anywhere, so it stays unconditional.
+PAIR_TOOLS = [
+    pytest.param("experiment_registration_fold.py", marks=pytest.mark.needs("pair_masks")),
+    "experiment_landmark_consistency.py",
+]
+
+
+@pytest.mark.parametrize("tool", PAIR_TOOLS)
 def test_the_tool_gives_the_same_answer_from_a_foreign_working_directory(tool, tmp_path):
     """The static checks above can be satisfied by a tool that is still cwd-sensitive some other way.
     This runs it for real from a directory that contains nothing."""
@@ -62,7 +73,7 @@ def test_the_tool_gives_the_same_answer_from_a_foreign_working_directory(tool, t
     assert run(ROOT) == run(str(tmp_path))
 
 
-@pytest.mark.parametrize("tool", ["experiment_registration_fold.py", "experiment_landmark_consistency.py"])
+@pytest.mark.parametrize("tool", PAIR_TOOLS)
 def test_the_scored_pair_filter_is_the_default_not_an_opt_in(tool):
     """`--all-pairs` must widen the set. If the default already included everything, the committed
     report would not be the one the obvious invocation reproduces."""
