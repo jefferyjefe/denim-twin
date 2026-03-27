@@ -5,9 +5,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 import numpy as np, cv2
 from denimtwin.seg.validate import check_garment_mask, _runs, segment_garment_consensus
 
-pytestmark = pytest.mark.skipif(
-    not os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) or importlib.util.find_spec("torch") is None,
-    reason="needs the SAM checkpoint and torch")
+pytestmark = pytest.mark.needs("sam_checkpoint", "torch")
 
 def _scene(distractor=True, W=700, H=520):
     """A denim-ish garment on a floor, plus a bright rectangle above it — the shape SAM preferred over the garment

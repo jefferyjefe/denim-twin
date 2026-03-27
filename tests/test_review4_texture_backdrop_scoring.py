@@ -31,9 +31,7 @@ def test_no_scoring_code_path_imports_the_presentation_fill():
         src = open(os.path.join(ROOT, f)).read()
         assert "texture_backdrop_fill" not in src, f"{f} reaches the scoring path and must not use the presentation fill"
 
-@pytest.mark.skipif(
-    not os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) or importlib.util.find_spec("torch") is None,
-    reason="needs the SAM checkpoint and torch")
+@pytest.mark.needs("sam_checkpoint", "torch")
 def test_predict_writes_scored_images_with_the_deterministic_fill():
     """pred_*.png are consumed by compare.py (via score_predict.py); inside the removed region they must equal the
     deterministic inpaint wherever the fringe renderer did not paint, not invented texture."""
