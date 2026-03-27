@@ -104,7 +104,7 @@ import pytest
 _HAVE_SAM = os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) and __import__("importlib").util.find_spec("torch") is not None
 
 
-@pytest.mark.skipif(not _HAVE_SAM, reason="needs the SAM checkpoint, torch and the harvested photos")
+@pytest.mark.needs("sam_checkpoint", "torch", "external_images")
 def test_the_published_roughness_table_reproduces_with_the_shipped_metric():
     """NOTE.md:24-36 publishes a per-garment roughness table at native resolution, and rows.json is its record.
     Both were produced at commit 85d02a4. Commit d5debb6 then rewrote `hem_roughness` — adding the solid-column

@@ -31,9 +31,7 @@ def test_apply_cut_preserves_the_cut_angle():
         f"apply_cut discarded the cut angle: identical removal masks ({int((removed_angled != removed_flat).sum())} differing px)"
 
 
-@pytest.mark.skipif(
-    not os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) or __import__("importlib").util.find_spec("torch") is None,
-    reason="needs the SAM checkpoint and torch")
+@pytest.mark.needs("sam_checkpoint", "torch")
 def test_predict_positive_and_negative_angles_are_not_nested():
     """tools/predict.py:101-108 — `--angle-deg +30` (outseam higher) and `--angle-deg -30` (inseam higher)
     must each remove fabric the other keeps. observed: the -30 removal is a STRICT SUBSET of the +30 one

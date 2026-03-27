@@ -18,9 +18,7 @@ sys.path.insert(0, os.path.join(ROOT, "src")); sys.path.insert(0, os.path.dirnam
 import numpy as np, cv2
 from test_canon import synthetic_jeans
 
-pytestmark = pytest.mark.skipif(
-    not os.path.exists(os.path.join(ROOT, "models", "sam_vit_b_01ec64.pth")) or __import__("importlib").util.find_spec("torch") is None,
-    reason="needs the SAM checkpoint and torch")
+pytestmark = pytest.mark.needs("sam_checkpoint", "torch")
 
 
 def _scene(scale=1.0):
