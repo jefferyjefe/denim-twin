@@ -38,8 +38,9 @@ def test_the_wash_effect_is_not_significant():
 
 def test_contributing_guidance_asks_for_raw_edges():
     """A cuffed after-wash contribution adds nothing to this question, however good the photo."""
+    # Committed, so the old pytest.skip here could only fire if someone deleted the contribution
+    # guidance -- which is precisely when this check matters.
     p = os.path.join(ROOT, "CONTRIBUTING_PAIRS.md")
-    if not os.path.exists(p):
-        pytest.skip("no CONTRIBUTING_PAIRS.md")
+    assert os.path.exists(p), "CONTRIBUTING_PAIRS.md is committed and must be present"
     t = open(p).read().lower()
     assert "raw" in t and "hem" in t, "contribution guidance does not ask for raw (unfinished) hems"

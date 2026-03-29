@@ -50,11 +50,13 @@ def test_no_baseline_was_refrozen_to_make_the_bench_green():
     """bench.py is green after this change without a re-freeze. If a future change needs a freeze,
     that is a deliberate act requiring its own report -- this asserts the current baseline still
     holds the pre-EXP_0038 numbers for the pair that moved most."""
+    # Both of these used to be pytest.skip. data/bench/baseline.json is committed and 443d1d4658 is
+    # the pair the freeze is about, so neither skip could fire in a normal checkout -- and each would
+    # have fired silently in the one situation this guard exists for: someone deleting the baseline,
+    # or dropping the pair from it, to make the bench green. Assert instead.
     p = os.path.join(ROOT, "data", "bench", "baseline.json")
-    if not os.path.exists(p):
-        pytest.skip("no bench baseline")
+    assert os.path.exists(p), "data/bench/baseline.json is committed and must be present"
     b = json.load(open(p))
     entry = b.get("443d1d4658")
-    if entry is None:
-        pytest.skip("pair not in baseline")
+    assert entry is not None, "443d1d4658 was removed from the bench baseline"
     assert abs(entry["hem_chamfer"] - 8.916) < 0.01, "the baseline was re-frozen"

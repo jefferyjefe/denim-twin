@@ -26,6 +26,7 @@ def test_registration_tps_does_not_fold_on_any_scored_pair():
     assert s["n_over_20pct"] == 0
 
 
+@pytest.mark.needs("pair_masks")
 def test_zero_perturbation_reproduces_the_baseline_exactly():
     """The null control for the uncertainty harness: with the error magnitudes scaled to zero,
     refitting the TPS and re-warping must give back the baseline mask bit-for-bit. Without this,
@@ -34,11 +35,11 @@ def test_zero_perturbation_reproduces_the_baseline_exactly():
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "experiment_groundtruth_uncertainty.py"),
                         "--draws", "3", "--scale", "0"],
                        capture_output=True, text=True, cwd=ROOT)
-    if r.returncode != 0:
-        pytest.skip("pair artefacts unavailable")
+    assert r.returncode == 0, r.stderr[-2000:]
     rows = json.loads(r.stdout)["rows"]
-    if not rows:
-        pytest.skip("no scored pairs present")
+    # Was pytest.skip("no scored pairs present"). With the masks declared as a prerequisite, an empty
+    # result is no longer "we have no data" -- it is the harness silently measuring nothing.
+    assert rows, "the uncertainty harness returned no pairs even though the pair masks are present"
     for x in rows:
         assert x["iou_sd"] == 0.0, f"{x['pair']}: harness adds noise at zero perturbation"
         assert x["iou_mean"] == x["iou_baseline"], f"{x['pair']}: zero perturbation moved the score"
