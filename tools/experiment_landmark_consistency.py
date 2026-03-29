@@ -42,7 +42,11 @@ def _run(a):
     # published result with no error raised. Missing is a hard failure for the same reason.
     ex = ROOT / "data/priors/exclude.txt"
     if not ex.exists():
-        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
+        # A raise, not sys.exit. tools/make_reports.py calls build() in-process and classifies what
+        # comes back; SystemExit is not an Exception, so it would tear the caller down instead of
+        # being reported as this tool refusing to run. The refusal is unchanged, message included --
+        # an empty exclude set silently admits the banned pairs into a published result.
+        raise RuntimeError(f"missing {ex}: refusing to run with an empty exclude set")
     EXCLUDE = {l.split()[0] for l in ex.read_text().splitlines()
                if l.strip() and not l.startswith("#")} if ex.exists() else set()
     rows = []
@@ -69,6 +73,15 @@ def _run(a):
                      "rejected": bool(rejected), "excluded": pid in EXCLUDE,
                      "findings": fnd, "fold_fraction_undropped": round(float(fold), 4),
                      "fold_fraction_dropped": round(float(fold_d), 4), "warp_dropped": dropped})
+    if not rows:
+        # np.nanmax over the empty fold array raised "zero-size array to reduction operation" from
+        # inside the summary, naming nothing. The landmark files this reads are TRACKED, so an empty
+        # run is a damaged checkout, not the gitignored-evidence case -- said here in those words.
+        n_dirs = len(glob.glob(f"{a.pairs}/*"))
+        raise RuntimeError(
+            f"no landmark set to check: none of the {n_dirs} director(ies) in {a.pairs} has a "
+            f"*_lm.json beside a modification.json. Both are tracked in git, so a checkout with "
+            f"none of them is damaged: restore it with `git checkout experiments/pairs`")
     n_inv = sum(r["severity"] == "inverted" for r in rows)
     n_deg = sum(r["severity"] == "degenerate" for r in rows)
     folds = np.array([r["fold_fraction_undropped"] for r in rows], float)

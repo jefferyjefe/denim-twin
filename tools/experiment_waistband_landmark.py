@@ -53,7 +53,11 @@ WAIST = ("waist_left", "waist_center", "waist_right")
 def excluded():
     ex = ROOT / "data/priors/exclude.txt"
     if not ex.exists():
-        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
+        # A raise, not sys.exit. tools/make_reports.py calls build() in-process and classifies what
+        # comes back; SystemExit is not an Exception, so it would tear the caller down instead of
+        # being reported as this tool refusing to run. The refusal is unchanged, message included --
+        # an empty exclude set silently admits the banned pairs into a published result.
+        raise RuntimeError(f"missing {ex}: refusing to run with an empty exclude set")
     return {l.split()[0] for l in ex.read_text().splitlines() if l.strip() and not l.startswith("#")}
 
 
@@ -318,6 +322,15 @@ def _run(a):
                   + "  ".join(f"{k} {v.get('iou')}" for k, v in out["arms"].items() if "iou" in v),
                   file=sys.stderr)
 
+    if not rows:
+        # Every pair fell out. That used to return {"n_pairs": 0, "skipped": [...]}, a summary whose
+        # only honest reading is "no evidence" but which make_reports could compare against the
+        # committed numbers and call STALE. The per-pair reasons are carried into the message.
+        why = "; ".join(f"{s['pair']}: {s['why']}" for s in skipped) or "no scored pair at all"
+        raise RuntimeError(
+            f"no scored pair in {a.pairs} produced a row ({why}). This experiment needs bmask.png, "
+            f"amask.png and pred_median_mask.png for each pair; all three are gitignored, so "
+            f"regenerate them with PAIRS_OUT=experiments/pairs python tools/run_pairs_batch.py")
     summary = {"n_pairs": len(rows), "skipped": skipped, "landmarks": a.landmarks}
     if rows:
         summary.update(_summarise(rows))
