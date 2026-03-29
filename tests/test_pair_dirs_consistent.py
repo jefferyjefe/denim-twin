@@ -7,6 +7,24 @@ predictions from an earlier accepted run. Two directories are in exactly that st
 
 This guards the case that would actually hurt: an ACCEPTED directory whose artefacts disagree,
 which would silently pair a photo with a mask of a different photo.
+
+WHAT THIS USED TO PROVE: nothing, on any checkout that had not run the batch. The skipif below
+tested for `experiments/pairs/*/NOTE.md`, which is COMMITTED, while every artefact it stands proxy
+for (before_used.png, bmask.png, after_used.png, amask.png, keep_mask.png, removed_mask.png,
+pred_median.png, pred_median_mask.png, real.png, real_mask.png) is gitignored -- they are traced
+from all-rights-reserved photographs. So the guard never fired, `if not (exists(pa) and exists(pb)):
+continue` dropped all eight groups, `bad` stayed empty, and `assert not bad` reported PASSED having
+opened zero images. Two further `if ia is None or ib is None: continue` widened the hole in the
+other direction: a png that was PRESENT but corrupt -- the one defect this test could uniquely
+catch -- was also waved through.
+
+WHAT IT PROVES NOW: the artefacts are declared as a prerequisite, so a checkout without them says
+UNAVAILABLE (and a --profile full run refuses to pass at all) instead of reporting a green
+comparison of nothing. When they ARE here, every group is required to have been compared: the
+prerequisite probe only asks whether masks exist at all, so a half-written batch would still satisfy
+it -- the per-directory count below is what makes that fail loudly rather than quietly shrink the
+test. And an unreadable png is now a failure, because a corrupt artefact is a defect that is
+present, not evidence that is absent.
 """
 import glob, os
 import cv2
@@ -33,24 +51,40 @@ def _accepted():
     return out
 
 
-@pytest.mark.skipif(not glob.glob(os.path.join(PAIRS, "*", "NOTE.md")),
-                    reason="pair artefacts are untracked (copyrighted source images)")
+@pytest.mark.needs("pair_masks")
 @pytest.mark.parametrize("d", _accepted() or [None], ids=lambda d: os.path.basename(d) if d else "none")
 def test_accepted_pair_dir_artefacts_have_matching_shapes(d):
-    if d is None:
-        pytest.skip("no accepted pair directories present")
-    bad = []
+    # NOTE.md is committed, so an empty accepted set means the checkout is damaged, not that the
+    # evidence is merely absent. That is a failure; it used to be a skip, which is how a broken
+    # checkout could report green.
+    assert d is not None, ("no accepted pair directory found. experiments/pairs/*/NOTE.md is "
+                           "COMMITTED -- if it is missing, restore it: git checkout experiments/pairs")
+    bad, checked = [], []
     for a, b in GROUPS:
         pa, pb = os.path.join(d, a), os.path.join(d, b)
         if not (os.path.exists(pa) and os.path.exists(pb)):
             continue
         ia = cv2.imread(pa, cv2.IMREAD_GRAYSCALE)
         ib = cv2.imread(pb, cv2.IMREAD_GRAYSCALE)
+        # Present but unreadable is a corrupt artefact -- a real defect in this directory. It used
+        # to `continue`, which turned the strongest signal this test can see into silence.
+        for name, img in ((a, ia), (b, ib)):
+            if img is None:
+                bad.append(f"{name} is present but cv2 could not decode it")
         if ia is None or ib is None:
             continue
+        checked.append((a, b))
         if ia.shape != ib.shape:
             bad.append(f"{a}{ia.shape} != {b}{ib.shape}")
     assert not bad, f"{os.path.basename(d)} artefacts disagree: " + "; ".join(bad)
+    # The floor that stops this passing over an empty directory. An accepted pair carries the whole
+    # artefact set; anything less is an interrupted or partly-deleted run, and the comparison this
+    # test claims to have made was not made.
+    missing = [f"{a}+{b}" for a, b in GROUPS if (a, b) not in checked]
+    assert len(checked) == len(GROUPS), (
+        f"{os.path.basename(d)} is accepted but only {len(checked)} of {len(GROUPS)} artefact pairs "
+        f"could be compared; never compared: {', '.join(missing)}. An accepted directory with a "
+        f"missing artefact is an incomplete run, not absent evidence -- re-run the batch for it.")
 
 
 def test_score_predict_still_skips_rejected_pairs():
