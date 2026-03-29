@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Run capture-quality checks on images. Usage: check_capture.py IMG [IMG...] [--board protocol/charuco_board.json]"""
-import argparse, json, sys
-sys.path.insert(0, __import__("os").path.join(__import__("os").path.dirname(__file__), "..", "src"))
+import argparse, json, os, sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # never Path.cwd(): the board ships with the repo
+sys.path.insert(0, os.path.join(ROOT, "src"))
 from denimtwin.capture.board import load_board
 from denimtwin.capture.quality import check_image
 
 p = argparse.ArgumentParser()
 p.add_argument("images", nargs="+")
-p.add_argument("--board", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protocol", "charuco_board.json"))
+p.add_argument("--board", default=os.path.join(ROOT, "protocol", "charuco_board.json"))
 p.add_argument("--no-board", action="store_true")
 p.add_argument("--json", action="store_true")
 a = p.parse_args()
