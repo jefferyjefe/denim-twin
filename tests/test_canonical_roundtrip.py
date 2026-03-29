@@ -127,9 +127,13 @@ def test_a_region_survives_the_round_trip_once_the_inverse_is_corrected():
     assert trip(True) > 0.9, f"a region still does not survive the corrected round trip (IoU {trip(True):.3f})"
 
 
-@pytest.mark.skipif(not os.path.exists(os.path.join(os.path.dirname(__file__), "..", "reports/canonical_roundtrip.json")),
-                    reason="needs a scored run (reports/canonical_roundtrip.json); artefacts are gitignored")
 def test_the_measured_report_says_what_the_note_says():
+    # This test used to disable itself when the report it reads was absent. That report is
+    # COMMITTED, so the condition was unreachable in any real checkout, and it would have fired in
+    # the one case worth catching: the artefact going missing. It escaped
+    # tests/test_guards_are_not_optional.py only because that meta-guard scanned for the pytest.skip
+    # spelling and not the conditional-marker one; it now scans both, which is how this comment came
+    # to be worded without naming either construct -- the scanner reads source, and it is right to.
     import json
     d = json.load(open(os.path.join(os.path.dirname(__file__), "..", "reports/canonical_roundtrip.json")))
     assert d["median_point_err_at_landmarks_px"] < 1.0, "the landmarks are no longer exact"

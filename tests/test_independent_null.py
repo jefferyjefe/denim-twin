@@ -68,9 +68,12 @@ def test_score_predict_always_warns_that_crop_only_is_not_independent():
 def test_a_generated_summary_carries_the_caveat():
     import glob
     outs = glob.glob(os.path.join(ROOT, "experiments", "pairs_predict*", "SUMMARY.md"))
+    # The SUMMARY.md files are committed (15 of them) and five carry the caveat, so the old
+    # pytest.skip could not fire -- except by someone regenerating every summary WITHOUT the caveat,
+    # which is the regression this test is for.
     fresh = [p for p in outs if "crop-only IoU is not an independent baseline" in open(p).read()]
-    if not fresh:
-        pytest.skip("no SUMMARY.md regenerated since the caveat was added")
+    assert fresh, ("no committed SUMMARY.md carries the crop-only caveat; EXP_0034's correction has "
+                   "been regenerated away")
     r = json.load(open(os.path.join(os.path.dirname(fresh[0]), "result.json")))
     assert r["crop_only_is_independent_of_the_model"] is False
     if r.get("loo_null"):
