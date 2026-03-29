@@ -68,7 +68,11 @@ def _run(a):
     # published result with no error raised. Missing is a hard failure for the same reason.
     ex = ROOT / "data/priors/exclude.txt"
     if not ex.exists():
-        sys.exit(f"missing {ex}: refusing to run with an empty exclude set")
+        # A raise, not sys.exit. tools/make_reports.py calls build() in-process and classifies what
+        # comes back; SystemExit is not an Exception, so it would tear the caller down instead of
+        # being reported as this tool refusing to run. The refusal is unchanged, message included --
+        # an empty exclude set silently admits the banned pairs into a published result.
+        raise RuntimeError(f"missing {ex}: refusing to run with an empty exclude set")
     EXCLUDE = {l.split()[0] for l in ex.read_text().splitlines()
                if l.strip() and not l.startswith("#")} if ex.exists() else set()
     rows = []
@@ -93,6 +97,16 @@ def _run(a):
         rows.append({"pair": pid, "n_landmarks": len(names), "names": names,
                      "fold_fraction": round(fold_fraction(t, bmask), 4),
                      "heldout_resid_px": round(float(heldout_residual(A, B)), 2)})
+    if not rows:
+        # An empty run used to return a report of nulls -- n_pairs 0, median_fold None -- which is a
+        # publishable-looking shape for "nothing was measured". It is now loud, and the pre-flight in
+        # tools/make_reports.py means a checkout without masks never gets here in the first place.
+        n_dirs = len(glob.glob(f"{a.pairs}/*"))
+        raise RuntimeError(
+            f"no pair in {a.pairs} yielded a fold measurement: none of the {n_dirs} director(ies) "
+            f"there has before_lm.json, after_lm.json and bmask.png together with at least 4 shared "
+            f"landmarks. bmask.png is gitignored; regenerate it with "
+            f"PAIRS_OUT=experiments/pairs python tools/run_pairs_batch.py")
     ff = np.array([r["fold_fraction"] for r in rows], float)
     return {"summary": {
         "n_pairs": len(rows),
