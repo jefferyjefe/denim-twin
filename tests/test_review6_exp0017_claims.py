@@ -30,13 +30,30 @@ def _pairs():
 def _finite(v): return isinstance(v, (int, float)) and not math.isnan(v)
 
 
+# The four tests below that take the `P` fixture read experiments/pairs/*/cmp_median/metrics.json,
+# which is gitignored. The fixture used to pytest.skip("no scored pair runs in this checkout") --
+# correct, but in prose that no tool could read or count. Declared instead: under --profile ci they
+# report UNAVAILABLE[pair_cmp_metrics] with the command that fixes it, and under --profile full they
+# FAIL, because a scientific pass may not be issued over scoring output that is not there.
+#
+# The marker is PER-TEST, not a module-level pytestmark. It was module-level for one revision, and
+# that silently disabled the two tests at the bottom of this file -- which read only committed
+# documents and reports and are perfectly checkable in a clean clone. One of them is the
+# cross-document guard that had been passing vacuously (all three regexes returning None, so
+# len({None}) == 1) and was just rewritten to bite; a module-level marker would have shipped that
+# rewrite un-exercised in CI, which is the same class of mistake wearing the new mechanism's clothes.
+NEEDS_SCORED_PAIRS = pytest.mark.needs("pair_cmp_metrics")
+
+
 @pytest.fixture(scope="module")
 def P():
     p = _pairs()
-    if not p: pytest.skip("no scored pair runs in this checkout")
+    assert p, ("no scored pair runs found even though the prerequisite reports them present; "
+               "experiments/pairs/*/cmp_median/metrics.json exists but carries no usable rows")
     return p
 
 
+@NEEDS_SCORED_PAIRS
 def test_the_usable_pair_count_matches_the_artefacts(P):
     """NOTE.md:8 — "## Result (**11 usable found pairs**, median preset)", repeated at :20-21 ("with n = 11") and
     in docs/STATUS.md ("Scored on all 11 pairs").
@@ -63,6 +80,7 @@ def test_the_usable_pair_count_matches_the_artefacts(P):
         f"the note's decidable count and result.json disagree: {m.group(1) if m else None} vs {R['decidable']}")
 
 
+@NEEDS_SCORED_PAIRS
 def test_the_mean_absolute_roughness_error_table_matches_the_artefacts(P):
     """NOTE.md:10-14 publishes the result table:
 
@@ -90,6 +108,7 @@ def test_the_mean_absolute_roughness_error_table_matches_the_artefacts(P):
                      + "; ".join(f"{k}: {v}" for k, v in bad.items()))
 
 
+@NEEDS_SCORED_PAIRS
 def test_the_sign_test_counts_match_the_artefacts(P):
     """NOTE.md:16 — "Per pair, the prediction is closer to the real hem's roughness than crop-only on **6**, worse
     on 3, tied on 2", and :19-20 — "A sign test on the 9 decided pairs gives **p = 0.51**".
@@ -115,6 +134,7 @@ def test_the_sign_test_counts_match_the_artefacts(P):
         f"note says {m.groups()}; result.json says {R['wins']}-{R['losses']}-{R['ties']}")
 
 
+@NEEDS_SCORED_PAIRS
 def test_the_named_failure_pairs_show_the_failure_the_note_describes(P):
     """NOTE.md:26-27 — "On three pairs the prediction puts roughness on a hem the real garment left smooth
     (b630a78c19, 443d1d4658, e97924ad2d ... predicted p90 1.0 px against a real 0.0)".
@@ -151,20 +171,81 @@ def test_exp0017_has_a_reproducible_artefact():
     assert sorted(os.listdir(d)) != ["NOTE.md"], f"{d} contains only NOTE.md: {sorted(os.listdir(d))}"
 
 
+SPLIT = r"(?<!\d)(\d)\s*-\s*(\d)\s*-\s*(\d)(?!\d)"   # a win-loss-tie split; single digits, so dates never match
+
+
 def test_the_three_documents_quote_the_same_result():
-    """The same EXP_0017 comparison is published in three places with three different results:
+    """The same EXP_0017 comparison was published in three places with three different results:
 
         experiments/EXP_0017_roughness_as_fray_metric/NOTE.md:16,19  "6 ... worse on 3, tied on 2", "p = 0.51"
         docs/STATUS.md:32                                            "beats crop-only 6-3-2 ... p=0.51"
         README.md:65-66                                              "beats crop-only on it 5-1-2 (p=0.22, EXP_0017)"
 
-    observed: the artefacts give 4-1-2 (two-sided sign test p = 0.375) — a fourth value. README and STATUS were
-              written at the same time (commits f4208a8, bbd53be) and do not agree with each other.
-    expected: one result, quoted identically wherever it appears."""
-    pat = r"(\d)\s*-\s*(\d)\s*-\s*(\d)"
-    readme = re.search(r"beats crop-only on it " + pat, open(os.path.join(ROOT, "README.md")).read())
-    status = re.search(r"beats crop-only " + pat, open(os.path.join(ROOT, "docs/STATUS.md")).read())
-    note = re.search(r"than crop-only on \*\*(\d+)\*\*, worse on (\d+), tied on (\d+)", NOTE)
-    got = {"README.md": readme and readme.groups(), "docs/STATUS.md": status and status.groups(),
-           "EXP_0017/NOTE.md": note and note.groups()}
-    assert len(set(got.values())) == 1, f"one comparison, three published results: {got}"
+    All three documents have since been restated, and the guard that was here did not survive the restatement --
+    worse, it did not notice. It built `{doc: re.search(...) and m.groups()}` and asserted `len(set(...)) == 1`.
+    When every pattern stopped matching the dict became `{None, None, None}`, the set became `{None}`, and the
+    cross-document consistency check passed having compared nothing at all. A regex that stops matching is now a
+    failure that names the document that drifted, and the patterns below are bound to the current text.
+
+    What the documents say now, and why the comparison had to be re-aimed rather than re-pointed:
+
+      * EXP_0017 was retracted twice. Its NOTE.md and README.md both publish the *retraction's* headline -- 6 of
+        the 7 real hems measure exactly zero, at 241-389 px of waistband -- and that is the number all the
+        current-position documents are supposed to state identically. It is checked in (a).
+      * README.md no longer publishes a win/loss/tie split for this comparison at all; the score was withdrawn.
+        Demanding that it quote one would be demanding it re-publish a retracted result, so (b) instead binds the
+        NOTE's split to result.json and requires that any split README ever quotes again agree with it.
+      * docs/STATUS.md is EXEMPT from (a) and (b), and the exemption is not a hole. It is a dated log and says so
+        in its own banner ("Entries are left as written because this file is a dated log; the current position is
+        in README.md, docs/BACKLOG.md and EXP_0034"), so repo policy is that its 6-3-2, 4-1-2 and 1-3-3 entries
+        are the historical record and corrections go in banners, never by editing the record. Rewriting them to
+        match today's number would destroy the evidence that the drift happened. (c) therefore checks the only
+        thing that can honestly be asked of an archive: that it still declares itself one, and that every entry
+        carrying a superseded split is marked superseded, so an archived number cannot be read as current.
+    """
+    README = open(os.path.join(ROOT, "README.md")).read()
+    STATUS = open(os.path.join(ROOT, "docs/STATUS.md")).read()
+
+    # (a) the retraction's headline, in the two documents that publish the current position.
+    CURRENT = {"README.md": README, "EXP_0017/NOTE.md": NOTE}
+
+    def quoted(pat, what):
+        got = {}
+        for name, text in CURRENT.items():
+            m = re.search(pat, text)
+            assert m, (f"{name} no longer states {what}: {pat!r} does not match. Either the document drifted or "
+                       f"this guard did; do not delete the pattern without re-aiming it at the new wording.")
+            got[name] = m.groups()
+        assert len(set(got.values())) == 1, f"one result, several published values for {what}: {got}"
+        return next(iter(got.values()))
+
+    n_zero, n_pairs = quoted(r"\*\*(\d+) of the (\d+) [^*]*exactly zero\*\*",
+                             "how many real hems measure exactly zero")
+    assert 0 < int(n_zero) <= int(n_pairs), (n_zero, n_pairs)
+    quoted(r"(\d+)\s*[-\u2013]\s*(\d+) px of\s+waistband",
+           "the waistband resolution those hems were measured at")
+
+    # (b) the win/loss/tie split: the note's must be result.json's, and README must not contradict it.
+    R = json.load(open(os.path.join(D, "result.json")))
+    split = [R["wins"], R["losses"], R["ties"]]
+    m = re.search(r"beats crop-only on \*\*(\d+)\*\* pairs, loses on \*\*(\d+)\*\*, ties on \*\*(\d+)\*\*", NOTE)
+    assert m, "EXP_0017/NOTE.md no longer states the sign-test split"
+    assert [int(x) for x in m.groups()] == split, f"note says {m.groups()}; result.json says {split}"
+    bad = [g for g in re.findall(SPLIT, README) if [int(x) for x in g] != split]
+    assert not bad, (f"README.md quotes a win-loss-tie split that is not result.json's {split}: {bad}. "
+                     "The EXP_0017 score is retracted; if README publishes one again it must be the artefact's.")
+    # and the note's own superseded splits stay inside its retraction banners, never in its body
+    body = "\n".join(l for l in NOTE.splitlines() if not l.lstrip().startswith(">"))
+    assert not re.search(SPLIT, body), (
+        "a bare win-loss-tie split appears in EXP_0017/NOTE.md outside its retraction banner: "
+        f"{re.findall(SPLIT, body)}")
+
+    # (c) docs/STATUS.md, exempt but not unchecked -- see the docstring for why it is not rewritten.
+    assert "this file is a dated log" in STATUS, (
+        "docs/STATUS.md no longer declares itself a dated log; that declaration is the whole basis on which "
+        "its superseded EXP_0017 numbers are exempt from the comparison above")
+    unmarked = [b.splitlines()[0][:80] for b in re.split(r"\n(?=- )", STATUS)
+                if "EXP_0017" in b and re.search(SPLIT, b)
+                and not re.search(r"retract|supersed|void|at the time|corrected", b, re.I)]
+    assert not unmarked, ("docs/STATUS.md entries quote an EXP_0017 win-loss-tie split without marking it "
+                          f"superseded, so it reads as the current result: {unmarked}")

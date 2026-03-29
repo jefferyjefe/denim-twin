@@ -1,5 +1,5 @@
 """Regression tests from the 2026-08-28 adversarial review (each originally demonstrated a bug)."""
-import sys, os, subprocess
+import sys, os, json, subprocess
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np, cv2, pytest
@@ -36,11 +36,16 @@ def test_ssim_does_not_leak_cut_region_into_keep_region():
     pred = img.copy(); pred[~keep] = 0                            # only the cut region touched
     assert I.unchanged_ssim(pred, img, keep) > 0.999              # observed: 0.95
 
+@pytest.mark.needs("external_images")
 def test_feature_retention_penalises_translation():
     # identity.py:35-46 -- ratio-test matches are never checked for spatial consistency;
     # a prediction shifted 40 px still 'retains' ~80% of features.
+    # The harvested set is gitignored, so this was pytest.skip("harvested image not present").
+    # Declared as a prerequisite instead; a named file that is missing while the set IS present is a
+    # broken checkout, not absent evidence, so that case now fails rather than opting out.
     real = cv2.imread(os.path.join(ROOT, "data/external/images/commons_c2024708ca53.jpg"))
-    if real is None: pytest.skip("harvested image not present")
+    assert real is not None, ("data/external/images is present but commons_c2024708ca53.jpg is not; "
+                              "re-run the harvest or update this test's subject")
     real = cv2.resize(real, (800, int(800 * real.shape[0] / real.shape[1])))
     shifted = np.roll(real, 40, axis=1)
     assert I.feature_retention(shifted, real, np.ones(real.shape[:2], bool)) < 0.2
@@ -63,15 +68,62 @@ def test_quality_detects_light_wash_on_light_background(tmp_path):
     r = check_image(str(p))
     assert r.foreground_fraction > 0.3, r.reasons   # observed: 0.0 -> 'foreground too small'
 
-def test_check_capture_runs_from_any_cwd(tmp_path):
-    # check_capture.py:10 -- default --board is relative to cwd, not the repo.
-    res = subprocess.run([sys.executable, os.path.join(ROOT, "tools/check_capture.py"),
-                          os.path.join(ROOT, "protocol/charuco_board.png")], cwd=tmp_path, capture_output=True, text=True)
-    assert "FileNotFoundError" not in res.stderr
+def _check_capture(cwd, *args):
+    """Run tools/check_capture.py --json and return (returncode, stdout, [report dicts]).
 
+    The tool's contract: one JSON report per image on stdout, exit 1 iff some image was judged
+    unusable and 0 otherwise. Any other exit -- or an empty stdout -- means it crashed.
+    """
+    res = subprocess.run([sys.executable, os.path.join(ROOT, "tools/check_capture.py"), "--json", *args],
+                         cwd=str(cwd), capture_output=True, text=True)
+    assert "Traceback" not in res.stderr, f"check_capture.py crashed (rc={res.returncode}):\n{res.stderr[-2000:]}"
+    assert res.returncode in (0, 1), f"unexpected exit {res.returncode}:\n{res.stderr[-2000:]}"
+    reports = [json.loads(l) for l in res.stdout.splitlines() if l.strip()]
+    assert reports, f"no report on stdout (rc={res.returncode}):\n{res.stderr[-2000:]}"
+    return res.returncode, res.stdout, reports
+
+
+def test_check_capture_runs_from_any_cwd(tmp_path):
+    # check_capture.py:3-12 -- the default --board was relative to the cwd, not to the repo, so the tool
+    # could only find protocol/charuco_board.json when it happened to be run from the repository root.
+    # The original guard here asserted only `"FileNotFoundError" not in res.stderr`, which a tool that
+    # dies of `NameError: name 'os' is not defined` before parsing a single argument also satisfies --
+    # and that is exactly what the tool did (line 4 called __import__("os") without binding the name).
+    # So this now asserts the exit status and the tool's actual output.
+    board_png = os.path.join(ROOT, "protocol/charuco_board.png")
+
+    # (1) The board image really is a board, and the tool finds the board SPEC through its default,
+    #     from a directory that contains nothing. 70 corners are detectable in that render.
+    rc, out, [rep] = _check_capture(tmp_path, board_png)
+    assert rep["board_corners"] >= 12, ("the default --board did not resolve from a foreign cwd", rep)
+    assert rep["mm_per_px"] and rep["mm_per_px"] > 0, ("no scale recovered from the board", rep)
+    # It is a bare board on white, not a garment capture, so the tool is expected to reject it -- with
+    # its documented exit 1 and a stated reason, not with a stack trace.
+    assert rc == 1 and rep["ok"] is False and rep["reasons"], rep
+
+    # (2) cwd-independence proper: the same invocation from the repo root gives the same verdict.
+    #     Compared as text because the report carries NaNs, which never compare equal to themselves.
+    assert _check_capture(ROOT, board_png)[:2] == (rc, out)
+
+    # (3) The exit status carries information: a capture that passes every check exits 0. Without this
+    #     the checks above would also hold for a tool that always failed every image.
+    good = tmp_path / "good.png"
+    im = np.full((1200, 900, 3), 230, np.uint8)
+    im[150:1050, 200:700] = np.random.default_rng(0).integers(60, 190, (900, 500, 3)).astype(np.uint8)
+    cv2.imwrite(str(good), im)
+    rc2, _, [ok_rep] = _check_capture(tmp_path, "--no-board", "good.png")
+    assert (rc2, ok_rep["ok"], ok_rep["reasons"]) == (0, True, []), ok_rep
+
+@pytest.mark.needs("network")
 def test_openverse_query_returns_results():
     # harvest_images.py:30 -- page_size=50 is rejected (401) for anonymous requests; every Openverse
     # call fails, the error is swallowed as a warning, manifest has 0 openverse records.
+    #
+    # This is a LIVE call to api.openverse.org, and until it was marked it made one on every run of
+    # the deterministic suite -- so the suite's result depended on a third party's uptime and rate
+    # limiter, and a green CI run had quietly reached the internet. It is a real integration check
+    # and worth keeping; it is not a unit test, and it now says so. Run it with
+    # DENIMTWIN_ALLOW_NETWORK=1 pytest tests/test_review_fixes.py -k openverse
     sys.path.insert(0, os.path.join(ROOT, "tools"))
     import harvest_images as H
     try:
