@@ -1,16 +1,58 @@
 name: tests
 on: [push, pull_request]
+
 jobs:
-  test:
+  # The clean-CI verification: a fresh checkout with no photographs, no masks, no model weights,
+  # no credentials and nothing fetched from the network. This job is deliberately the WEAKER of the
+  # two claims this repository can make, and naming it that way is the point -- see
+  # docs/PROJECT_STATUS.md. It proves the repository is internally consistent. It proves nothing
+  # about physical prediction accuracy, and tools/verify.py prints that in its own summary so a
+  # green tick here can never be quoted as a scientific result.
+  clean-ci:
+    name: clean-CI verification (hermetic)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - run: pip install numpy opencv-contrib-python-headless pillow pyyaml jsonschema scikit-image scipy pytest
+
+      # Pinned, and the same file a contributor installs. This step used to be an inline package
+      # list that differed from requirements.txt in four packages, so "what CI runs" and "what the
+      # instructions say to install" were two environments and neither was reproducible.
+      - run: pip install -r requirements-ci.txt
+
+      # The hermetic profile must STAY hermetic. tests/test_repeatability_harness.py imported a tool
+      # that imported torch at module level, which aborted pytest collection here for as long as
+      # torch was absent -- and would have been masked forever the day someone added torch to this
+      # job "to fix CI". If the heavy optional dependencies ever become installed in this job, the
+      # clean-CI claim quietly stops being tested. So assert their absence.
+      - name: assert the clean-CI environment really is clean
+        run: |
+          python - <<'PY'
+          import importlib.util, sys
+          heavy = [m for m in ("torch", "torchvision", "segment_anything", "open_clip")
+                   if importlib.util.find_spec(m) is not None]
+          if heavy:
+              sys.exit(f"{heavy} installed in the clean-CI job. This job exists to prove the "
+                       f"repository verifies WITHOUT them; installing them here would hide exactly "
+                       f"the defect it is guarding. The heavy extras live in requirements.txt; "
+                       f"exercise them in a --profile full run on a machine that has the evidence.")
+          import os
+          if os.path.exists("models/sam_vit_b_01ec64.pth"):
+              sys.exit("the SAM checkpoint is present in the clean-CI job; see above.")
+          print("clean: no torch, no torchvision, no segment_anything, no open_clip, no checkpoint")
+          PY
+
       # One gate, one exit code. This previously ran sentinel/scope_check/protocol_audit with
       # `|| true`, so three checks could not fail the build and caught nothing for months
       # (scope_check was flagging the line that declares its own ban). tools/verify.py runs the
-      # required checks blocking and the advisory ones as warnings; the bench needs pair
-      # artefacts that are untracked here, so it is skipped in CI.
-      - run: python tools/verify.py --no-bench
+      # required checks blocking and the advisory ones as warnings. The bench and every other check
+      # that needs pair artefacts is excluded by the ci profile itself rather than by a flag, and
+      # anything whose evidence is absent is reported NOT RUN rather than passed.
+      #
+      # Exit codes: 0 pass, 1 a required check failed, 2 the profile could not be satisfied.
+      - run: python tools/verify.py --profile ci --no-bench --json /tmp/verify-ci.json
+
+      - name: verification summary
+        if: always()
+        run: cat /tmp/verify-ci.json || echo "no summary written"
