@@ -1,0 +1,425 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://denim-twin.invalid/schemas/provenance.schema.json",
+ "title": "Sample provenance record",
+ "description": "One record per sample. A sample is a photograph, or a before/after pair of photographs, that the project might learn from or measure against. This schema records WHERE it came from, WHAT rights attach to it, and WHETHER it is known to show the same garment before and after. It deliberately does NOT record whether the sample may be used for training: that is derived by tools/validate_provenance.py from the fields below, because a file may not assert its own eligibility. See docs/DATA_ELIGIBILITY.md.",
+ "type": "object",
+ "required": [
+  "record_id",
+  "sample_kind",
+  "pair_type",
+  "exact_garment",
+  "exact_garment_basis",
+  "rights",
+  "provenance"
+ ],
+ "properties": {
+  "record_id": {
+   "description": "Stable identifier, '<namespace>:<local-id>'. The local id is the identifier the rest of the pipeline already uses for this sample -- sha1(page_url)[:10] for a tutorial pair (the prefix of its files in data/external/pair_images), sha1(image_url)[:10] for a control or unpaired candidate (the stem of its file), '<source>_' + sha1(url)[:12] for a harvested image. That is not decoration: a provenance record that cannot be joined to the artefact it describes gates nothing.",
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]{1,23}:[A-Za-z0-9][A-Za-z0-9._-]{1,79}$"
+  },
+  "sample_kind": {
+   "description": "Whether this record describes a before/after PAIR or a single photograph. Physical-accuracy evidence is a pair; a lone image can be a prior, a control or a negative example, and can never be before/after evidence however good its licence is.",
+   "type": "string",
+   "enum": [
+    "before_after_pair",
+    "single_image"
+   ]
+  },
+  "pair_type": {
+   "description": "How the pair came to exist. controlled_physical: this project photographed the same garment before and after under protocol/PROTOCOL.md. creator_contributed_physical: a real person's real before/after pair, contributed with consent. licensed_physical: a real before/after pair obtained under a licence that permits this use. synthetic_edit: a generated or edited image -- never admissible as physical evidence. weak_visual: a visually similar pair, or a lone image, NOT verified to show the same garment.",
+   "type": "string",
+   "enum": [
+    "controlled_physical",
+    "creator_contributed_physical",
+    "licensed_physical",
+    "synthetic_edit",
+    "weak_visual"
+   ]
+  },
+  "exact_garment": {
+   "description": "Tri-state, deliberately not a boolean. 'unknown' is the common case for anything found on the web, and a boolean would record it as false -- indistinguishable from a checked negative -- or, worse, default to true. verified: the project established that both photographs show one physical garment. not_verified: nobody has established it either way. known_different: they are known to be different garments.",
+   "type": "string",
+   "enum": [
+    "verified",
+    "not_verified",
+    "known_different"
+   ]
+  },
+  "exact_garment_basis": {
+   "description": "How the value above was arrived at, in words. Required for every record and required to be non-empty when exact_garment is 'verified': a verification with no stated basis is an unbacked claim, and tools/validate_provenance.py rejects the record.",
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "rights": {
+   "$ref": "#/$defs/rights"
+  },
+  "provenance": {
+   "$ref": "#/$defs/provenance"
+  },
+  "consent": {
+   "$ref": "#/$defs/consent"
+  },
+  "synthetic": {
+   "$ref": "#/$defs/synthetic"
+  },
+  "training_eligible": {
+   "description": "OPTIONAL, and never authoritative. tools/validate_provenance.py recomputes eligibility from the fields above and REJECTS the record if this disagrees, in either direction. Present only so that a record copied in from elsewhere cannot smuggle a claim past the gate; the committed manifest omits it.",
+   "type": "boolean"
+  },
+  "notes": {
+   "type": "string"
+  },
+  "sample": {
+   "$ref": "#/$defs/sample"
+  }
+ },
+ "additionalProperties": false,
+ "$defs": {
+  "rights": {
+   "description": "What may lawfully be done with this sample. Every field is required, including the ones that are usually 'no': an omitted permission would be read by a careless consumer as an unrestricted one.",
+   "type": "object",
+   "required": [
+    "license_id",
+    "license_url",
+    "license_statement",
+    "attribution",
+    "rights_holder",
+    "redistributable",
+    "derivatives_allowed",
+    "commercial_use_allowed"
+   ],
+   "properties": {
+    "license_id": {
+     "description": "An SPDX licence identifier, an SPDX LicenseRef- identifier for a bespoke written agreement, or one of two sentinels. ALL-RIGHTS-RESERVED: the source asserts copyright and grants nothing (redistributable must then be false). UNDETERMINED: the source recorded a rights statement that is not a licence identifier at all -- a public-domain status claim, a licence family with no version, a site footer -- so no permission may be inferred from it. The enum is closed on purpose: adding a licence is a deliberate edit here, not a string that happens to appear in a harvest.",
+     "oneOf": [
+      {
+       "enum": [
+        "ALL-RIGHTS-RESERVED",
+        "UNDETERMINED",
+        "CC0-1.0",
+        "CC-PDDC",
+        "CC-BY-2.0",
+        "CC-BY-2.5",
+        "CC-BY-3.0",
+        "CC-BY-4.0",
+        "CC-BY-SA-2.0",
+        "CC-BY-SA-2.5",
+        "CC-BY-SA-3.0",
+        "CC-BY-SA-4.0",
+        "CC-BY-NC-2.0",
+        "CC-BY-NC-3.0",
+        "CC-BY-NC-4.0",
+        "CC-BY-NC-SA-2.0",
+        "CC-BY-NC-SA-3.0",
+        "CC-BY-NC-SA-4.0",
+        "CC-BY-ND-2.0",
+        "CC-BY-ND-3.0",
+        "CC-BY-ND-4.0",
+        "CC-BY-NC-ND-2.0",
+        "CC-BY-NC-ND-3.0",
+        "CC-BY-NC-ND-4.0",
+        "GFDL-1.2-only",
+        "GFDL-1.3-only"
+       ]
+      },
+      {
+       "type": "string",
+       "pattern": "^LicenseRef-[A-Za-z0-9][A-Za-z0-9.-]{1,60}$"
+      }
+     ]
+    },
+    "license_url": {
+     "description": "Where the licence text lives. Null is allowed and honest -- Wikimedia records a licence shortname with no URL for many files -- but null is never a licence.",
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^https?://",
+     "minLength": 8
+    },
+    "license_statement": {
+     "description": "The rights text as it was actually recorded at the source, verbatim. This is the audit trail behind license_id: when license_id is UNDETERMINED it is the whole of what is known.",
+     "type": "string",
+     "minLength": 1
+    },
+    "attribution": {
+     "description": "The attribution string the licence requires, or null when none was recorded. Null under a BY-family licence means the licence cannot be complied with, and the sample is refused.",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "rights_holder": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "redistributable": {
+     "description": "Does the licence permit the image itself to be republished? A LICENCE fact, not a policy one: this project never republishes a photograph regardless of the answer -- data/external/README.md says only derived numbers enter the repository -- but the two must be recorded separately, because a policy that is stricter than the licence must not be mistaken for a permission the licence never gave.",
+     "type": "boolean"
+    },
+    "derivatives_allowed": {
+     "description": "May derivative works be made? Masks, landmark overlays, canonicalised crops and renders are all derivative works, so a sample with this false cannot be used at all -- not even privately -- and is refused.",
+     "type": "boolean"
+    },
+    "commercial_use_allowed": {
+     "description": "Recorded, and deliberately NOT part of the eligibility rule: this is a research project and an NC licence does not block research use. It is required so that a later commercial question has an answer already on file instead of a re-litigation of every record.",
+     "type": "boolean"
+    },
+    "derivatives_basis": {
+     "description": "Why derivatives are permitted when no licence grants them -- e.g. 'the project holds the copyright: these are its own capture-protocol photographs'. Required by tools/validate_provenance.py whenever derivatives_allowed is true and license_id is ALL-RIGHTS-RESERVED.",
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "additionalProperties": false
+  },
+  "provenance": {
+   "description": "Where the sample came from and when, in enough detail that someone else could go and look.",
+   "type": "object",
+   "required": [
+    "source",
+    "source_url",
+    "retrieved_at",
+    "method",
+    "recorded_in"
+   ],
+   "properties": {
+    "source": {
+     "description": "Who published it: a site, an institution, a contributor, or this project.",
+     "type": "string",
+     "minLength": 1
+    },
+    "source_url": {
+     "description": "The page the sample was found on. Null only for a sample this project created itself, which has no external page.",
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^https?://",
+     "minLength": 8
+    },
+    "retrieved_at": {
+     "description": "ISO-8601 date or date-time at which the facts in this record were observed at the source.",
+     "type": "string",
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?$"
+    },
+    "method": {
+     "description": "How it was obtained: the tool that fetched it, or 'manual web review', or the capture protocol.",
+     "type": "string",
+     "minLength": 3
+    },
+    "recorded_in": {
+     "description": "Repo-relative path of the file these facts were carried across from, so every field here can be checked against a committed source rather than believed.",
+     "type": "string",
+     "minLength": 1
+    },
+    "asset_url": {
+     "description": "Direct URL of the image, when one was recorded. A URL is not an image: nothing here is downloaded by validation.",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "local_path": {
+     "description": "Repo-relative path of a local copy, if one was ever fetched. Every such path is gitignored; the image is never committed.",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "notes": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "consent": {
+   "description": "Required for creator_contributed_physical. A person's before/after photographs are not made usable by a licence field alone.",
+   "type": "object",
+   "required": [
+    "obtained",
+    "contributor",
+    "consent_record",
+    "consent_date",
+    "scope"
+   ],
+   "properties": {
+    "obtained": {
+     "type": "boolean"
+    },
+    "contributor": {
+     "type": "string",
+     "minLength": 1
+    },
+    "consent_record": {
+     "description": "Where the signed or written consent is filed. A consent with no record is a memory.",
+     "type": "string",
+     "minLength": 1
+    },
+    "consent_date": {
+     "type": "string",
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?$"
+    },
+    "scope": {
+     "type": "string",
+     "enum": [
+      "research_only",
+      "research_and_publication"
+     ]
+    },
+    "withdrawn": {
+     "description": "Consent can be taken back. When it is, the sample stops being eligible and this is how that is recorded without deleting the audit trail.",
+     "type": "boolean",
+     "default": false
+    },
+    "notes": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "synthetic": {
+   "description": "Required for synthetic_edit. A generated image must say what generated it, so that it can never be mistaken later for a photograph.",
+   "type": "object",
+   "required": [
+    "generator",
+    "edit_description"
+   ],
+   "properties": {
+    "generator": {
+     "type": "string",
+     "minLength": 1
+    },
+    "edit_description": {
+     "type": "string",
+     "minLength": 1
+    },
+    "base_record_id": {
+     "description": "The real sample this was derived from, if any. Its rights travel with the edit.",
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "additionalProperties": false
+  },
+  "sample": {
+   "type": "object",
+   "description": "Per-sample detail for a record whose two frames come from a dataset rather than from a capture session. Derived NUMBERS only -- dimensions and a digest, never a pixel -- so a record can be checked against the operator's local copy without the repository holding any part of it. Added for tools/editgarment_adapter.py, whose first version carried this information under field names of its own invention and was rejected wholesale by this schema; a label only excludes a sample if the thing doing the excluding can parse it.",
+   "additionalProperties": false,
+   "required": [
+    "sample_id"
+   ],
+   "properties": {
+    "sample_id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "instruction": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "edit_type": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "source_image": {
+     "$ref": "#/$defs/image_facts"
+    },
+    "edited_image": {
+     "$ref": "#/$defs/image_facts"
+    }
+   }
+  },
+  "image_facts": {
+   "type": "object",
+   "description": "What is knowable about a local image file without redistributing it.",
+   "additionalProperties": false,
+   "required": [
+    "path_relative_to_root",
+    "width",
+    "height",
+    "sha256"
+   ],
+   "properties": {
+    "path_relative_to_root": {
+     "type": "string",
+     "minLength": 1
+    },
+    "width": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "height": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "mode": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "format": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   }
+  }
+ },
+ "allOf": [
+  {
+   "if": {
+    "properties": {
+     "pair_type": {
+      "const": "creator_contributed_physical"
+     }
+    },
+    "required": [
+     "pair_type"
+    ]
+   },
+   "then": {
+    "required": [
+     "consent"
+    ]
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "pair_type": {
+      "const": "synthetic_edit"
+     }
+    },
+    "required": [
+     "pair_type"
+    ]
+   },
+   "then": {
+    "required": [
+     "synthetic"
+    ]
+   }
+  }
+ ]
+}
