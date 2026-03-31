@@ -7,7 +7,7 @@ where the guard matters: someone deleted or failed to regenerate the artefact th
 
 This file is the meta-guard. It does not test the pipeline; it tests the tests.
 """
-import glob, json, os, re, subprocess
+import ast, glob, json, os, re, subprocess, sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TESTS = sorted(glob.glob(os.path.join(ROOT, "tests", "test_*.py")))
@@ -35,10 +35,18 @@ def test_no_test_skips_itself_because_a_committed_report_is_absent():
     for f in TESTS:
         if os.path.basename(f) == SELF:
             continue
-        for m in re.finditer(r"pytest\.skip\(\s*f?[\"']([^\"']*)[\"']", open(f).read()):
+        src = open(f).read()
+        # Both spellings. The regex used to match only pytest.skip(, so a
+        # @pytest.mark.skipif(not os.path.exists("reports/canonical_roundtrip.json"), reason=...)
+        # walked straight past this guard and disabled a test on a COMMITTED report for months.
+        for m in re.finditer(r"pytest\.skip\(\s*f?[\"']([^\"']*)[\"']", src):
             for tok in re.findall(r"[\w.]+\.json", m.group(1)):
                 if tok in tracked:
                     bad.append(f"{os.path.basename(f)}: skips on missing {tok}, which is committed")
+        for m in re.finditer(r"skipif\((?P<body>(?:[^()]|\([^()]*\))*)\)", src, re.S):
+            for tok in re.findall(r"[\w.]+\.json", m.group("body")):
+                if tok in tracked:
+                    bad.append(f"{os.path.basename(f)}: skipif on missing {tok}, which is committed")
     assert not bad, "assert the file is present instead of skipping:\n" + "\n".join(bad)
 
 
@@ -66,9 +74,23 @@ segmentation pass. Skipping is the honest answer here; being silent about it was
 """
 
 
-def test_the_number_of_skipped_tests_has_not_grown():
+def test_the_number_of_unclassified_skips_has_not_grown():
     """reports/suite.json records what the last verify.py run actually did. A new skip means a guard
     stopped running, and this is where that has to be argued for rather than absorbed.
+
+    What changed: there are now two kinds of not-run, and only one of them is a hole.
+
+      * An UNAVAILABLE test declared its prerequisite -- @pytest.mark.needs("pair_masks") -- and the
+        prerequisite is a named entry in src/denimtwin/prereqs.py carrying the command that
+        satisfies it. It is counted, printed by name, refused a scientific pass by --profile full,
+        and it shows up in a diff as a marker. That is what "a deliberate act" was supposed to mean.
+      * An UNCLASSIFIED skip is a test that opted out in prose at the point of use, which no tool
+        can read, count, or refuse. That is the hole this file was written to close, and the cap
+        below is unchanged: one.
+
+    Before the split this test could not survive a clean clone at all -- 26 tests skip there for
+    want of photographs nobody can commit, so the cap failed on the second run of a repository that
+    was behaving perfectly correctly. Counting the two separately is what lets the cap stay at one.
 
     The file is written after pytest finishes, so a newly-introduced skip is caught on the NEXT
     verify run, not the one that introduces it. That is a one-run delay, not a hole: the number is
@@ -76,10 +98,97 @@ def test_the_number_of_skipped_tests_has_not_grown():
     p = os.path.join(ROOT, "reports", "suite.json")
     assert os.path.exists(p), "reports/suite.json is missing; run tools/verify.py"
     s = json.load(open(p))
-    assert s["skipped"] <= ALLOWED_SKIPS, (
-        f"{s['skipped']} tests skipped, {ALLOWED_SKIPS} allowed. A skip is a guard that stopped "
-        f"running -- fix it or extend ALLOWED_SKIPS with a reason.\n{ALLOWED_SKIPS_REASON}")
+    for k in ("skipped", "unavailable", "unclassified_skips"):
+        assert k in s, (f"reports/suite.json has no {k!r}; it predates the UNAVAILABLE split. "
+                        f"Run tools/verify.py to regenerate it.")
+    assert s["unclassified_skips"] <= ALLOWED_SKIPS, (
+        f"{s['unclassified_skips']} unclassified skip(s), {ALLOWED_SKIPS} allowed. A skip that names "
+        f"no prerequisite is a guard that stopped running for a reason no tool can check -- declare "
+        f"it with @pytest.mark.needs(<resource>) if it is waiting on evidence, or fix it. Extending "
+        f"ALLOWED_SKIPS needs a reason here.\n{ALLOWED_SKIPS_REASON}")
     # deliberately NOT asserting s["failed"] == 0. verify.py's exit code already covers that, and
     # asserting it here is a deadlock: one failing run records failed >= 1, which fails this test on
     # the next run, which keeps the count at >= 1 forever. Committed counts can only be used for
     # quantities a passing run is free to change.
+
+
+def test_every_unavailable_test_named_a_declared_prerequisite():
+    """The other half of the split, and the reason it is not just a rename.
+
+    An UNAVAILABLE is only more honest than a prose skip if the reason is checkable. If a test could
+    invent its own resource name, the new bucket would be the old hole with a better vocabulary."""
+    p = os.path.join(ROOT, "reports", "suite.json")
+    assert os.path.exists(p), "reports/suite.json is missing; run tools/verify.py"
+    s = json.load(open(p))
+    sys.path.insert(0, os.path.join(ROOT, "src"))
+    from denimtwin import prereqs
+    undeclared = sorted(set(s.get("unavailable_by_resource", {})) - set(prereqs.RESOURCES))
+    assert not undeclared, (
+        f"suite.json reports tests unavailable for resource(s) that no longer exist in "
+        f"src/denimtwin/prereqs.py: {undeclared}")
+
+
+def test_a_full_profile_run_leaves_nothing_unavailable():
+    """A --profile full run is the scientific claim. It may not be issued over absent evidence.
+
+    tools/verify.py refuses the profile up front when a prerequisite is missing, and tests/conftest.py
+    turns an absent declared resource into a FAILURE rather than a skip under that profile. This
+    asserts the recorded outcome agrees, so a full run cannot be reported as passing while some of
+    its evidence quietly never arrived. A ci-profile record is exempt: being unable to run those
+    checks is the honest and expected state of a clean clone."""
+    p = os.path.join(ROOT, "reports", "suite.json")
+    assert os.path.exists(p), "reports/suite.json is missing; run tools/verify.py"
+    s = json.load(open(p))
+    if s.get("profile") != "full":
+        return
+    # `unavailable_blocking`, not `unavailable`: an opt-in resource (network) is never escalated,
+    # because a full verification is a claim about real garment evidence and must remain completable
+    # offline. Everything else must be present.
+    assert s.get("unavailable_blocking", s.get("unavailable", 0)) == 0, (
+        f"the last run recorded profile=full with {s.get('unavailable_blocking')} test(s) "
+        f"UNAVAILABLE for want of evidence ({s.get('unavailable_by_resource')}). A full "
+        f"verification is a claim about real garment evidence and cannot be made over evidence "
+        f"that is not there.")
+
+
+# The opt-in exemption, bounded. Adding to this is a deliberate act, like ALLOWED_SKIPS above.
+ALLOWED_OPTIN_EXEMPT = 1
+ALLOWED_OPTIN_EXEMPT_REASON = """
+tests/test_review_fixes.py::test_openverse_query_returns_results -- a genuine integration check
+against a live third-party API (it caught harvest_images.py's page_size 401, which silently zeroed
+every Openverse record). It cannot run offline and must not run in a verification profile, so it is
+the one test allowed to sit behind @pytest.mark.needs("network").
+"""
+
+
+def test_the_opt_in_exemption_is_not_an_unbounded_hole():
+    """`network` is exempt from the --profile full escalation. That exemption needs a ceiling.
+
+    An opt-in resource is never escalated to a failure, because a full verification is a claim about
+    garment evidence and has to stay completable offline. The cost is a hole with no natural bound:
+    a test marked @pytest.mark.needs("network") is skipped in EVERY profile, is not an unclassified
+    skip, is not a blocking unavailable, and so passes all three of the guards above while asserting
+    nothing. One test doing that deliberately is a documented integration check. Ten would be a
+    quarantine, and nothing else in this file would notice.
+
+    Counted from the source rather than from a run: a marker on a test that never executes is
+    exactly the marker that would otherwise go uncounted."""
+    sys.path.insert(0, os.path.join(ROOT, "src"))
+    from denimtwin import prereqs
+    optin = {n for n, r in prereqs.RESOURCES.items() if r.kind == "optin"}
+    exempt = []
+    for f in TESTS:
+        tree = ast.parse(open(f).read(), filename=f)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or not node.name.startswith("test_"):
+                continue
+            for dec in node.decorator_list:
+                call = dec if isinstance(dec, ast.Call) else None
+                fn = call.func if call else None
+                if (isinstance(fn, ast.Attribute) and fn.attr == "needs"
+                        and any(isinstance(a, ast.Constant) and a.value in optin for a in call.args)):
+                    exempt.append(f"{os.path.basename(f)}::{node.name}")
+    assert len(exempt) <= ALLOWED_OPTIN_EXEMPT, (
+        f"{len(exempt)} test(s) sit behind an opt-in resource and therefore never run, never fail, "
+        f"and are never counted as a hole: {sorted(exempt)}. {ALLOWED_OPTIN_EXEMPT} is allowed. "
+        f"Raising the ceiling needs a reason here.\n{ALLOWED_OPTIN_EXEMPT_REASON}")

@@ -1,6 +1,17 @@
 {
+ "profile": "full",
  "failed": 0,
- "passed": 430,
- "skipped": 1,
- "xfailed": 6
+ "passed": 552,
+ "skipped": 2,
+ "xfailed": 6,
+ "error": 0,
+ "unavailable": 1,
+ "unavailable_blocking": 0,
+ "unclassified_skips": 1,
+ "unavailable_by_resource": {
+  "network": 1
+ },
+ "unavailable_tests": [
+  "tests/test_review_fixes.py::test_openverse_query_returns_results"
+ ]
 }
