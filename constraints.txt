@@ -1,0 +1,133 @@
+# constraints.txt -- the exact version of every package in the dependency closure.
+#
+# WHY THIS FILE EXISTS
+# ---------------------------------------------------------------------------------------------
+# Both requirements files begin with `-c constraints.txt`, so `pip install -r requirements.txt`
+# and `pip install -r requirements-ci.txt` are fully pinned without anyone having to remember an
+# extra flag. Two consequences, and both are the point:
+#
+#   1. TRANSITIVE dependencies are pinned too. Pinning only the twelve packages we name by hand
+#      still lets scikit-image pull a different imageio next Tuesday. A run whose numbers depend
+#      on which day it was installed is not reproducible, whatever its top-level pins say.
+#
+#   2. requirements.txt and requirements-ci.txt necessarily list the seven shared core packages
+#      twice -- they have to, because they install different OpenCV BUILDS (see the OpenCV note
+#      below). If those two lists ever disagree on a version, at least one of them disagrees with
+#      this file, and pip aborts with a constraint conflict. The failure this repository actually
+#      had -- two unpinned lists quietly describing two different environments, for months, with
+#      nothing recording which one a given result came from -- is no longer expressible.
+#
+# PROVENANCE OF THESE NUMBERS
+# ---------------------------------------------------------------------------------------------
+# Every version below was read out of the maintainer's working virtualenv with
+#
+#     .venv/bin/python -m pip list
+#
+# on 2026-08-30 (CPython 3.9.6, macOS arm64). These are the versions the artefacts currently under
+# reports/ and experiments/ were produced with. Nothing here was picked off a changelog or a
+# release page; nothing here is a version that has not been observed running this code.
+#
+# The closure was COMPUTED from installed package metadata (walking `Requires-Dist` with the
+# environment markers evaluated), not eyeballed off `pip list`. Packages that are present in that
+# virtualenv but not reachable from the twelve declared dependencies -- pdfminer.six, cryptography,
+# cffi, pycparser, charset-normalizer -- are deliberately NOT pinned here. They are not ours.
+#
+# A constraint on a package that nothing requires is a no-op: it caps a version, it never installs
+# one. That is why the whole closure can live in one file that both environments share.
+#
+# WHEN YOU CHANGE A PIN
+# ---------------------------------------------------------------------------------------------
+# Bump it here, re-run the verification in docs/REPRODUCIBILITY.md, and say in the commit message
+# what moved and what it changed. A pin that is bumped without a re-run silently detaches the
+# committed numbers from the environment that produced them.
+
+# ---------------------------------------------------------------------------------------------
+# CORE -- reachable from the hermetic dependency set. Installed by BOTH requirements files, and
+# by `tools/verify.py --profile ci`. Every one of these has a CPython 3.11 manylinux wheel as well
+# as the CPython 3.9 macOS wheel observed here, so CI and the maintainer's machine install the
+# same versions of the same libraries.
+# ---------------------------------------------------------------------------------------------
+attrs==26.1.0
+imageio==2.37.2
+iniconfig==2.1.0
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
+lazy-loader==0.5
+networkx==3.2.1
+numpy==2.0.2
+packaging==26.3
+pillow==11.3.0
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==8.4.2
+PyYAML==6.0.3
+referencing==0.36.2
+rpds-py==0.27.1
+scikit-image==0.24.0
+scipy==1.13.1
+tifffile==2024.8.30
+typing_extensions==4.16.0
+
+# OpenCV. Both distributions are pinned to the SAME upstream OpenCV release, on purpose: exactly
+# one of them gets installed (requirements.txt takes the GUI build, requirements-ci.txt the
+# headless build), and pinning both here means the choice of build can never become a choice of
+# OpenCV version. They ship the same cv2 module from the same source; the headless build simply
+# omits HighGUI, which a CI runner has no display for anyway.
+# Both are `cp37-abi3` wheels -- one wheel serves CPython 3.7 and up -- so the same file installs
+# on the maintainer's 3.9 and on CI's 3.11.
+opencv-contrib-python==5.0.0.93
+opencv-contrib-python-headless==5.0.0.93
+
+# Backports that pytest requires only on CPython < 3.11. Constraining them is harmless on 3.11,
+# where pip will not install them at all (`tomllib` and `ExceptionGroup` are in the stdlib there).
+# They are listed so that the maintainer's 3.9 environment is pinned as tightly as CI's 3.11 one.
+exceptiongroup==1.3.1
+tomli==2.4.1
+
+# ---------------------------------------------------------------------------------------------
+# OPTIONAL HEAVY EXTRAS -- reachable only from torch / torchvision / segment-anything /
+# open_clip_torch. Installed by requirements.txt, NOT by requirements-ci.txt. Nothing in
+# `tools/verify.py --profile ci` imports any of these; see src/denimtwin/prereqs.py, which
+# declares torch, segment_anything and open_clip as absent-able resources rather than hard
+# dependencies.
+#
+# CAVEAT, stated because it is a real gap: this closure was observed on macOS arm64, where torch
+# is self-contained. On Linux x86_64 the same torch wheel additionally requires the nvidia-*
+# CUDA runtime packages (and triton). Those were never installed here, so they are NOT pinned --
+# pinning a version this project has never run would be inventing one. The extras environment is
+# therefore reproducible on macOS arm64 and only approximately so on Linux. The hermetic core,
+# which is what CI verifies, has no such hole.
+# ---------------------------------------------------------------------------------------------
+torch==2.8.0
+torchvision==0.23.0
+segment-anything==1.0
+open_clip_torch==3.3.0
+
+# their closure
+annotated-doc==0.0.5
+anyio==4.12.1
+certifi==2026.7.22
+click==8.1.8
+filelock==3.19.1
+fsspec==2025.10.0
+ftfy==6.3.1
+h11==0.16.0
+hf-xet==1.6.0
+httpcore==1.0.9
+httpx==0.28.1
+huggingface_hub==1.8.0
+idna==3.19
+Jinja2==3.1.6
+markdown-it-py==3.0.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+mpmath==1.3.0
+regex==2026.1.15
+rich==15.0.0
+safetensors==0.7.0
+shellingham==1.5.4
+sympy==1.14.0
+timm==1.0.29
+tqdm==4.70.0
+typer==0.23.2
+wcwidth==0.8.3
