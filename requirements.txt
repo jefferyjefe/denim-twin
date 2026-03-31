@@ -1,12 +1,80 @@
-numpy
-opencv-contrib-python
-pillow
-pyyaml
-jsonschema
-scikit-image
-scipy
-pytest
-torch
-torchvision
-segment-anything
-open_clip_torch
+# requirements.txt -- the FULL local development environment: the hermetic core plus the heavy
+# optional extras. This is what `README.md` tells a new contributor to install.
+#
+#     python3 -m venv .venv && source .venv/bin/activate
+#     pip install -r requirements.txt
+#
+# WHICH FILE DO I WANT?
+# ---------------------------------------------------------------------------------------------
+#   requirements-ci.txt  the hermetic core, headless OpenCV, no torch. Everything
+#                        `tools/verify.py --profile ci` needs, and nothing else. This is the
+#                        environment CI runs in.
+#   requirements.txt     this file: the same core with the GUI OpenCV build, plus torch,
+#                        torchvision, segment-anything and open_clip_torch. Needed to segment a
+#                        photograph, to run `tools/predict.py` from an image, to run the CLIP role
+#                        gate, and for `tools/verify.py --profile full`.
+#   constraints.txt      the pinned transitive closure, applied automatically by both files.
+#
+# WHY THIS FILE DOES NOT JUST `-r requirements-ci.txt`
+# ---------------------------------------------------------------------------------------------
+# Because of OpenCV, and only because of OpenCV. `opencv-contrib-python` and
+# `opencv-contrib-python-headless` are two builds of the same release that both install a module
+# called `cv2`; installing both into one environment leaves whichever landed last in charge. So
+# the seven other core packages are listed again below rather than pulled in.
+#
+# That duplication is the exact shape of the bug this repository had, so it is defended: both
+# files start with `-c constraints.txt`, which pins each shared package once. If the two lists
+# ever disagree about a version, pip aborts the install with a constraint conflict instead of
+# silently building a third environment nobody described.
+#
+# WHY THE GUI OpenCV BUILD HERE
+# ---------------------------------------------------------------------------------------------
+# `tools/annotate_landmarks.py` is an interactive annotator: it calls cv2.imshow, cv2.namedWindow,
+# cv2.setMouseCallback and cv2.waitKey, and it needs a real window. That is the only thing in the
+# repository that does. The headless build would import fine and then fail at the first click.
+# CI installs the headless build instead because a GitHub runner has no display -- the two builds
+# are the same OpenCV release (constraints.txt pins both to 5.0.0.93) and differ only in HighGUI.
+# If you never annotate by hand, `pip install -r requirements-ci.txt` is enough for the test suite.
+#
+# PYTHON VERSION
+# ---------------------------------------------------------------------------------------------
+# The versions below were observed on CPython 3.9.6 (macOS arm64), which is what the maintainer's
+# .venv runs and what the committed results were produced with. CI runs CPython 3.11. Every pin
+# resolves to a wheel on both. See docs/REPRODUCIBILITY.md for the discrepancy and the
+# recommendation about it.
+#
+# VERSIONS
+# ---------------------------------------------------------------------------------------------
+# All read from `.venv/bin/python -m pip list` on 2026-08-30. These are the versions the artefacts
+# under reports/ and experiments/ were produced with. See constraints.txt for full provenance and
+# for the transitive pins.
+-c constraints.txt
+
+# --- hermetic core (shared with requirements-ci.txt; versions refereed by constraints.txt) -----
+numpy==2.0.2
+pillow==11.3.0
+PyYAML==6.0.3
+jsonschema==4.25.1
+scikit-image==0.24.0
+scipy==1.13.1
+pytest==8.4.2
+
+# GUI build -- see "WHY THE GUI OpenCV BUILD HERE" above. requirements-ci.txt installs
+# opencv-contrib-python-headless at this same version.
+opencv-contrib-python==5.0.0.93
+
+# --- optional heavy extras ---------------------------------------------------------------------
+# Only the segmentation and CLIP code paths need these, and every one of them is declared in
+# src/denimtwin/prereqs.py as a resource that may legitimately be absent. A check that cannot run
+# without them reports UNAVAILABLE; it never reports a pass. Roughly 3 GB installed.
+#   torch, torchvision   segmentation (src/denimtwin/seg/sam.py) and everything downstream of a mask
+#   segment-anything     Meta's SAM; also needs the ViT-B checkpoint, which is NOT a pip package:
+#                        see README.md "Models" or prereqs.RESOURCES["sam_checkpoint"].how
+#   open_clip_torch      the image role / CLIP gate used when triaging harvested images
+#
+# On Linux x86_64, torch additionally pulls the nvidia-* CUDA runtime packages, which this project
+# has never installed and therefore does not pin. See the caveat in constraints.txt.
+torch==2.8.0
+torchvision==0.23.0
+segment-anything==1.0
+open_clip_torch==3.3.0

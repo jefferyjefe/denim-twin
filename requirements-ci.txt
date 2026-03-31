@@ -1,0 +1,58 @@
+# requirements-ci.txt -- the HERMETIC CORE. This is the whole environment CI runs in.
+#
+# WHAT THIS FILE IS FOR
+# ---------------------------------------------------------------------------------------------
+# Exactly one command needs exactly this set:
+#
+#     pip install -r requirements-ci.txt
+#     python tools/verify.py --profile ci
+#
+# A `--profile ci` run is hermetic by construction: no photographs, no masks, no SAM checkpoint,
+# no network, no torch. It reads only what is committed. That is why torch, torchvision,
+# segment-anything and open_clip_torch are ABSENT here rather than merely unused -- if they were
+# installed, a check could quietly start depending on one and nobody would notice until the day it
+# was missing. src/denimtwin/prereqs.py declares each of them as a named resource whose absence is
+# reported as UNAVAILABLE, never as a pass.
+#
+# This file previously did not exist. CI installed an inline list in .github/workflows/tests.yml,
+# unpinned, which differed from the (also unpinned) requirements.txt in four packages and in the
+# OpenCV build. Two environments, neither reproducible, and no record of which one produced a
+# given number. The list now lives here, pinned, in the repository, next to the documentation that
+# says what it proves.
+#
+# WHAT A GREEN RUN OF THIS ENVIRONMENT PROVES
+# ---------------------------------------------------------------------------------------------
+# That the repository is internally consistent: the committed numbers match the committed
+# artefacts, the schemas validate, the tools resolve their paths against the repository. It proves
+# NOTHING about how well this code predicts what happens to a real pair of jeans. That claim needs
+# `--profile full` and real garment evidence. See docs/REPRODUCIBILITY.md.
+#
+# PYTHON VERSION
+# ---------------------------------------------------------------------------------------------
+# CI runs CPython 3.11. Every pin below is available as a 3.11 manylinux wheel AND as the 3.9
+# macOS wheel the maintainer actually runs, so neither environment builds anything from source.
+#
+# VERSIONS
+# ---------------------------------------------------------------------------------------------
+# `-c constraints.txt` pins the transitive closure as well as the packages named here, and makes
+# it impossible for this file and requirements.txt to disagree about a shared version without pip
+# aborting. Every version was read from the maintainer's working virtualenv on 2026-08-30; these
+# are the versions the committed results were produced with. See constraints.txt for provenance.
+-c constraints.txt
+
+numpy==2.0.2
+pillow==11.3.0
+PyYAML==6.0.3
+jsonschema==4.25.1
+scikit-image==0.24.0
+scipy==1.13.1
+pytest==8.4.2
+
+# HEADLESS OpenCV, deliberately. A GitHub runner has no display and no GTK/Qt libraries; the
+# non-headless build imports them at `import cv2` and would fail here for a reason that has
+# nothing to do with this project. Same OpenCV release as the GUI build requirements.txt installs
+# -- see the OpenCV note in constraints.txt, which pins both distributions to 5.0.0.93 so the two
+# files cannot drift onto different OpenCV versions.
+# The one tool that needs a window (tools/annotate_landmarks.py, an interactive annotator) cannot
+# run in this environment and is not part of any verification profile.
+opencv-contrib-python-headless==5.0.0.93
