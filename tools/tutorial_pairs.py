@@ -11,6 +11,9 @@ none|ruler|coin|known_object, license_or_terms, found_at}
 """
 import argparse, hashlib, json, os, sys, urllib.request, urllib.parse
 from pathlib import Path
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1] / "src"))
+from denimtwin.prereqs import require_network as _require_network
 ROOT = Path(__file__).resolve().parents[1]; P = ROOT / "data/external/pairs.jsonl"; IMG = ROOT / "data/external/pair_images"
 ROLES = {"before", "marked", "after_cut", "after_wash", "detail"}
 UA = "denim-twin-research (jefferyh619@gmail.com; academic; not redistributed)"
@@ -34,6 +37,7 @@ def validate(recs):
 def fetch(recs, limit, research_use=False):
     """Download images for internal research evaluation. Records whose license_or_terms is not an open licence
     (CC/public domain) are skipped unless research_use=True (owner acknowledges research-only, no redistribution)."""
+    _require_network("tools/tutorial_pairs.py", "download the referenced tutorial photographs")
     IMG.mkdir(parents=True, exist_ok=True); n = 0
     for r in recs:
         lic = str(r.get("license_or_terms", "")).lower()
