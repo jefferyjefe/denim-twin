@@ -12,6 +12,9 @@ Usage:
 import argparse, json, os, re, sys, time, hashlib, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1] / "src"))
+from denimtwin.prereqs import require_network as _require_network
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "data/external/manifest.jsonl"
@@ -37,6 +40,7 @@ def norm_license(name, version=None):
     return n or "UNKNOWN"
 
 def get(url, params=None):
+    _require_network("tools/harvest_images.py", "query the image APIs and download images")
     if params: url += ("&" if "?" in url else "?") + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -103,6 +107,12 @@ def main():
     if new == 0 and not any(per_source.values()):
         pass  # nothing new anywhere: normal once sources are exhausted
     if a.download:
+        # Guarded here as well as in get(). The download loop is the code that actually writes
+        # copyrighted photographs to disk -- which is what the refusal message names -- and it has
+        # its own urlopen. It is currently unreachable without passing through get() first, so the
+        # guarantee rested on call ordering rather than on the guard; that is the kind of thing that
+        # holds until someone adds a --skip-search flag.
+        _require_network("tools/harvest_images.py", "download images")
         IMG_DIR.mkdir(parents=True, exist_ok=True); got = 0
         for r in recs.values():
             out = IMG_DIR / f"{r['source']}_{hashlib.sha1(r['url'].encode()).hexdigest()[:12]}{os.path.splitext(urllib.parse.urlparse(r['url']).path)[1] or '.jpg'}"

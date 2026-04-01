@@ -18,6 +18,9 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np, cv2
 from denimtwin.evidence import single_wash_evidence, hem_frayed
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1] / "src"))
+from denimtwin.prereqs import require_network as _require_network
 
 ROOT = Path(__file__).resolve().parents[1]
 CAND = ROOT / "data/external/unpaired_candidates.jsonl"
@@ -49,6 +52,7 @@ def fname(rec):
     return f"{hashlib.sha1(rec['image_url'].encode()).hexdigest()[:10]}{ext}"
 
 def fetch(rec):
+    _require_network("tools/ingest_unpaired.py", "download the referenced images")
     IMG.mkdir(parents=True, exist_ok=True); p = IMG / fname(rec)
     if p.exists() and p.stat().st_size > 1000: return p
     req = urllib.request.Request(rec["image_url"], headers={"User-Agent": UA})
