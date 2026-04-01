@@ -13,8 +13,14 @@ Scope v1: denim only, straight cuts, raw hems, one standardized wash/dry cycle.
 **Data (online-only variant, see charter amendment):** found tutorial pairs (`data/external/pairs.jsonl`),
 CC-licensed unpaired images (`manifest.jsonl`), and crowd-sourced pairs — **[contribute yours](CONTRIBUTING_PAIRS.md)**.
 
+**Current capability — start here: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).** What works,
+what is validated, what is experimental, what is synthetic, what is blocked on missing physical data,
+and what a clean-CI pass does and does not prove.
+
 See `docs/CHARTER.md` for the full project charter, `protocol/PROTOCOL.md`
-for the physical experimental protocol, and `docs/PLAN.md` for the 12-month plan.
+for the physical experimental protocol, `docs/PLAN.md` for the 12-month plan,
+`docs/REPRODUCIBILITY.md` for the pinned environments, and
+`docs/DATA_ELIGIBILITY.md` for how a sample becomes usable evidence.
 
 ## Layout
 
@@ -47,6 +53,17 @@ One flat-lay photo plus a cut specification; no after-photo, no ground truth nee
 Writes three renders (conservative / median / aggressive), `diff.png` (exactly which pixels changed),
 `modification.json` (the cut as structured parameters) and `prediction.json` (interval + provenance).
 Put a coin in the frame if you want any answer in centimetres.
+
+## Verification
+
+    python tools/verify.py --profile ci      # hermetic: no torch, no weights, no photos, no network
+    python tools/verify.py --profile full    # scientific: everything, over real garment evidence
+
+The first is what CI runs on a fresh clone. It proves the repository is internally consistent and
+proves **nothing** about physical prediction accuracy — no garment is measured. The second refuses to
+report a pass at all when the evidence it needs is absent: it names every missing artefact, prints the
+command that would supply it, and exits 2 rather than 0. The two are not interchangeable; see
+[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
 ## Status (2026-08-29, honest)
 - Product path (`tools/predict.py`): one photo + a cut spec → three renders + an 80% fringe-depth interval, every
