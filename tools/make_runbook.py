@@ -377,6 +377,26 @@ def doc_recovery(spec, shots, ordered):
              "ADDS a feature, the plan grows and the new frames appear in NEXT ACTION. If it "
              "removes one, the frames you already took stay in the log and are simply no longer "
              "required."), "",
+        "## The app says the log does not verify", "",
+        wrap("Three different sentences, and they mean different things. A TORN FINAL LINE is an "
+             "interrupted append: the next run quarantines it into manifest.jsonl.torn and "
+             "continues, and you re-take the frame that was in flight. A CHAIN BREAK or MISMATCH "
+             "means an entry was edited, inserted, removed or reordered after it was written -- do "
+             "not cut, and recover from the phone's own copies. ENTRIES MISSING means the log is "
+             "shorter than the anchor beside it says it once was: something removed entries from "
+             "the end."), "",
+        wrap("None of these can be repaired by editing the log, and trying makes it worse: the "
+             "chain is recomputed from the file's own contents, so an edit that fixes one entry "
+             "breaks every entry after it. The recoverable path is always the same -- the "
+             "photographs are still on the phone, and re-ingesting them into a fresh session "
+             "rebuilds a log that verifies."), "",
+        "## The app refuses a photograph that looks fine to me", "",
+        wrap("Read which check refused it, because the four outcomes want different things. RETAKE "
+             "means something was measured and did not meet the requirement -- the message names "
+             "it. UNAVAILABLE means the check could not run at all: no board in frame, no scale, "
+             "no earlier image to compare against. That is not a fault in the photograph, and "
+             "re-shooting the same frame will not clear it; supply what is missing. HUMAN CHECK "
+             "means no measurement can settle it and the app is asking you to look."), "",
         "## The gate says READY and I do not believe it", "",
         wrap("Run `tools/pilot.py precut <GARMENT> --json /tmp/v.json` and read the satisfied list. "
              "Every condition names the evidence it accepted. If a condition passed that should not "
