@@ -70,6 +70,9 @@ SCENARIOS = [
     'a human confirmation does not carry over to a different photograph',
     'verifications recorded before a photograph do not pre-clear it',
     'four concurrent writers do not break the chain',
+    'a measurement read in inches blocks even though its readings agree',
+    'a garment with three tears is asked for three tear photographs',
+    'a required shot that would expand to no frames blocks by name',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

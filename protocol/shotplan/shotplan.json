@@ -373,6 +373,7 @@
    "frame_guide": "",
    "framing": "200 mm field centred on distressing instance NN as enumerated in the record's existing_damage_annotations; the whole feature plus >=40 mm of undamaged denim on every side, and the nearest seam or hardware landmark inside the frame so the feature is relocatable. If the feature is longer than 160 mm, shoot overlapping frames R1..Rn with >=30% overlap. Garment face is bound at instantiation from the annotation's location field.",
    "garment_side": "n/a",
+   "instance_of": "n_distressing",
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -393,7 +394,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the feature, coplanar, graduated edge facing it, within 20 mm, never crossing the damaged area.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.DISTRESS.I01.R1",
+   "shot_id": "BEFORE.ANOM.DISTRESS.R1",
    "state": "before"
   },
   {
@@ -405,9 +406,10 @@
    "frame_guide": "",
    "framing": "200 mm field centred on embroidery instance NN: the whole embroidered area, individual stitch penetrations resolvable at the densest point, the stabiliser/denim boundary, >=40 mm of plain denim around it, and the nearest seam landmark.",
    "garment_side": "n/a",
+   "instance_of": "n_embroidery",
    "lens": "main",
    "matched_shot_ids": [
-    "POSTWASH.ANOM.EMBROIDERY.I01.R1"
+    "POSTWASH.ANOM.EMBROIDERY.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
@@ -427,7 +429,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on plain denim beside the embroidery, coplanar with the fabric (not on the raised stitching), graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.EMBROIDERY.I01.R1",
+   "shot_id": "BEFORE.ANOM.EMBROIDERY.R1",
    "state": "before"
   },
   {
@@ -439,9 +441,10 @@
    "frame_guide": "",
    "framing": "200 mm field centred on logo instance NN (woven tab, printed mark, stamped hardware logo): the whole logo with all text legible in the frame's own orientation, its attachment to the fabric, >=40 mm of surrounding denim, and the nearest seam landmark.",
    "garment_side": "n/a",
+   "instance_of": "n_logos",
    "lens": "main",
    "matched_shot_ids": [
-    "POSTWASH.ANOM.LOGO.I01.R1"
+    "POSTWASH.ANOM.LOGO.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
@@ -461,7 +464,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the logo, coplanar with the fabric, graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.LOGO.I01.R1",
+   "shot_id": "BEFORE.ANOM.LOGO.R1",
    "state": "before"
   },
   {
@@ -473,6 +476,7 @@
    "frame_guide": "",
    "framing": "200 mm field centred on paint instance NN: the whole painted area if it fits, otherwise the most detailed 200 mm of it plus overlapping frames R1..Rn at >=30% overlap; every edge of the paint film, any existing cracking or flaking, >=40 mm of unpainted denim, and the nearest seam landmark.",
    "garment_side": "n/a",
+   "instance_of": "n_paint",
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -493,7 +497,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on UNPAINTED denim beside the feature, coplanar with the fabric (the paint film sits proud), graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.PAINT.I01.R1",
+   "shot_id": "BEFORE.ANOM.PAINT.R1",
    "state": "before"
   },
   {
@@ -505,9 +509,10 @@
    "frame_guide": "",
    "framing": "200 mm field centred on applied-patch instance NN: the whole patch, its full attachment perimeter (stitched, fused or riveted), any lifting at the edges, >=40 mm of surrounding denim, and the nearest seam landmark.",
    "garment_side": "n/a",
+   "instance_of": "n_patches",
    "lens": "main",
    "matched_shot_ids": [
-    "POSTWASH.ANOM.PATCH.I01.R1"
+    "POSTWASH.ANOM.PATCH.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
@@ -527,7 +532,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the patch, coplanar with the DENIM not the patch, graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.PATCH.I01.R1",
+   "shot_id": "BEFORE.ANOM.PATCH.R1",
    "state": "before"
   },
   {
@@ -571,9 +576,10 @@
    "frame_guide": "",
    "framing": "350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the WHOLE fade pattern including its outer boundary where it returns to full-shade denim, plus the nearest seam so the pattern is relocatable. A 200 mm field is too small for a whisker fan, which is why this ANOM type uses the region tier.",
    "garment_side": "n/a",
+   "instance_of": "n_printed_fade",
    "lens": "main",
    "matched_shot_ids": [
-    "POSTWASH.ANOM.PRINT_FADE.I01.R1"
+    "POSTWASH.ANOM.PRINT_FADE.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
@@ -592,7 +598,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Board coplanar with the backdrop, top-left frame corner, >=125x100 mm strip in frame, on the backdrop and never on the fade.",
    "scale_reference": "charuco_board",
-   "shot_id": "BEFORE.ANOM.PRINT_FADE.I01.R1",
+   "shot_id": "BEFORE.ANOM.PRINT_FADE.R1",
    "state": "before"
   },
   {
@@ -604,6 +610,7 @@
    "frame_guide": "",
    "framing": "200 mm field centred on repair instance NN: the whole repair, every repair stitch row, the boundary between repair thread and original fabric, >=40 mm of intact denim on each side, and the nearest seam landmark.",
    "garment_side": "n/a",
+   "instance_of": "n_repairs",
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -624,7 +631,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the repair, coplanar, graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.REPAIR.I01.R1",
+   "shot_id": "BEFORE.ANOM.REPAIR.R1",
    "state": "before"
   },
   {
@@ -636,6 +643,7 @@
    "frame_guide": "",
    "framing": "200 mm field centred on stain instance NN: the whole stain including its diffuse boundary, >=40 mm of clean denim beyond the outermost visible edge, and the nearest seam landmark. Rig's standard two diffuse sources only -- no raking light, which invents stain edges.",
    "garment_side": "n/a",
+   "instance_of": "n_stains",
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -656,7 +664,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on clean denim beside the stain, coplanar, graduated edge facing it, within 20 mm, never overlapping the stain.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.STAIN.I01.R1",
+   "shot_id": "BEFORE.ANOM.STAIN.R1",
    "state": "before"
   },
   {
@@ -668,6 +676,7 @@
    "frame_guide": "",
    "framing": "200 mm field centred on tear instance NN: the full extent of the tear including both terminations, >=40 mm of intact denim beyond each, any exposed weft floats, and the nearest seam landmark. Do not open, close or flatten the tear -- shoot it as it lies.",
    "garment_side": "n/a",
+   "instance_of": "n_tears",
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -688,7 +697,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the tear, coplanar, graduated edge facing it, within 20 mm, never bridging the opening.",
    "scale_reference": "ruler",
-   "shot_id": "BEFORE.ANOM.TEAR.I01.R1",
+   "shot_id": "BEFORE.ANOM.TEAR.R1",
    "state": "before"
   },
   {
@@ -1136,7 +1145,7 @@
    "camera_angle": "macro_perpendicular",
    "camera_height_group": "mount_low_macro",
    "camera_position": "",
-   "conditional_on": "n_distressing > 0 or n_tears > 0 or n_repairs > 0 or n_stains > 0 or n_paint > 0 or n_printed_fade > 0",
+   "conditional_on": "n_distressing > 0",
    "est_seconds": 90,
    "frame_guide": "",
    "framing": "PARAMETERISED OVER LEG AND INSTANCE. The generator emits one instance per counted feature occurrence located within 120 mm of the hem, with Inn replaced by the zero-padded instance index. Instance indices are assigned from the record's existing_damage_annotations array order where the occurrence is already annotated there, and otherwise from an instance table the pilot ledger maintains keyed by (leg, feature_key, index), each row carrying a written 'saw' sentence. Frame about 100 mm centred on the occurrence with the loop tape in frame so its loop coordinate is readable, and the hem edge visible along one side of the frame.",
@@ -1580,7 +1589,7 @@
    "camera_angle": "macro_perpendicular",
    "camera_height_group": "mount_low_macro",
    "camera_position": "",
-   "conditional_on": "n_distressing > 0 or n_tears > 0 or n_repairs > 0 or n_stains > 0 or n_paint > 0 or n_printed_fade > 0",
+   "conditional_on": "n_distressing > 0",
    "est_seconds": 90,
    "frame_guide": "",
    "framing": "PARAMETERISED OVER LEG AND INSTANCE. The generator emits one instance per counted feature occurrence located within 120 mm of the hem, with Inn replaced by the zero-padded instance index. Instance indices are assigned from the record's existing_damage_annotations array order where the occurrence is already annotated there, and otherwise from an instance table the pilot ledger maintains keyed by (leg, feature_key, index), each row carrying a written 'saw' sentence. Frame about 100 mm centred on the occurrence with the loop tape in frame so its loop coordinate is readable, and the hem edge visible along one side of the frame.",
@@ -5202,6 +5211,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One distressed area per frame \u2014 abrasion, whiskering, honeycomb, a worn-through patch \u2014 filling at least half the frame with at least 30 mm of intact denim visible on every side so the boundary between distressed and intact fabric is in frame. Camera perpendicular, rule in the fabric plane.",
    "garment_side": "front",
+   "instance_of": "n_distressing",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5220,7 +5230,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the area, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.DISTRESSING.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.DISTRESSING.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5232,6 +5242,7 @@
    "frame_guide": "feature_plus_20mm_margin",
    "framing": "One embroidered element per frame, close enough that individual stitches are resolved, with the surrounding denim visible on at least three sides. Camera perpendicular, rule in the fabric plane.",
    "garment_side": "front",
+   "instance_of": "n_embroidery",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5250,7 +5261,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the embroidery, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.EMBROIDERY.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.EMBROIDERY.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5352,6 +5363,7 @@
    "frame_guide": "feature_plus_20mm_margin",
    "framing": "One logo per frame \u2014 printed, woven, heat-transferred or applied \u2014 filling at least half the frame short dimension, with surrounding denim on at least three sides. Camera perpendicular, rule in the fabric plane.",
    "garment_side": "front",
+   "instance_of": "n_logos",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5370,7 +5382,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the logo, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.LOGOS.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.LOGOS.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5382,6 +5394,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One painted area per frame, showing an edge of the paint and the bare denim beside it in the same frame, plus any existing cracking or flaking of the paint film. Camera perpendicular, rule in the fabric plane, at least 30 mm of bare denim visible.",
    "garment_side": "front",
+   "instance_of": "n_paint",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5400,7 +5413,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the painted area, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.PAINT.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.PAINT.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5412,6 +5425,7 @@
    "frame_guide": "feature_plus_20mm_margin",
    "framing": "One patch per frame, showing the whole patch, its full attachment perimeter (stitched, glued or fused), and the denim it sits on. Camera perpendicular, rule in the fabric plane, at least 20 mm margin.",
    "garment_side": "front",
+   "instance_of": "n_patches",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5430,7 +5444,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the patch, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.PATCHES.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.PATCHES.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5472,6 +5486,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One printed or laser-etched fade region per frame, framed so both the lightest and the darkest part of the pattern and a margin of un-patterned denim are all inside the frame. Camera perpendicular, rule in the fabric plane.",
    "garment_side": "front",
+   "instance_of": "n_printed_fade",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5490,7 +5505,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the region, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.PRINTED_FADE.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.PRINTED_FADE.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5502,6 +5517,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One repair per frame (darn, patch-behind, sashiko, machine bartack), showing the repair, its stitch density, and the intact fabric it joins on at least three sides. Camera perpendicular, rule in the fabric plane.",
    "garment_side": "front",
+   "instance_of": "n_repairs",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5520,7 +5536,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the repair, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.REPAIRS.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.REPAIRS.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5592,6 +5608,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One stain per frame, with unstained denim of the same panel visible in the same frame for comparison. Camera perpendicular, rule in the fabric plane, at least 30 mm of clean denim on at least two sides.",
    "garment_side": "front",
+   "instance_of": "n_stains",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5610,7 +5627,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the stain, in the fabric plane",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.STAINS.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.STAINS.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -5622,6 +5639,7 @@
    "frame_guide": "feature_plus_30mm_margin",
    "framing": "One tear or hole per frame, with a contrasting card slipped behind it so the opening's true outline is visible rather than reading as the fabric behind. Camera perpendicular, rule in the fabric plane, at least 30 mm of intact denim on every side.",
    "garment_side": "front",
+   "instance_of": "n_tears",
    "lens": "macro",
    "matched_shot_ids": [],
    "min_reps": 1,
@@ -5640,7 +5658,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "rule flat on the fabric beside the tear, in the fabric plane; contrasting card BEHIND the opening",
    "scale_reference": "ruler",
-   "shot_id": "INTAKE.FEATURE.TEARS.WHOLE_GARMENT_FRONT.I01",
+   "shot_id": "INTAKE.FEATURE.TEARS.WHOLE_GARMENT_FRONT",
    "state": "intake"
   },
   {
@@ -6934,15 +6952,16 @@
    "conditional_on": "n_embroidery > 0",
    "est_seconds": 75,
    "frame_guide": "",
-   "framing": "200 mm field centred on embroidery instance NN: the whole embroidered area, individual stitch penetrations resolvable at the densest point, the stabiliser/denim boundary, >=40 mm of plain denim around it, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.EMBROIDERY.I01.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
+   "framing": "200 mm field centred on embroidery instance NN: the whole embroidered area, individual stitch penetrations resolvable at the densest point, the stabiliser/denim boundary, >=40 mm of plain denim around it, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.EMBROIDERY.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
    "garment_side": "n/a",
+   "instance_of": "n_embroidery",
    "lens": "main",
    "matched_shot_ids": [
-    "BEFORE.ANOM.EMBROIDERY.I01.R1"
+    "BEFORE.ANOM.EMBROIDERY.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
-   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.EMBROIDERY.I01.R1. Dense embroidery locally stiffens and pre-shrinks the ground fabric, so it is a shrinkage anomaly with a sharp boundary; its threads are also a different fibre that can bleed. Without a before frame at stitch resolution, post-wash puckering around it reads as fabric distortion.",
+   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.EMBROIDERY.R1. Dense embroidery locally stiffens and pre-shrinks the ground fabric, so it is a shrinkage anomaly with a sharp boundary; its threads are also a different fibre that can bleed. Without a before frame at stitch resolution, post-wash puckering around it reads as fabric distortion.",
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed embroidery_count integer.",
     "max_mm_per_px": 0.1,
@@ -6958,7 +6977,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on plain denim beside the embroidery, coplanar with the fabric (not on the raised stitching), graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "POSTWASH.ANOM.EMBROIDERY.I01.R1",
+   "shot_id": "POSTWASH.ANOM.EMBROIDERY.R1",
    "state": "post_wash"
   },
   {
@@ -6968,15 +6987,16 @@
    "conditional_on": "n_logos > 0",
    "est_seconds": 75,
    "frame_guide": "",
-   "framing": "200 mm field centred on logo instance NN (woven tab, printed mark, stamped hardware logo): the whole logo with all text legible in the frame's own orientation, its attachment to the fabric, >=40 mm of surrounding denim, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.LOGO.I01.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
+   "framing": "200 mm field centred on logo instance NN (woven tab, printed mark, stamped hardware logo): the whole logo with all text legible in the frame's own orientation, its attachment to the fabric, >=40 mm of surrounding denim, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.LOGO.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
    "garment_side": "n/a",
+   "instance_of": "n_logos",
    "lens": "main",
    "matched_shot_ids": [
-    "BEFORE.ANOM.LOGO.I01.R1"
+    "BEFORE.ANOM.LOGO.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
-   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.LOGO.I01.R1. Logos are the identity evidence that lets this exact garment be re-identified later, which is what the DATA_ELIGIBILITY exact_garment tri-state demands a written basis for; a verification nobody wrote down is not a verification. They are also small printed or woven elements that visibly degrade in a wash.",
+   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.LOGO.R1. Logos are the identity evidence that lets this exact garment be re-identified later, which is what the DATA_ELIGIBILITY exact_garment tri-state demands a written basis for; a verification nobody wrote down is not a verification. They are also small printed or woven elements that visibly degrade in a wash.",
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed logo_count integer. Legible brand text is also a provenance artefact -- it belongs in the garment's own record, not in any committed derived JSON, since committed artefacts carry numbers and manifests only.",
     "max_mm_per_px": 0.1,
@@ -6992,7 +7012,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the logo, coplanar with the fabric, graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "POSTWASH.ANOM.LOGO.I01.R1",
+   "shot_id": "POSTWASH.ANOM.LOGO.R1",
    "state": "post_wash"
   },
   {
@@ -7002,15 +7022,16 @@
    "conditional_on": "n_patches > 0",
    "est_seconds": 75,
    "frame_guide": "",
-   "framing": "200 mm field centred on applied-patch instance NN: the whole patch, its full attachment perimeter (stitched, fused or riveted), any lifting at the edges, >=40 mm of surrounding denim, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.PATCH.I01.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
+   "framing": "200 mm field centred on applied-patch instance NN: the whole patch, its full attachment perimeter (stitched, fused or riveted), any lifting at the edges, >=40 mm of surrounding denim, and the nearest seam landmark.  [Reproduce the framing of BEFORE.ANOM.PATCH.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
    "garment_side": "n/a",
+   "instance_of": "n_patches",
    "lens": "main",
    "matched_shot_ids": [
-    "BEFORE.ANOM.PATCH.I01.R1"
+    "BEFORE.ANOM.PATCH.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
-   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.PATCH.I01.R1. An applied patch is a second fabric with its own shrinkage rate bonded to the garment, and edge lifting is the most common wash failure; a fused patch can also release entirely. Its before-state perimeter is the only reference for judging that.",
+   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.PATCH.R1. An applied patch is a second fabric with its own shrinkage rate bonded to the garment, and edge lifting is the most common wash failure; a fused patch can also release entirely. Its before-state perimeter is the only reference for judging that.",
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed patch_count integer. Distinct from WAIST.BRAND_PATCH, which is the waistband maker's patch and has its own dedicated shot.",
     "max_mm_per_px": 0.1,
@@ -7026,7 +7047,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Steel rule on the denim beside the patch, coplanar with the DENIM not the patch, graduated edge facing it, within 20 mm.",
    "scale_reference": "ruler",
-   "shot_id": "POSTWASH.ANOM.PATCH.I01.R1",
+   "shot_id": "POSTWASH.ANOM.PATCH.R1",
    "state": "post_wash"
   },
   {
@@ -7036,15 +7057,16 @@
    "conditional_on": "n_printed_fade > 0",
    "est_seconds": 90,
    "frame_guide": "",
-   "framing": "350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the WHOLE fade pattern including its outer boundary where it returns to full-shade denim, plus the nearest seam so the pattern is relocatable. A 200 mm field is too small for a whisker fan, which is why this ANOM type uses the region tier.  [Reproduce the framing of BEFORE.ANOM.PRINT_FADE.I01.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
+   "framing": "350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the WHOLE fade pattern including its outer boundary where it returns to full-shade denim, plus the nearest seam so the pattern is relocatable. A 200 mm field is too small for a whisker fan, which is why this ANOM type uses the region tier.  [Reproduce the framing of BEFORE.ANOM.PRINT_FADE.R1 exactly: the app shows it as a ghost overlay, which is a capture aid and never evidence.]",
    "garment_side": "n/a",
+   "instance_of": "n_printed_fade",
    "lens": "main",
    "matched_shot_ids": [
-    "BEFORE.ANOM.PRINT_FADE.I01.R1"
+    "BEFORE.ANOM.PRINT_FADE.R1"
    ],
    "min_reps": 1,
    "necessity": "conditional",
-   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.PRINT_FADE.I01.R1. Fades are pre-existing shade gradients that a wash redistributes, so they are the strongest confound for any post-wash colour or shade measurement, and their boundaries are also convenient non-seam landmarks. Recorded only at whole-garment scale their boundaries are unresolvable; unrecorded, post-wash shade change is unattributable.",
+   "purpose": "The after-wash half of a matched pair with BEFORE.ANOM.PRINT_FADE.R1. Fades are pre-existing shade gradients that a wash redistributes, so they are the strongest confound for any post-wash colour or shade measurement, and their boundaries are also convenient non-seam landmarks. Recorded only at whole-garment scale their boundaries are unresolvable; unrecorded, post-wash shade change is unattributable.",
    "quality": {
     "extra": "GATE_A. Instance scheme as in ANOM.DISTRESS; requires the proposed print_fade_count integer. DENIM_0001 records 'pronounced whiskering and knee fades' on front thighs/knees, so at least two instances exist there. Lighting must be the rig's standard two diffuse sources: a fade is a low-contrast, large-area shade gradient and any raking light fabricates one.",
     "max_mm_per_px": 0.1,
@@ -7059,7 +7081,7 @@
    "reposition_camera_between_reps": false,
    "scale_placement": "Board coplanar with the backdrop, top-left frame corner, >=125x100 mm strip in frame, on the backdrop and never on the fade.",
    "scale_reference": "charuco_board",
-   "shot_id": "POSTWASH.ANOM.PRINT_FADE.I01.R1",
+   "shot_id": "POSTWASH.ANOM.PRINT_FADE.R1",
    "state": "post_wash"
   },
   {
@@ -7217,7 +7239,7 @@
    "camera_angle": "side_profile",
    "camera_height_group": "mount_grazing_table",
    "camera_position": "",
-   "conditional_on": "has_hem_curl_visible",
+   "conditional_on": "n_curl_positions > 0",
    "est_seconds": 90,
    "frame_guide": "",
    "framing": "PARAMETERISED OVER LEG AND INSTANCE. One instance per visually conspicuous curl or wave in the cut edge, Inn replaced by the zero-padded 1-based instance index from the pilot ledger's instance table. Grazing station, axis in the surface plane and perpendicular to the local tangent, vertical steel rule at the frame centre, framed tight on the single feature with its loop coordinate readable from the tape and at least 20 mm of flatter edge visible on each side for reference.",
@@ -7486,7 +7508,7 @@
    "camera_angle": "side_profile",
    "camera_height_group": "mount_grazing_table",
    "camera_position": "",
-   "conditional_on": "has_hem_curl_visible",
+   "conditional_on": "n_curl_positions > 0",
    "est_seconds": 90,
    "frame_guide": "",
    "framing": "PARAMETERISED OVER LEG AND INSTANCE. One instance per visually conspicuous curl or wave in the cut edge, Inn replaced by the zero-padded 1-based instance index from the pilot ledger's instance table. Grazing station, axis in the surface plane and perpendicular to the local tangent, vertical steel rule at the frame centre, framed tight on the single feature with its loop coordinate readable from the tape and at least 20 mm of flatter edge visible on each side for reference.",

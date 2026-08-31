@@ -45,6 +45,26 @@ REQUIRED_MEASUREMENTS = {
 #: garment; thickness with a caliper is finer.
 MEASUREMENT_TOLERANCE = {"fabric_thickness_mm": 0.15, "mass_grams": 2.0, "_default_cm": 0.5}
 
+#: Plausible ranges for an adult pair of jeans, as the conventions in record.json define them --
+#: waist, thigh and leg opening are FULL circumferences (measured flat and doubled).
+#:
+#: Agreement between two readings is not enough on its own, and leg_opening_cm shows why: it is the
+#: measurement that SIZES a required series (the hem macro count comes from it) and PLACES the cut
+#: (the outseam offset is computed from it). An operator reading the tape in inches records two
+#: readings that agree perfectly with each other and are 2.5x wrong, which halves the fray series
+#: and moves the cut mark by centimetres -- and every other check passes, because everything
+#: downstream believes the number.
+MEASUREMENT_RANGE = {
+    "waist_cm": (55.0, 150.0),
+    "front_rise_cm": (15.0, 45.0),
+    "back_rise_cm": (20.0, 55.0),
+    "thigh_cm": (35.0, 95.0),
+    "original_inseam_cm": (50.0, 105.0),
+    "leg_opening_cm": (20.0, 80.0),
+    "fabric_thickness_mm": (0.3, 3.0),
+    "mass_grams": (200.0, 1400.0),
+}
+
 #: Rig calibration readings that must exist and pass before any garment capture counts.
 REQUIRED_SETUP_CHECKS = (
     "empty_backdrop", "board_verification", "board_square_measured", "lighting_test",
@@ -281,7 +301,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
 
     # --- measurements ---------------------------------------------------------------------
     def c_measurements():
-        missing, thin, inconsistent = [], [], []
+        missing, thin, inconsistent, implausible = [], [], [], []
         for name, n_required in sorted(REQUIRED_MEASUREMENTS.items()):
             m = state["measurements"].get(name)
             if not m:
@@ -291,12 +311,23 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
             if len(readings) < n_required:
                 thin.append("%s (%d of %d readings)" % (name, len(readings), n_required))
                 continue
+            if any(not isinstance(r, (int, float)) or not math.isfinite(float(r))
+                   for r in readings):
+                implausible.append("%s (a reading is not a finite number)" % name)
+                continue
+            lo, hi = MEASUREMENT_RANGE.get(name, (None, None))
+            mean = sum(readings) / len(readings)
+            if lo is not None and not (lo <= mean <= hi):
+                implausible.append("%s = %.2f, outside the plausible %.0f-%.0f for an adult "
+                                   "garment (a tape read in inches gives two readings that agree "
+                                   "perfectly and are 2.5x wrong)" % (name, mean, lo, hi))
+                continue
             tol = MEASUREMENT_TOLERANCE.get(name, MEASUREMENT_TOLERANCE["_default_cm"])
             spread = max(readings) - min(readings)
             if spread > tol:
                 inconsistent.append("%s (readings differ by %.2f, tolerance %.2f)"
                                     % (name, spread, tol))
-        if missing or thin or inconsistent:
+        if missing or thin or inconsistent or implausible:
             parts = []
             if missing:
                 parts.append("%d not measured (%s)" % (len(missing), ", ".join(missing)))
@@ -305,6 +336,9 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
             if inconsistent:
                 parts.append("%d whose readings disagree (%s)"
                              % (len(inconsistent), "; ".join(inconsistent)))
+            if implausible:
+                parts.append("%d outside a plausible range (%s)"
+                             % (len(implausible), "; ".join(implausible)))
             return False, "measurements incomplete: " + "; ".join(parts), \
                    "run `pilot.py measure`; each dimension needs its readings taken independently, " \
                    "not copied", {"missing": missing, "thin": thin, "inconsistent": inconsistent}

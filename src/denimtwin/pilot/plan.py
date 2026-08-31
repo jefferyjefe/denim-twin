@@ -157,6 +157,21 @@ def activate(spec, answers, measurements=None):
         inst = s.get("instance_of")
         if inst:
             n = instance_count(features, inst)
+            if n == 0:
+                # Inclusion and cardinality come from two independent inputs and were never
+                # reconciled. A shot whose condition is an OR over several counts but whose
+                # instance_of names only one of them is INCLUDED when any of them is non-zero and
+                # expands to ZERO frames when that particular one is -- so a garment with three
+                # tears and no distressing silently lost the frames that photograph the tears.
+                # Vanishing is the one outcome a required shot may not have.
+                c = dict(s)
+                c["expansion_blocked"] = (
+                    "this shot is required -- its condition %r is true for this garment -- but it "
+                    "is instanced on %r, which is 0, so it would expand to no frames at all. The "
+                    "condition and the count disagree about whether the feature is there."
+                    % (s.get("conditional_on") or "(unconditional)", inst))
+                out.append(c)
+                continue
             for i in range(1, n + 1):
                 c = dict(s)
                 c["shot_id"] = "%s.I%02d" % (s["shot_id"], i)

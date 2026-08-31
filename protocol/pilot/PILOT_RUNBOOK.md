@@ -654,7 +654,7 @@ materially shorter, and the app tells you your own number after intake.
       about 100 mm of edge centred on the cuff's mid-front, loop tape in frame. Record the
       unrolled cuff depth in mm from the tape.
       *why:* A cuff hides the true original hem edge and changes the leg-opening circumference the loop arithmetic depends on. Both states must be recorded so the measured circumference is unambiguous and so the finished-edge control is the actual hem rather than a fold.
-- [ ] `BEFORE.HEM.LEFT.WEAR.INN.MACRO.I01` (1/1, conditional, n_distressing > 0 or n_tears > 0 or n_repairs > 0 or n_stains > 0 or n_paint > 0 or n_printed_fade > 0)
+- [ ] `BEFORE.HEM.LEFT.WEAR.INN.MACRO.I01` (1/1, conditional, n_distressing > 0)
       PARAMETERISED OVER LEG AND INSTANCE. The generator emits one instance per counted
       feature occurrence located within 120 mm of the hem, with Inn replaced by the zero-
       padded instance index. Instance indices are assigned from the record's
@@ -664,7 +664,7 @@ materially shorter, and the app tells you your own number after intake.
       100 mm centred on the occurrence with the loop tape in frame so its loop coordinate
       is readable, and the hem edge visible along one side of the frame.
       *why:* Pre-existing damage, repairs, stains, paint or printed fade near the hem sit inside the region the post-wash loop map will measure, and hem_roughness cannot tell a pre-existing hole or a paint edge from a wash-produced fringe. Every such occurrence must have a dated before-image at measurement resolution with its loop coordinate recorded, or the corresponding post-wash positions are confounded and must be refused rather than reported.
-- [ ] `BEFORE.HEM.RIGHT.WEAR.INN.MACRO.I01` (1/1, conditional, n_distressing > 0 or n_tears > 0 or n_repairs > 0 or n_stains > 0 or n_paint > 0 or n_printed_fade > 0)
+- [ ] `BEFORE.HEM.RIGHT.WEAR.INN.MACRO.I01` (1/1, conditional, n_distressing > 0)
       PARAMETERISED OVER LEG AND INSTANCE. The generator emits one instance per counted
       feature occurrence located within 120 mm of the hem, with Inn replaced by the zero-
       padded instance index. Instance indices are assigned from the record's
@@ -1119,7 +1119,7 @@ materially shorter, and the app tells you your own number after intake.
       Mirror of WAISTBAND_CORNER_L: 200 mm field on the right waistband end / outseam
       junction, >=60 mm of outseam below and >=60 mm of waistband inboard.
       *why:* Right-hand counterpart; the L/R pair is the only evidence of construction asymmetry at the waist, which otherwise gets read post-wash as differential shrinkage.
-- [ ] `BEFORE.ANOM.DISTRESS.I01.R1` (1/1, conditional, n_distressing > 0)
+- [ ] `BEFORE.ANOM.DISTRESS.R1.I01` (1/1, conditional, n_distressing > 0)
       200 mm field centred on distressing instance NN as enumerated in the record's
       existing_damage_annotations; the whole feature plus >=40 mm of undamaged denim on
       every side, and the nearest seam or hardware landmark inside the frame so the
@@ -1127,40 +1127,40 @@ materially shorter, and the app tells you your own number after intake.
       frames R1..Rn with >=30% overlap. Garment face is bound at instantiation from the
       annotation's location field.
       *why:* Pre-existing distressing is loose or broken weave that will fray in the wash independently of anything the shears do, so an unrecorded instance becomes a false positive in the post-wash fray measurement. One frame per instance is the only way each is separately attributable.
-- [ ] `BEFORE.ANOM.TEAR.I01.R1` (1/1, conditional, n_tears > 0)
+- [ ] `BEFORE.ANOM.TEAR.R1.I01` (1/1, conditional, n_tears > 0)
       200 mm field centred on tear instance NN: the full extent of the tear including both
       terminations, >=40 mm of intact denim beyond each, any exposed weft floats, and the
       nearest seam landmark. Do not open, close or flatten the tear -- shoot it as it
       lies.
       *why:* A tear grows in a wash and its terminations migrate, so its before-state length and end-points are the only way to say afterwards whether it grew. Unrecorded, a grown tear is indistinguishable from wash-induced damage the protocol would have to explain.
-- [ ] `BEFORE.ANOM.REPAIR.I01.R1` (1/1, conditional, n_repairs > 0)
+- [ ] `BEFORE.ANOM.REPAIR.R1.I01` (1/1, conditional, n_repairs > 0)
       200 mm field centred on repair instance NN: the whole repair, every repair stitch
       row, the boundary between repair thread and original fabric, >=40 mm of intact denim
       on each side, and the nearest seam landmark.
       *why:* Repair thread is usually a different fibre from the garment and shrinks at its own rate, so a repair is a local stiffness anomaly that biases any nearby shrinkage or fray measurement. Recording it lets that region be excluded rather than silently averaged in.
-- [ ] `BEFORE.ANOM.PAINT.I01.R1` (1/1, conditional, n_paint > 0)
+- [ ] `BEFORE.ANOM.PAINT.R1.I01` (1/1, conditional, n_paint > 0)
       200 mm field centred on paint instance NN: the whole painted area if it fits,
       otherwise the most detailed 200 mm of it plus overlapping frames R1..Rn at >=30%
       overlap; every edge of the paint film, any existing cracking or flaking, >=40 mm of
       unpainted denim, and the nearest seam landmark.
       *why:* SEQUENCING CRITICAL: a painted print is what determines whether the garment can be machine-washed at all, and DENIM_0001 already took that branch. This frame must precede any wash decision, and it is the before-state of the component most likely to change visibly in the wash. Once washed, an uncracked before-state cannot be reconstructed.
-- [ ] `BEFORE.ANOM.EMBROIDERY.I01.R1` (1/1, conditional, n_embroidery > 0)
+- [ ] `BEFORE.ANOM.EMBROIDERY.R1.I01` (1/1, conditional, n_embroidery > 0)
       200 mm field centred on embroidery instance NN: the whole embroidered area,
       individual stitch penetrations resolvable at the densest point, the stabiliser/denim
       boundary, >=40 mm of plain denim around it, and the nearest seam landmark.
       *why:* Dense embroidery locally stiffens and pre-shrinks the ground fabric, so it is a shrinkage anomaly with a sharp boundary; its threads are also a different fibre that can bleed. Without a before frame at stitch resolution, post-wash puckering around it reads as fabric distortion.
-- [ ] `BEFORE.ANOM.LOGO.I01.R1` (1/1, conditional, n_logos > 0)
+- [ ] `BEFORE.ANOM.LOGO.R1.I01` (1/1, conditional, n_logos > 0)
       200 mm field centred on logo instance NN (woven tab, printed mark, stamped hardware
       logo): the whole logo with all text legible in the frame's own orientation, its
       attachment to the fabric, >=40 mm of surrounding denim, and the nearest seam
       landmark.
       *why:* Logos are the identity evidence that lets this exact garment be re-identified later, which is what the DATA_ELIGIBILITY exact_garment tri-state demands a written basis for; a verification nobody wrote down is not a verification. They are also small printed or woven elements that visibly degrade in a wash.
-- [ ] `BEFORE.ANOM.PATCH.I01.R1` (1/1, conditional, n_patches > 0)
+- [ ] `BEFORE.ANOM.PATCH.R1.I01` (1/1, conditional, n_patches > 0)
       200 mm field centred on applied-patch instance NN: the whole patch, its full
       attachment perimeter (stitched, fused or riveted), any lifting at the edges, >=40 mm
       of surrounding denim, and the nearest seam landmark.
       *why:* An applied patch is a second fabric with its own shrinkage rate bonded to the garment, and edge lifting is the most common wash failure; a fused patch can also release entirely. Its before-state perimeter is the only reference for judging that.
-- [ ] `BEFORE.ANOM.STAIN.I01.R1` (1/1, conditional, n_stains > 0)
+- [ ] `BEFORE.ANOM.STAIN.R1.I01` (1/1, conditional, n_stains > 0)
       200 mm field centred on stain instance NN: the whole stain including its diffuse
       boundary, >=40 mm of clean denim beyond the outermost visible edge, and the nearest
       seam landmark. Rig's standard two diffuse sources only -- no raking light, which
@@ -1225,7 +1225,7 @@ materially shorter, and the app tells you your own number after intake.
       and smoothed, with the fold crease visible. Both frames carry the whole leg opening
       plus >=60 mm of leg above the cuff.
       *why:* CONTRIBUTING_PAIRS is explicit that a cuffed or hemmed edge cannot fray however it is washed, so whether the garment arrived cuffed changes what the original inseam even means and where the crease has already set the fabric. Recording only the as-received state loses the true leg length; recording only the unfolded state destroys the evidence of how it was worn.
-- [ ] `BEFORE.ANOM.PRINT_FADE.I01.R1` (1/1, conditional, n_printed_fade > 0)
+- [ ] `BEFORE.ANOM.PRINT_FADE.R1.I01` (1/1, conditional, n_printed_fade > 0)
       350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the
       WHOLE fade pattern including its outer boundary where it returns to full-shade
       denim, plus the nearest seam so the pattern is relocatable. A 200 mm field is too
@@ -2300,7 +2300,7 @@ materially shorter, and the app tells you your own number after intake.
 
 ### After washing — either face, lay 1, mount_grazing_table, tele lens
 
-- [ ] `POSTWASH.HEM.LEFT.CURL_INSTANCE.INN.MACRO.I01` (1/1, conditional, has_hem_curl_visible)
+- [ ] `POSTWASH.HEM.LEFT.CURL_INSTANCE.INN.MACRO.I01` (1/1, conditional, n_curl_positions > 0)
       PARAMETERISED OVER LEG AND INSTANCE. One instance per visually conspicuous curl or
       wave in the cut edge, Inn replaced by the zero-padded 1-based instance index from
       the pilot ledger's instance table. Grazing station, axis in the surface plane and
@@ -2434,7 +2434,7 @@ materially shorter, and the app tells you your own number after intake.
       continues without reset.  [frame 6 of 6 around the loop: arc 380-456 mm from the
       inseam seam, covering measurement position(s) 1, 2]
       *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
-- [ ] `POSTWASH.HEM.RIGHT.CURL_INSTANCE.INN.MACRO.I01` (1/1, conditional, has_hem_curl_visible)
+- [ ] `POSTWASH.HEM.RIGHT.CURL_INSTANCE.INN.MACRO.I01` (1/1, conditional, n_curl_positions > 0)
       PARAMETERISED OVER LEG AND INSTANCE. One instance per visually conspicuous curl or
       wave in the cut edge, Inn replaced by the zero-padded 1-based instance index from
       the pilot ledger's instance table. Grazing station, axis in the surface plane and
@@ -2551,38 +2551,38 @@ materially shorter, and the app tells you your own number after intake.
       framing of BEFORE.WAIST.WAISTBAND_CORNER_R.R1 exactly: the app shows it as a ghost
       overlay, which is a capture aid and never evidence.]
       *why:* The after-wash half of a matched pair with BEFORE.WAIST.WAISTBAND_CORNER_R.R1. Right-hand counterpart; the L/R pair is the only evidence of construction asymmetry at the waist, which otherwise gets read post-wash as differential shrinkage.
-- [ ] `POSTWASH.ANOM.EMBROIDERY.I01.R1` (1/1, conditional, n_embroidery > 0)
+- [ ] `POSTWASH.ANOM.EMBROIDERY.R1.I01` (1/1, conditional, n_embroidery > 0)
       200 mm field centred on embroidery instance NN: the whole embroidered area,
       individual stitch penetrations resolvable at the densest point, the stabiliser/denim
       boundary, >=40 mm of plain denim around it, and the nearest seam landmark.
-      [Reproduce the framing of BEFORE.ANOM.EMBROIDERY.I01.R1 exactly: the app shows it as
-      a ghost overlay, which is a capture aid and never evidence.]
-      *why:* The after-wash half of a matched pair with BEFORE.ANOM.EMBROIDERY.I01.R1. Dense embroidery locally stiffens and pre-shrinks the ground fabric, so it is a shrinkage anomaly with a sharp boundary; its threads are also a different fibre that can bleed. Without a before frame at stitch resolution, post-wash puckering around it reads as fabric distortion.
-- [ ] `POSTWASH.ANOM.LOGO.I01.R1` (1/1, conditional, n_logos > 0)
+      [Reproduce the framing of BEFORE.ANOM.EMBROIDERY.R1 exactly: the app shows it as a
+      ghost overlay, which is a capture aid and never evidence.]
+      *why:* The after-wash half of a matched pair with BEFORE.ANOM.EMBROIDERY.R1. Dense embroidery locally stiffens and pre-shrinks the ground fabric, so it is a shrinkage anomaly with a sharp boundary; its threads are also a different fibre that can bleed. Without a before frame at stitch resolution, post-wash puckering around it reads as fabric distortion.
+- [ ] `POSTWASH.ANOM.LOGO.R1.I01` (1/1, conditional, n_logos > 0)
       200 mm field centred on logo instance NN (woven tab, printed mark, stamped hardware
       logo): the whole logo with all text legible in the frame's own orientation, its
       attachment to the fabric, >=40 mm of surrounding denim, and the nearest seam
-      landmark.  [Reproduce the framing of BEFORE.ANOM.LOGO.I01.R1 exactly: the app shows
-      it as a ghost overlay, which is a capture aid and never evidence.]
-      *why:* The after-wash half of a matched pair with BEFORE.ANOM.LOGO.I01.R1. Logos are the identity evidence that lets this exact garment be re-identified later, which is what the DATA_ELIGIBILITY exact_garment tri-state demands a written basis for; a verification nobody wrote down is not a verification. They are also small printed or woven elements that visibly degrade in a wash.
-- [ ] `POSTWASH.ANOM.PATCH.I01.R1` (1/1, conditional, n_patches > 0)
+      landmark.  [Reproduce the framing of BEFORE.ANOM.LOGO.R1 exactly: the app shows it
+      as a ghost overlay, which is a capture aid and never evidence.]
+      *why:* The after-wash half of a matched pair with BEFORE.ANOM.LOGO.R1. Logos are the identity evidence that lets this exact garment be re-identified later, which is what the DATA_ELIGIBILITY exact_garment tri-state demands a written basis for; a verification nobody wrote down is not a verification. They are also small printed or woven elements that visibly degrade in a wash.
+- [ ] `POSTWASH.ANOM.PATCH.R1.I01` (1/1, conditional, n_patches > 0)
       200 mm field centred on applied-patch instance NN: the whole patch, its full
       attachment perimeter (stitched, fused or riveted), any lifting at the edges, >=40 mm
       of surrounding denim, and the nearest seam landmark.  [Reproduce the framing of
-      BEFORE.ANOM.PATCH.I01.R1 exactly: the app shows it as a ghost overlay, which is a
+      BEFORE.ANOM.PATCH.R1 exactly: the app shows it as a ghost overlay, which is a
       capture aid and never evidence.]
-      *why:* The after-wash half of a matched pair with BEFORE.ANOM.PATCH.I01.R1. An applied patch is a second fabric with its own shrinkage rate bonded to the garment, and edge lifting is the most common wash failure; a fused patch can also release entirely. Its before-state perimeter is the only reference for judging that.
+      *why:* The after-wash half of a matched pair with BEFORE.ANOM.PATCH.R1. An applied patch is a second fabric with its own shrinkage rate bonded to the garment, and edge lifting is the most common wash failure; a fused patch can also release entirely. Its before-state perimeter is the only reference for judging that.
 
 ### After washing — either face, lay 1, mount_overhead_fov350, main lens
 
-- [ ] `POSTWASH.ANOM.PRINT_FADE.I01.R1` (1/1, conditional, n_printed_fade > 0)
+- [ ] `POSTWASH.ANOM.PRINT_FADE.R1.I01` (1/1, conditional, n_printed_fade > 0)
       350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the
       WHOLE fade pattern including its outer boundary where it returns to full-shade
       denim, plus the nearest seam so the pattern is relocatable. A 200 mm field is too
       small for a whisker fan, which is why this ANOM type uses the region tier.
-      [Reproduce the framing of BEFORE.ANOM.PRINT_FADE.I01.R1 exactly: the app shows it as
-      a ghost overlay, which is a capture aid and never evidence.]
-      *why:* The after-wash half of a matched pair with BEFORE.ANOM.PRINT_FADE.I01.R1. Fades are pre-existing shade gradients that a wash redistributes, so they are the strongest confound for any post-wash colour or shade measurement, and their boundaries are also convenient non-seam landmarks. Recorded only at whole-garment scale their boundaries are unresolvable; unrecorded, post-wash shade change is unattributable.
+      [Reproduce the framing of BEFORE.ANOM.PRINT_FADE.R1 exactly: the app shows it as a
+      ghost overlay, which is a capture aid and never evidence.]
+      *why:* The after-wash half of a matched pair with BEFORE.ANOM.PRINT_FADE.R1. Fades are pre-existing shade gradients that a wash redistributes, so they are the strongest confound for any post-wash colour or shade measurement, and their boundaries are also convenient non-seam landmarks. Recorded only at whole-garment scale their boundaries are unresolvable; unrecorded, post-wash shade change is unattributable.
 
 ### After washing — BACK up, lay 1, handheld_oblique, main lens
 

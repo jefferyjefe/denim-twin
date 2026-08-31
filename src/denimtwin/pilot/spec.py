@@ -196,6 +196,20 @@ class Spec(object):
                             % (sid, s["necessity"]))
             if s.get("instance_of") and s["instance_of"] not in self.feature_by_key:
                 errs.append("%s: instance_of names unknown feature %r" % (sid, s["instance_of"]))
+            if s.get("instance_of") and cond:
+                # Whether the shot is included and how many frames it becomes must be decided by
+                # the same answer. If the condition can be true while the count is zero, the shot is
+                # required and expands to nothing -- a required photograph that disappears without
+                # anything reporting it missing.
+                try:
+                    keys = feature_keys(cond)
+                except SpecError:
+                    keys = set()
+                if keys and s["instance_of"] not in keys:
+                    errs.append(
+                        "%s: is instanced on %r but its condition %r does not mention it, so the "
+                        "condition can be true while the count is zero and the shot would expand "
+                        "to no frames" % (sid, s["instance_of"], cond))
             for m in s.get("matched_shot_ids") or []:
                 if m not in seen:
                     errs.append("%s: matched_shot_ids names %r, which is not a shot in this "

@@ -894,7 +894,61 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "append read the head and wrote with no lock, so two writers stamped the same "
                       "prev_chain and the chain broke permanently -- and the web app is threaded"))
 
-    # -- 38. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 38. an implausible measurement blocks even when both readings agree ---------------------
+    b = new("inches")
+    b.open_session(); b.freeze_rig(); b.answer_features()
+    b.measure()
+    # A tape read in inches: two readings that agree perfectly with each other and are 2.5x wrong.
+    b.store.append("measurement", {"name": "leg_opening_cm", "readings": [15.75, 15.8],
+                                   "mean": 15.775, "spread": 0.05, "tolerance": 0.5,
+                                   "in_tolerance": True}, operator="selftest")
+    blocked = b.blocked_conditions()
+    out.append(Result("a measurement read in inches blocks even though its readings agree",
+                      "measurements.complete" in blocked,
+                      "leg_opening_cm 15.75/15.8 cm, spread 0.05, outside the plausible range",
+                      "leg_opening_cm sizes the hem series and places the cut mark; two readings "
+                      "agreeing with each other says nothing about whether the tape was the right "
+                      "one"))
+
+    # -- 39. a required shot may not expand to zero frames ----------------------------------------
+    b = new("zeroexpand")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    ans = dict(b.store.fold()[0]["features"])
+    for k in list(ans):
+        if k.startswith("n_"):
+            ans[k] = 0
+    ans["n_tears"] = 3
+    b.store.append("feature_answers", {"answers": ans}, operator="selftest")
+    shots2, meta2 = b.activated()
+    tear = [x for x in shots2 if "TEAR" in x["shot_id"].upper()]
+    out.append(Result("a garment with three tears is asked for three tear photographs",
+                      len(tear) >= 3 and not meta2["expansion_blocked"],
+                      "%d tear frames planned: %s"
+                      % (len(tear), [x["shot_id"] for x in tear][:4]),
+                      "inclusion and cardinality came from two independent answers: a shot could "
+                      "be required because one count was non-zero and expand to nothing because "
+                      "the count it was instanced on was zero"))
+
+    # -- 40. and if one ever could, it blocks rather than vanishing --------------------------------
+    b = new("zeroblocks")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    bad_shot = {"shot_id": "BEFORE.TEST.MISMATCHED", "state": "before", "garment_side": "front",
+                "region_id": "whole_garment_front", "camera_angle": "overhead", "framing": "-",
+                "scale_reference": "charuco_board", "min_reps": 1, "necessity": "conditional",
+                "conditional_on": "n_tears > 0", "instance_of": "n_stains",
+                "est_seconds": 30, "camera_height_group": "m", "lens": "main", "purpose": "x"}
+    fake = type("S", (), {"features": full_spec.features, "shots": [bad_shot],
+                          "states": full_spec.states, "regions": full_spec.regions})()
+    answers3 = {f["key"]: (0 if f["type"] == "count" else True) for f in full_spec.features}
+    answers3.update({"n_tears": 2, "n_stains": 0})
+    shots3, meta3 = PLAN.activate(fake, answers3)
+    out.append(Result("a required shot that would expand to no frames blocks by name",
+                      len(meta3["expansion_blocked"]) == 1,
+                      "expansion_blocked: %s"
+                      % [x["why"][:70] for x in meta3["expansion_blocked"]],
+                      "vanishing is the one outcome a required photograph may not have"))
+
+    # -- 41. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
