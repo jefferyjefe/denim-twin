@@ -89,6 +89,10 @@ CHECKS = [Check(*c) for c in [
     ("pilot", [PY_, "tools/pilot.py", "selftest"], ("ci", "full"), (), True, [],
      "the capture navigator's cut gate can be made to say READY without the evidence, or refuses "
      "to say it with the evidence -- either way a garment is at risk"),
+    ("runbook", [PY_, "tools/make_runbook.py", "--check"], ("ci", "full"), (), True, [],
+     "the printed pilot documents no longer match the shot plan: run tools/make_runbook.py --write. "
+     "A runbook that has drifted sends the operator to collect a different set of evidence from the "
+     "one the gate requires, and they find out with a garment on the table"),
     ("shotplan", [PY_, "tools/check_shotplan.py"], ("ci", "full"), (), True, [],
      "the shot-plan specification does not load, or a shot points at a region, feature or matched "
      "shot that does not exist -- each of which silently deletes a required photograph"),
