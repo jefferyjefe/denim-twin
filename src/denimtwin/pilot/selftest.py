@@ -1,0 +1,654 @@
+"""Run the whole system against synthetic images, and try to make it lie.
+
+Two kinds of scenario, and both are necessary.
+
+The NEGATIVE ones try to obtain a pass that is not deserved: five copies of one photograph offered
+as five independent re-lays, a photograph swapped under a manifest entry, a measurement recorded
+once and called two readings, a hem series whose length is unknown, a capture with no calibration
+board. Each asserts that the system refuses, and names which refusal.
+
+The POSITIVE one matters just as much, and is the one a suspicious gate quietly fails: a gate that
+says NO to everything is not safe, it is broken, and it teaches its operator to route around it. So
+one scenario drives a complete session to READY TO CUT and asserts that the gate opens. If it cannot
+be made to open with valid evidence, that is a defect of the same severity as opening it without.
+
+Everything runs in a temporary directory. Nothing here touches data/garments -- the repository's
+real garment records are not a test fixture, and `tests/conftest.py` already had to learn that a
+suite which writes where the evidence lives is a suite that can destroy it.
+"""
+import json
+import os
+import shutil
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+from . import gates as GATES
+from . import plan as PLAN
+from . import qa as QA
+from . import spec as SPEC
+from .fixtures import synth_capture
+from .manifest import ManifestError, ingest_photo, sha256_file
+from .store import Store, setup_hash
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+class Result(object):
+    def __init__(self, name, ok, detail, expectation):
+        self.name, self.ok, self.detail, self.expectation = name, ok, detail, expectation
+
+
+class Bench(object):
+    """One temporary garment with the machinery to drive it."""
+
+    def __init__(self, tmp, spec, gid="DENIM_9001"):
+        self.tmp = Path(tmp)
+        self.spec = spec
+        self.gid = gid
+        self.dir = self.tmp / "garments" / gid
+        for s in ("rig", "intake", "before", "marked", "immediate_after", "post_wash"):
+            (self.dir / "images" / s).mkdir(parents=True, exist_ok=True)
+        self.store = Store(self.dir)
+        self.setup = {"camera_model": "synthetic", "mount_height_cm": 80.0, "lens": "main",
+                      "backdrop": "dark green matte", "lighting": "two diffuse 45deg",
+                      "leg_gap_cm": 4.0, "exposure_locked": True, "room": "test"}
+        self.setup_hash = setup_hash(self.setup)
+        self._board = None
+
+    @property
+    def board(self):
+        if self._board is None:
+            from ..capture.board import load_board
+            self._board = load_board(ROOT / "protocol" / "charuco_board.json")
+        return self._board
+
+    # -- session steps -----------------------------------------------------------------------
+
+    def open_session(self, spec_hash=None):
+        self.store.append("session_opened",
+                          {"spec_version": self.spec.version,
+                           "spec_hash": spec_hash or self.spec.content_hash,
+                           "protocol_version": self.spec.doc["protocol_version"]})
+
+    def freeze_rig(self, *, board_mm=200.0, squares=8, skip=()):
+        self.store.append("setup_frozen", {"setup": self.setup, "setup_hash": self.setup_hash,
+                                           "reason": "selftest"})
+        for c in GATES.REQUIRED_SETUP_CHECKS:
+            if c in skip:
+                continue
+            rec = {"check": c, "outcome": QA.PASS, "confirmed_by": "selftest"}
+            if c == "board_square_measured":
+                rec.update({"squares_spanned": squares, "measured_mm": board_mm})
+            self.store.append("setup_check", rec, setup_hash=self.setup_hash)
+
+    def answer_features(self, overrides=None):
+        ans = {}
+        for f in self.spec.features:
+            ans[f["key"]] = 0 if f["type"] == "count" else (
+                False if f["unanswered_means"] == "absent" else True)
+        ans.update(overrides or {})
+        self.store.append("feature_answers", {"answers": ans}, operator="selftest")
+        return ans
+
+    def measure(self, *, skip=(), bad_tolerance=(), single_reading=()):
+        vals = {"waist_cm": 82.0, "front_rise_cm": 27.0, "back_rise_cm": 37.0, "thigh_cm": 60.0,
+                "original_inseam_cm": 78.0, "leg_opening_cm": 40.0,
+                "fabric_thickness_mm": 1.05, "mass_grams": 640.0}
+        for name, n in sorted(GATES.REQUIRED_MEASUREMENTS.items()):
+            if name in skip:
+                continue
+            base = vals[name]
+            step = 0.05 if name == "fabric_thickness_mm" else (0.5 if name == "mass_grams" else 0.1)
+            readings = [base + i * step for i in range(n)]
+            if name in bad_tolerance:
+                readings = [base, base + 40.0] + readings[2:]
+            if name in single_reading:
+                readings = readings[:1]
+            tol = GATES.MEASUREMENT_TOLERANCE.get(name, GATES.MEASUREMENT_TOLERANCE["_default_cm"])
+            spread = max(readings) - min(readings)
+            self.store.append("measurement",
+                              {"name": name, "readings": readings,
+                               "mean": sum(readings) / len(readings), "spread": spread,
+                               "tolerance": tol, "in_tolerance": spread <= tol},
+                              operator="selftest")
+
+    def activated(self):
+        st, _ = self.store.fold()
+        return PLAN.activate(self.spec, st["features"], st["measurements"])
+
+    def synth_for(self, shot, rep, *, relay=None, seed=None, **kw):
+        """A synthetic frame sized for the shot's own quality requirements."""
+        q = QA.merged_quality(self.spec.doc["quality_defaults"], shot)
+        mm = q.get("max_mm_per_px")
+        mm = min(float(mm) * 0.75, 0.5) if mm else 0.35
+        mm = max(mm, 0.06)
+        long_edge = int(q.get("min_long_edge_px") or 1600)
+        long_edge = max(long_edge + 200, 1600)
+        w = min(long_edge, 2600)
+        h = int(w * 0.75)
+        subject = "jeans_back" if shot.get("garment_side") == "back" else "jeans_front"
+        if shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
+            subject = "hem_macro"
+        if shot["state"] == "rig":
+            subject = "blank_backdrop"
+        args = dict(subject=subject, mm_per_px=mm, size=(w, h),
+                    seed=(seed if seed is not None else abs(hash(shot["shot_id"])) % 9999) + rep,
+                    relay=(relay if relay is not None else rep),
+                    ruler=shot.get("scale_reference") in ("ruler", "both"))
+        args.update(kw)
+        p = self.tmp / "synth" / ("%s_r%d.png" % (shot["shot_id"].replace(".", "_"), rep))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        synth_capture(str(p), **args)
+        return p
+
+    def add(self, shot, rep, src, *, confirm_all=True, setup_hash_override="__default__"):
+        from .manifest import read_exif, exif_timestamp
+        from . import qa_primitives as Q
+        import cv2
+        dest, sha, already = ingest_photo(src, self.dir / "images" / shot["state"],
+                                          shot["shot_id"], rep)
+        rel = str(dest.relative_to(self.dir))
+        exif = read_exif(dest)
+        ts = exif_timestamp(exif) or (time.time() + rep * 120)
+        img = cv2.imread(str(dest))
+        sh = self.setup_hash if setup_hash_override == "__default__" else setup_hash_override
+        self.store.append("capture",
+                          {"shot_id": shot["shot_id"], "rep": rep, "path": rel, "sha256": sha,
+                           "exif": exif, "exif_ts": ts,
+                           "width": img.shape[1] if img is not None else None,
+                           "height": img.shape[0] if img is not None else None,
+                           "state": shot["state"], "region_id": shot.get("region_id")},
+                          operator="selftest", setup_hash=sh)
+        st, _ = self.store.fold()
+        compare = []
+        for (sid, r), c in sorted(st["captures"].items()):
+            if (sid, r) == (shot["shot_id"], rep):
+                continue
+            p = self.dir / (c.get("path") or "")
+            if not p.exists():
+                continue
+            oimg = cv2.imread(str(p))
+            compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
+                            "self_sha256": sha, "image": oimg,
+                            "pose": Q.garment_pose(oimg) if oimg is not None else None,
+                            "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
+                            "is_previous_rep": (sid == shot["shot_id"] and r == rep - 1)})
+        assertions = {"operator": "selftest"}
+        if confirm_all:
+            for k in ("ruler_visible", "side_confirmed", "region_confirmed", "relay_confirmed"):
+                assertions[k] = True
+        board, bspec = self.board
+        checks = QA.check_capture(dest, shot,
+                                  QA.merged_quality(self.spec.doc["quality_defaults"], shot),
+                                  board=board, board_spec=bspec, image=img, compare_to=compare,
+                                  operator_assertions=assertions)
+        outcome = QA.roll_up(checks)
+        self.store.append("qa_result", {"shot_id": shot["shot_id"], "rep": rep,
+                                        "outcome": outcome,
+                                        "checks": [c.as_dict() for c in checks]},
+                          operator="selftest")
+        return outcome, checks
+
+    def resolve_humans(self):
+        """Record a verification for every claim a check referred to a person."""
+        st, _ = self.store.fold()
+        n = 0
+        for (sid, rep), q in sorted(st["qa"].items()):
+            for c in (q.get("checks") or []):
+                if c.get("outcome") == QA.HUMAN:
+                    self.store.append("human_verification",
+                                      {"shot_id": sid, "rep": rep, "claim": c["check_id"],
+                                       "value": True, "verifier_name": "selftest"},
+                                      operator="selftest")
+                    n += 1
+        return n
+
+    def cut_ready_extras(self, *, tolerance_error_cm=0.0, skip=()):
+        from . import cutspec as CUT
+        st, _ = self.store.fold()
+        m = st["measurements"]
+        if "cut_spec" not in skip:
+            s = CUT.compute(target_inseam_cm=15.0,
+                            original_inseam_cm=m["original_inseam_cm"]["mean"],
+                            thigh_cm=m["thigh_cm"]["mean"],
+                            leg_opening_cm=m["leg_opening_cm"]["mean"])
+            self.store.append("cut_spec", s, operator="selftest")
+            if "verification" not in skip:
+                self.store.append("human_verification",
+                                  {"shot_id": None, "rep": None, "claim": "cut_marks_verified",
+                                   "value": True, "verifier_name": "second person",
+                                   "measured_inseam_cm": s["target_inseam_cm"] + tolerance_error_cm,
+                                   "measured_outseam_cm": s["predicted_outseam_cm"]},
+                                  operator="selftest")
+        for claim in ("legs_cut_separately", "offcuts_retained_labelled"):
+            if claim in skip:
+                continue
+            self.store.append("human_verification",
+                              {"shot_id": None, "rep": None, "claim": claim, "value": True,
+                               "verifier_name": "selftest"}, operator="selftest")
+
+    def gate(self, gate_id="ready_to_cut", **kw):
+        return GATES.evaluate(gate_id, self.spec, self.store, garment_dir=self.dir, **kw)
+
+    def blocked_conditions(self, gate_id="ready_to_cut", **kw):
+        return {b.condition for b in self.gate(gate_id, **kw).blocks}
+
+
+# ------------------------------------------------------------------------------------------
+# scenarios
+# ------------------------------------------------------------------------------------------
+
+def _mini_spec(tmp):
+    """A four-shot specification, so the positive control can be driven to READY quickly.
+
+    It is a real specification loaded through the real loader -- the gate under test is the same
+    code path as production. Only the shot list is small.
+    """
+    src = ROOT / "protocol" / "shotplan"
+    d = Path(tmp) / "shotplan"
+    d.mkdir(parents=True, exist_ok=True)
+    for f in ("shotplan.schema.json", "regions.schema.json"):
+        shutil.copy(str(src / f), str(d / f))
+    regions = json.loads((src / "regions.json").read_text())
+    doc = json.loads((src / "shotplan.json").read_text())
+    keep = []
+    for want in ("whole_garment_front", "whole_garment_back"):
+        for s in doc["shots"]:
+            if s["region_id"] == want and s["camera_angle"] == "overhead" \
+                    and s["necessity"] == "required" and s["state"] == "before":
+                c = dict(s)
+                c["min_reps"] = 2
+                c["relay_between_reps"] = True
+                c["matched_shot_ids"] = []
+                keep.append(c)
+                break
+    if len(keep) < 2:                       # the plan changed; synthesise the two frames instead
+        keep = [{
+            "shot_id": "BEFORE.WHOLE.%s_OVERHEAD" % side.upper(), "state": "before",
+            "garment_side": side, "region_id": "whole_garment_%s" % side,
+            "camera_angle": "overhead",
+            "framing": "whole garment, board in frame", "scale_reference": "charuco_board",
+            "min_reps": 2, "relay_between_reps": True, "necessity": "required",
+            "est_seconds": 45, "camera_height_group": "mount_overhead", "lens": "main",
+            "purpose": "silhouette and scale before any modification",
+            "quality": {"min_subject_px": 400,
+                        "subject_px_meaning": "garment width"},
+        } for side in ("front", "back")]
+    doc["shots"] = keep
+    # The features stay exactly as they are. Only the shot list shrinks: the region map's own
+    # conditions reference most of the feature keys, and a specification whose regions point at
+    # features that are not declared is precisely what the loader is supposed to refuse.
+    (d / "regions.json").write_text(json.dumps(regions))
+    (d / "shotplan.json").write_text(json.dumps(doc))
+    return SPEC.load(d / "shotplan.json")
+
+
+def scenarios(full_spec, tmp_root, want_full=False):
+    out = []
+
+    def new(name, spec=None, gid="DENIM_9001"):
+        t = Path(tempfile.mkdtemp(dir=str(tmp_root), prefix=name[:18] + "_"))
+        return Bench(t, spec or full_spec, gid)
+
+    # -- 1. a fresh garment is never ready ---------------------------------------------------
+    b = new("fresh")
+    v = b.gate()
+    out.append(Result("fresh garment is not ready to cut", not v.ready,
+                      "%d blocks: %s" % (len(v.blocks),
+                                         ", ".join(sorted(x.condition for x in v.blocks))[:150]),
+                      "a garment with no evidence must be blocked"))
+
+    # -- 2. an empty plan is a block, not a pass ---------------------------------------------
+    b = new("emptyplan")
+    b.open_session()
+    b.freeze_rig()
+    v = b.gate()
+    out.append(Result("unanswered questionnaire blocks the plan",
+                      "features.answered" in {x.condition for x in v.blocks},
+                      "blocks: " + ", ".join(sorted(x.condition for x in v.blocks))[:150],
+                      "no features answered means no plan, and no plan is not an empty requirement"))
+
+    # -- 3. missing measurements block --------------------------------------------------------
+    b = new("nomeasure")
+    b.open_session(); b.freeze_rig(); b.answer_features()
+    b.measure(skip=("thigh_cm", "back_rise_cm"))
+    out.append(Result("missing measurements block the cut",
+                      "measurements.complete" in b.blocked_conditions(),
+                      "blocked: " + ", ".join(sorted(b.blocked_conditions()))[:150],
+                      "a dimension nobody measured cannot be quietly treated as measured"))
+
+    # -- 4. one reading is not two ------------------------------------------------------------
+    b = new("onereading")
+    b.open_session(); b.freeze_rig(); b.answer_features()
+    b.measure(single_reading=("waist_cm",))
+    out.append(Result("a single reading does not satisfy 'two independent readings'",
+                      "measurements.complete" in b.blocked_conditions(),
+                      "blocked: measurements.complete present = %s"
+                      % ("measurements.complete" in b.blocked_conditions()),
+                      "the protocol asks for two readings so their spread can be seen"))
+
+    # -- 5. readings that disagree block ------------------------------------------------------
+    b = new("badtol")
+    b.open_session(); b.freeze_rig(); b.answer_features()
+    b.measure(bad_tolerance=("waist_cm",))
+    out.append(Result("readings outside tolerance block the cut",
+                      "measurements.complete" in b.blocked_conditions(),
+                      "waist readings 40 cm apart",
+                      "two readings that disagree by 40 cm were not both measurements of a waist"))
+
+    # -- 6. a photograph is never overwritten -------------------------------------------------
+    b = new("overwrite")
+    shot = {"shot_id": "TEST.A", "state": "before"}
+    p1 = b.tmp / "a.png"; synth_capture(str(p1), subject="jeans_front", mm_per_px=0.5,
+                                        size=(900, 700), seed=1)
+    p2 = b.tmp / "b.png"; synth_capture(str(p2), subject="jeans_front", mm_per_px=0.5,
+                                        size=(900, 700), seed=2)
+    d1, s1, _ = ingest_photo(p1, b.dir / "images" / "before", "TEST.A", 1)
+    refused = False
+    try:
+        shutil.copy(str(p2), str(d1))            # simulate something replacing the file in place
+        ingest_photo(p2, b.dir / "images" / "before", "TEST.A", 1)
+    except ManifestError:
+        refused = True
+    # the content-addressed name means a different image simply cannot land on the same path
+    d2, s2, _ = ingest_photo(p2, b.dir / "images" / "before", "TEST.A", 1)
+    out.append(Result("a different photograph never lands on an existing one",
+                      d2 != d1 and s2 != s1,
+                      "%s vs %s" % (d1.name, d2.name),
+                      "content-addressed names make an in-place replacement impossible"))
+
+    # -- 7. re-ingesting identical bytes is idempotent -----------------------------------------
+    b = new("idem")
+    p = b.tmp / "a.png"; synth_capture(str(p), subject="jeans_front", mm_per_px=0.5,
+                                       size=(900, 700), seed=3)
+    da, sa, first = ingest_photo(p, b.dir / "images" / "before", "TEST.A", 1)
+    db, sb, second = ingest_photo(p, b.dir / "images" / "before", "TEST.A", 1)
+    out.append(Result("an interrupted upload can be retried safely",
+                      da == db and sa == sb and not first and second,
+                      "second ingest reported already_present=%s" % second,
+                      "retrying a torn copy must complete it or find it complete, never duplicate"))
+
+    # -- 8. a torn manifest line is quarantined, not silently dropped --------------------------
+    b = new("torn")
+    b.open_session()
+    with open(str(b.store.manifest.path), "a") as f:
+        f.write('{"seq":99,"kind":"cap')
+    entries, problems = b.store.manifest.read()
+    kinds = {p["kind"] for p in problems}
+    b.store.append("note", {"text": "after the tear"})
+    entries2, problems2 = b.store.manifest.read()
+    out.append(Result("a torn manifest line is detected and quarantined",
+                      "torn_final_line" in kinds and not problems2
+                      and os.path.exists(str(b.store.manifest.path) + ".torn"),
+                      "detected %s; after repair %d problems; .torn kept=%s"
+                      % (sorted(kinds), len(problems2),
+                         os.path.exists(str(b.store.manifest.path) + ".torn")),
+                      "an interrupted append damages one line and must not read as an empty log"))
+
+    # -- 9. editing history breaks the chain ---------------------------------------------------
+    b = new("tamper")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    lines = Path(b.store.manifest.path).read_text().strip().split("\n")
+    o = json.loads(lines[3]); o["payload"]["readings"] = [82.0, 82.0]
+    lines[3] = json.dumps(o, sort_keys=True, separators=(",", ":"))
+    Path(b.store.manifest.path).write_text("\n".join(lines) + "\n")
+    _, problems = b.store.manifest.read()
+    out.append(Result("editing the log to fix a number breaks the hash chain",
+                      any(p["kind"] in ("chain_mismatch", "chain_break") for p in problems)
+                      and "log.intact" in b.blocked_conditions(),
+                      "problems: %s" % [p["kind"] for p in problems][:4],
+                      "a manifest edited to make the gate pass must be detectable"))
+
+    # -- 10. captures taken before the rig was frozen are not attributable ---------------------
+    b = new("nosetup")
+    b.open_session(); b.answer_features(); b.measure()
+    b.freeze_rig()
+    sh = {"shot_id": "BEFORE.X", "state": "before", "garment_side": "front",
+          "region_id": "whole_garment_front", "camera_angle": "overhead", "framing": "-",
+          "scale_reference": "charuco_board", "min_reps": 1, "necessity": "required",
+          "est_seconds": 30, "camera_height_group": "m", "lens": "main", "purpose": "x"}
+    src = b.synth_for(sh, 1)
+    b.add(sh, 1, src, setup_hash_override=None)
+    out.append(Result("a capture with no rig hash is not attributable",
+                      "rig.captures_attributable" in b.blocked_conditions(),
+                      "blocked: rig.captures_attributable",
+                      "a photograph that cannot be tied to a frozen rig is not evidence of it"))
+
+    # -- 11. the printed board being the wrong size blocks -------------------------------------
+    b = new("badboard")
+    b.open_session(); b.answer_features(); b.measure()
+    b.freeze_rig(board_mm=190.0, squares=8)          # 23.75 mm/square: a 'fit to page' print
+    out.append(Result("a board printed at the wrong scale blocks the cut",
+                      "rig.board_square_measured" in b.blocked_conditions(),
+                      "measured 23.75 mm per square against a declared 25.0",
+                      "every scale in the session would carry the printing error"))
+
+    # -- 12. an incomplete rig calibration blocks ----------------------------------------------
+    b = new("rigskip")
+    b.open_session(); b.answer_features(); b.measure()
+    b.freeze_rig(skip=("board_garment_coplanar", "daylight_controlled"))
+    out.append(Result("skipping calibration readings blocks the cut",
+                      "rig.calibrated" in b.blocked_conditions(),
+                      "two readings not recorded",
+                      "an unrecorded calibration reading is not a passed one"))
+
+    # -- 13. a hem series that cannot be sized blocks -------------------------------------------
+    b = new("hemblock")
+    b.open_session(); b.freeze_rig(); b.answer_features()
+    b.measure(skip=("leg_opening_cm",))
+    blocked = b.blocked_conditions()
+    out.append(Result("a hem series with no measured leg opening blocks, not vanishes",
+                      "plan.fully_expanded" in blocked or "measurements.complete" in blocked,
+                      "blocked: " + ", ".join(sorted(blocked))[:140],
+                      "expanding to zero frames would delete the fray series and the gate would "
+                      "then find nothing missing"))
+
+    # -- 14. the same photograph cannot be five relays -----------------------------------------
+    b = new("relay")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    sh = {"shot_id": "BEFORE.WHOLE.FRONT_OVERHEAD", "state": "before", "garment_side": "front",
+          "region_id": "whole_garment_front", "camera_angle": "overhead",
+          "framing": "-", "scale_reference": "charuco_board", "min_reps": 2,
+          "relay_between_reps": True, "necessity": "required", "est_seconds": 45,
+          "camera_height_group": "m", "lens": "main", "purpose": "x"}
+    src = b.synth_for(sh, 1, relay=0, seed=42)
+    b.add(sh, 1, src)
+    same = b.tmp / "same_again.png"
+    shutil.copy(str(src), str(same))
+    outcome2, checks2 = b.add(sh, 2, same)
+    relay_checks = [c for c in checks2 if c.check_id in ("relay_independence", "duplicate_content")]
+    out.append(Result("one photograph cannot be two independent relays",
+                      outcome2 == QA.RETAKE and any(c.outcome == QA.RETAKE for c in relay_checks),
+                      "%s; %s" % (outcome2, "; ".join("%s=%s" % (c.check_id, c.outcome)
+                                                      for c in relay_checks)),
+                      "the same frame resubmitted is not a repeat"))
+
+    # -- 15. the same LAY re-shot is not a relay either ------------------------------------------
+    b = new("samelay")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src1 = b.synth_for(sh, 1, relay=0, seed=7)
+    b.add(sh, 1, src1)
+    src2 = b.synth_for(sh, 2, relay=0, seed=99)      # same lay, different sensor noise
+    o2, c2 = b.add(sh, 2, src2)
+    rc = [c for c in c2 if c.check_id == "relay_independence"]
+    out.append(Result("the same lay photographed twice is not a relay",
+                      bool(rc) and rc[0].outcome == QA.RETAKE,
+                      "relay_independence=%s (%s)" % (rc[0].outcome if rc else "absent",
+                                                      (rc[0].detail[:80] if rc else "")),
+                      "a second frame of an unmoved garment measures nothing new"))
+
+    # -- 16. no board means UNAVAILABLE, never PASS ----------------------------------------------
+    b = new("noboard")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src = b.synth_for(sh, 1, board=False)
+    o, checks = b.add(sh, 1, src)
+    scale = [c for c in checks if c.check_id in ("scale", "board_corners")]
+    out.append(Result("a frame with no calibration board never passes",
+                      o != QA.PASS and any(c.outcome in (QA.UNAVAILABLE, QA.RETAKE) for c in scale),
+                      "%s; %s" % (o, "; ".join("%s=%s" % (c.check_id, c.outcome) for c in scale)),
+                      "no board means no scale, and no scale is not a pass"))
+
+    # -- 17. human-only checks are not auto-passed -----------------------------------------------
+    b = new("human")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src = b.synth_for(sh, 1)
+    o, checks = b.add(sh, 1, src, confirm_all=False)
+    humans = [c for c in checks if c.outcome == QA.HUMAN]
+    out.append(Result("checks a photograph cannot settle ask a person",
+                      o == QA.HUMAN and len(humans) >= 1,
+                      "%s; %d human check(s): %s" % (o, len(humans),
+                                                     ", ".join(c.check_id for c in humans)),
+                      "a ruler in the plane and which face is up are not decidable from pixels"))
+
+    # -- 18. a missing photograph on disk is not evidence ------------------------------------------
+    b = new("filegone")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src = b.synth_for(sh, 1)
+    b.add(sh, 1, src)
+    st, _ = b.store.fold()
+    rel = list(st["captures"].values())[0]["path"]
+    os.unlink(str(b.dir / rel))
+    out.append(Result("a manifest entry whose photograph is gone blocks",
+                      "captures.files_intact" in b.blocked_conditions(check_files=True),
+                      "deleted %s" % rel,
+                      "the record of a photograph is not the photograph"))
+
+    # -- 19. swapping the file under a manifest entry is detected -----------------------------------
+    b = new("swap")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src = b.synth_for(sh, 1)
+    b.add(sh, 1, src)
+    st, _ = b.store.fold()
+    rel = list(st["captures"].values())[0]["path"]
+    other = b.tmp / "other.png"
+    synth_capture(str(other), subject="jeans_back", mm_per_px=0.5, size=(900, 700), seed=77)
+    shutil.copy(str(other), str(b.dir / rel))
+    out.append(Result("swapping the file under a manifest entry is detected",
+                      "captures.files_intact" in b.blocked_conditions(check_files=True),
+                      "replaced the bytes at %s" % rel,
+                      "the hash recorded at capture time is what makes the entry mean something"))
+
+    # -- 20. changing the plan under a session is detected ------------------------------------------
+    b = new("specdrift")
+    b.open_session(spec_hash="0" * 64)
+    b.freeze_rig(); b.answer_features(); b.measure()
+    out.append(Result("a session opened under a different plan is detected",
+                      "spec.bound" in b.blocked_conditions(),
+                      "session hash != specification on disk",
+                      "the evidence was collected against a list that has since changed"))
+
+    # -- 21. cut readiness needs a cut specification and a second person ----------------------------
+    b = new("nocut")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    blocked = b.blocked_conditions()
+    out.append(Result("no cut specification and no second person blocks",
+                      "cut.specified" in blocked and "cut.second_person_verified" in blocked,
+                      "blocked: cut.specified, cut.second_person_verified",
+                      "PROTOCOL 3.2 requires a second person to verify both marks"))
+
+    # -- 22. a verification outside tolerance blocks -------------------------------------------------
+    b = new("badverify")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    b.cut_ready_extras(tolerance_error_cm=1.2)          # 12 mm, against a 3 mm tolerance
+    out.append(Result("a second-person measurement outside tolerance blocks",
+                      "cut.second_person_verified" in b.blocked_conditions(),
+                      "12 mm against a 3 mm tolerance",
+                      "verification that does not agree with the specified cut is not verification"))
+
+    # -- 23. hem coverage gaps are reported -----------------------------------------------------------
+    from . import hem as HEM
+    g = HEM.HemGeometry.from_leg_opening("left", 20.0)
+    partial = g.coverage([1, 2])
+    complete = g.coverage([m["index"] for m in g.macros()])
+    out.append(Result("hem coverage gaps are found and named",
+                      not partial["complete"] and partial["n_gaps"] > 0 and complete["complete"],
+                      "2 of %d macros -> %d gaps; all macros -> complete"
+                      % (len(g.macros()), partial["n_gaps"]),
+                      "a gap in the macro series is a hole in the fray profile"))
+
+    # -- 24. the sanitised manifest carries no absolute path -------------------------------------------
+    b = new("sanitise")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    src = b.synth_for(sh, 1)
+    b.add(sh, 1, src)
+    san, _ = b.store.manifest.sanitised(b.dir)
+    blob = json.dumps(san)
+    leaks = [x for x in ("/Users/", "/home/", str(b.tmp)) if x in blob]
+    gps = [k for e in san for k in ((e.get("payload") or {}).get("exif") or {})
+           if str(k).startswith("GPS")]
+    out.append(Result("the committable manifest has no absolute path and no location",
+                      not leaks and not gps,
+                      "%d entries, leaks=%s, gps tags=%s" % (len(san), leaks, gps),
+                      "a photograph's coordinates must not enter the repository"))
+
+    # -- 25. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    mini = _mini_spec(tmp_root)
+    b = new("happy", spec=mini, gid="DENIM_9002")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    shots, _m = b.activated()
+    captured = 0
+    for s in shots:
+        for rep in range(1, int(s.get("min_reps", 1)) + 1):
+            src = b.synth_for(s, rep, relay=rep, seed=1000 + captured)
+            o, _c = b.add(s, rep, src)
+            captured += 1
+    b.resolve_humans()
+    b.cut_ready_extras()
+    v = b.gate()
+    out.append(Result("A COMPLETE SESSION OPENS THE GATE (positive control)",
+                      v.ready,
+                      "%d frames captured; %d satisfied, %d blocking%s"
+                      % (captured, len(v.satisfied), len(v.blocks),
+                         (": " + "; ".join("%s -- %s" % (x.condition, x.what[:90])
+                                           for x in v.blocks)) if v.blocks else ""),
+                      "a gate that cannot be opened by valid evidence is broken, not safe"))
+
+    if want_full:
+        b = new("happyfull", spec=full_spec, gid="DENIM_9003")
+        b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+        shots, _m = b.activated()
+        req = [s for s in shots if s["state"] in ("rig", "intake", "before", "marked")
+               and s["necessity"] != "optional"]
+        n = 0
+        for s in req:
+            for rep in range(1, int(s.get("min_reps", 1)) + 1):
+                src = b.synth_for(s, rep, relay=rep, seed=5000 + n)
+                b.add(s, rep, src)
+                n += 1
+        b.resolve_humans()
+        b.cut_ready_extras()
+        v = b.gate()
+        out.append(Result("the FULL specification's gate opens on a complete session",
+                          v.ready, "%d frames; %d blocking%s"
+                          % (n, len(v.blocks),
+                             (": " + "; ".join("%s" % x.condition for x in v.blocks))
+                             if v.blocks else ""),
+                          "the real plan, driven to completion"))
+    return out
+
+
+def run(verbose=False, want_full=False):
+    spec = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
+    tmp = Path(tempfile.mkdtemp(prefix="pilot_selftest_"))
+    try:
+        results = scenarios(spec, tmp, want_full=want_full)
+    finally:
+        if not verbose:
+            shutil.rmtree(str(tmp), ignore_errors=True)
+    bad = [r for r in results if not r.ok]
+    width = 72
+    print("=" * width)
+    print("  Pilot Capture Navigator -- self test on synthetic images")
+    print("=" * width)
+    for r in results:
+        print("  %s  %s" % ("PASS" if r.ok else "FAIL", r.name))
+        if verbose or not r.ok:
+            print("        expected: %s" % r.expectation)
+            print("        observed: %s" % r.detail)
+    print("-" * width)
+    print("  %d of %d scenarios behaved as required" % (len(results) - len(bad), len(results)))
+    if verbose:
+        print("  artefacts left in %s" % tmp)
+    return 1 if bad else 0

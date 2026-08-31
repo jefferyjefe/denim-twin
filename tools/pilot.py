@@ -621,7 +621,7 @@ def cmd_finalize(a):
 def cmd_selftest(a):
     """Run the whole workflow against synthetic images in a temporary tree."""
     from denimtwin.pilot import selftest
-    return selftest.run(verbose=a.verbose)
+    return selftest.run(verbose=a.verbose, want_full=a.full)
 
 
 def main(argv=None):
@@ -692,6 +692,8 @@ def main(argv=None):
     s.set_defaults(fn=cmd_serve)
     s = sub.add_parser("selftest", help="run the whole workflow on synthetic images")
     s.add_argument("--verbose", action="store_true")
+    s.add_argument("--full", action="store_true",
+                   help="also drive the FULL specification to READY (slow: hundreds of frames)")
     s.set_defaults(fn=cmd_selftest)
 
     a = p.parse_args(argv)
