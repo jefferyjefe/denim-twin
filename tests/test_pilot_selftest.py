@@ -73,6 +73,12 @@ SCENARIOS = [
     'a measurement read in inches blocks even though its readings agree',
     'a garment with three tears is asked for three tear photographs',
     'a required shot that would expand to no frames blocks by name',
+    'a photograph taken before the rig was frozen is not attributable to it',
+    'captures split across two rig configurations block unless the change is recorded',
+    'the board-square measurement refuses one square spanned',
+    'the board-square measurement refuses a fractional count',
+    'the board-square measurement refuses more squares than the board has',
+    'a verdict that disagrees with its own checks is refused',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

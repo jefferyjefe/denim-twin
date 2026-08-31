@@ -76,6 +76,11 @@ REQUIRED_SETUP_CHECKS = (
 #: same order as the tilt bias EXP_0043 measured, so it is not a detail.
 BOARD_SQUARE_MM = 25.0
 BOARD_SQUARE_TOLERANCE_MM = 0.5
+#: A steel rule reads to about 0.5 mm. Over one 25 mm square that is a 2% measurement, which is
+#: worse than the scale error the tilt gate is set to catch; over eight squares it is 0.25%.
+MIN_BOARD_SQUARES_SPANNED = 4
+#: The board is 8 x 11 squares (protocol/charuco_board.json), so a run cannot exceed 11.
+BOARD_MAX_SQUARES = 11
 
 #: Second-person verification of the cut marks. PROTOCOL.md 3.2 sets this.
 CUT_MARK_TOLERANCE_MM = 3.0
@@ -277,7 +282,30 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
         if v is None or n in (None, 0):
             return False, "the printed board's square size has not been measured", \
                    "measure a run of squares with a steel rule and record it in `pilot.py setup`", {}
-        per = float(v) / float(n)
+        # It is a quotient of two numbers a person typed, and only the quotient was checked. A
+        # single square spanned, a fractional count, a negative length -- all divided to something
+        # near 25 and passed. A one-square measurement is also below what a steel rule resolves:
+        # 0.5 mm read over 25 mm is 2%, and over 200 mm it is 0.25%.
+        try:
+            v, n = float(v), float(n)
+        except (TypeError, ValueError):
+            return False, "the board-square measurement is not numeric", "re-record it", {}
+        if not (math.isfinite(v) and math.isfinite(n)):
+            return False, "the board-square measurement is not a finite number", "re-record it", {}
+        if n != int(n) or n < MIN_BOARD_SQUARES_SPANNED:
+            return False, ("the board-square measurement spans %g squares; measure a run of at "
+                           "least %d whole squares, because a rule read to 0.5 mm over one 25 mm "
+                           "square is a 2%% measurement"
+                           % (n, MIN_BOARD_SQUARES_SPANNED)), \
+                   ("span at least %d whole squares with the rule and record the total"
+                    % MIN_BOARD_SQUARES_SPANNED), {"squares_spanned": n}
+        if n > BOARD_MAX_SQUARES:
+            return False, ("the measurement claims %g squares, but the board only has %d in its "
+                           "longest direction" % (n, BOARD_MAX_SQUARES)), \
+                   "re-count the squares the rule spans", {"squares_spanned": n}
+        if v <= 0:
+            return False, "the measured length is not positive", "re-measure", {"measured_mm": v}
+        per = v / n
         off = abs(per - BOARD_SQUARE_MM)
         if off > BOARD_SQUARE_TOLERANCE_MM:
             return False, ("the printed squares measure %.2f mm, not %.1f mm (%.2f mm out) -- every "
@@ -289,22 +317,69 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                {"mm_per_square": per}
 
     def c_captures_carry_setup():
-        known = {h["setup_hash"] for h in state["setup_history"] if h.get("setup_hash")}
-        bad = [k for k, c in state["captures"].items()
-               if not c.get("setup_hash") or c["setup_hash"] not in known]
-        if bad:
-            return False, ("%d capture(s) are not attributable to a frozen rig configuration"
-                           % len(bad)), \
-                   "these were taken before the rig was frozen, or under a configuration that was " \
-                   "never recorded. Re-take them, or record the configuration they were taken " \
-                   "under as a deviation.", \
-                   {"examples": ["%s r%d" % (s, r) for s, r in sorted(bad)[:6]]}
-        return True, "all %d captures carry a known rig hash" % len(state["captures"]), None, {}
+        # Set membership was not enough. `known` was every rig hash appearing ANYWHERE in the log,
+        # so a photograph taken (or back-dated) a week before the rig was frozen became attributable
+        # to a configuration that did not exist when it was taken -- attribution by coincidence of
+        # spelling. Resolve each capture against the freeze IN EFFECT AT ITS OWN POSITION in the log.
+        freezes = sorted(((h.get("seq"), h.get("setup_hash")) for h in state["setup_history"]
+                          if h.get("setup_hash")), key=lambda x: (x[0] is None, x[0]))
+        bad, premature = [], []
+        for k, c in sorted(state["captures"].items()):
+            h = c.get("setup_hash")
+            seq = c.get("seq")
+            if not h:
+                bad.append("%s r%d (no rig hash)" % k)
+                continue
+            in_effect = None
+            for fseq, fh in freezes:
+                if fseq is None or seq is None or fseq < seq:
+                    in_effect = fh
+            if in_effect is None:
+                premature.append("%s r%d" % k)
+            elif h != in_effect:
+                premature.append("%s r%d (cites %s, rig in effect was %s)"
+                                 % (k[0], k[1], str(h)[:8], str(in_effect)[:8]))
+        if bad or premature:
+            return False, ("%d capture(s) carry no rig hash and %d cite a configuration that was "
+                           "not the one in effect when they were taken"
+                           % (len(bad), len(premature))), \
+                   "these were taken before the rig was frozen, or under a configuration recorded " \
+                   "later. Re-take them, or record the configuration they were taken under as a " \
+                   "deviation.", {"no_hash": bad[:6], "wrong_rig": premature[:6]}
+        return True, "all %d captures carry the rig hash in effect when they were taken" \
+               % len(state["captures"]), None, {}
+
+    def c_one_rig():
+        """The gated states must have been captured under ONE rig, or the change must be recorded.
+
+        The rig could be re-frozen mid-session: half the captures under one configuration and half
+        under another, the calibration never re-run against the new one, and nothing saying the
+        camera had moved. Every capture was individually 'attributable', and the session as a whole
+        described two rigs.
+        """
+        used = {}
+        for k, c in state["captures"].items():
+            if c.get("state") in states and c.get("setup_hash"):
+                used.setdefault(c["setup_hash"], []).append("%s r%d" % k)
+        if len(used) <= 1:
+            return True, "one rig configuration across %d captures" % len(state["captures"]), \
+                   None, {}
+        recorded = {d.get("field") for d in state["deviations"] if d.get("kind") == "rig"}
+        if not recorded:
+            return False, ("the captures in these states were taken under %d different rig "
+                           "configurations and no rig deviation was recorded"
+                           % len(used)), \
+                   "re-freeze deliberately with `pilot.py setup --reason ...`, which records what " \
+                   "changed, or re-take the frames from the earlier configuration", \
+                   {"configurations": {h[:8]: v[:3] for h, v in used.items()}}
+        return True, "%d rig configurations, with the change recorded as a deviation" % len(used), \
+               None, {"configurations": sorted(h[:8] for h in used)}
 
     _guard(blocks, satisfied, "rig.frozen", c_setup_frozen)
     _guard(blocks, satisfied, "rig.calibrated", c_setup_checks)
     _guard(blocks, satisfied, "rig.board_square_measured", c_board_square)
     _guard(blocks, satisfied, "rig.captures_attributable", c_captures_carry_setup)
+    _guard(blocks, satisfied, "rig.one_configuration", c_one_rig)
 
     # --- measurements ---------------------------------------------------------------------
     def c_measurements():
@@ -376,6 +451,16 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                     unresolved.append("%s r%d (never checked)" % key)
                     continue
                 out = q.get("outcome")
+                recomputed = QA.roll_up([QA.Check(c.get("check_id", "?"), c.get("outcome", QA.UNAVAILABLE),
+                                                  c.get("detail", ""))
+                                         for c in (q.get("checks") or [])])
+                if recomputed != out:
+                    # The verdict is a roll-up of the checks stored beside it. If the two disagree,
+                    # the outcome was written by something other than the checker, and appending a
+                    # forged one leaves the hash chain perfectly intact.
+                    failing.append("%s r%d (recorded %s, but its own checks roll up to %s)"
+                                   % (key[0], key[1], out, recomputed))
+                    continue
                 if out == QA.PASS:
                     continue
                 if out == QA.HUMAN:

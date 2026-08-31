@@ -102,7 +102,7 @@ class Store(object):
                 st["setup"] = p.get("setup")
                 st["setup_hash"] = p.get("setup_hash")
                 st["setup_history"].append({"setup_hash": p.get("setup_hash"), "ts": e.get("ts"),
-                                            "reason": p.get("reason")})
+                                            "seq": e.get("seq"), "reason": p.get("reason")})
             elif k == "setup_check":
                 st["setup_checks"][p.get("check")] = p
             elif k == "feature_answers":
@@ -112,8 +112,8 @@ class Store(object):
                 st["measurements"][p.get("name")] = p
             elif k == "capture":
                 st["captures"][(p.get("shot_id"), int(p.get("rep", 1)))] = dict(
-                    p, ts=e.get("ts"), setup_hash=e.get("setup_hash"), operator=e.get("operator"),
-                    chain=e.get("chain"))
+                    p, ts=e.get("ts"), seq=e.get("seq"), setup_hash=e.get("setup_hash"),
+                    operator=e.get("operator"), chain=e.get("chain"))
             elif k == "qa_result":
                 key = (p.get("shot_id"), int(p.get("rep", 1)))
                 rec = dict(p, ts=e.get("ts"), seq=e.get("seq"))

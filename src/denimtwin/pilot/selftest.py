@@ -949,7 +949,73 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       % [x["why"][:70] for x in meta3["expansion_blocked"]],
                       "vanishing is the one outcome a required photograph may not have"))
 
-    # -- 41. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 41. a photograph taken before the rig was frozen ------------------------------------------
+    b = new("backdated", spec=mini_sp, gid="DENIM_9215")
+    b.open_session()
+    sh_ = mini_sp.shots[0]
+    # A capture recorded BEFORE any setup_frozen entry, citing a hash frozen later.
+    b.store.append("capture", {"shot_id": sh_["shot_id"], "rep": 1,
+                               "path": "images/before/x.png", "sha256": "d" * 64,
+                               "state": "before", "region_id": sh_["region_id"]},
+                   operator="forger", setup_hash=b.setup_hash)
+    b.freeze_rig(); b.answer_features(); b.measure()
+    out.append(Result("a photograph taken before the rig was frozen is not attributable to it",
+                      "rig.captures_attributable" in b.blocked_conditions(check_files=False),
+                      "capture at sequence 1 citing a rig frozen at sequence 2",
+                      "attribution was set membership over the whole log, so a frame back-dated a "
+                      "week before the freeze became attributable to a configuration that did not "
+                      "exist when it was taken"))
+
+    # -- 42. re-freezing the rig mid-session -------------------------------------------------------
+    b, sp = complete_mini("refreeze", gid="DENIM_9216")
+    assert b.gate().ready
+    other_setup = dict(b.setup, mount_height_cm=b.setup["mount_height_cm"] + 12.0)
+    h2 = setup_hash(other_setup)
+    b.store.append("setup_frozen", {"setup": other_setup, "setup_hash": h2,
+                                    "reason": "moved the camera"}, operator="forger")
+    sh_ = b.activated()[0][0]
+    b.add(sh_, 1, b.synth_for(sh_, 1, seed=7777), setup_hash_override=h2)
+    out.append(Result("captures split across two rig configurations block unless the change is recorded",
+                      "rig.one_configuration" in b.blocked_conditions(check_files=False),
+                      "half the session under one rig hash, half under another, no deviation",
+                      "every capture was individually attributable while the session as a whole "
+                      "described two rigs, with the calibration never re-run against the second"))
+
+    # -- 43. the board-square measurement is arithmetic on typed numbers ----------------------------
+    for label, kw, why in (
+            ("one square spanned", dict(board_mm=25.0, squares=1),
+             "a rule read to 0.5 mm over one 25 mm square is a 2% measurement"),
+            ("a fractional count", dict(board_mm=62.5, squares=2.5),
+             "squares are whole things"),
+            ("more squares than the board has", dict(board_mm=500.0, squares=20),
+             "the board is 8 x 11")):
+        b = new("boardarith" + label[:6].replace(" ", ""), spec=mini_sp,
+                gid="DENIM_92%02d" % (17 + ["one square spanned", "a fractional count",
+                                            "more squares than the board has"].index(label)))
+        b.open_session(); b.answer_features(); b.measure(); b.freeze_rig(**kw)
+        out.append(Result("the board-square measurement refuses %s" % label,
+                          "rig.board_square_measured" in b.blocked_conditions(check_files=False),
+                          "measured_mm=%(board_mm)s over %(squares)s squares" % kw, why))
+
+    # -- 44. a verdict must agree with the checks stored beside it ------------------------------------
+    b, sp = complete_mini("forgedverdict", gid="DENIM_9220")
+    assert b.gate().ready
+    st_, _ = b.store.fold()
+    (sid_, rep_), q_ = sorted(st_["qa"].items())[0]
+    cap_ = st_["captures"][(sid_, rep_)]
+    forged = [dict(c) for c in (q_.get("checks") or [])]
+    if forged:
+        forged[0]["outcome"] = QA.RETAKE
+    b.store.append("qa_result", {"shot_id": sid_, "rep": rep_, "outcome": QA.PASS,
+                                 "capture_sha256": cap_["sha256"], "checks": forged},
+                   operator="forger")
+    out.append(Result("a verdict that disagrees with its own checks is refused",
+                      not b.gate(check_files=False).ready,
+                      "appended outcome=PASS over a check list containing a RETAKE",
+                      "the outcome is a roll-up of the checks stored beside it; writing one that "
+                      "does not follow from them leaves the hash chain perfectly intact"))
+
+    # -- 45. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

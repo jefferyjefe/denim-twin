@@ -347,6 +347,30 @@ def validate_answers(spec, answers):
     return out
 
 
+#: The rig fields tools/pilot.py asks for. A configuration missing them is not a frozen rig: the
+#: API used to hash whatever arrived, so `{}` froze an empty rig and all ten calibration readings
+#: could be posted as PASS without a camera, a backdrop or a board existing.
+REQUIRED_SETUP_FIELDS = ("camera_model", "mount_height_cm", "lens", "backdrop", "lighting",
+                         "leg_gap_cm", "exposure_locked", "room")
+
+
+def validate_setup(cfg):
+    if not isinstance(cfg, dict):
+        raise BadInput("setup must be an object")
+    out = {}
+    for k in REQUIRED_SETUP_FIELDS:
+        v = cfg.get(k)
+        if v is None or (isinstance(v, str) and not v.strip()):
+            raise BadInput("the rig configuration is missing %s; a frozen rig has to say what it "
+                           "is" % k)
+        out[k] = v
+    out["mount_height_cm"] = _num(out["mount_height_cm"], "mount_height_cm")
+    out["leg_gap_cm"] = _num(out["leg_gap_cm"], "leg_gap_cm")
+    for k, v in cfg.items():
+        out.setdefault(k, v)
+    return out
+
+
 def build_api(session):
     """Every handler takes (match, query, body) because the dispatcher passes all three.
 
@@ -441,7 +465,10 @@ def build_api(session):
     @api.route("POST", "/api/setup/(DENIM_[0-9]{4})")
     def _setup(m, _q, b):
         st = session.store(m.group(1))
-        cfg = b.get("setup") or {}
+        try:
+            cfg = validate_setup(b.get("setup") or {})
+        except BadInput as e:
+            return 400, {"error": str(e)}
         h = setup_hash(cfg)
         st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
                                    "reason": b.get("reason") or "frozen from the app"},
