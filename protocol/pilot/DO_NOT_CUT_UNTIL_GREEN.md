@@ -33,7 +33,15 @@ this is safe' is not permission.
 | `cut.second_person_verified` | a second person measured both marks within 3 mm |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
 
-On the most demanding garment the plan can describe, that is **209 required frames** before
+Two later gates add their own, and `pilot.py gate ready_to_wash` / `ready_to_finalize` check them:
+
+| condition | what must be true |
+|---|---|
+| `offcuts.assigned` | exactly two offcuts, one per leg, two defined conditions, the left/right alternation intact across garments |
+| `wash.planned` | a complete wash plan, written once and not revised |
+| `wash.actual` | what actually happened, with every departure from the plan recorded |
+
+On the most demanding garment the plan can describe, that is **201 required frames** before
 the cut.
 
 ## The four results a photograph can get

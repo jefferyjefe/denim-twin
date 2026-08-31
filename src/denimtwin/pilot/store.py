@@ -126,7 +126,7 @@ class Store(object):
             "deviations": [],
             "state": None, "state_history": [],
             "cut_spec": None,
-            "wash_planned": None, "wash_actual": None,
+            "wash_planned": None, "wash_actual": None, "wash_plan_rewrites": [],
             "offcuts": {},
             "notes": [],
             "unknown_kinds": [],
@@ -195,7 +195,14 @@ class Store(object):
             elif k == "cut_spec":
                 st["cut_spec"] = dict(p, ts=e.get("ts"))
             elif k == "wash_planned":
-                st["wash_planned"] = dict(p, ts=e.get("ts"))
+                # FIRST write wins. Last-write-wins let a second plan be appended after the wash to
+                # match whatever happened, and the deviation -- which is the difference between the
+                # two -- then computed to nothing. The invariant this log exists to hold is that
+                # planned and actual cannot collapse.
+                if st["wash_planned"] is None:
+                    st["wash_planned"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                else:
+                    st["wash_plan_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_actual":
                 st["wash_actual"] = dict(p, ts=e.get("ts"))
             elif k == "offcut":
@@ -312,8 +319,12 @@ def diff_planned_actual(planned, actual):
     if not planned or not actual:
         return []
     out = []
+    # Envelope metadata is not a wash setting. Excluding a fixed list let each new envelope field
+    # (ts, then seq) leak in as a "deviation" the operator would have to explain.
+    envelope = {"ts", "seq", "recorded_by", "operator", "chain", "prev_chain", "kind", "schema",
+                "setup_hash"}
     for k in sorted(set(list(planned.keys()) + list(actual.keys()))):
-        if k in ("ts", "recorded_by"):
+        if k in envelope:
             continue
         pv, av = planned.get(k), actual.get(k)
         if pv is None and av is None:

@@ -746,17 +746,29 @@ def cmd_finalize(a):
     st = Store(gdir)
     v = GATES.evaluate("ready_to_finalize", spec, st, garment_dir=gdir, rehash=True)
     _print_verdict(v)
+    if not v.ready:
+        print("\nthe committable manifest is not written until the gate opens: a sanitised copy of "
+              "a session that did not pass is a record that looks finished and is not.")
+        return FAIL
     out = gdir / "pilot" / "manifest.sanitised.json"
     try:
         sanitised, problems = st.manifest.sanitised(ROOT)
     except Exception as e:
         print("\nrefusing to write the committable manifest: %s" % e)
         return FAIL
+    if problems:
+        # `problems` was bound and thrown away. It carries chain breaks and torn lines -- exactly
+        # what must not be sanitised into something that reads as a clean record.
+        print("\nrefusing to write the committable manifest: the log reports %d integrity "
+              "problem(s):" % len(problems))
+        for pr in problems[:5]:
+            print("   %s: %s" % (pr["kind"], pr["detail"]))
+        return FAIL
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(sanitised, indent=1, sort_keys=True) + "\n")
     print("\nwrote %s (%d entries, absolute paths and location EXIF removed)"
           % (out.relative_to(ROOT), len(sanitised)))
-    return OK if v.ready else FAIL
+    return OK
 
 
 def cmd_selftest(a):

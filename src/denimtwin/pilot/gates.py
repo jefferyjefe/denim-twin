@@ -82,6 +82,11 @@ MIN_BOARD_SQUARES_SPANNED = 4
 #: The board is 8 x 11 squares (protocol/charuco_board.json), so a run cannot exceed 11.
 BOARD_MAX_SQUARES = 11
 
+#: Every field the wash record carries, planned and actual alike. PROTOCOL.md 4 fixes the cycle.
+WASH_FIELDS = ("machine", "location", "cycle", "water_temp_c", "spin_rpm", "detergent",
+               "detergent_ml", "filler_load", "start_time", "end_time", "dryer_method",
+               "dryer_setting", "dryer_minutes", "conditioning_start", "conditioning_end")
+
 #: Second-person verification of the cut marks. PROTOCOL.md 3.2 sets this.
 CUT_MARK_TOLERANCE_MM = 3.0
 
@@ -781,32 +786,117 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     if gate_id in ("ready_to_wash", "ready_to_finalize"):
         def c_offcuts():
             from . import offcut as OFF
+            gid = garment_dir.name
+            want = {"%s_OFFCUT_L" % gid, "%s_OFFCUT_R" % gid}
             oc = state["offcuts"]
-            if len(oc) < 2:
-                return False, ("%d offcut sample(s) recorded; the protocol keeps two and washes "
-                               "them under different conditions" % len(oc)), \
-                       "run `pilot.py offcut plan --assign auto` to record the assignment the " \
-                       "alternation rule computes", {"have": sorted(oc)}
+            # Identity first. Everything below keys off the label, which is free text, so two
+            # records labelled ..._OFFCUT_L and ..._OFFCUT_L2 were two samples as far as the count
+            # was concerned and one leg as far as the experiment was concerned.
+            if set(oc) != want:
+                return False, ("the offcut records are %s; this garment's two samples are %s"
+                               % (", ".join(sorted(oc)) or "none", ", ".join(sorted(want)))), \
+                       "run `pilot.py offcut plan --assign auto`, which writes both labels", \
+                       {"have": sorted(oc), "want": sorted(want)}
+            legs = {str(v.get("originating_leg", ""))[:1].lower() for v in oc.values()}
+            if legs != {"l", "r"}:
+                return False, ("both offcut records name the same leg (%s); they are two samples "
+                               "from two legs" % ", ".join(sorted(legs))), \
+                       "correct the originating_leg on the offcut records", {"legs": sorted(legs)}
             assigned = [v for v in oc.values() if v.get("assigned_wash_condition")]
             if len(assigned) < 2:
                 return False, "both offcuts must have a wash condition assigned before the wash", \
                        "run `pilot.py offcut plan --assign auto`", {}
-            conds = {v.get("assigned_wash_condition") for v in oc.values()}
+            unknown = [v.get("assigned_wash_condition") for v in assigned
+                       if OFF.classify(v.get("assigned_wash_condition")) is None]
+            if unknown:
+                return False, ("an offcut is assigned a condition this protocol does not define: "
+                               "%s" % ", ".join(repr(u) for u in unknown[:3])), \
+                       "the conditions are %s" % ", ".join(OFF.CONDITIONS), {"unknown": unknown}
+            # Distinctness over the ASSIGNED records only. Built over every record, one bare extra
+            # entry with no condition put a None into the set and made two identical conditions
+            # look like two.
+            conds = {v["assigned_wash_condition"] for v in assigned}
             if len(conds) < 2:
                 return False, ("both offcuts are assigned the same condition (%s), so the pair "
                                "measures nothing" % ", ".join(sorted(conds))), \
-                       "the two offcuts exist to be washed differently; re-assign", {}
+                       "the two offcuts exist to be washed differently; re-assign", \
+                       {"conditions": sorted(conds)}
             alt = OFF.check_alternation(garment_dir.parent)
+            if alt.get("unclassified"):
+                return False, ("%d sibling garment(s) record an offcut condition this code cannot "
+                               "classify, so whether the alternation holds is unknown: %s"
+                               % (len(alt["unclassified"]),
+                                  ", ".join(u["garment_id"] for u in alt["unclassified"][:3]))), \
+                       ("record those conditions in the protocol's vocabulary (%s)"
+                        % ", ".join(OFF.CONDITIONS)), {"unclassified": alt["unclassified"][:3]}
             if not alt["alternating"]:
-                return False, ("the left/right alternation is broken across garments (%s): leg and "
-                               "wash condition are confounded"
-                               % "".join(alt["sequence"])), \
-                       "PROTOCOL.md 7 alternates which leg goes in with the garment; record the " \
-                       "deviation deliberately if it cannot be fixed", {"breaks": alt["breaks"][:3]}
-            return True, "two offcuts, two conditions, alternation intact (%s)" % \
+                excused = any(d.get("kind") == "offcut_alternation" for d in state["deviations"])
+                if not excused:
+                    return False, ("the left/right alternation is broken across garments (%s): leg "
+                                   "and wash condition are confounded"
+                                   % "".join(alt["sequence"])), \
+                           "PROTOCOL.md 7 alternates which leg goes in with the garment; if it " \
+                           "cannot be fixed, record it deliberately as a deviation of kind " \
+                           "'offcut_alternation'", {"breaks": alt["breaks"][:3]}
+                return True, ("the alternation is broken (%s) and the departure is recorded as a "
+                              "deviation" % "".join(alt["sequence"])), None, \
+                       {"breaks": alt["breaks"][:3]}
+            return True, "two offcuts, two legs, two conditions, alternation intact (%s)" % \
                    "".join(alt["sequence"]), None, {}
 
         _guard(blocks, satisfied, "offcuts.assigned", c_offcuts)
+
+        def c_wash_planned():
+            wp = state["wash_planned"]
+            if not wp:
+                return False, "no wash has been planned", \
+                       "run `pilot.py wash <GARMENT>` before the load goes in", {}
+            missing = [k for k in WASH_FIELDS if wp.get(k) in (None, "")]
+            if missing:
+                return False, "the wash plan is missing %s" % ", ".join(missing[:6]), \
+                       "re-record the plan with every field", {"missing": missing}
+            if state["wash_plan_rewrites"]:
+                return False, ("the wash plan was written %d more time(s) after the first; the "
+                               "planned settings are what the deviation is measured against and "
+                               "cannot be revised to match what happened"
+                               % len(state["wash_plan_rewrites"])), \
+                       "the first plan stands. Record the difference as a deviation instead.", \
+                       {"rewrites": [r["seq"] for r in state["wash_plan_rewrites"]][:5]}
+            return True, "wash planned: %s, %s" % (wp.get("machine"), wp.get("cycle")), None, {}
+
+        _guard(blocks, satisfied, "wash.planned", c_wash_planned)
+
+    if gate_id == "ready_to_finalize":
+        def c_wash_actual():
+            """The wash actually happened, and its deviations from the plan are recorded.
+
+            ready_to_finalize differed from ready_to_wash by one state and added no condition of its
+            own, so a garment could be photographed after washing with no record that it had been
+            washed, under what settings, or how far those departed from the plan. The whole
+            experiment is one wash.
+            """
+            wa, wp = state["wash_actual"], state["wash_planned"]
+            if not wa:
+                return False, "no actual wash settings were recorded", \
+                       "run `pilot.py wash <GARMENT> --actual` with what really happened", {}
+            missing = [k for k in WASH_FIELDS if wa.get(k) in (None, "")]
+            if missing:
+                return False, "the actual wash record is missing %s" % ", ".join(missing[:6]), \
+                       "re-record it with every field", {"missing": missing}
+            from .store import diff_planned_actual
+            devs = diff_planned_actual(wp, wa)
+            recorded = {d.get("field") for d in state["deviations"] if d.get("kind") == "wash"}
+            unrecorded = [d["field"] for d in devs if d["field"] not in recorded]
+            if unrecorded:
+                return False, ("%d wash setting(s) departed from the plan without a recorded "
+                               "deviation: %s" % (len(unrecorded), ", ".join(unrecorded[:6]))), \
+                       "record each departure; the planned settings are never overwritten, and a " \
+                       "deviation nobody wrote down is a deviation nobody can allow for", \
+                       {"unrecorded": unrecorded}
+            return True, "wash recorded, %d deviation(s) from the plan, all recorded" % len(devs), \
+                   None, {"deviations": [d["field"] for d in devs]}
+
+        _guard(blocks, satisfied, "wash.actual", c_wash_actual)
 
     if gate_id == "ready_to_cut":
         def c_cut_spec():

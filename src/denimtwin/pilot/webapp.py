@@ -625,6 +625,18 @@ def build_api(session):
             return 400, {"error": "record the planned wash first; actual settings never replace "
                                   "planned ones"}
         rec = dict(b.get("wash") or {})
+        missing = [k for k in GATES.WASH_FIELDS if rec.get(k) in (None, "")]
+        if missing:
+            return 400, {"error": "a wash record needs every field; missing: %s"
+                                  % ", ".join(missing)}
+        for k in ("water_temp_c", "spin_rpm", "detergent_ml", "dryer_minutes"):
+            try:
+                rec[k] = _num(rec.get(k), k)
+            except BadInput as e:
+                return 400, {"error": str(e)}
+        if not b.get("actual") and st["wash_planned"]:
+            return 400, {"error": "this garment already has a wash plan; the planned settings are "
+                                  "what a deviation is measured against and are not revised"}
         store.append(which, rec, operator=b.get("operator"))
         devs = []
         if b.get("actual"):
@@ -636,7 +648,15 @@ def build_api(session):
     @api.route("POST", "/api/offcut/(DENIM_[0-9]{4})")
     def _offcut(m, _q, b):
         store = session.store(m.group(1))
+        from . import offcut as OFF
         rec = dict(b.get("offcut") or {})
+        cond = rec.get("assigned_wash_condition")
+        if cond is not None and OFF.classify(cond) is None:
+            return 400, {"error": "%r is not a wash condition this protocol defines; it must be "
+                                  "one of %s" % (cond, ", ".join(OFF.CONDITIONS))}
+        leg = str(rec.get("originating_leg", ""))[:1].lower()
+        if rec.get("originating_leg") is not None and leg not in ("l", "r"):
+            return 400, {"error": "originating_leg must be left or right"}
         lbl = rec.get("label")
         if not isinstance(lbl, str) or not lbl.strip():
             # A JSON array passes a truthiness test and then cannot be a projection key, which made

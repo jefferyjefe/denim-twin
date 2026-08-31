@@ -201,6 +201,12 @@ class Manifest(object):
                                                "not a log entry" % (i + 1),
                                      "raw_prefix": line[:120]})
                     continue
+                if not all(k in obj for k in ("chain", "prev_chain", "seq")):
+                    problems.append({"kind": "entry_missing_chain", "line_no": i + 1,
+                                     "detail": "line %d is an object but carries no chain, so it "
+                                               "was not written by the appender" % (i + 1),
+                                     "raw_prefix": line[:120]})
+                    continue
                 entries.append(obj)
             except ValueError:
                 if i == len(raw) - 1 or not any(x.strip() for x in raw[i + 1:]):
@@ -264,7 +270,7 @@ class Manifest(object):
                 recs.append(r)
         if not recs:
             return [{"kind": "head_unreadable", "detail": "the head record is empty"}]
-        want_chain = entries[-1]["chain"] if entries else self.seed
+        want_chain = entries[-1].get("chain") if entries else self.seed
         out = []
         high = max(int(r.get("count") or 0) for r in recs)
         if len(entries) < high:
@@ -300,7 +306,7 @@ class Manifest(object):
     def head_chain(self, entries=None):
         if entries is None:
             entries, _ = self.read(verify=False)
-        return entries[-1]["chain"] if entries else self.seed
+        return (entries[-1].get("chain") or self.seed) if entries else self.seed
 
     # -- writing ------------------------------------------------------------------------------
 

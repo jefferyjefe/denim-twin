@@ -88,6 +88,14 @@ SCENARIOS = [
     'a fabricated mean does not size the hem series or place the cut',
     'a cut verification that names nobody does not verify',
     "a capture that mislabels its own state does not count as that shot's evidence",
+    'a verification naming a photograph that does not exist yet does not clear it',
+    'a later verdict on the same photograph cannot improve an earlier one',
+    'a capture path that leaves the garment directory is refused',
+    'every state in the specification is required by some gate',
+    "two offcuts from the same leg are not the protocol's pair",
+    'an offcut condition the protocol does not define is refused',
+    'the post-wash gate requires the wash to have been recorded',
+    'the wash plan cannot be rewritten after the wash to match what happened',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

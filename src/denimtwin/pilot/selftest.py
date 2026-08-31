@@ -1191,7 +1191,127 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "matched on shot id alone, so a frame could mislabel its state to escape the "
                       "first and still satisfy the second"))
 
-    # -- 54. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 54. a verification naming a photograph that does not exist yet ------------------------------
+    b = new("preclearsha", spec=mini_sp, gid="DENIM_9230")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    sh_ = b.activated()[0][0]
+    src_ = b.synth_for(sh_, 1)
+    from .manifest import sha256_file as _sha
+    known = _sha(src_)
+    for claim in ("ruler_visible", "side_confirmed", "region_confirmed", "subject_span",
+                  "garment_side", "anatomical_region"):
+        b.store.append("human_verification",
+                       {"shot_id": sh_["shot_id"], "rep": 1, "claim": claim, "value": True,
+                        "verifier_name": "forger", "operator": "forger",
+                        "capture_sha256": known}, operator="forger")
+    b.add(sh_, 1, src_, confirm_all=False)
+    st_, _ = b.store.fold()
+    out.append(Result("a verification naming a photograph that does not exist yet does not clear it",
+                      not _resolved(st_, sh_["shot_id"], 1),
+                      "pre-recorded verifications carrying the file's hash, then ingested it",
+                      "the rule accepted a verification that named the capture's hash OR postdated "
+                      "it, and the API takes that hash straight from the client"))
+
+    # -- 55. a second verdict may not improve the first -----------------------------------------------
+    b, sp = complete_mini("worstwins", gid="DENIM_9231")
+    st_, _ = b.store.fold()
+    (sid_, rep_), q_ = sorted(st_["qa"].items())[0]
+    cap_ = st_["captures"][(sid_, rep_)]
+    b.store.append("qa_result", {"shot_id": sid_, "rep": rep_, "outcome": QA.RETAKE,
+                                 "capture_sha256": cap_["sha256"],
+                                 "checks": [dict(c) for c in (q_.get("checks") or [])],
+                                 "not_applicable": q_.get("not_applicable")}, operator="selftest")
+    b.store.append("qa_result", {"shot_id": sid_, "rep": rep_, "outcome": QA.PASS,
+                                 "capture_sha256": cap_["sha256"],
+                                 "checks": [dict(c) for c in (q_.get("checks") or [])],
+                                 "not_applicable": q_.get("not_applicable")}, operator="forger")
+    out.append(Result("a later verdict on the same photograph cannot improve an earlier one",
+                      not b.gate(check_files=False).ready,
+                      "RETAKE then PASS on the same sha; the worse one stands",
+                      "re-running a checker on one frame is deterministic, so two verdicts that "
+                      "disagree about it are evidence of tampering"))
+
+    # -- 56. a capture path that leaves the garment directory -------------------------------------------
+    b, sp = complete_mini("traversal", gid="DENIM_9232")
+    st_, _ = b.store.fold()
+    (sid_, rep_), cap_ = sorted(st_["captures"].items())[0]
+    b.store.append("capture", dict(cap_, shot_id="BEFORE.WHOLE.ESCAPED",
+                                   path="../../../etc/hosts"),
+                   operator="forger", setup_hash=cap_.get("setup_hash"))
+    out.append(Result("a capture path that leaves the garment directory is refused",
+                      "captures.files_intact" in b.blocked_conditions(),
+                      "recorded a path of ../../../etc/hosts",
+                      "only the basename was checked, so a path could satisfy the naming rule and "
+                      "point the evidence anywhere"))
+
+    # -- 57. every state the specification declares is guarded by some gate -----------------------------
+    declared = {st_["state"] for st_ in full_spec.states}
+    covered = set()
+    for g in GATES.GATE_LAST_STATE:
+        covered |= set(GATES.gate_states(full_spec, g))
+    out.append(Result("every state in the specification is required by some gate",
+                      declared == covered,
+                      "declared %d states, gates cover %d; uncovered: %s"
+                      % (len(declared), len(covered), sorted(declared - covered) or "none"),
+                      "the state sets were listed by hand and fell behind the plan: the offcut "
+                      "states appeared in none of them, so a hundred required frames -- the whole "
+                      "offcut experiment -- were guarded by nothing"))
+
+    # -- 58. the offcut pair's identity ------------------------------------------------------------------
+    b = new("offcutid", spec=mini_sp, gid="DENIM_9233")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    from . import offcut as _OFF
+    for lbl, leg, cond in (("DENIM_9233_OFFCUT_L", "left", _OFF.WITH_GARMENT),
+                           ("DENIM_9233_OFFCUT_L2", "left", _OFF.SEPARATE_LOAD)):
+        b.store.append("offcut", {"label": lbl, "originating_leg": leg,
+                                  "assigned_wash_condition": cond}, operator="selftest")
+    out.append(Result("two offcuts from the same leg are not the protocol's pair",
+                      "offcuts.assigned" in b.blocked_conditions("ready_to_wash", check_files=False),
+                      "recorded ..._OFFCUT_L and ..._OFFCUT_L2, both from the left leg",
+                      "everything keyed off a free-text label, so two records from one leg counted "
+                      "as two samples"))
+
+    # -- 59. an offcut condition the protocol does not define ---------------------------------------------
+    b = new("offcutvocab", spec=mini_sp, gid="DENIM_9234")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    for lbl, leg, cond in (("DENIM_9234_OFFCUT_L", "left", "in the blue bucket"),
+                           ("DENIM_9234_OFFCUT_R", "right", "the other one")):
+        b.store.append("offcut", {"label": lbl, "originating_leg": leg,
+                                  "assigned_wash_condition": cond}, operator="selftest")
+    out.append(Result("an offcut condition the protocol does not define is refused",
+                      "offcuts.assigned" in b.blocked_conditions("ready_to_wash", check_files=False),
+                      "two distinct free-text conditions that name no arm of the experiment",
+                      "free text let both samples go into the same load under two spellings, and "
+                      "made a broken alternation read as intact"))
+
+    # -- 60. the post-wash gate must require the wash ------------------------------------------------------
+    b, sp = complete_mini("nowash", gid="DENIM_9235")
+    conds = {x.condition for x in b.gate("ready_to_finalize", check_files=False).blocks}
+    out.append(Result("the post-wash gate requires the wash to have been recorded",
+                      {"wash.planned", "wash.actual"} <= conds,
+                      "ready_to_finalize blocks on: %s"
+                      % sorted(c for c in conds if c.startswith("wash")),
+                      "it differed from the cut gate by one state and added no condition of its "
+                      "own, so a garment could be photographed after washing with no record that "
+                      "it had been washed, or under what settings"))
+
+    # -- 61. the wash plan cannot be revised to match what happened ----------------------------------------
+    b = new("replan", spec=mini_sp, gid="DENIM_9236")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    plan_a = {k: (30.0 if k == "water_temp_c" else "x") for k in GATES.WASH_FIELDS}
+    b.store.append("wash_planned", plan_a, operator="selftest")
+    b.store.append("wash_actual", dict(plan_a, water_temp_c=60.0), operator="selftest")
+    b.store.append("wash_planned", dict(plan_a, water_temp_c=60.0), operator="forger")
+    st_, _ = b.store.fold()
+    conds = {x.condition for x in b.gate("ready_to_finalize", check_files=False).blocks}
+    out.append(Result("the wash plan cannot be rewritten after the wash to match what happened",
+                      st_["wash_planned"]["water_temp_c"] == 30.0 and "wash.planned" in conds,
+                      "appended a second plan at 60 C after washing at 60 C; the first plan (30 C) "
+                      "stands and the rewrite is reported",
+                      "last-write-wins let the plan be revised to match the outcome, and the "
+                      "deviation -- the difference between the two -- then computed to nothing"))
+
+    # -- 62. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
