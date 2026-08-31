@@ -108,6 +108,37 @@ the safe reading is the worse one.
 timestamp let a future-dated approval outrank a real retraction appended after it. Log position is
 stamped by the appender; the payload's clock is not.
 
+## Round 3 — the angles run by hand
+
+Round 3's agents were blocked on their first attempt by an account session limit, so three of its
+four angles were run directly instead. Two found something.
+
+**`pilot.py add` with a FIFO hung forever.** It passed every existence test and then blocked inside
+the copy, waiting for a writer that never came. A hang is worse than a refusal: the operator cannot
+tell it from slow work, and the gate never answers at all. Ingestion now requires a regular,
+non-empty file.
+
+**Eight hostile inputs exited non-zero while printing a traceback** — a cut inseam of zero, of
+infinity, of NaN; a source that is a directory or missing. Non-zero is technically a refusal and a
+stack trace is not one: it says something broke, not what to do. The command line now catches its
+own exception types and prints a sentence, which is the rule the gate already held one level down.
+
+The rest held:
+
+- Ordering. Reps ingested out of order, a repeat with no first capture, an entry with no sequence
+  number, a duplicated sequence number, and a capture appended before the rig freeze it cites — all
+  blocked, and none crashed.
+- The checker. An empty backdrop, a field of pure noise and a flat grey field, each with a real
+  detected board and each at the resolution the shot demands, were offered as whole-garment frames
+  with the operator confirming the ruler, the side and the region. All three refused, by content
+  rather than arithmetic.
+
+One thing that probe establishes and should not be overstated: the side check PASSED, because the
+operator asserted it and the pixels genuinely cannot settle which face of a garment is up. That is
+the honest answer, and it is recorded as an assertion with a name on it — but a determined operator
+can still confirm something untrue. No arrangement of software fixes that. What the system can do is
+make the claim attributable, and it does.
+
 ## What the attacks did not break
 
 Worth recording, because they are the parts that held:
