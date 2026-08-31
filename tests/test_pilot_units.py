@@ -294,3 +294,35 @@ def test_the_later_half_of_a_matched_pair_is_offered_its_earlier_image(tmp_path)
     assert ghost and ghost["shot_id"] == earlier
     assert "never evidence" in ghost["note"]
     assert ghost["url"].startswith("/photo?p=DENIM_0003/")
+
+
+# -- what may enter the repository -------------------------------------------------------------------
+
+def test_the_raw_capture_log_is_gitignored_and_the_sanitised_one_is_not():
+    """The local log carries full EXIF, which on a phone includes GPS.
+
+    data/external/README.md already says only derived numbers enter this repository and .gitignore
+    keeps the photographs out. Their coordinates have to be kept out too, and the sanitised
+    projection is the only form that may be committed.
+    """
+    # The RULES, not the prose: the comment above them names the sanitised file, and matching on
+    # raw text would read that explanation as a rule.
+    rules = [ln.strip() for ln in (ROOT / ".gitignore").read_text().splitlines()
+             if ln.strip() and not ln.strip().startswith("#")]
+    assert "data/garments/**/pilot/manifest.jsonl" in rules
+    assert not [r for r in rules if "sanitised" in r], (
+        "the sanitised manifest is the committable form; ignoring it would leave nothing to commit")
+
+
+def test_sanitisation_drops_location_tags_and_absolute_paths(tmp_path):
+    from denimtwin.pilot.manifest import Manifest, sanitise_exif
+    m = Manifest(tmp_path / "manifest.jsonl")
+    m.append("capture", {"shot_id": "A.B", "rep": 1, "path": "images/before/x.jpg",
+                         "exif": {"Make": "Apple", "GPSLatitude": "51.5",
+                                  "GPSInfo": {"1": "N"}, "DateTimeOriginal": "2026:08:31 10:00:00"}})
+    out, problems = m.sanitised(tmp_path)
+    assert not problems
+    exif = out[0]["payload"]["exif"]
+    assert "Make" in exif and "DateTimeOriginal" in exif
+    assert not [k for k in exif if str(k).startswith("GPS")]
+    assert sanitise_exif({"GPSLatitude": 1, "Model": "x"}) == {"Model": "x"}

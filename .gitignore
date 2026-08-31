@@ -40,3 +40,11 @@ experiments/**/*.jpeg
 # comparison's numbers enter the repository, for the reason above.
 experiments/pairs_lmprov_control/
 experiments/pairs_lmprov_refit/
+
+# The pilot capture log in its LOCAL form. It carries full EXIF -- which on a phone includes GPS --
+# and it is the working copy the session appends to. Only the sanitised projection may enter the
+# repository: `tools/pilot.py finalize` writes manifest.sanitised.json with location tags dropped and
+# every path made repo-relative, and refuses to write at all if an absolute path survives.
+data/garments/**/pilot/manifest.jsonl
+data/garments/**/pilot/manifest.jsonl.torn
+data/garments/**/pilot/.incoming/
