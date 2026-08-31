@@ -28,7 +28,7 @@ from . import qa as QA
 from . import spec as SPEC
 from .manifest import ingest_photo, read_exif, exif_timestamp
 from .server import Api, serve
-from .store import Store, setup_hash, diff_planned_actual
+from .store import Store, setup_hash, diff_planned_actual, mean_of
 
 
 def _to_path(poly):
@@ -149,7 +149,7 @@ class Session(object):
 
         # hem loops
         hems = []
-        lo = (st["measurements"].get("leg_opening_cm") or {}).get("mean")
+        lo = mean_of(st["measurements"].get("leg_opening_cm"))
         for leg in ("left", "right"):
             if lo is None:
                 hems.append({"leg": leg, "available": False,
@@ -215,7 +215,7 @@ class Session(object):
             "features_answered": bool(st["features"]),
             "features": st["features"],
             "assumed_present": meta.get("assumed_present") or [],
-            "measurements": {k: {"mean": v.get("mean"), "readings": v.get("readings"),
+            "measurements": {k: {"mean": mean_of(v), "readings": v.get("readings"),
                                  "in_tolerance": v.get("in_tolerance")}
                              for k, v in st["measurements"].items()},
             "measurements_required": GATES.REQUIRED_MEASUREMENTS,
@@ -589,7 +589,7 @@ def build_api(session):
         from . import cutspec as CUT
         store = session.store(m.group(1))
         st, _ = store.fold()
-        need = lambda k: (st["measurements"].get(k) or {}).get("mean")
+        need = lambda k: mean_of(st["measurements"].get(k))
         missing = [k for k in ("original_inseam_cm", "thigh_cm", "leg_opening_cm") if need(k) is None]
         if missing:
             return 400, {"error": "these measurements are needed first: %s" % ", ".join(missing)}
@@ -624,8 +624,11 @@ def build_api(session):
     def _offcut(m, _q, b):
         store = session.store(m.group(1))
         rec = dict(b.get("offcut") or {})
-        if not rec.get("label"):
-            return 400, {"error": "an offcut needs its physical label"}
+        lbl = rec.get("label")
+        if not isinstance(lbl, str) or not lbl.strip():
+            # A JSON array passes a truthiness test and then cannot be a projection key, which made
+            # the garment permanently ungateable.
+            return 400, {"error": "an offcut needs its physical label as text"}
         store.append("offcut", rec, operator=b.get("operator"))
         return 200, {"ok": True}
 

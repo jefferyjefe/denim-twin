@@ -109,8 +109,12 @@ def expand_hem_series(shot, measurements, cut_spec=None):
     from . import hem as HEM
 
     hs = shot.get("hem_series") or {}
+    from .store import mean_of
     lo = (measurements or {}).get("leg_opening_cm")
-    lo = lo.get("mean") if isinstance(lo, dict) else lo
+    # Recomputed from the readings the gate validated, never read off the record: a fabricated
+    # `mean` beside two honest readings passed every measurement condition and then sized this
+    # series and placed the cut.
+    lo = mean_of(lo) if isinstance(lo, dict) else lo
     if lo is None:
         c = dict(shot)
         c["expansion_blocked"] = (

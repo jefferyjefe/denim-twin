@@ -438,6 +438,15 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             for rep in range(1, int(s.get("min_reps", 1)) + 1):
                 key = (s["shot_id"], rep)
                 q = state["qa"].get(key)
+                cap = state["captures"].get(key)
+                if cap is not None and cap.get("state") and cap["state"] != s["state"]:
+                    # Two projections disagreed about what a capture's state means: the one-rig
+                    # condition trusts the capture's self-declared state while this one matched on
+                    # shot id alone, so a frame could mislabel its state to escape the first and
+                    # still count as the second's evidence.
+                    failing.append("%s r%d (filed under state %r, but the shot belongs to %r)"
+                                   % (key[0], key[1], cap.get("state"), s["state"]))
+                    continue
                 if key not in done:
                     # `done` excludes frames the checker rejected, so "not done" covers two very
                     # different situations and the operator's next move differs: take the
@@ -451,6 +460,20 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     unresolved.append("%s r%d (never checked)" % key)
                     continue
                 out = q.get("outcome")
+                # The record must contain the checks its own shot class can support. Re-deriving the
+                # roll-up from the stored list tests the record against ITSELF: a list of invented
+                # all-PASS checks rolls up to PASS and agrees with a PASS verdict perfectly. So the
+                # MANDATORY set comes from the code -- what this class of frame is checkable for --
+                # and anything absent has to be justified by the record's own not_applicable notes.
+                present = {c.get("check_id") for c in (q.get("checks") or [])}
+                excused = {x.get("check_id") for x in (q.get("not_applicable") or [])}
+                mandatory = set(QA.APPLICABLE.get(QA.shot_class(s), ())) - QA.OPTIONAL_CHECKS
+                absent = sorted(mandatory - present - excused)
+                if absent:
+                    failing.append("%s r%d (its record is missing %d check(s) this kind of frame "
+                                   "is checkable for: %s)"
+                                   % (key[0], key[1], len(absent), ", ".join(absent[:4])))
+                    continue
                 recomputed = QA.roll_up([QA.Check(c.get("check_id", "?"), c.get("outcome", QA.UNAVAILABLE),
                                                   c.get("detail", ""))
                                          for c in (q.get("checks") or [])])
@@ -584,18 +607,38 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     _guard(blocks, satisfied, "captures.repositions_recorded", c_repositions)
 
     def c_reuse_legitimate():
+        """A reuse declaration is judged exactly as a verdict is: re-derived, not asserted.
+
+        Round 1 stopped trusting a bare `outcome` on a qa_result. The identical field on the
+        neighbouring entry kind kept its trust, so one appended declaration could assert PASS and
+        clear the shot it named.
+        """
         bad = []
+        by_shot = {sh["shot_id"]: sh for sh in (activated or [])}
         for r in state["reuse"]:
+            sid = r.get("shot_id")
             if not r.get("source_shot_id") or not r.get("checks_rerun"):
-                bad.append(r.get("shot_id"))
+                bad.append("%s (names no source, or records no re-run checks)" % sid)
                 continue
             if r.get("outcome") != QA.PASS:
-                bad.append(r.get("shot_id"))
+                bad.append("%s (recorded outcome %s)" % (sid, r.get("outcome")))
+                continue
+            shot = by_shot.get(sid)
+            if shot is None:
+                bad.append("%s (not an activated shot)" % sid)
+                continue
+            rerun = set(r.get("checks_rerun") or [])
+            mandatory = set(QA.APPLICABLE.get(QA.shot_class(shot), ())) - QA.OPTIONAL_CHECKS
+            missing = sorted(mandatory - rerun)
+            if missing:
+                bad.append("%s (did not re-run %s)" % (sid, ", ".join(missing[:4])))
         if bad:
-            return False, ("%d image reuse declaration(s) do not record that the borrowed image was "
-                           "re-checked against the borrowing shot's own requirements" % len(bad)), \
+            return False, ("%d image reuse declaration(s) do not establish that the borrowed image "
+                           "was re-checked against the borrowing shot's own requirements"
+                           % len(bad)), \
                    "an image may satisfy a second shot only when every requirement of that shot " \
-                   "passes on it; re-run the check or capture the shot properly", {"shots": bad[:8]}
+                   "passes on it; run `pilot.py reuse`, which re-runs them, or capture the shot", \
+                   {"shots": bad[:8]}
         return True, "%d image reuse declaration(s), each re-checked" % len(state["reuse"]), None, {}
 
     _guard(blocks, satisfied, "captures.reuse_legitimate", c_reuse_legitimate)
@@ -704,6 +747,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                 if not v.get(k):
                     return False, "the second-person verification is missing %s" % k, \
                            "re-record the verification with all fields", {"have": sorted(v.keys())}
+            if not (v.get("operator") or "").strip() or not (v.get("verifier_name") or "").strip():
+                return False, ("the cut-mark verification does not name both the operator and the "
+                               "person who verified"), \
+                       "re-record it with --verifier NAME; a verification with no attribution is " \
+                       "not one", {"operator": v.get("operator"),
+                                   "verifier": v.get("verifier_name")}
             if (v.get("verifier_name") or "").strip().lower() == \
                     (v.get("operator") or "").strip().lower():
                 # PROTOCOL.md 3.2 asks for a SECOND person. verifier_name defaults to the operator

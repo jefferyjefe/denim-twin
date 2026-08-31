@@ -118,6 +118,33 @@ NOT_APPLICABLE_WHY = {
     (VIDEO, "blur"): "a clip's sharpness is not a single frame's Laplacian",
 }
 
+#: Why an applicable check produced no result for a PARTICULAR shot. These are conditions of the
+#: shot, not of its class: a macro scaled by a rule genuinely has no board to measure a scale from,
+#: and saying so is different from saying the scale was fine.
+SHOT_LEVEL_WHY = {
+    "board_corners": "this shot is scaled by a rule rather than the calibration board, so there is "
+                     "no board in frame to count corners on",
+    "scale": "this shot carries no calibration board, so no metric scale can be recovered from it; "
+             "its scale reference is the rule, which a person confirms",
+    "camera_tilt": "scale variation across the board is what measures tilt, and this shot carries "
+                   "no board",
+    "subject_extent": "this shot sets no bound on how much of the frame the subject fills",
+    "subject_span": "this shot names no minimum span for its subject",
+    "resolution": "this shot names no minimum long edge",
+    "ruler_visible": "this shot's scale reference is not a rule",
+    "duplicate_content": "there was no accepted frame to compare this one against",
+    "relay_independence": "no previous repetition of this shot to be independent of",
+    "camera_repositioned": "this frame is not a repeat that follows a camera reposition",
+    "garment_side": "this shot does not declare which face of the garment is up",
+    "anatomical_region": "this shot's region is not one a person is asked to confirm at this range",
+}
+
+#: Checks that only exist when there is something to compare against or a repeat to justify them,
+#: so their absence from a record is not evidence that the checker was skipped. Everything else in
+#: APPLICABLE must appear in a frame's record, or be excused by its own not_applicable note.
+OPTIONAL_CHECKS = frozenset({"duplicate_content", "relay_independence", "camera_repositioned",
+                             "subject_extent", "subject_span", "resolution"})
+
 #: Regions whose frames are labels or tags rather than views of the garment.
 LABEL_REGIONS = ("care_label", "size_tag")
 
@@ -193,13 +220,29 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     def applies(check_id):
         return check_id in ok_here
 
-    def not_applicable():
-        """The checks this class cannot support, recorded so an omission is never read as a pass."""
+    def not_applicable(ran=()):
+        """Every check that did NOT produce a result, and why.
+
+        Two reasons a check does not run, and both have to be recorded. The CLASS may not support it
+        -- a rig frame has no garment whose side could be confirmed. Or this particular SHOT may not
+        require what the check needs: a macro scaled by a rule has no board, so the scale and tilt
+        checks have nothing to measure. The second kind used to leave no trace at all, so 146 of 290
+        shots got no scale or tilt result and nothing said so; an un-run check that is silent cannot
+        be told from one that passed, which is the defect this whole engine is arranged against.
+        """
         out = []
-        for cid in sorted(set().union(*APPLICABLE.values()) - ok_here):
-            why = NOT_APPLICABLE_WHY.get((cls, cid))
-            if why:
-                out.append({"check_id": cid, "not_applicable_to": cls, "why": why})
+        ran = set(ran)
+        for cid in sorted(set().union(*APPLICABLE.values())):
+            if cid in ran:
+                continue
+            if cid not in ok_here:
+                why = NOT_APPLICABLE_WHY.get((cls, cid))
+                if why:
+                    out.append({"check_id": cid, "not_applicable_to": cls, "why": why})
+                continue
+            why = SHOT_LEVEL_WHY.get(cid)
+            out.append({"check_id": cid, "not_applicable_to": "this shot",
+                        "why": (why or "this shot does not require it")})
         return out
 
     try:
@@ -207,7 +250,7 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     except ImportError:
         return [Check("dependencies", UNAVAILABLE,
                       "OpenCV is not installed, so no image check can run",
-                      fix="pip install -r requirements.txt")], not_applicable()
+                      fix="pip install -r requirements.txt")], not_applicable(["dependencies"])
 
     img = image if image is not None else cv2.imread(str(path))
     if img is None:
@@ -217,7 +260,7 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
         # verdict and no way to add one.
         return [Check("readable", RETAKE, "the file could not be read as an image",
                       {"path": path.name}, fix="re-transfer or re-take this capture")], \
-            not_applicable()
+            not_applicable(["readable"])
     h, w = img.shape[:2]
     checks.append(Check("readable", PASS, "%dx%d" % (w, h), {"width": w, "height": h}))
 
@@ -536,4 +579,4 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     if shot.get("relay_between_reps") and not (compare_to or []):
         pass    # the first repetition has nothing to be independent of; that is not a finding
 
-    return checks, not_applicable()
+    return checks, not_applicable(c.check_id for c in checks)

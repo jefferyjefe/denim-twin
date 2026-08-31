@@ -69,8 +69,47 @@ class Store(object):
 
     # -- reading ------------------------------------------------------------------------------
 
+    @staticmethod
+    def _key(v, what, seq, problems):
+        """A projection key taken from a payload. Only a scalar can be one.
+
+        fold() keyed four projections on values taken straight from the payload -- the setup check's
+        name, the measurement's name, the offcut's label, the verification's claim -- and coerced
+        two more with a bare int(). A JSON object or array in any of them raised inside the replay,
+        and because every gate condition reads the folded state rather than the log, one such entry
+        made the garment permanently ungateable: not a false pass, but no verdict at all, on a
+        garment whose photographs were fine.
+        """
+        if isinstance(v, str) and v.strip():
+            return v
+        if isinstance(v, int) and not isinstance(v, bool):
+            return v
+        problems.append({"kind": "uninterpretable_payload", "seq": seq,
+                         "detail": "the %s of entry %s is %r, which cannot identify anything"
+                                   % (what, seq, v)})
+        return None
+
+    @staticmethod
+    def _rep(v, seq, problems):
+        try:
+            if v is None:
+                return 1
+            r = int(v)
+            if r < 1:
+                raise ValueError(r)
+            return r
+        except (TypeError, ValueError):
+            problems.append({"kind": "uninterpretable_payload", "seq": seq,
+                             "detail": "entry %s has a repeat index of %r" % (seq, v)})
+            return None
+
     def fold(self):
-        """Replay the log. Returns a state dict plus the integrity problems found on the way."""
+        """Replay the log. Returns a state dict plus the integrity problems found on the way.
+
+        Total by construction: an entry this code cannot interpret becomes a PROBLEM, which
+        `gates.log.intact` blocks on, rather than an exception that leaves the gate with nothing to
+        say.
+        """
         entries, problems = self.manifest.read()
         st = {
             "garment_id": self.dir.name,
@@ -104,24 +143,44 @@ class Store(object):
                 st["setup_history"].append({"setup_hash": p.get("setup_hash"), "ts": e.get("ts"),
                                             "seq": e.get("seq"), "reason": p.get("reason")})
             elif k == "setup_check":
-                st["setup_checks"][p.get("check")] = p
+                key = self._key(p.get("check"), "check name", e.get("seq"), problems)
+                if key is not None:
+                    st["setup_checks"][key] = p
             elif k == "feature_answers":
                 st["features"].update(p.get("answers") or {})
                 st["features_answered_at"] = e.get("ts")
             elif k == "measurement":
-                st["measurements"][p.get("name")] = p
+                key = self._key(p.get("name"), "measurement name", e.get("seq"), problems)
+                if key is not None:
+                    st["measurements"][key] = p
             elif k == "capture":
-                st["captures"][(p.get("shot_id"), int(p.get("rep", 1)))] = dict(
+                sid = self._key(p.get("shot_id"), "shot id", e.get("seq"), problems)
+                rep = self._rep(p.get("rep", 1), e.get("seq"), problems)
+                if sid is None or rep is None:
+                    continue
+                st["captures"][(sid, rep)] = dict(
                     p, ts=e.get("ts"), seq=e.get("seq"), setup_hash=e.get("setup_hash"),
                     operator=e.get("operator"), chain=e.get("chain"))
             elif k == "qa_result":
-                key = (p.get("shot_id"), int(p.get("rep", 1)))
-                rec = dict(p, ts=e.get("ts"), seq=e.get("seq"))
-                st["qa_all"].setdefault(key, []).append(rec)
+                sid = self._key(p.get("shot_id"), "shot id", e.get("seq"), problems)
+                rep = self._rep(p.get("rep", 1), e.get("seq"), problems)
+                if sid is None or rep is None:
+                    continue
+                st["qa_all"].setdefault((sid, rep), []).append(
+                    dict(p, ts=e.get("ts"), seq=e.get("seq")))
             elif k == "human_verification":
-                st["verifications"][(p.get("shot_id"), int(p.get("rep", 1)) if p.get("rep") else None,
-                                     p.get("claim"))] = dict(p, ts=e.get("ts"),
-                                                             operator=e.get("operator"))
+                claim = self._key(p.get("claim"), "claim", e.get("seq"), problems)
+                if claim is None:
+                    continue
+                rep = self._rep(p.get("rep"), e.get("seq"), problems) if p.get("rep") else None
+                if p.get("rep") and rep is None:
+                    continue
+                # The record's OWN attribution wins. `operator=e.get("operator")` overwrote it, so a
+                # verification that explicitly named its author projected as operator None -- and
+                # the second-person check, which refuses a verifier equal to the operator, compared
+                # a name against None and let it through.
+                st["verifications"][(p.get("shot_id"), rep, claim)] = dict(
+                    p, ts=e.get("ts"), operator=p.get("operator") or e.get("operator"))
             elif k == "reuse_declaration":
                 st["reuse"].append(dict(p, ts=e.get("ts")))
             elif k == "deviation":
@@ -136,7 +195,9 @@ class Store(object):
             elif k == "wash_actual":
                 st["wash_actual"] = dict(p, ts=e.get("ts"))
             elif k == "offcut":
-                lbl = p.get("label")
+                lbl = self._key(p.get("label"), "offcut label", e.get("seq"), problems)
+                if lbl is None:
+                    continue
                 cur = st["offcuts"].get(lbl, {})
                 cur.update(p)
                 st["offcuts"][lbl] = cur
@@ -188,6 +249,29 @@ class Store(object):
                 continue
             out.add((r.get("shot_id"), int(r.get("rep", 1))))
         return out
+
+
+def mean_of(measurement):
+    """The mean of a measurement's own readings, recomputed.
+
+    The gate validates `readings` -- their count, finiteness, spread and plausible range -- and the
+    record also carries a `mean` that nothing checked. Every consumer read the mean: the hem series
+    is sized from it, the cut is placed from it. So a record could carry two honest readings and a
+    fabricated mean, pass every measurement condition, and hand a different number to the planner
+    and the cut. Derived fields are recomputed here rather than trusted.
+    """
+    if not measurement:
+        return None
+    rs = []
+    for r in (measurement.get("readings") or []):
+        try:
+            f = float(r)
+        except (TypeError, ValueError):
+            return None
+        if f != f:
+            return None
+        rs.append(f)
+    return (sum(rs) / len(rs)) if rs else None
 
 
 def setup_hash(setup):

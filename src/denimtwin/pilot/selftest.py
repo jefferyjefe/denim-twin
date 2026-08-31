@@ -26,6 +26,7 @@ import zlib
 from pathlib import Path
 
 from . import gates as GATES
+from . import hem as HEM
 from . import plan as PLAN
 from . import qa as QA
 from . import spec as SPEC
@@ -1103,7 +1104,94 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the permission to reuse a frame is worth something only if the borrowing "
                       "shot's own requirements were applied to it"))
 
-    # -- 49. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 49. invented checks that agree with their own verdict ---------------------------------------
+    b, sp = complete_mini("inventedchecks", gid="DENIM_9225")
+    assert b.gate().ready
+    st_, _ = b.store.fold()
+    (sid_, rep_), _q = sorted(st_["qa"].items())[0]
+    cap_ = st_["captures"][(sid_, rep_)]
+    b.store.append("qa_result",
+                   {"shot_id": sid_, "rep": rep_, "outcome": QA.PASS,
+                    "capture_sha256": cap_["sha256"],
+                    "checks": [{"check_id": "readable", "outcome": QA.PASS, "detail": "fine"},
+                               {"check_id": "blur", "outcome": QA.PASS, "detail": "fine"}]},
+                   operator="forger")
+    out.append(Result("a verdict backed by invented checks does not clear a frame",
+                      not b.gate(check_files=False).ready,
+                      "appended PASS over a two-item check list that rolls up to PASS",
+                      "re-deriving the roll-up from the stored list tests the record against "
+                      "ITSELF; a list of invented all-PASS checks agrees with a PASS verdict "
+                      "perfectly, so the mandatory set has to come from the code"))
+
+    # -- 50. a payload that cannot be a projection key ------------------------------------------------
+    b = new("badkey", spec=mini_sp, gid="DENIM_9226")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    b.store.append("offcut", {"label": ["not", "a", "label"]}, operator="forger")
+    crashed = False
+    try:
+        st_, probs_ = b.store.fold()
+        v = b.gate(check_files=False)
+    except Exception:
+        crashed, probs_, v = True, [], None
+    out.append(Result("a payload that cannot identify anything is a finding, not a crash",
+                      (not crashed) and any(x["kind"] == "uninterpretable_payload" for x in probs_)
+                      and v is not None and not v.ready,
+                      "crashed=%s problems=%s" % (crashed, sorted({x["kind"] for x in probs_})),
+                      "every gate condition reads the folded state, so one unreplayable entry made "
+                      "the garment permanently ungateable -- no verdict at all, on a garment whose "
+                      "photographs were fine"))
+
+    # -- 51. a fabricated mean beside honest readings ---------------------------------------------------
+    b = new("fakemean", spec=mini_sp, gid="DENIM_9227")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    b.store.append("measurement", {"name": "leg_opening_cm", "readings": [40.0, 40.1],
+                                   "mean": 12.0, "spread": 0.1, "tolerance": 0.5,
+                                   "in_tolerance": True}, operator="forger")
+    st_, _ = b.store.fold()
+    from .store import mean_of
+    got = mean_of(st_["measurements"]["leg_opening_cm"])
+    shots_, _m = b.activated()
+    hem_frames = [x for x in shots_ if x.get("hem_position")]
+    honest = HEM.HemGeometry.from_leg_opening("left", 40.05)
+    out.append(Result("a fabricated mean does not size the hem series or place the cut",
+                      abs(got - 40.05) < 1e-6,
+                      "record claims mean=12.0 over readings [40.0, 40.1]; recomputed %.2f" % got,
+                      "the gate validates the readings and every consumer read the mean, so two "
+                      "honest readings beside a fabricated mean passed every measurement condition "
+                      "and then handed a different number to the planner and the cut"))
+
+    # -- 52. a verification with no attribution ----------------------------------------------------------
+    b, sp = complete_mini("noattrib", gid="DENIM_9228")
+    st_, _ = b.store.fold()
+    cs_ = st_["cut_spec"]
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified", "value": True,
+                    "verifier_name": "someone", "operator": None,
+                    "measured_inseam_cm": cs_["target_inseam_cm"],
+                    "measured_outseam_cm": cs_["predicted_outseam_cm"]},
+                   operator=None)
+    out.append(Result("a cut verification that names nobody does not verify",
+                      "cut.second_person_verified" in b.blocked_conditions(check_files=False),
+                      "appended a verification with operator=None",
+                      "fold overwrote the payload's own attribution with the envelope's, so a "
+                      "record naming its author projected as operator None -- and the check that "
+                      "refuses a verifier equal to the operator compared a name against None"))
+
+    # -- 53. a capture filed under the wrong state --------------------------------------------------------
+    b, sp = complete_mini("wrongstate", gid="DENIM_9229")
+    assert b.gate().ready
+    st_, _ = b.store.fold()
+    (sid_, rep_), cap_ = sorted(st_["captures"].items())[0]
+    b.store.append("capture", dict(cap_, state="post_wash"), operator="forger",
+                   setup_hash=cap_.get("setup_hash"))
+    out.append(Result("a capture that mislabels its own state does not count as that shot's evidence",
+                      not b.gate(check_files=False).ready,
+                      "re-filed a before-state frame as post_wash",
+                      "one condition trusted the capture's self-declared state while another "
+                      "matched on shot id alone, so a frame could mislabel its state to escape the "
+                      "first and still satisfy the second"))
+
+    # -- 54. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

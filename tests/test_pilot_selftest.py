@@ -83,6 +83,11 @@ SCENARIOS = [
     'a photograph swapped with its size and mtime restored is still detected',
     'repairing a torn tail does not delete an interior entry',
     'a reuse declaration with no re-run checks is refused',
+    'a verdict backed by invented checks does not clear a frame',
+    'a payload that cannot identify anything is a finding, not a crash',
+    'a fabricated mean does not size the hem series or place the cut',
+    'a cut verification that names nobody does not verify',
+    "a capture that mislabels its own state does not count as that shot's evidence",
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 
