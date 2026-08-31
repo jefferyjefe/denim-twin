@@ -79,6 +79,8 @@ SCENARIOS = [
     'the board-square measurement refuses a fractional count',
     'the board-square measurement refuses more squares than the board has',
     'a verdict that disagrees with its own checks is refused',
+    'one photograph cannot satisfy two shots without a declared reuse',
+    'a photograph swapped with its size and mtime restored is still detected',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

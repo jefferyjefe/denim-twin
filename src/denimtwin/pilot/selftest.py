@@ -1015,7 +1015,55 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the outcome is a roll-up of the checks stored beside it; writing one that "
                       "does not follow from them leaves the hash chain perfectly intact"))
 
-    # -- 45. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 45. one photograph filed under two shots, whatever the add-time checker saw ----------------
+    b, sp = complete_mini("sharedfile", gid="DENIM_9221")
+    assert b.gate().ready
+    st_, _ = b.store.fold()
+    (sid_a, rep_a), capa = sorted(st_["captures"].items())[0]
+    # Record a second shot pointing at the same bytes, filed under its own correct name -- the shape
+    # a duplicate takes when the add-time comparison did not happen (the earlier file was missing,
+    # the ordering differed, the checker had not yet been hardened).
+    src = b.dir / capa["path"]
+    dest = b.dir / "images" / "before" / ("BEFORE.WHOLE.SHARED__r01__%s.png" % capa["sha256"][:12])
+    shutil.copy(str(src), str(dest))
+    b.store.append("capture", {"shot_id": "BEFORE.WHOLE.SHARED", "rep": 1,
+                               "path": str(dest.relative_to(b.dir)), "sha256": capa["sha256"],
+                               "state": "before", "region_id": "whole_garment_front",
+                               "dhash": capa.get("dhash")},
+                   operator="forger", setup_hash=b.setup_hash)
+    out.append(Result("one photograph cannot satisfy two shots without a declared reuse",
+                      "captures.no_undeclared_reuse" in b.blocked_conditions(),
+                      "the same sha256 filed under %s and BEFORE.WHOLE.SHARED" % sid_a,
+                      "duplicate detection lived only in the add-time checker, whose comparison set "
+                      "is whatever was on disk at that moment, and nothing ever looked again"))
+
+    # -- 46. the file-integrity cache must not trust a restored mtime -------------------------------
+    b, sp = complete_mini("mtime", gid="DENIM_9222")
+    assert b.gate().ready                      # populates the hash cache
+    st_, _ = b.store.fold()
+    (sid_b, rep_b), capb = sorted(st_["captures"].items())[0]
+    target = b.dir / capb["path"]
+    before_stat = os.stat(str(target))
+    other = b.synth_for(b.activated()[0][0], 1, seed=31337)
+    data = Path(other).read_bytes()
+    # Same length, so size is unchanged; mtime put back exactly.
+    orig = target.read_bytes()
+    target.write_bytes((data * (len(orig) // len(data) + 1))[:len(orig)])
+    os.utime(str(target), ns=(before_stat.st_atime_ns, before_stat.st_mtime_ns))
+    after = os.stat(str(target))
+    same_size_and_mtime = (after.st_size == before_stat.st_size
+                           and after.st_mtime_ns == before_stat.st_mtime_ns)
+    out.append(Result("a photograph swapped with its size and mtime restored is still detected",
+                      same_size_and_mtime
+                      and "captures.files_intact" in b.blocked_conditions(),
+                      "size and mtime identical after the swap: %s; blocked: %s"
+                      % (same_size_and_mtime,
+                         "captures.files_intact" in b.blocked_conditions()),
+                      "the cache keyed on (path, size, mtime) and mtime is settable, so restoring "
+                      "it defeated the check for as long as a `serve` process stayed up -- and a "
+                      "capture UI is exactly a long-running process"))
+
+    # -- 47. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

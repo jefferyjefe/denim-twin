@@ -458,7 +458,7 @@ def cmd_precut(a):
     spec = load_spec()
     gdir = garment_dir(a.garment)
     v = GATES.evaluate("ready_to_cut", spec, Store(gdir), garment_dir=gdir,
-                       check_files=not a.no_file_check)
+                       check_files=not a.no_file_check, rehash=True)
     _print_verdict(v)
     if a.json:
         Path(a.json).write_text(json.dumps(v.as_dict(), indent=1) + "\n")
@@ -473,7 +473,7 @@ def cmd_precut(a):
 def cmd_gate(a):
     spec = load_spec()
     gdir = garment_dir(a.garment)
-    v = GATES.evaluate(a.gate, spec, Store(gdir), garment_dir=gdir)
+    v = GATES.evaluate(a.gate, spec, Store(gdir), garment_dir=gdir, rehash=True)
     _print_verdict(v)
     return OK if v.ready else FAIL
 
@@ -649,7 +649,7 @@ def cmd_finalize(a):
     spec = load_spec()
     gdir = garment_dir(a.garment)
     st = Store(gdir)
-    v = GATES.evaluate("ready_to_finalize", spec, st, garment_dir=gdir)
+    v = GATES.evaluate("ready_to_finalize", spec, st, garment_dir=gdir, rehash=True)
     _print_verdict(v)
     out = gdir / "pilot" / "manifest.sanitised.json"
     try:

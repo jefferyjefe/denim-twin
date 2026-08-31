@@ -149,7 +149,7 @@ GATE_STATES = {
 }
 
 
-def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
+def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash=False):
     """Evaluate one gate. Returns a Verdict. Never raises for a data problem -- that is a block."""
     if gate_id not in GATE_STATES:
         raise ValueError("unknown gate %r" % gate_id)
@@ -513,7 +513,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 missing.append("%s r%d -> %s" % (sid, rep, rel))
                 continue
             want = c.get("sha256")
-            if want and _hash_changed(p, want):
+            if want and _hash_changed(p, want, use_cache=not rehash):
                 changed.append("%s r%d -> %s" % (sid, rep, rel))
         if missing or changed or unhashed or misfiled:
             return False, ("%d recorded photograph(s) missing from disk, %d no longer matching "
@@ -599,6 +599,42 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
         return True, "%d image reuse declaration(s), each re-checked" % len(state["reuse"]), None, {}
 
     _guard(blocks, satisfied, "captures.reuse_legitimate", c_reuse_legitimate)
+
+    def c_no_undeclared_reuse():
+        """No two accepted captures may be the same photograph unless the reuse is declared.
+
+        Duplicate detection lived only in the add-time checker, whose comparison set is built from
+        the files present on disk at that moment. Anything that made a comparison not happen -- an
+        earlier file temporarily missing, an ingest ordering, a checker that had not yet been
+        hardened -- left the duplicate accepted, and nothing ever looked again. This is the same
+        question asked of the DURABLE record, where the hashes are, so it does not depend on what
+        could be read at the time.
+        """
+        declared = set()
+        for r in state["reuse"]:
+            declared.add((r.get("shot_id"), int(r.get("rep", 1))))
+            if r.get("source_shot_id"):
+                declared.add((r.get("source_shot_id"), int(r.get("source_rep", 1))))
+        by_sha = {}
+        for key, c in sorted(state["captures"].items()):
+            sha = c.get("sha256")
+            if not sha or key in declared:
+                continue
+            by_sha.setdefault(sha, []).append(key)
+        dupes = {sha: ks for sha, ks in by_sha.items() if len(ks) > 1}
+        if dupes:
+            eg = []
+            for sha, ks in sorted(dupes.items())[:4]:
+                eg.append("%s used for %s" % (sha[:12],
+                                              ", ".join("%s r%d" % k for k in ks[:3])))
+            return False, ("%d photograph(s) are filed under more than one shot without a recorded "
+                           "reuse declaration" % len(dupes)), \
+                   "one frame may satisfy a second shot only when every requirement of that shot " \
+                   "passes on it and the reuse is recorded; otherwise capture the shot properly", \
+                   {"duplicates": eg}
+        return True, "no photograph satisfies two shots without a declared reuse", None, {}
+
+    _guard(blocks, satisfied, "captures.no_undeclared_reuse", c_no_undeclared_reuse)
 
     # --- the cut itself -------------------------------------------------------------------
     if gate_id in ("ready_to_wash", "ready_to_finalize"):
@@ -736,25 +772,32 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
     return Verdict(gate_id, blocks, satisfied, ev)
 
 
-#: Re-hashing hundreds of photographs on every screen refresh is not affordable, and skipping the
-#: check is not acceptable, so the result is cached on the file's identity. A file whose size and
-#: modification time are both unchanged since it was last hashed has not been rewritten by anything
-#: that is not deliberately hiding, and the cache is per-process -- it never survives to make a
-#: later run trust a stale answer.
+#: Re-hashing every photograph on every screen refresh is wasteful and skipping the check is not
+#: acceptable, so the result is cached on the file's identity. The first version keyed the cache on
+#: (path, size, mtime) and asserted that a file whose size and mtime were unchanged had not been
+#: rewritten -- which is false, because mtime is settable. Replacing a photograph and restoring its
+#: mtime with os.utime defeated it for as long as a `serve` process stayed up, and a capture UI is
+#: exactly a long-running process.
+#:
+#: The key now includes the inode and ctime. ctime is the inode's own change time and cannot be set
+#: through utime; rewriting the file's contents moves it whatever is done to mtime. That is not a
+#: cryptographic guarantee -- a process with enough privilege can do more than utime -- but it
+#: closes the gap that an ordinary write leaves open, and `--recheck` re-hashes everything.
 _HASH_CACHE = {}
 
 
-def _hash_changed(path, want):
+def _hash_changed(path, want, use_cache=True):
     from .manifest import sha256_file
     try:
         st = os.stat(str(path))
     except OSError:
         return True
-    key = (str(path), st.st_size, st.st_mtime_ns)
-    got = _HASH_CACHE.get(key)
+    key = (str(path), st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+    got = _HASH_CACHE.get(key) if use_cache else None
     if got is None:
         got = sha256_file(path)
-        _HASH_CACHE[key] = got
+        if use_cache:
+            _HASH_CACHE[key] = got
     return got != want
 
 
