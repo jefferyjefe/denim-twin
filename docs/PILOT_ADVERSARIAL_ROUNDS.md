@@ -28,7 +28,7 @@ refused by the time they were re-run — fixes were landing while verification p
 count is not a clean measure of the original code — or not reproducible.
 
 **Every one of the thirty-one was fixed, and each is now a scenario in `tools/pilot.py selftest`.**
-The suite went from 25 scenarios to 49.
+The suite went from 25 scenarios to 49, and to 64 after round 2.
 
 ### The ones worth remembering
 
@@ -63,6 +63,50 @@ work; there is now a test that speaks real multipart to a real server.
 required series and places the cut mark, and an operator reading inches records two readings that
 agree perfectly and are 2.5× wrong. Every downstream check passed, because everything downstream
 believed the number.
+
+## Round 2 — five angles, thirty-three findings
+
+Round 2 was pointed at round 1's fixes, and most of what it found was in them.
+
+| angle | what it attacked | findings |
+|---|---|---|
+| regress-round1 | every round-1 fix, hunting the variant it misses | 7 |
+| fold-invariants | `store.fold()` and the projections the gate reads | 7 |
+| plan-and-spec | the required set, again and harder | 6 |
+| concurrency-and-io | timing, staging, the head anchor | 3 |
+| human-and-wash | the wash and offcut gates — surfaces nothing had exercised | 12 |
+
+### The ones that mattered most
+
+**My round-1 fix was testing the record against itself.** The gate re-derived a verdict's roll-up
+from the checks stored beside it and refused a disagreement — but a list of two invented all-PASS
+checks rolls up to PASS and agrees perfectly. The mandatory set now comes from the code: what this
+class of frame is checkable for, minus what the record's own not-applicable notes justify. Which in
+turn forced every applicable check that does not run for a particular shot to say so, and revealed
+that 146 of 290 shots were getting no scale or tilt result with nothing recording it.
+
+**A hundred required frames were guarded by nothing.** The specification declares eight states; the
+three hand-kept tuples naming which states each gate covers named six. The two offcut states
+appeared in none of them, so the entire offcut experiment could be skipped and every gate still
+opened. The sets are derived from the specification's own ordering now.
+
+**The gate's own first line broke its own rule.** `store.fold()` ran above every guard, so anything
+the log or the replay raised escaped the deny-by-default machinery and returned a traceback instead
+of a verdict. A gate that cannot answer must still answer no.
+
+**The post-wash gate required nothing about the wash.** It differed from the pre-wash gate by one
+string in a tuple and added no condition of its own, so a garment could be photographed after
+washing with no record that it had been washed, under what settings, or how far those departed from
+the plan. The whole experiment is one wash.
+
+**A later verdict could improve an earlier one.** Taking the latest verdict bound to a photograph
+meant naming the same hash with a fabricated check list turned a RETAKE into a PASS. Re-running a
+checker on one frame is deterministic, so two verdicts that disagree are evidence of tampering and
+the safe reading is the worse one.
+
+**"The latest wins" was decided by a writable clock.** Ordering verifications by their payload
+timestamp let a future-dated approval outrank a real retraction appended after it. Log position is
+stamped by the appender; the payload's clock is not.
 
 ## What the attacks did not break
 

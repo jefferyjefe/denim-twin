@@ -86,13 +86,15 @@ tilt, relay independence and duplicate content — are measured in
 records a negative result as well: image similarity **cannot** tell five independent re-lays from one
 photograph submitted five times, so the system does not pretend to.
 
-    python tools/pilot.py selftest               # 49 scenarios, on synthetic images, in a temp dir
+    python tools/pilot.py selftest               # 64 scenarios, on synthetic images, in a temp dir
 
-Forty-eight of them try to obtain a pass that is not deserved. The last drives a complete session to
+Sixty-three of them try to obtain a pass that is not deserved. The last drives a complete session to
 READY and asserts the gate opens — a gate that cannot be opened by valid evidence is broken, not
-safe. Most of the forty-eight are there because an adversarial agent found them: independent
-attackers in isolated worktrees produced thirty-one ways to make the gate say READY without the
-evidence, and every one is now a scenario that fails without its fix. See
+safe. Most of the sixty-three are there because an adversarial agent found them: independent
+attackers in isolated worktrees produced 31 ways to make the gate say READY without the evidence,
+and a second round aimed at the *fixes* produced 33 more — including that one of the round-1 fixes
+was testing the record against itself, and that a hundred required frames were guarded by no gate at
+all. Every one is now a scenario that fails without its fix. See
 [`docs/PILOT_ADVERSARIAL_ROUNDS.md`](docs/PILOT_ADVERSARIAL_ROUNDS.md), which records what held as
 well as what broke.
 
