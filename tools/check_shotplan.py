@@ -33,7 +33,10 @@ except SPEC.SpecError as e:
 # Every feature answered "present" must produce a plan; a plan that fails to generate under the
 # most inclusive answers is a plan that can fail to generate at all.
 answers = {f["key"]: (1 if f["type"] == "count" else True) for f in s.features}
-shots, meta = PLAN.activate(s, answers, {"leg_opening_cm": {"mean": 20.0}})
+# A measurement carries READINGS; its mean is recomputed from them and never read off the record,
+# so a fixture that supplies only a mean now describes an unmeasured dimension.
+MEASURED = {"leg_opening_cm": {"name": "leg_opening_cm", "readings": [40.0, 40.1]}}
+shots, meta = PLAN.activate(s, answers, MEASURED)
 if not shots:
     print("the specification activates no shots even with every feature present")
     raise SystemExit(1)

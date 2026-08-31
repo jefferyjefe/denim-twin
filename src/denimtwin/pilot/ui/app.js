@@ -111,6 +111,57 @@ function regionInfo() {
     (rows || '<div class="muted">no shots planned for this region</div>');
 }
 
+/* ------------------------------------------------------------------ framing guide
+ * A drawing of what the viewfinder should contain. The framing sentence is precise and still has to
+ * be turned into a picture in the operator's head before every frame; this is that picture, with
+ * the board and the rule where the shot says they go. */
+var GUIDES = {
+  full_garment: { subject: 'M 120 30 L 200 30 L 208 90 L 196 210 L 168 210 L 160 120 L 152 210 ' +
+                           'L 124 210 L 112 90 Z', board: true, note: 'whole garment inside the frame with margin; board flat in its usual corner' },
+  paired_hems: { subject: 'M 60 120 L 260 120 L 260 170 L 60 170 Z', board: true,
+                 note: 'both hems side by side, edges parallel to the long side of the frame' },
+  leg_section_quarter: { subject: 'M 108 20 L 212 20 L 206 220 L 114 220 Z', board: true,
+                         note: 'one quarter of the leg fills the frame top to bottom' },
+  seam_strip: { subject: 'M 140 16 L 180 16 L 180 224 L 140 224 Z', rule: 'v',
+                note: 'the seam runs the long way through the middle; rule alongside it' },
+  waistband_strip: { subject: 'M 20 88 L 300 88 L 300 152 L 20 152 Z', board: true,
+                     note: 'the waistband spans the frame end to end' },
+  hem_10cm_strip: { subject: 'M 16 96 L 304 96 L 304 150 L 16 150 Z', rule: 'h',
+                    note: 'about 10 cm of edge fills the frame; rule flat in the cloth\u2019s plane' },
+  fly_full_length: { subject: 'M 132 18 L 188 18 L 188 222 L 132 222 Z', board: true,
+                     note: 'the fly runs the full height of the frame' },
+  label_card: { subject: 'M 70 60 L 250 60 L 250 180 L 70 180 Z', rule: 'h',
+                note: 'the label fills the middle; every printed line legible without zooming' },
+  grazing_horizon_line: { subject: 'M 0 150 L 320 150 L 320 158 L 0 158 Z', rule: 'h',
+                          note: 'camera at surface level; the edge seen along the surface, not from above' },
+  phone_screen: { subject: 'M 110 24 L 210 24 L 210 216 L 110 216 Z',
+                  note: 'the phone screen fills the frame, readable' },
+  full_frame: { subject: 'M 8 8 L 312 8 L 312 232 L 8 232 Z',
+                note: 'the subject fills the frame edge to edge' },
+};
+
+function drawGuide(shot) {
+  var wrap = $('guidewrap'), svg = $('frameguide');
+  var key = shot && shot.frame_guide;
+  var g = key && (GUIDES[key] || (/margin/.test(key) ? {
+    subject: 'M 96 62 L 224 62 L 224 178 L 96 178 Z', margin: true, rule: 'h',
+    note: 'the feature centred, with the stated margin of surrounding cloth all round',
+  } : null));
+  if (!g) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  var parts = ['<rect class="frame" x="4" y="4" width="312" height="232" rx="6"/>'];
+  parts.push('<path class="subject" d="' + esc(g.subject) + '"/>');
+  if (g.margin) parts.push('<rect class="margin" x="76" y="44" width="168" height="152" rx="4"/>');
+  if (g.board) parts.push('<rect class="board" x="248" y="16" width="56" height="72"/>' +
+                          '<text x="252" y="98">board</text>');
+  if (g.rule === 'h') parts.push('<rect class="rule" x="30" y="206" width="260" height="12"/>' +
+                                 '<text x="30" y="202">rule, in the same plane</text>');
+  if (g.rule === 'v') parts.push('<rect class="rule" x="238" y="24" width="12" height="192"/>' +
+                                 '<text x="196" y="20">rule</text>');
+  svg.innerHTML = parts.join('');
+  $('guidenote').textContent = g.note;
+}
+
 /* ------------------------------------------------------------------ NOW */
 function renderNow() {
   var n = S.next;
@@ -145,6 +196,8 @@ function renderNow() {
     ' lens · height group ' + (n.camera_height_group || '-');
   $('f-position').textContent = n.camera_position || '—';
   $('f-framing').textContent = n.framing;
+  $('f-guide').textContent = n.frame_guide ? n.frame_guide.replace(/_/g, ' ') : '—';
+  drawGuide(n);
   $('f-scale').textContent = n.scale_reference.replace(/_/g, ' ') +
     (n.scale_placement ? ' — ' + n.scale_placement : '');
   var q = n.quality || {};
