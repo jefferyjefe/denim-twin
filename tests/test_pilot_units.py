@@ -214,3 +214,46 @@ def test_every_region_that_survives_the_cut_and_changes_with_washing_has_a_later
     assert not missing, (
         "%d region(s) change with washing, survive the cut, are photographed before it and have no "
         "frame in any later state: %s" % (len(missing), missing[:10]))
+
+
+# -- the offcut alternation ------------------------------------------------------------------------
+
+def test_offcut_assignment_alternates_across_garments(tmp_path):
+    from denimtwin.pilot import offcut as OFF
+    import json as _json
+
+    def mk(gid, leg=None):
+        d = tmp_path / gid
+        d.mkdir()
+        (d / "record.json").write_text(_json.dumps({
+            "garment_id": gid,
+            "offcut_wash": ({leg: OFF.WITH_GARMENT,
+                             ("R" if leg == "L" else "L"): OFF.SEPARATE_LOAD} if leg else None)}))
+    mk("DENIM_0001", "L")
+    mk("DENIM_0002", "R")
+    mk("DENIM_0003")
+    a = OFF.next_assignment(str(tmp_path), "DENIM_0003")
+    assert a["with_garment"]["leg"] == "L", "must alternate away from DENIM_0002's R"
+    assert a["other"]["leg"] == "R"
+    assert OFF.check_alternation(str(tmp_path))["alternating"]
+
+
+def test_a_broken_alternation_is_detected(tmp_path):
+    from denimtwin.pilot import offcut as OFF
+    import json as _json
+    for gid, leg in (("DENIM_0001", "L"), ("DENIM_0002", "R"), ("DENIM_0003", "R")):
+        d = tmp_path / gid
+        d.mkdir()
+        (d / "record.json").write_text(_json.dumps({
+            "garment_id": gid,
+            "offcut_wash": {leg: OFF.WITH_GARMENT,
+                            ("R" if leg == "L" else "L"): OFF.SEPARATE_LOAD}}))
+    r = OFF.check_alternation(str(tmp_path))
+    assert not r["alternating"] and r["breaks"], r
+
+
+def test_a_garment_that_cannot_be_machine_washed_changes_what_the_second_offcut_is_for(tmp_path):
+    from denimtwin.pilot import offcut as OFF
+    a = OFF.next_assignment(str(tmp_path), "DENIM_0009", garment_machine_washable=False)
+    assert a["other"]["condition"] == OFF.GARMENT_CONDITION
+    assert "care label" in a["note"]

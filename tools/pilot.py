@@ -542,8 +542,30 @@ def cmd_wash(a):
 
 
 def cmd_offcut(a):
+    from denimtwin.pilot import offcut as OFF
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
+    if a.assign == "auto" or a.leg == "plan":
+        wash_ok = bool(state["features"].get("is_machine_washable", True))
+        plan_ = OFF.next_assignment(GARMENTS, a.garment, garment_machine_washable=wash_ok)
+        print("Offcut wash assignment for %s" % a.garment)
+        print("  %s  ->  %s" % (plan_["with_garment"]["label"], plan_["with_garment"]["condition"]))
+        print("  %s  ->  %s" % (plan_["other"]["label"], plan_["other"]["condition"]))
+        print("  %s" % plan_["reason"])
+        print("  %s" % plan_["note"])
+        alt = OFF.check_alternation(GARMENTS)
+        print("  alternation so far: %s%s"
+              % ("".join(alt["sequence"]) or "(none)",
+                 "" if alt["alternating"] else "   <-- BROKEN: " + alt["breaks"][0]["why_it_matters"]))
+        if a.assign == "auto":
+            for side in ("with_garment", "other"):
+                st.append("offcut", {"label": plan_[side]["label"],
+                                     "originating_leg": plan_[side]["leg"].lower(),
+                                     "assigned_wash_condition": plan_[side]["condition"],
+                                     "assignment_reason": plan_["reason"]},
+                          operator=a.operator)
+            print("\n  recorded.")
+        return OK
     label = "%s_OFFCUT_%s" % (a.garment, a.leg.upper()[0])
     rec = {"label": label, "originating_leg": a.leg.lower()}
     if a.assign:
@@ -692,8 +714,10 @@ def main(argv=None):
     s = add("wash", cmd_wash)
     s.add_argument("--actual", action="store_true")
     s = add("offcut", cmd_offcut)
-    s.add_argument("leg", choices=["left", "right"])
-    s.add_argument("--assign", default=None)
+    s.add_argument("leg", choices=["left", "right", "plan"],
+                   help="'plan' prints the assignment the alternation rule computes")
+    s.add_argument("--assign", default=None,
+                   help="a condition name, or 'auto' to record the computed alternating assignment")
     s.add_argument("--actual-wash", default=None, dest="actual_wash")
     s.add_argument("--length", type=float, default=None)
     s.add_argument("--width", type=float, default=None)

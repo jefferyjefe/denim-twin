@@ -454,6 +454,36 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
     _guard(blocks, satisfied, "captures.reuse_legitimate", c_reuse_legitimate)
 
     # --- the cut itself -------------------------------------------------------------------
+    if gate_id in ("ready_to_wash", "ready_to_finalize"):
+        def c_offcuts():
+            from . import offcut as OFF
+            oc = state["offcuts"]
+            if len(oc) < 2:
+                return False, ("%d offcut sample(s) recorded; the protocol keeps two and washes "
+                               "them under different conditions" % len(oc)), \
+                       "run `pilot.py offcut plan --assign auto` to record the assignment the " \
+                       "alternation rule computes", {"have": sorted(oc)}
+            assigned = [v for v in oc.values() if v.get("assigned_wash_condition")]
+            if len(assigned) < 2:
+                return False, "both offcuts must have a wash condition assigned before the wash", \
+                       "run `pilot.py offcut plan --assign auto`", {}
+            conds = {v.get("assigned_wash_condition") for v in oc.values()}
+            if len(conds) < 2:
+                return False, ("both offcuts are assigned the same condition (%s), so the pair "
+                               "measures nothing" % ", ".join(sorted(conds))), \
+                       "the two offcuts exist to be washed differently; re-assign", {}
+            alt = OFF.check_alternation(garment_dir.parent)
+            if not alt["alternating"]:
+                return False, ("the left/right alternation is broken across garments (%s): leg and "
+                               "wash condition are confounded"
+                               % "".join(alt["sequence"])), \
+                       "PROTOCOL.md 7 alternates which leg goes in with the garment; record the " \
+                       "deviation deliberately if it cannot be fixed", {"breaks": alt["breaks"][:3]}
+            return True, "two offcuts, two conditions, alternation intact (%s)" % \
+                   "".join(alt["sequence"]), None, {}
+
+        _guard(blocks, satisfied, "offcuts.assigned", c_offcuts)
+
     if gate_id == "ready_to_cut":
         def c_cut_spec():
             cs = state["cut_spec"]
