@@ -195,6 +195,7 @@ class Bench(object):
                            "state": shot["state"], "region_id": shot.get("region_id")},
                           operator="selftest", setup_hash=sh)
         st, _ = self.store.fold()
+        board, bspec = self.board
         compare = []
         for (sid, r), c in sorted(st["captures"].items()):
             if (sid, r) == (shot["shot_id"], rep):
@@ -207,7 +208,7 @@ class Bench(object):
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
                             "self_sha256": sha, "image": oimg, "path": str(p),
                             "dhash": c.get("dhash"),
-                            "pose": Q.garment_pose(oimg) if oimg is not None else None,
+                            "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
                             "is_previous_rep": prev})
         assertions = {"operator": "selftest"}
@@ -215,7 +216,6 @@ class Bench(object):
             for k in ("ruler_visible", "side_confirmed", "region_confirmed",
                       "relay_confirmed", "camera_repositioned"):
                 assertions[k] = True
-        board, bspec = self.board
         checks, na = QA.check_capture(dest, shot,
                                       QA.merged_quality(self.spec.doc["quality_defaults"], shot),
                                       rep=rep, board=board, board_spec=bspec, image=img,

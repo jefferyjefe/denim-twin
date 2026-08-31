@@ -37,6 +37,8 @@ import math
 import cv2
 import numpy as np
 
+from ..capture.board import mm_per_pixel
+
 # --- thresholds, all from EXP_0043; see reports/pilot_qa_primitives.json ---------------------
 
 #: Fronto-parallel boards measured a scale_range_ratio of 1.033 (median) to 1.049 (max) purely from
@@ -66,10 +68,14 @@ RELAY_AMBIGUOUS_NCC = 0.80
 RELAY_MIN_SECONDS = 20.0
 
 #: NCC at or above this was only ever produced by the same frame re-encoded or brightness-shifted.
-NEAR_DUPLICATE_NCC = 0.999
-#: Genuine independent relays measured at most 0.9934; between that and NEAR_DUPLICATE_NCC is the
-#: band where a human decides.
-DISTINCT_NCC_MAX = 0.9940
+#: The measurement (EXP_0043) put the lowest such case at 0.999594; this sits just under it. An
+#: earlier value of 0.999 was a conservative rounding, and rounding the wrong way here is not free:
+#: two DIFFERENT frames of one garment framed similarly can correlate above 0.999, and refusing them
+#: sends the operator to re-shoot photographs that were correct.
+NEAR_DUPLICATE_NCC = 0.9995
+#: Genuine independent relays measured at most 0.99719 against each other. Between that and
+#: NEAR_DUPLICATE_NCC is the band no measurement resolved, and a human decides.
+DISTINCT_NCC_MAX = 0.998
 
 
 # --- board geometry --------------------------------------------------------------------------
@@ -195,6 +201,42 @@ def garment_pose(img, exclude_rect=None):
             "area_px": float(m.sum()), "area_fraction": float(m.mean()),
             "bbox": [int(xs.min()), int(ys.min()), int(xs.max() - xs.min() + 1),
                      int(ys.max() - ys.min() + 1)]}
+
+
+def board_footprint(img, board, spec, mm_per_px=None):
+    """Bounding box of the calibration board in the frame, padded, or None if it is not there."""
+    if img is None or board is None or spec is None:
+        return None
+    try:
+        from ..capture.board import detect
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        corners, ids = detect(gray, board)
+        if corners is None:
+            return None
+        pts = np.asarray(corners).reshape(-1, 2)
+        h, w = gray.shape[:2]
+        if not mm_per_px:
+            mm_per_px = mm_per_pixel(corners, ids, spec)
+        pad = 3.0 * float(spec["square_mm"]) / float(mm_per_px or 1.0)
+        x0 = max(0, int(pts[:, 0].min() - pad))
+        y0 = max(0, int(pts[:, 1].min() - pad))
+        x1 = min(w, int(pts[:, 0].max() + pad))
+        y1 = min(h, int(pts[:, 1].max() + pad))
+        return [x0, y0, max(1, x1 - x0), max(1, y1 - y0)]
+    except Exception:
+        return None
+
+
+def garment_pose_of(img, board=None, spec=None, mm_per_px=None):
+    """The garment's pose with the calibration board kept out of it.
+
+    THE ONE ENTRY POINT, because two poses computed differently are not comparable and the relay
+    check compares poses. Measuring one frame with the board excluded and the frame before it with
+    the board included produced a 114 mm 'displacement' of a garment that had not moved -- which
+    made the same lay photographed twice look like a genuine re-lay, the exact thing the check
+    exists to refuse.
+    """
+    return garment_pose(img, board_footprint(img, board, spec, mm_per_px))
 
 
 def _angle_delta(a, b):

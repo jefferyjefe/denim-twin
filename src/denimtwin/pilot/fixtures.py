@@ -177,7 +177,10 @@ def synth_capture(path, *, mm_per_px=0.5, size=(1600, 1200), subject="jeans_fron
             cv2.putText(img, line, (pad + 20, pad + 60 + i * 55), cv2.FONT_HERSHEY_SIMPLEX,
                         min(w, h) / 900.0, (20, 20, 20), 2, cv2.LINE_AA)
     elif subject == "blank_backdrop":
-        pass
+        # A real matte cloth backdrop has a weave, and that texture is what a blur check measures.
+        # A perfectly flat synthetic field has no detail at any focus, so a sharp frame of it scored
+        # as blurred -- a property of the fixture, not of the photograph.
+        img = _fabric((h, w), rng, BACKDROP_BGR, weave_mm_per_px=mm_per_px, strength=9)
     else:
         raise ValueError("unknown subject: %r" % (subject,))
 

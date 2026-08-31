@@ -275,6 +275,7 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     # -- scale and tilt -----------------------------------------------------------------------
     mm_per_px = report.mm_per_px if report is not None else None
     srr = None
+    board_rect = None
     if needs_board and applies("scale"):
         if mm_per_px is None:
             checks.append(Check("scale", UNAVAILABLE,
@@ -296,6 +297,18 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             corners, ids = detect(gray, board) if board is not None else (None, None)
             srr = Q.scale_range_ratio(corners, ids, board_spec) if corners is not None else None
+            if corners is not None:
+                # The board is the highest-contrast object in the frame, so left in it becomes the
+                # largest foreground blob and every measurement of "the garment" -- its pose, its
+                # displacement between repeats, its span -- is actually a measurement of the board.
+                # Two frames then have IDENTICAL poses, and the relay check reports that the cloth
+                # did not move when what did not move was the calibration target. Cut it out.
+                import numpy as _np
+                pts = _np.asarray(corners).reshape(-1, 2)
+                pad = 3.0 * float(board_spec["square_mm"]) / (mm_per_px or 1.0)
+                x0 = max(0, int(pts[:, 0].min() - pad)); y0 = max(0, int(pts[:, 1].min() - pad))
+                x1 = min(w, int(pts[:, 0].max() + pad)); y1 = min(h, int(pts[:, 1].max() + pad))
+                board_rect = [x0, y0, max(1, x1 - x0), max(1, y1 - y0)]
         except Exception:
             srr = None
         limit = quality.get("max_scale_range_ratio")
@@ -310,7 +323,8 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                             fix="raise or re-aim the camera until it is square to the surface"))
 
     # -- subject extent -----------------------------------------------------------------------
-    pose = Q.garment_pose(img)
+    pose = Q.garment_pose(img, board_rect)
+    # exported so callers store it rather than recomputing it differently later
     min_frac, max_frac = quality.get("min_subject_fraction"), quality.get("max_subject_fraction")
     if (min_frac is not None or max_frac is not None) and applies("subject_extent"):
         if pose is None:
@@ -332,13 +346,46 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
             checks.append(Check("subject_span", UNAVAILABLE,
                                 "no subject outline, so %s could not be measured" % meaning))
         else:
-            span = float(pose["bbox"][2])
-            checks.append(Check("subject_span", PASS if span >= min_subject_px else RETAKE,
-                                "%s spans %.0f px (needs >= %.0f)" % (meaning, span, min_subject_px),
-                                {"span_px": span, "required": min_subject_px,
-                                 "meaning": meaning},
-                                fix="fill more of the frame with the garment, or capture at a "
-                                    "higher resolution"))
+            bw, bh = float(pose["bbox"][2]), float(pose["bbox"][3])
+            low = meaning.lower()
+            # The requirement names a specific quantity, and only some of them are a silhouette's
+            # bounding box. A "traced seam length" or a "hem edge end to end" is a path along the
+            # cloth, and reporting the bounding box as though it were that path is measuring the
+            # wrong thing confidently -- the defect this whole engine is arranged against.
+            if any(k in low for k in ("height", "length", "vertical", "down the leg", "seam")):
+                span, computable = bh, ("height" in low or "vertical" in low)
+            elif any(k in low for k in ("width", "span", "across", "waistband", "end to end",
+                                        "opening", "diameter")):
+                span, computable = bw, True
+            else:
+                span, computable = max(bw, bh), False
+            if computable:
+                checks.append(Check("subject_span", PASS if span >= min_subject_px else RETAKE,
+                                    "%s spans %.0f px (needs >= %.0f)"
+                                    % (meaning, span, min_subject_px),
+                                    {"span_px": span, "required": min_subject_px,
+                                     "meaning": meaning, "bbox_w": bw, "bbox_h": bh},
+                                    fix="fill more of the frame with the subject, or capture at a "
+                                        "higher resolution"))
+            elif span >= min_subject_px:
+                # The bounding box already clears the requirement, and every path inside the
+                # subject is at most its bounding box -- so this cannot be a pass on its own.
+                checks.append(Check("subject_span", HUMAN,
+                                    "the requirement is %r, which is a path along the cloth rather "
+                                    "than a silhouette dimension, and this check can only measure "
+                                    "the bounding box (%.0f x %.0f px, needs >= %.0f). Confirm the "
+                                    "feature is resolved end to end."
+                                    % (meaning, bw, bh, min_subject_px),
+                                    {"bbox_w": bw, "bbox_h": bh, "required": min_subject_px,
+                                     "meaning": meaning},
+                                    fix="look at the frame and confirm, or frame tighter"))
+            else:
+                checks.append(Check("subject_span", RETAKE,
+                                    "%s needs >= %.0f px and the whole subject only spans "
+                                    "%.0f x %.0f px, so no path inside it can reach that"
+                                    % (meaning, min_subject_px, bw, bh),
+                                    {"bbox_w": bw, "bbox_h": bh, "required": min_subject_px},
+                                    fix="frame tighter or capture at a higher resolution"))
 
     # -- things a photograph cannot settle by itself ------------------------------------------
     if (shot.get("scale_reference") in ("ruler", "both") or quality.get("requires_ruler")) \

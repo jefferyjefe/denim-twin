@@ -308,7 +308,7 @@ def _dhash_hex(img):
     return Q.dhash_bits(img).hex()
 
 
-def _compare_set(spec, st_state, gdir, shot_id, rep, shot):
+def _compare_set(spec, st_state, gdir, shot_id, rep, shot, _b=None, _bspec=None):
     """Captures this one must be compared against: every accepted frame, plus the previous repeat."""
     from denimtwin.pilot import qa_primitives as Q
     import cv2
@@ -323,7 +323,7 @@ def _compare_set(spec, st_state, gdir, shot_id, rep, shot):
         img = cv2.imread(str(p)) if prev else None
         out.append({"shot_id": sid, "rep": r, "path": str(p), "sha256": c.get("sha256"),
                     "image": img, "dhash": c.get("dhash"),
-                    "pose": Q.garment_pose(img) if img is not None else None,
+                    "pose": Q.garment_pose_of(img, _b, _bspec) if img is not None else None,
                     "exif_ts": c.get("exif_ts"), "is_previous_rep": prev})
     return out
 
@@ -355,7 +355,7 @@ def cmd_add(a):
               operator=a.operator, setup_hash=state["setup_hash"])
     b, bspec = board()
     quality = QA.merged_quality(spec.doc["quality_defaults"], shot)
-    cmp_ = _compare_set(spec, state, gdir, a.shot, a.rep, shot)
+    cmp_ = _compare_set(spec, state, gdir, a.shot, a.rep, shot, b, bspec)
     for c in cmp_:
         c["self_sha256"] = sha
         c["this_exif_ts"] = ts

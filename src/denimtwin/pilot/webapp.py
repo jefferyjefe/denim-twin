@@ -381,7 +381,7 @@ def build_api(session):
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
                             "self_sha256": sha, "image": oimg, "path": str(p),
                             "dhash": c.get("dhash"),
-                            "pose": Q.garment_pose(oimg) if oimg is not None else None,
+                            "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
                             "is_previous_rep": prev})
         assertions = {"operator": fields.get("operator")}
