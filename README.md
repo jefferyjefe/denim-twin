@@ -93,6 +93,8 @@ photograph submitted five times, so the system does not pretend to.
 
     python tools/pilot.py selftest               # 66 scenarios, on synthetic images, in a temp dir
 
+    python tools/pilot.py selftest --full        # and drive the real 419-frame plan to READY
+
 Sixty-five of them try to obtain a pass that is not deserved. The last drives a complete session to
 READY and asserts the gate opens — a gate that cannot be opened by valid evidence is broken, not
 safe. Most of the sixty-three are there because an adversarial agent found them: independent
