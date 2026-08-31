@@ -34,6 +34,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import tempfile
 import time
 from pathlib import Path
@@ -432,6 +433,18 @@ def ingest_photo(src, dest_dir, shot_id, rep, *, move=False):
     src = Path(src)
     if not src.exists():
         raise ManifestError("source does not exist: %s" % src)
+    # A regular file, and nothing else. A FIFO passed every existence test and then blocked the
+    # process forever inside the copy, waiting for a writer that never came -- and a hang is worse
+    # than a refusal here, because the operator cannot tell it from slow work and the gate simply
+    # never answers. A directory, a socket and a device node are all equally not photographs.
+    st_ = os.stat(str(src))
+    if not stat.S_ISREG(st_.st_mode):
+        raise ManifestError("%s is not a regular file (it is a %s); a photograph is a file"
+                            % (src, "directory" if stat.S_ISDIR(st_.st_mode)
+                               else "fifo" if stat.S_ISFIFO(st_.st_mode)
+                               else "socket" if stat.S_ISSOCK(st_.st_mode) else "special file"))
+    if st_.st_size == 0:
+        raise ManifestError("%s is empty; there is no photograph in it" % src)
     sha = sha256_file(src)
     ext = src.suffix.lower() or ".jpg"
     dest_dir = Path(dest_dir)

@@ -45,7 +45,8 @@ from denimtwin.pilot import plan as PLAN            # noqa: E402
 from denimtwin.pilot import qa as QA                # noqa: E402
 from denimtwin.pilot import spec as SPEC            # noqa: E402
 from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual, mean_of  # noqa: E402
-from denimtwin.pilot.manifest import ingest_photo, read_exif, exif_timestamp, sha256_file  # noqa: E402
+from denimtwin.pilot.manifest import (ingest_photo, read_exif, exif_timestamp, sha256_file,  # noqa: E402
+                                      ManifestError)
 
 # The garment tree, overridable so a rehearsal cannot touch real evidence. data/garments holds the
 # only copies of two real garments' records, and "run the whole thing once to see how it feels" is
@@ -479,6 +480,14 @@ def cmd_confirm(a):
     st = Store(garment_dir(a.garment))
     if not a.operator:
         raise SystemExit("--operator is required: a human verification without a name is not one")
+    if a.shot:
+        spec = load_spec()
+        state0, _ = st.fold()
+        activated, _m = PLAN.activate(spec, state0["features"], state0["measurements"],
+                                      state0.get("cut_spec"))
+        if a.shot not in {x["shot_id"] for x in activated}:
+            raise SystemExit("%s is not an activated shot for this garment, so there is nothing "
+                             "about it to verify" % a.shot)
     cap_sha = None
     if a.shot:
         state, _ = st.fold()
@@ -859,7 +868,18 @@ def main(argv=None):
     s.set_defaults(fn=cmd_selftest)
 
     a = p.parse_args(argv)
-    return a.fn(a) or OK
+    try:
+        return a.fn(a) or OK
+    except SystemExit:
+        raise
+    except (CUT.CutSpecError, SPEC.SpecError, PLAN.PlanError, ManifestError, ValueError,
+            OSError) as e:
+        # The same rule the gate holds, applied at the command line: a condition this code cannot
+        # satisfy is a refusal with a sentence, not a traceback. A stack trace tells the operator
+        # that something broke; it does not tell them what to do, and on cut day that difference
+        # matters more than the line number.
+        print("refused: %s" % e, file=sys.stderr)
+        return FAIL
 
 
 if __name__ == "__main__":

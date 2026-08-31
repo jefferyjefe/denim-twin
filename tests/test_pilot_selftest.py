@@ -96,6 +96,7 @@ SCENARIOS = [
     'an offcut condition the protocol does not define is refused',
     'the post-wash gate requires the wash to have been recorded',
     'the wash plan cannot be rewritten after the wash to match what happened',
+    'a source that is not a photograph is refused rather than hanging',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

@@ -1311,7 +1311,36 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "last-write-wins let the plan be revised to match the outcome, and the "
                       "deviation -- the difference between the two -- then computed to nothing"))
 
-    # -- 62. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 62. a source that is not a photograph -------------------------------------------------------
+    b = new("notafile", spec=mini_sp, gid="DENIM_9237")
+    outcomes = {}
+    fifo = b.tmp / "a_fifo"
+    try:
+        os.mkfifo(str(fifo))
+    except (AttributeError, OSError):
+        fifo = None
+    empty = b.tmp / "empty.png"
+    empty.write_bytes(b"")
+    adir = b.tmp / "a_dir"
+    adir.mkdir(exist_ok=True)
+    for label, target in [("a directory", adir), ("an empty file", empty)] + \
+            ([("a fifo", fifo)] if fifo else []):
+        try:
+            ingest_photo(target, b.dir / "images" / "before", "TEST.X", 1)
+            outcomes[label] = "ACCEPTED"
+        except ManifestError:
+            outcomes[label] = "refused"
+        except Exception as e:              # noqa: BLE001
+            outcomes[label] = type(e).__name__
+    out.append(Result("a source that is not a photograph is refused rather than hanging",
+                      all(v == "refused" for v in outcomes.values()),
+                      "; ".join("%s -> %s" % kv for kv in sorted(outcomes.items())),
+                      "a FIFO passed every existence test and then blocked the process forever "
+                      "inside the copy, waiting for a writer that never came -- and a hang is worse "
+                      "than a refusal, because the operator cannot tell it from slow work and the "
+                      "gate never answers at all"))
+
+    # -- 63. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
