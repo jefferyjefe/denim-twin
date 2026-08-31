@@ -53,6 +53,7 @@ class Session(object):
         self.board_path = Path(board_path)
         self._spec = None
         self._board = None
+        self.default_garment = None
 
     @property
     def spec(self):
@@ -97,11 +98,11 @@ class Session(object):
         for (sid, rep), q in st["qa"].items():
             if q.get("outcome") == QA.RETAKE:
                 blocked.add((sid, rep))
-        nxt = PLAN.next_action(spec, [e for e in ordered
+        nxt = PLAN.next_action([e for e in ordered
                                       if not state_filter or e["state"] == state_filter],
                                done, blocked)
         if nxt is None:
-            nxt = PLAN.next_action(spec, ordered, done)
+            nxt = PLAN.next_action(ordered, done)
         remaining = [e for e in ordered if (e["shot_id"], e["rep"]) not in done]
 
         # coverage by state
@@ -254,34 +255,42 @@ class Session(object):
 
 
 def build_api(session):
+    """Every handler takes (match, query, body) because the dispatcher passes all three.
+
+    A handler names with a leading underscore whatever it does not read, so the signature says which
+    parts of the request each route actually depends on -- and so that
+    tests/test_no_dead_parameters.py, which exists because a keyword argument nobody reads is a lie
+    to the caller, can tell a uniform signature from a forgotten one.
+    """
     api = Api()
 
     @api.route("GET", "/api/garments")
-    def _garments(m, q, b):
+    def _garments(_m, _q, _b):
         return 200, {"garments": session.list_garments(),
+                     "default_garment": session.default_garment,
                      "spec_version": session.spec.version,
                      "spec_hash": session.spec.content_hash[:12]}
 
     @api.route("GET", "/api/map")
-    def _map(m, q, b):
+    def _map(_m, _q, _b):
         return 200, session.map_data()
 
     @api.route("GET", "/api/state/(DENIM_[0-9]{4})")
-    def _state(m, q, b):
+    def _state(m, q, _b):
         try:
             return 200, session.snapshot(m.group(1), state_filter=(q.get("state") or [None])[0])
         except KeyError:
             return 404, {"error": "no such garment"}
 
     @api.route("POST", "/api/features/(DENIM_[0-9]{4})")
-    def _features(m, q, b):
+    def _features(m, _q, b):
         st = session.store(m.group(1))
         st.append("feature_answers", {"answers": b.get("answers") or {}},
                   operator=b.get("operator"))
         return 200, {"ok": True}
 
     @api.route("POST", "/api/measure/(DENIM_[0-9]{4})")
-    def _measure(m, q, b):
+    def _measure(m, _q, b):
         name = b.get("name")
         readings = [float(x) for x in (b.get("readings") or []) if x not in (None, "")]
         need = GATES.REQUIRED_MEASUREMENTS.get(name)
@@ -300,7 +309,7 @@ def build_api(session):
         return 200, {"ok": True, "spread": spread, "in_tolerance": spread <= tol}
 
     @api.route("POST", "/api/confirm/(DENIM_[0-9]{4})")
-    def _confirm(m, q, b):
+    def _confirm(m, _q, b):
         if not b.get("operator"):
             return 400, {"error": "a human verification needs a name on it"}
         st = session.store(m.group(1))
@@ -314,7 +323,7 @@ def build_api(session):
         return 200, {"ok": True}
 
     @api.route("POST", "/api/setup/(DENIM_[0-9]{4})")
-    def _setup(m, q, b):
+    def _setup(m, _q, b):
         st = session.store(m.group(1))
         cfg = b.get("setup") or {}
         h = setup_hash(cfg)
@@ -326,7 +335,7 @@ def build_api(session):
         return 200, {"ok": True, "setup_hash": h}
 
     @api.route("POST", "/api/upload")
-    def _upload(m, q, b):
+    def _upload(_m, _q, b):
         fields = b.get("fields") or {}
         files = b.get("files") or {}
         gid = fields.get("garment")
@@ -406,7 +415,7 @@ def build_api(session):
                      "url": "/photo?p=%s/%s" % (gid, rel)}
 
     @api.route("POST", "/api/cutspec/(DENIM_[0-9]{4})")
-    def _cutspec(m, q, b):
+    def _cutspec(m, _q, b):
         from . import cutspec as CUT
         store = session.store(m.group(1))
         st, _ = store.fold()
@@ -425,7 +434,7 @@ def build_api(session):
                      "packet": CUT.packet_lines(m.group(1), s)}
 
     @api.route("POST", "/api/wash/(DENIM_[0-9]{4})")
-    def _wash(m, q, b):
+    def _wash(m, _q, b):
         store = session.store(m.group(1))
         st, _ = store.fold()
         which = "wash_actual" if b.get("actual") else "wash_planned"
@@ -442,7 +451,7 @@ def build_api(session):
         return 200, {"ok": True, "deviations": devs}
 
     @api.route("POST", "/api/offcut/(DENIM_[0-9]{4})")
-    def _offcut(m, q, b):
+    def _offcut(m, _q, b):
         store = session.store(m.group(1))
         rec = dict(b.get("offcut") or {})
         if not rec.get("label"):
@@ -451,7 +460,7 @@ def build_api(session):
         return 200, {"ok": True}
 
     @api.route("GET", "/api/gate/(DENIM_[0-9]{4})/([a-z_]+)")
-    def _gate(m, q, b):
+    def _gate(m, _q, _b):
         gid, gate = m.group(1), m.group(2)
         if gate not in GATES.GATE_STATES:
             return 400, {"error": "unknown gate"}
@@ -465,6 +474,11 @@ def build_api(session):
 def run(*, root, garments, spec_path, board_path, garment=None, port=8765, lan=False,
         open_browser=True):
     session = Session(root, garments, spec_path, board_path)
+    if garment:
+        if garment not in session.list_garments():
+            print("no such garment: %s" % garment, file=sys.stderr)
+            return 2
+        session.default_garment = garment
     try:
         session.spec
     except Exception as e:
@@ -478,6 +492,8 @@ def run(*, root, garments, spec_path, board_path, garment=None, port=8765, lan=F
     print("=" * 68)
     print("  open on your phone:  %s" % url)
     print("  reachable from:      %s" % where)
+    if session.default_garment:
+        print("  garment:             %s" % session.default_garment)
     print("  photographs stored:  %s" % garments)
     print("                       (gitignored; nothing is uploaded anywhere)")
     if not lan:

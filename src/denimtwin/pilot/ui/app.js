@@ -440,7 +440,9 @@ api('/api/map').then(function (j) { MAP = j; render(); }).catch(function (e) { s
 api('/api/garments').then(function (j) {
   var sel = $('garment');
   sel.innerHTML = j.garments.map(function (g) { return '<option>' + esc(g) + '</option>'; }).join('');
-  var want = localStorage.getItem('pilot_garment');
+  // The server was started for a particular garment when `serve GARMENT` named one; that beats
+  // whatever this browser looked at last, because the operator just typed it.
+  var want = j.default_garment || localStorage.getItem('pilot_garment');
   GARMENT = (want && j.garments.indexOf(want) >= 0) ? want : j.garments[0];
   if (GARMENT) { sel.value = GARMENT; refresh(); }
   else showErr('No garments yet. Run `tools/pilot.py new` first.');

@@ -79,7 +79,7 @@ def instance_count(features, key):
         return 0
 
 
-def expand_hem_series(spec, shot, measurements):
+def expand_hem_series(shot, measurements):
     """A hem-loop template becomes one frame per macro position, from the MEASURED leg opening.
 
     The count cannot be written into the specification, because it is a property of the garment: a
@@ -152,7 +152,7 @@ def activate(spec, answers, measurements=None):
         if not include:
             continue
         if s.get("hem_series"):
-            out.extend(expand_hem_series(spec, s, measurements))
+            out.extend(expand_hem_series(s, measurements))
             continue
         inst = s.get("instance_of")
         if inst:
@@ -261,7 +261,7 @@ def progress(ordered, done_keys):
     return done, todo
 
 
-def next_action(spec, ordered, done_keys, blocked_keys=()):
+def next_action(ordered, done_keys, blocked_keys=()):
     """The single best next thing to do, or None when the ordered set is complete.
 
     "Best" is the earliest item in the order that is neither captured nor currently blocked behind a
@@ -305,7 +305,7 @@ def cost_class(shot):
     ])
 
 
-def measured_pace(spec, captures, ordered):
+def measured_pace(captures, ordered):
     """cost_class -> {median_seconds, n}, measured from the gaps between this session's captures.
 
     The gap between one accepted capture and the next is the time the operator took on it, including

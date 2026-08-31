@@ -62,7 +62,13 @@ def _fabric(shape, rng, base_bgr, weave_mm_per_px=None, strength=14):
 
 
 def _jeans_polygon(w, h, side="front", legs_touching=False):
-    """A flat-lay jeans silhouette in a w x h frame. Returns the outer contour and leg-gap wedge."""
+    """A flat-lay jeans silhouette in a w x h frame. Returns the outer contour and the crotch height.
+
+    `side` mirrors the outline horizontally, because turning a garment over swaps which side of the
+    frame each leg is on. The region map's convention note says the same thing and warns not to
+    'fix' it: on the front view the wearer's left is at large x, and on the back view it is at small
+    x. A fixture that drew both views identically would make a left/right mix-up invisible.
+    """
     cx = w / 2.0
     top = h * 0.06
     waist_half = w * 0.20
@@ -78,6 +84,9 @@ def _jeans_polygon(w, h, side="front", legs_touching=False):
         (cx - gap * 0.6, crotch_y), (cx - gap, bottom),
         (cx - hem_half - w * 0.02, bottom), (cx - hip_half, crotch_y * 0.75),
     ]
+    if str(side).startswith("back"):
+        # Turning the garment over reflects it about the frame's vertical centre line.
+        outer = [(2.0 * cx - x, y) for (x, y) in outer][::-1]
     return np.array([outer], np.int32), crotch_y
 
 

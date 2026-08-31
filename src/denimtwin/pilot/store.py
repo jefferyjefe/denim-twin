@@ -141,15 +141,24 @@ class Store(object):
     # -- convenience --------------------------------------------------------------------------
 
     def done_keys(self, state=None):
-        """(shot_id, rep) pairs that have an accepted capture. Reuse counts; a RETAKE does not."""
+        """(shot_id, rep) pairs that have an accepted capture, optionally within one state.
+
+        Reuse counts, because a declared reuse that passed the borrowing shot's own checks is that
+        shot's evidence. A RETAKE does not count: a rejected frame is not a captured one, and
+        treating it as captured is how a required shot goes missing without anything saying so.
+        """
         st, _ = self.fold()
         out = set()
         for (sid, rep), cap in st["captures"].items():
+            if state is not None and cap.get("state") != state:
+                continue
             q = st["qa"].get((sid, rep))
             if q and q.get("outcome") == "RETAKE_REQUIRED":
                 continue
             out.add((sid, rep))
         for r in st["reuse"]:
+            if state is not None and r.get("state") != state:
+                continue
             out.add((r.get("shot_id"), int(r.get("rep", 1))))
         return out
 

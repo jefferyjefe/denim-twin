@@ -304,7 +304,7 @@ class Manifest(object):
         return out, problems
 
 
-def ingest_photo(src, dest_dir, shot_id, rep, *, state=None, move=False):
+def ingest_photo(src, dest_dir, shot_id, rep, *, move=False):
     """Copy a capture into the garment tree under a content-addressed name. Never overwrites.
 
     Returns (dest_path, sha, was_already_present). Re-ingesting identical bytes is a no-op that
