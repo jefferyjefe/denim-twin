@@ -9,6 +9,7 @@
     tools/pilot.py next       GARMENT         the single best next action
     tools/pilot.py add        GARMENT SHOT F  ingest a photograph and check it
     tools/pilot.py confirm    GARMENT SHOT C  record a human verification
+    tools/pilot.py reuse      GARMENT SRC TGT one frame also satisfying a second shot
     tools/pilot.py cutspec    GARMENT --inseam N
     tools/pilot.py packet     GARMENT         the printable cut packet
     tools/pilot.py precut     GARMENT         THE GATE: may this garment be cut?
@@ -398,6 +399,74 @@ def cmd_add(a):
     return OK if outcome == QA.PASS else FAIL
 
 
+def cmd_reuse(a):
+    """Declare that one accepted photograph also satisfies a second shot.
+
+    The specification allows it, and the gate has always required the declaration to record that the
+    borrowing shot's OWN checks were re-run on the borrowed frame -- but nothing could create one,
+    so the permission was unreachable and the condition guarded a surface that did not exist. This
+    is that surface, and it does the re-running rather than taking the operator's word: the target
+    shot's requirements are applied to the source image, and a reuse that does not pass them is
+    refused rather than recorded.
+    """
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    state, _ = st.fold()
+    shots, _m = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
+    by_id = {x["shot_id"]: x for x in shots}
+    target = by_id.get(a.target)
+    if target is None:
+        raise SystemExit("%s is not an activated shot for this garment" % a.target)
+    src = state["captures"].get((a.source, a.source_rep))
+    if src is None:
+        raise SystemExit("no capture recorded for %s rep %d" % (a.source, a.source_rep))
+    path = gdir / src["path"]
+    if not path.exists():
+        raise SystemExit("the source photograph is not on disk: %s" % src["path"])
+    import cv2
+    img = cv2.imread(str(path))
+    b, bspec = board()
+    assertions = {"operator": a.operator}
+    for k in (a.confirm or []):
+        assertions[k] = True
+    cmp_ = _compare_set(spec, state, gdir, a.target, a.rep, target, b, bspec)
+    for c in cmp_:
+        c["self_sha256"] = src.get("sha256")
+    checks, na = QA.check_capture(path, target,
+                                  QA.merged_quality(spec.doc["quality_defaults"], target),
+                                  rep=a.rep, board=b, board_spec=bspec, image=img,
+                                  compare_to=[c for c in cmp_
+                                              if c.get("sha256") != src.get("sha256")],
+                                  operator_assertions=assertions)
+    outcome = QA.roll_up(checks)
+    print("%s reused for %s r%d -> %s" % (a.source, a.target, a.rep, outcome))
+    for c in checks:
+        if c.outcome != QA.PASS:
+            print("  %-22s %-28s %s" % (c.check_id, c.outcome, c.detail[:90]))
+    if outcome != QA.PASS:
+        print("\nrefused: a frame may satisfy a second shot only when every requirement of that "
+              "shot passes on it.")
+        return FAIL
+    st.append("capture", dict(src, shot_id=a.target, rep=a.rep, state=target["state"],
+                              region_id=target.get("region_id"), reused_from=a.source),
+              operator=a.operator, setup_hash=src.get("setup_hash"))
+    st.append("qa_result", {"shot_id": a.target, "rep": a.rep, "outcome": outcome,
+                            "shot_class": QA.shot_class(target),
+                            "capture_sha256": src.get("sha256"),
+                            "checks": [c.as_dict() for c in checks], "not_applicable": na},
+              operator=a.operator)
+    st.append("reuse_declaration",
+              {"shot_id": a.target, "rep": a.rep, "source_shot_id": a.source,
+               "source_rep": a.source_rep, "sha256": src.get("sha256"),
+               "state": target["state"], "checks_rerun": [c.check_id for c in checks],
+               "outcome": outcome, "reason": a.reason},
+              operator=a.operator)
+    print("\nrecorded. The manifest names the source, the shot it now also satisfies, and every "
+          "check that was re-run on it.")
+    return OK
+
+
 def cmd_confirm(a):
     st = Store(garment_dir(a.garment))
     if not a.operator:
@@ -716,6 +785,13 @@ def main(argv=None):
     s.add_argument("--rep", type=int, default=1)
     s.add_argument("--confirm", action="append",
                    help="record an operator assertion, e.g. --confirm ruler_visible")
+    s = add("reuse", cmd_reuse)
+    s.add_argument("source", help="the shot id whose photograph is being borrowed")
+    s.add_argument("target", help="the shot id it should also satisfy")
+    s.add_argument("--source-rep", type=int, default=1, dest="source_rep")
+    s.add_argument("--rep", type=int, default=1)
+    s.add_argument("--reason", default=None)
+    s.add_argument("--confirm", action="append")
     s = add("confirm", cmd_confirm)
     s.add_argument("claim")
     s.add_argument("--shot", default=None)

@@ -21,6 +21,8 @@ answered features, captures so far): the same session state always produces the 
 "what do I do now" has one answer and a resumed session does not reshuffle itself. Nothing in this
 module uses a clock or a random number.
 """
+import math
+
 from . import spec as SPEC
 
 #: Which way up the garment must be lying for a shot. Profile and edge shots are taken with the
@@ -70,13 +72,29 @@ def resolve_features(spec, answers):
 
 
 def instance_count(features, key):
+    """How many instances of a counted feature the garment has.
+
+    Read the SAME WAY `spec.evaluate` reads it, which was not true before. evaluate compares with
+    float(), so "2.0" and 0.5 are both greater than zero, while this cast with int(): "2.0" raised
+    and 0.5 truncated to 0. A shot could therefore be INCLUDED because the count was positive and
+    expand to NO frames because the same count read as zero -- the silent drop, through a second
+    door. A value that cannot be read as a number is not zero instances either; it is unknown, and
+    unknown means plan the photograph.
+    """
     v = features.get(key)
     if isinstance(v, bool):
         return 1 if v else 0
+    if v is None:
+        return 1
     try:
-        return max(0, int(v))
+        f = float(v)
     except (TypeError, ValueError):
+        return 1
+    if f != f or f in (float("inf"), float("-inf")):
+        return 1
+    if f <= 0:
         return 0
+    return max(1, int(math.ceil(f)))
 
 
 def expand_hem_series(shot, measurements, cut_spec=None):

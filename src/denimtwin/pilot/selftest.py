@@ -1063,7 +1063,47 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "it defeated the check for as long as a `serve` process stayed up -- and a "
                       "capture UI is exactly a long-running process"))
 
-    # -- 47. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 47. the tail repair must not delete an interior entry --------------------------------------
+    b = new("interior", spec=mini_sp, gid="DENIM_9223")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    lines = Path(b.store.manifest.path).read_text().strip().split("\n")
+    n_before = len(lines)
+    lines[4] = lines[4][:40]                       # damage an interior line
+    Path(b.store.manifest.path).write_text("\n".join(lines) + "\n{\"seq\":99,\"kind\":\"cap")
+    b.store.append("note", {"text": "after the tear"})
+    ents, probs = b.store.manifest.read()
+    kept_interior = any("corrupt_line" == x["kind"] for x in probs)
+    out.append(Result("repairing a torn tail does not delete an interior entry",
+                      kept_interior and not b.gate(check_files=False).ready,
+                      "%d lines before; problems after the repair: %s"
+                      % (n_before, sorted({x["kind"] for x in probs})),
+                      "the repair fired on a torn LAST line and then dropped every unparseable line "
+                      "anywhere, so a real measurement damaged by something else was deleted by a "
+                      "repair that had not been asked to touch it"))
+
+    # -- 48. a reuse must pass the borrowing shot's own checks ---------------------------------------
+    b = new("reuse", spec=mini_sp, gid="DENIM_9224")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    shots_ = b.activated()[0]
+    front_ = [x for x in shots_ if x.get("garment_side") == "front"][0]
+    back_ = [x for x in shots_ if x.get("garment_side") == "back"][0]
+    b.add(front_, 1, b.synth_for(front_, 1))
+    st_, _ = b.store.fold()
+    src_ = st_["captures"][(front_["shot_id"], 1)]
+    # Borrow the FRONT frame for the BACK shot without re-checking: the gate must still refuse,
+    # because the declaration is only worth something if the checks behind it were run.
+    b.store.append("reuse_declaration",
+                   {"shot_id": back_["shot_id"], "rep": 1, "source_shot_id": front_["shot_id"],
+                    "source_rep": 1, "sha256": src_["sha256"], "state": back_["state"]},
+                   operator="forger")
+    blocked_ = b.blocked_conditions(check_files=False)
+    out.append(Result("a reuse declaration with no re-run checks is refused",
+                      "captures.reuse_legitimate" in blocked_,
+                      "declared a reuse carrying no checks_rerun and no outcome",
+                      "the permission to reuse a frame is worth something only if the borrowing "
+                      "shot's own requirements were applied to it"))
+
+    # -- 49. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

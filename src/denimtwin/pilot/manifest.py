@@ -332,24 +332,32 @@ class Manifest(object):
         return entry
 
     def _quarantine_torn(self):
+        """Remove ONLY the torn tail, never an interior line.
+
+        The first version fired when the last line was unparseable and then dropped every
+        unparseable line anywhere in the file. An interior line damaged by something else -- a bad
+        sector, an editor -- was therefore deleted by a repair that had not been asked to touch it,
+        and a real measurement vanished from the record. The chain caught the deletion, so it never
+        became a pass, but the entry was gone. Interior damage is left exactly where it is, for the
+        gate to block on; only the incomplete final append is removed, because that is not an entry.
+        """
         raw = self.path.read_text(errors="replace")
-        lines = raw.split("\n")
-        keep, bad = [], []
-        for i, line in enumerate(lines):
-            if not line.strip():
-                continue
+        lines = [l for l in raw.split("\n") if l.strip()]
+        tail = []
+        while lines:
             try:
-                json.loads(line)
-                keep.append(line)
+                json.loads(lines[-1])
+                break
             except ValueError:
-                bad.append(line)
-        if bad:
-            q = self.path.with_suffix(self.path.suffix + ".torn")
-            with open(str(q), "a") as f:
-                f.write("\n".join(bad) + "\n")
-                f.flush()
-                os.fsync(f.fileno())
-        atomic_write_text(self.path, "".join(l + "\n" for l in keep))
+                tail.append(lines.pop())
+        if not tail:
+            return
+        q = self.path.with_suffix(self.path.suffix + ".torn")
+        with open(str(q), "a") as f:
+            f.write("\n".join(reversed(tail)) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        atomic_write_text(self.path, "".join(l + "\n" for l in lines))
 
     # -- committable form ---------------------------------------------------------------------
 

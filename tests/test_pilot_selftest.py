@@ -81,6 +81,8 @@ SCENARIOS = [
     'a verdict that disagrees with its own checks is refused',
     'one photograph cannot satisfy two shots without a declared reuse',
     'a photograph swapped with its size and mtime restored is still detected',
+    'repairing a torn tail does not delete an interior entry',
+    'a reuse declaration with no re-run checks is refused',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 
