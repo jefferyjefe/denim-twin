@@ -20,13 +20,15 @@ this is safe' is not permission.
 | `rig.frozen` | the rig configuration is frozen and hashed |
 | `rig.calibrated` | all 10 calibration readings recorded and passing |
 | `rig.board_square_measured` | the printed squares measure 25.0 mm within 0.5 mm |
-| `rig.captures_attributable` | every photograph carries a known rig hash |
+| `rig.captures_attributable` | every photograph carries the rig hash in effect when it was taken |
+| `rig.one_configuration` | the session used one rig, or the change is recorded as a deviation |
 | `measurements.complete` | all 8 measurements, each with its independent readings, in tolerance |
 | `captures.required_complete` | every required frame captured and passing |
 | `captures.files_intact` | every recorded photograph still on disk, hash unchanged |
 | `captures.relays_independent` | each repeat followed a real re-lay |
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
+| `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared reuse |
 | `cut.specified` | the cut is defined and its outseam offset computed |
 | `cut.second_person_verified` | a second person measured both marks within 3 mm |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |

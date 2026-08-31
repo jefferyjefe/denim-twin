@@ -410,7 +410,10 @@ def doc_green_sheet(spec, shots, ordered):
         % len(GATES.REQUIRED_SETUP_CHECKS),
         "| `rig.board_square_measured` | the printed squares measure %.1f mm within %.1f mm |"
         % (GATES.BOARD_SQUARE_MM, GATES.BOARD_SQUARE_TOLERANCE_MM),
-        "| `rig.captures_attributable` | every photograph carries a known rig hash |",
+        "| `rig.captures_attributable` | every photograph carries the rig hash in effect when it "
+        "was taken |",
+        "| `rig.one_configuration` | the session used one rig, or the change is recorded as a "
+        "deviation |",
         "| `measurements.complete` | all %d measurements, each with its independent readings, in "
         "tolerance |" % len(GATES.REQUIRED_MEASUREMENTS),
         "| `captures.required_complete` | every required frame captured and passing |",
@@ -418,6 +421,8 @@ def doc_green_sheet(spec, shots, ordered):
         "| `captures.relays_independent` | each repeat followed a real re-lay |",
         "| `captures.repositions_recorded` | each repeat that needed a camera reposition records one |",
         "| `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |",
+        "| `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared "
+        "reuse |",
         "| `cut.specified` | the cut is defined and its outseam offset computed |",
         "| `cut.second_person_verified` | a second person measured both marks within %.0f mm |"
         % CUT.verification_tolerance_mm(),
