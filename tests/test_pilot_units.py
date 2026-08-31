@@ -257,3 +257,40 @@ def test_a_garment_that_cannot_be_machine_washed_changes_what_the_second_offcut_
     a = OFF.next_assignment(str(tmp_path), "DENIM_0009", garment_machine_washable=False)
     assert a["other"]["condition"] == OFF.GARMENT_CONDITION
     assert "care label" in a["note"]
+
+
+# -- the ghost overlay -----------------------------------------------------------------------------
+
+def test_the_later_half_of_a_matched_pair_is_offered_its_earlier_image(tmp_path):
+    """And it is labelled a capture aid, because that is the whole constraint on it.
+
+    The overlay exists so the operator can reproduce a framing. It must never become evidence, so
+    the only thing that travels with it is a URL and a sentence saying what it is not.
+    """
+    import os
+    from denimtwin.pilot import webapp
+    from denimtwin.pilot.selftest import Bench
+
+    spec = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
+    b = Bench(tmp_path, spec, "DENIM_0003")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    shots, _ = b.activated()
+    byid = {x["shot_id"]: x for x in shots}
+    pairs = [p for p in spec.matched_pairs() if p[0] in byid and p[1] in byid]
+    assert pairs, "the plan should declare cross-state matched pairs"
+    earlier, later = pairs[0]
+    b.add(byid[earlier], 1, b.synth_for(byid[earlier], 1))
+    ordered = PLAN.order(spec, shots, state=byid[later]["state"])
+    for e in ordered:
+        if e["shot_id"] == later:
+            break
+        b.add(byid[e["shot_id"]], e["rep"], b.synth_for(byid[e["shot_id"]], e["rep"]))
+    sess = webapp.Session(tmp_path, os.path.join(str(tmp_path), "garments"),
+                          ROOT / "protocol" / "shotplan" / "shotplan.json",
+                          ROOT / "protocol" / "charuco_board.json")
+    snap = sess.snapshot("DENIM_0003", state_filter=byid[later]["state"])
+    assert snap["next"]["shot_id"] == later
+    ghost = snap["ghost"]
+    assert ghost and ghost["shot_id"] == earlier
+    assert "never evidence" in ghost["note"]
+    assert ghost["url"].startswith("/photo?p=DENIM_0003/")
