@@ -210,12 +210,13 @@ class Bench(object):
             if (sid, r) == (shot["shot_id"], rep):
                 continue
             p = self.dir / (c.get("path") or "")
-            if not p.exists():
-                continue
+            present = p.exists()
             prev = (sid == shot["shot_id"] and r == rep - 1)
-            oimg = cv2.imread(str(p)) if prev else None
+            oimg = cv2.imread(str(p)) if (prev and present) else None
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg, "path": str(p),
+                            "self_sha256": sha, "image": oimg,
+                            "path": str(p) if present else None,
+                            "undecodable": not present,
                             "dhash": c.get("dhash"),
                             "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,

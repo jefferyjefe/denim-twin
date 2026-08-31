@@ -317,11 +317,11 @@ def _compare_set(spec, st_state, gdir, shot_id, rep, shot, _b=None, _bspec=None)
         if (sid, r) == (shot_id, rep):
             continue
         p = gdir / (c.get("path") or "")
-        if not p.exists():
-            continue
+        present = p.exists()
         prev = (sid == shot_id and r == rep - 1)
-        img = cv2.imread(str(p)) if prev else None
-        out.append({"shot_id": sid, "rep": r, "path": str(p), "sha256": c.get("sha256"),
+        img = cv2.imread(str(p)) if (prev and present) else None
+        out.append({"shot_id": sid, "rep": r, "path": str(p) if present else None,
+                    "sha256": c.get("sha256"), "undecodable": not present,
                     "image": img, "dhash": c.get("dhash"),
                     "pose": Q.garment_pose_of(img, _b, _bspec) if img is not None else None,
                     "exif_ts": c.get("exif_ts"), "is_previous_rep": prev})

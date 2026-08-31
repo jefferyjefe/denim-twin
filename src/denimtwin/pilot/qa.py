@@ -73,7 +73,8 @@ APPLICABLE = {
             "ruler_visible", "anatomical_region", "duplicate_content", "camera_repositioned"},
     RIG: {"readable", "resolution", "blur", "board_corners", "scale", "camera_tilt",
           "duplicate_content", "camera_repositioned"},
-    LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned"},
+    LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned",
+            "anatomical_region", "ruler_visible"},
     VIDEO: {"readable", "duplicate_content"},
 }
 
@@ -112,6 +113,8 @@ NOT_APPLICABLE_WHY = {
     (LABEL, "scale"): "no board in frame; the label carries text, not a measurement",
     (LABEL, "camera_tilt"): "no board, so scale variation cannot be measured",
     (LABEL, "garment_side"): "not a view of the garment",
+    (LABEL, "subject_extent"): "a label is framed to fill",
+    (LABEL, "subject_span"): "a label is framed to fill",
     (VIDEO, "blur"): "a clip's sharpness is not a single frame's Laplacian",
 }
 
@@ -204,12 +207,17 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     except ImportError:
         return [Check("dependencies", UNAVAILABLE,
                       "OpenCV is not installed, so no image check can run",
-                      fix="pip install -r requirements.txt")]
+                      fix="pip install -r requirements.txt")], not_applicable()
 
     img = image if image is not None else cv2.imread(str(path))
     if img is None:
+        # Every caller unpacks two values. Returning a bare list here turned an unreadable file --
+        # a text file with a .jpg suffix, a truncated transfer -- into a ValueError raised AFTER the
+        # capture entry was already in the append-only log, leaving a recorded photograph with no
+        # verdict and no way to add one.
         return [Check("readable", RETAKE, "the file could not be read as an image",
-                      {"path": path.name}, fix="re-transfer or re-take this capture")]
+                      {"path": path.name}, fix="re-transfer or re-take this capture")], \
+            not_applicable()
     h, w = img.shape[:2]
     checks.append(Check("readable", PASS, "%dx%d" % (w, h), {"width": w, "height": h}))
 
@@ -417,8 +425,13 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                 "frame may show neither. Confirm the %s is up." % side,
                                 fix="confirm the facing side in the app"))
 
+    # A label frame has no automatic content check at all -- nothing in the pixels distinguishes a
+    # care label from an empty backdrop -- so the only honest answer is to ask. Without this, a
+    # required care-label photograph was satisfied PASS by a frame of the backdrop, with no human
+    # asked and nothing in the record saying anything had been assumed.
     if shot.get("region_id") and applies("anatomical_region") \
-            and shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
+            and (cls == LABEL
+                 or shot.get("camera_angle") in ("macro_perpendicular", "side_profile")):
         if assertions.get("region_confirmed") is True:
             checks.append(Check("anatomical_region", PASS,
                                 "operator confirmed this is %s" % shot["region_id"]))
@@ -449,8 +462,38 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
         if oimg is None and candidate and other.get("path"):
             oimg = cv2.imread(str(other["path"]))
         n = Q.ncc(img, oimg) if oimg is not None else None
-        if not candidate and n is None:
-            # Far apart on the signature: not the same frame, and no decode was needed to say so.
+        # The HASH comparison costs nothing and needs no image, so it runs on every pair whatever
+        # the signatures said: an exact re-use is caught unconditionally. Dropping a pair entirely
+        # -- which the prefilter used to do -- meant a lightly perturbed copy could satisfy a second
+        # shot id with NO record that a comparison had even been considered, and a check that leaves
+        # no trace is indistinguishable from one that passed.
+        same_bytes = (other.get("sha256") and other.get("self_sha256")
+                      and other["sha256"] == other["self_sha256"])
+        if same_bytes:
+            checks.append(Check("duplicate_content", RETAKE,
+                                "byte-identical to %s rep %s, which is already recorded"
+                                % (other.get("shot_id"), other.get("rep")),
+                                {"other_shot_id": other.get("shot_id"), "other_rep": other.get("rep")},
+                                fix="capture a new frame; this one is already in the log"))
+            continue
+        if n is None:
+            if not candidate:
+                # Far apart on the recorded signature AND different bytes. That is a decided
+                # comparison, not a skipped one, and it is recorded as such.
+                checks.append(Check("duplicate_content", PASS,
+                                    "distinct from %s rep %s on its recorded signature (Hamming "
+                                    "%s, far outside the near-duplicate band) and on its hash"
+                                    % (other.get("shot_id"), other.get("rep"), dist),
+                                    {"dhash_distance": dist, "compared": "signature+hash",
+                                     "other_shot_id": other.get("shot_id")}))
+                continue
+            # We needed to look and could not: the earlier frame was not available to decode.
+            checks.append(Check("duplicate_content", UNAVAILABLE,
+                                "could not be compared with %s rep %s -- its signature is within "
+                                "the near-duplicate band but its file was not available to decode"
+                                % (other.get("shot_id"), other.get("rep")),
+                                {"dhash_distance": dist, "other_shot_id": other.get("shot_id")},
+                                fix="restore the earlier photograph so the two can be compared"))
             continue
         outcome, detail = Q.duplicate_verdict(other.get("sha256"), other.get("self_sha256"), n)
         if outcome != PASS:

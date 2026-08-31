@@ -109,7 +109,16 @@ class _Handler(BaseHTTPRequestHandler):
                 k, _, v = part.strip().partition("=")
                 if k == "pilot_token":
                     tok = v
-        return bool(tok) and hmac.compare_digest(str(tok), self.server.token)
+        if not tok:
+            return False
+        # compare_digest refuses a non-ASCII str and raises TypeError, and the call happens BEFORE
+        # any authorisation decision -- so one query parameter from an unauthenticated client killed
+        # the handler thread. Compare bytes, and treat anything unencodable as simply wrong.
+        try:
+            given = str(tok).encode("utf-8", "ignore")
+        except Exception:                                        # noqa: BLE001
+            return False
+        return hmac.compare_digest(given, self.server.token.encode("utf-8"))
 
     def _send(self, status, body, ctype="application/json; charset=utf-8", extra=None):
         if isinstance(body, (dict, list)):
@@ -214,10 +223,16 @@ class _Handler(BaseHTTPRequestHandler):
         if length > MAX_BODY_BYTES:
             return self._send(413, {"error": "body too large"})
         raw = self.rfile.read(length) if length else b"{}"
+        def _no_constants(name):
+            raise ValueError("%s is not a value this API accepts" % name)
+
         try:
-            body = json.loads(raw.decode("utf-8") or "{}")
-        except ValueError:
-            return self._send(400, {"error": "body is not JSON"})
+            # Python's json accepts NaN and Infinity by default. NaN compares false against every
+            # bound, so a NaN measurement slipped past a tolerance check and switched it off; and
+            # canonical() refuses to serialise one, so it would break the log on write instead.
+            body = json.loads(raw.decode("utf-8") or "{}", parse_constant=_no_constants)
+        except (ValueError, UnicodeDecodeError) as e:
+            return self._send(400, {"error": "body is not acceptable JSON: %s" % e})
         if ctype not in ("application/json", ""):
             return self._send(415, {"error": "expected application/json"})
         status, obj = self.server.api.dispatch("POST", u.path, q, body)

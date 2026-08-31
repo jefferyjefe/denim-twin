@@ -253,15 +253,22 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
     def c_setup_checks():
         have = state["setup_checks"]
         missing = [c for c in REQUIRED_SETUP_CHECKS if c not in have]
-        failed = [c for c, v in have.items() if v.get("outcome") not in (None, QA.PASS)]
+        # An explicit PASS, or nothing. `not in (None, QA.PASS)` treated a reading with NO outcome
+        # at all as satisfied, so a calibration record posted with the check's name and no verdict
+        # counted as a passing calibration -- absence wearing the costume of a result, in the one
+        # place the whole session's scale comes from.
+        failed = [c for c in REQUIRED_SETUP_CHECKS
+                  if c in have and have[c].get("outcome") != QA.PASS]
+        unknown = [c for c in have if c not in REQUIRED_SETUP_CHECKS]
         if missing or failed:
-            return False, ("rig calibration incomplete: %d missing (%s), %d not passing (%s)"
+            return False, ("rig calibration incomplete: %d missing (%s), %d recorded without an "
+                           "explicit pass (%s)"
                            % (len(missing), ", ".join(missing[:6]) or "-",
                               len(failed), ", ".join(failed[:4]) or "-")), \
                    "run `pilot.py setup` and complete every calibration reading", \
-                   {"missing": missing, "failed": failed}
+                   {"missing": missing, "failed": failed, "unrecognised": unknown[:6]}
         return True, "all %d rig calibration checks recorded and passing" % len(REQUIRED_SETUP_CHECKS), \
-               None, {}
+               None, {"unrecognised": unknown[:6]}
 
     def c_board_square():
         m = state["setup_checks"].get("board_square_measured") or {}

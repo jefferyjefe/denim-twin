@@ -12,7 +12,9 @@ parts disagree with each other while five requests land, and a capture UI that s
 panel and lists blocks in another is worse than no UI.
 """
 import json
+import math
 import os
+import re
 import sys
 import time
 import webbrowser
@@ -20,6 +22,7 @@ from pathlib import Path
 
 from . import gates as GATES
 from . import hem as HEM
+from . import qa_primitives as Q
 from . import plan as PLAN
 from . import qa as QA
 from . import spec as SPEC
@@ -254,6 +257,96 @@ class Session(object):
         }
 
 
+class BadInput(Exception):
+    pass
+
+
+def _num(v, name, *, allow_none=False):
+    """A finite number, or a refusal naming the field.
+
+    Everything that reaches the log or the gate goes through here. The API used to store whatever
+    JSON arrived: a repeat index of "two" was written straight into the log and then every later
+    fold() raised on int(), permanently bricking the garment -- the gate could no longer be run at
+    all, on a garment whose evidence was intact.
+    """
+    if v is None or v == "":
+        if allow_none:
+            return None
+        raise BadInput("%s is required" % name)
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        raise BadInput("%s must be a number, got %r" % (name, v))
+    if not math.isfinite(f):
+        raise BadInput("%s must be a finite number, got %r" % (name, v))
+    return f
+
+
+def _int(v, name, *, allow_none=False, lo=None, hi=None):
+    f = _num(v, name, allow_none=allow_none)
+    if f is None:
+        return None
+    if f != int(f):
+        raise BadInput("%s must be a whole number, got %r" % (name, v))
+    i = int(f)
+    if lo is not None and i < lo:
+        raise BadInput("%s must be at least %d" % (name, lo))
+    if hi is not None and i > hi:
+        raise BadInput("%s must be at most %d" % (name, hi))
+    return i
+
+
+def _shot_id(v, name="shot_id", *, allow_none=False):
+    if v is None:
+        if allow_none:
+            return None
+        raise BadInput("%s is required" % name)
+    v = str(v)
+    if not re.fullmatch(r"[A-Z0-9_]+(\.[A-Z0-9_]+)+", v):
+        raise BadInput("%s %r is not a shot id" % (name, v))
+    return v
+
+
+def validate_answers(spec, answers):
+    """Feature answers, coerced to the type the specification declares for each key.
+
+    An answer stored verbatim is an answer the plan will misread. A count arriving as the string
+    "2.0" made instance_count()'s int() raise, which plan.activate swallowed as zero instances --
+    so posting a string silently DELETED the photographs that count was supposed to require.
+    """
+    if not isinstance(answers, dict):
+        raise BadInput("answers must be an object")
+    by_key = {f["key"]: f for f in spec.features}
+    out = {}
+    for k, v in answers.items():
+        f = by_key.get(k)
+        if f is None:
+            raise BadInput("%r is not a feature in this shot plan" % k)
+        if v is None:
+            continue
+        t = f["type"]
+        if t == "bool":
+            if isinstance(v, bool):
+                out[k] = v
+            elif str(v).lower() in ("true", "yes", "y", "1"):
+                out[k] = True
+            elif str(v).lower() in ("false", "no", "n", "0"):
+                out[k] = False
+            else:
+                raise BadInput("%s must be true or false, got %r" % (k, v))
+        elif t == "count":
+            out[k] = _int(v, k, lo=0, hi=500)
+        elif t == "number":
+            out[k] = _num(v, k)
+        elif t == "enum":
+            if str(v) not in (f.get("options") or []):
+                raise BadInput("%s must be one of %s" % (k, f.get("options")))
+            out[k] = str(v)
+        else:
+            out[k] = str(v)
+    return out
+
+
 def build_api(session):
     """Every handler takes (match, query, body) because the dispatcher passes all three.
 
@@ -284,18 +377,25 @@ def build_api(session):
 
     @api.route("POST", "/api/features/(DENIM_[0-9]{4})")
     def _features(m, _q, b):
+        try:
+            answers = validate_answers(session.spec, b.get("answers") or {})
+        except BadInput as e:
+            return 400, {"error": str(e)}
         st = session.store(m.group(1))
-        st.append("feature_answers", {"answers": b.get("answers") or {}},
-                  operator=b.get("operator"))
-        return 200, {"ok": True}
+        st.append("feature_answers", {"answers": answers}, operator=b.get("operator"))
+        return 200, {"ok": True, "answers": answers}
 
     @api.route("POST", "/api/measure/(DENIM_[0-9]{4})")
     def _measure(m, _q, b):
         name = b.get("name")
-        readings = [float(x) for x in (b.get("readings") or []) if x not in (None, "")]
         need = GATES.REQUIRED_MEASUREMENTS.get(name)
         if need is None:
             return 400, {"error": "%s is not a required measurement" % name}
+        try:
+            readings = [_num(x, "%s reading" % name)
+                        for x in (b.get("readings") or []) if x not in (None, "")]
+        except BadInput as e:
+            return 400, {"error": str(e)}
         tol = GATES.MEASUREMENT_TOLERANCE.get(name, GATES.MEASUREMENT_TOLERANCE["_default_cm"])
         if len(readings) < need:
             return 400, {"error": "%s needs %d independent readings, got %d"
@@ -312,21 +412,29 @@ def build_api(session):
     def _confirm(m, _q, b):
         if not b.get("operator"):
             return 400, {"error": "a human verification needs a name on it"}
+        if not b.get("claim"):
+            return 400, {"error": "a verification must say what it verifies"}
+        try:
+            rep_ = _int(b.get("rep"), "rep", allow_none=True, lo=1, hi=99)
+            shot_ = _shot_id(b.get("shot_id"), allow_none=True)
+            mi = _num(b.get("measured_inseam_cm"), "measured_inseam_cm", allow_none=True)
+            mo = _num(b.get("measured_outseam_cm"), "measured_outseam_cm", allow_none=True)
+        except BadInput as e:
+            return 400, {"error": str(e)}
         st = session.store(m.group(1))
         # Bind it to the photograph it is about, so re-ingesting a different frame under the same
         # shot id cannot inherit the confirmation.
         cap_sha = b.get("capture_sha256")
-        if cap_sha is None and b.get("shot_id"):
+        if cap_sha is None and shot_:
             st_, _ = st.fold()
-            cap = st_["captures"].get((b.get("shot_id"), int(b.get("rep") or 1)))
+            cap = st_["captures"].get((shot_, rep_ or 1))
             cap_sha = (cap or {}).get("sha256")
         st.append("human_verification",
-                  {"shot_id": b.get("shot_id"), "rep": b.get("rep"), "claim": b.get("claim"),
+                  {"shot_id": shot_, "rep": rep_, "claim": str(b.get("claim")),
                    "value": bool(b.get("value", True)), "note": b.get("note"),
                    "verifier_name": b.get("verifier") or b.get("operator"),
                    "operator": b.get("operator"), "capture_sha256": cap_sha,
-                   "measured_inseam_cm": b.get("measured_inseam_cm"),
-                   "measured_outseam_cm": b.get("measured_outseam_cm")},
+                   "measured_inseam_cm": mi, "measured_outseam_cm": mo},
                   operator=b.get("operator"))
         return 200, {"ok": True}
 
@@ -338,7 +446,24 @@ def build_api(session):
         st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
                                    "reason": b.get("reason") or "frozen from the app"},
                   operator=b.get("operator"))
+        # A calibration reading posted with a name and no verdict used to count as a passing one.
+        # The name has to be one the gate knows, and the verdict has to be stated.
         for c in (b.get("checks") or []):
+            if not isinstance(c, dict):
+                return 400, {"error": "each check must be an object"}
+            name = c.get("check")
+            if name not in GATES.REQUIRED_SETUP_CHECKS:
+                return 400, {"error": "%r is not a calibration reading this gate knows; it must be "
+                                      "one of %s" % (name, ", ".join(GATES.REQUIRED_SETUP_CHECKS))}
+            if c.get("outcome") not in (QA.PASS, QA.RETAKE, QA.UNAVAILABLE, QA.HUMAN):
+                return 400, {"error": "check %r must record an explicit outcome" % name}
+            if name == "board_square_measured":
+                try:
+                    c = dict(c, squares_spanned=_int(c.get("squares_spanned"),
+                                                     "squares_spanned", lo=1, hi=200),
+                             measured_mm=_num(c.get("measured_mm"), "measured_mm"))
+                except BadInput as e:
+                    return 400, {"error": str(e)}
             st.append("setup_check", c, operator=b.get("operator"), setup_hash=h)
         return 200, {"ok": True, "setup_hash": h}
 
@@ -348,7 +473,11 @@ def build_api(session):
         files = b.get("files") or {}
         gid = fields.get("garment")
         shot_id = fields.get("shot_id")
-        rep = int(fields.get("rep") or 1)
+        try:
+            rep = _int(fields.get("rep") or 1, "rep", lo=1, hi=99)
+            shot_id = _shot_id(shot_id)
+        except BadInput as e:
+            return 400, {"error": str(e)}
         if not gid or not shot_id or not files:
             return 400, {"error": "garment, shot_id and a file are required"}
         try:
@@ -390,16 +519,22 @@ def build_api(session):
                      operator=fields.get("operator"), setup_hash=st["setup_hash"])
         board, bspec = session.board
         quality = QA.merged_quality(spec.doc["quality_defaults"], shot)
-        from . import qa_primitives as Q
         compare = []
         for (sid, r), c in sorted(st["captures"].items()):
-            p = gdir / (c.get("path") or "")
-            if not p.exists() or (sid, r) == (shot_id, rep):
+            if (sid, r) == (shot_id, rep):
                 continue
+            p = gdir / (c.get("path") or "")
+            # A recorded capture whose file is momentarily absent is still something this frame must
+            # be compared against: its hash and signature are in the log and cost nothing. Skipping
+            # it made the duplicate check silently not run, so a byte-identical re-use went
+            # unnoticed for exactly as long as the earlier file was missing.
+            present = p.exists()
             prev = (sid == shot_id and r == rep - 1)
-            oimg = cv2.imread(str(p)) if prev else None
+            oimg = cv2.imread(str(p)) if (prev and present) else None
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg, "path": str(p),
+                            "self_sha256": sha, "image": oimg,
+                            "path": str(p) if present else None,
+                            "undecodable": not present,
                             "dhash": c.get("dhash"),
                             "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
