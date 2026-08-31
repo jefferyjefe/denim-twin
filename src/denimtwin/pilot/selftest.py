@@ -36,6 +36,15 @@ from .store import Store, setup_hash
 ROOT = Path(__file__).resolve().parents[3]
 
 
+def _resolved(state, shot_id, rep):
+    """Is every HUMAN claim on this frame cleared, by the gate's own rule?"""
+    from .gates import _human_resolved
+    q = state["qa"].get((shot_id, rep))
+    if not q:
+        return False
+    return _human_resolved(state, shot_id, rep, q, state["captures"].get((shot_id, rep)))
+
+
 class Result(object):
     def __init__(self, name, ok, detail, expectation):
         self.name, self.ok, self.detail, self.expectation = name, ok, detail, expectation
@@ -223,6 +232,7 @@ class Bench(object):
         outcome = QA.roll_up(checks)
         self.store.append("qa_result", {"shot_id": shot["shot_id"], "rep": rep,
                                         "outcome": outcome, "shot_class": QA.shot_class(shot),
+                                        "capture_sha256": sha,
                                         "checks": [c.as_dict() for c in checks],
                                         "not_applicable": na},
                           operator="selftest")
@@ -235,9 +245,12 @@ class Bench(object):
         for (sid, rep), q in sorted(st["qa"].items()):
             for c in (q.get("checks") or []):
                 if c.get("outcome") == QA.HUMAN:
+                    cap = st["captures"].get((sid, rep)) or {}
                     self.store.append("human_verification",
                                       {"shot_id": sid, "rep": rep, "claim": c["check_id"],
-                                       "value": True, "verifier_name": "selftest"},
+                                       "value": True, "verifier_name": "selftest",
+                                       "operator": "selftest",
+                                       "capture_sha256": cap.get("sha256")},
                                       operator="selftest")
                     n += 1
         return n
@@ -256,6 +269,7 @@ class Bench(object):
                 self.store.append("human_verification",
                                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified",
                                    "value": True, "verifier_name": "second person",
+                                   "operator": "selftest",
                                    "measured_inseam_cm": s["target_inseam_cm"] + tolerance_error_cm,
                                    "measured_outseam_cm": s["predicted_outseam_cm"]},
                                   operator="selftest")
@@ -264,7 +278,8 @@ class Bench(object):
                 continue
             self.store.append("human_verification",
                               {"shot_id": None, "rep": None, "claim": claim, "value": True,
-                               "verifier_name": "selftest"}, operator="selftest")
+                               "verifier_name": "selftest", "operator": "selftest"},
+                              operator="selftest")
 
     def gate(self, gate_id="ready_to_cut", **kw):
         return GATES.evaluate(gate_id, self.spec, self.store, garment_dir=self.dir, **kw)
@@ -620,7 +635,266 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "%d entries, leaks=%s, gps tags=%s" % (len(san), leaks, gps),
                       "a photograph's coordinates must not enter the repository"))
 
-    # -- 25. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # ---------------------------------------------------------------------------------------
+    # Bypasses found by the adversarial round. Each of these produced READY TO CUT, or a crash
+    # instead of a verdict, before the fix beside it.
+    # ---------------------------------------------------------------------------------------
+
+    def complete_mini(name, gid="DENIM_9200", spec=None):
+        """A finished, honest session on the small specification: the gate opens on it."""
+        sp = spec or _mini_spec(tmp_root)
+        bb = new(name, spec=sp, gid=gid)
+        bb.open_session(); bb.freeze_rig(); bb.answer_features(); bb.measure()
+        for sh_ in bb.activated()[0]:
+            for r_ in range(1, int(sh_.get("min_reps", 1)) + 1):
+                bb.add(sh_, r_, bb.synth_for(sh_, r_, relay=r_))
+        bb.resolve_humans(); bb.cut_ready_extras()
+        return bb, sp
+
+    # -- 25. another garment's log must not satisfy this garment ------------------------------
+    donor, mini_sp = complete_mini("donor", gid="DENIM_9201")
+    assert donor.gate().ready
+    thief = new("thief", spec=mini_sp, gid="DENIM_9202")
+    shutil.copytree(str(donor.dir / "pilot"), str(thief.dir / "pilot"))
+    shutil.copytree(str(donor.dir / "images"), str(thief.dir / "images"), dirs_exist_ok=True)
+    tv = thief.gate()
+    _, tprob = thief.store.manifest.read()
+    out.append(Result("a log copied from another garment does not satisfy this one",
+                      not tv.ready and any(p["kind"] in ("chain_break", "chain_mismatch")
+                                           for p in tprob),
+                      "copied a READY garment's log wholesale: ready=%s, chain problems=%s"
+                      % (tv.ready, [p["kind"] for p in tprob][:3]),
+                      "the chain is seeded from the garment's own identity, so a transplanted log "
+                      "fails at its first entry"))
+
+    # -- 26. a later verdict must not turn a rejected frame into a passing one ------------------
+    b, sp = complete_mini("supersede", gid="DENIM_9203")
+    sh_ = b.activated()[0][0]
+    st_, _ = b.store.fold()
+    cap = st_["captures"][(sh_["shot_id"], 1)]
+    b.store.append("qa_result", {"shot_id": sh_["shot_id"], "rep": 1, "outcome": QA.RETAKE,
+                                 "capture_sha256": cap["sha256"], "checks": []},
+                   operator="selftest")
+    blocked_now = "captures.required_complete" in b.blocked_conditions()
+    b.store.append("qa_result", {"shot_id": sh_["shot_id"], "rep": 1, "outcome": QA.PASS,
+                                 "checks": []}, operator="forger")
+    out.append(Result("an appended verdict that names no photograph cannot clear a rejection",
+                      blocked_now and "captures.required_complete" in b.blocked_conditions(),
+                      "RETAKE recorded -> blocked; unbound PASS appended -> still blocked",
+                      "a verdict belongs to the frame it judged; turning a RETAKE into a PASS "
+                      "requires another photograph"))
+
+    # -- 27. a capture entry pointing at another shot's file ------------------------------------
+    b, sp = complete_mini("misfile", gid="DENIM_9204")
+    st_, _ = b.store.fold()
+    (sid_a, _r), capa = sorted(st_["captures"].items())[0]
+    fake_id = "BEFORE.WHOLE.FAKE_SHOT"
+    b.store.append("capture", {"shot_id": fake_id, "rep": 1, "path": capa["path"],
+                               "sha256": capa["sha256"], "state": "before",
+                               "region_id": "whole_garment_front"},
+                   operator="forger", setup_hash=b.setup_hash)
+    v = b.gate()
+    ev = {}
+    for blk in v.blocks:
+        if blk.condition == "captures.files_intact":
+            ev = blk.evidence
+    out.append(Result("a capture entry pointing at another shot's photograph is refused",
+                      "captures.files_intact" in {x.condition for x in v.blocks}
+                      and bool(ev.get("misfiled")),
+                      "misfiled: %s" % (ev.get("misfiled") or [])[:2],
+                      "ingestion files a capture under its own shot, repeat and hash; an entry "
+                      "whose path does not encode those is pointing at someone else's frame"))
+
+    # -- 28. truncating the log ------------------------------------------------------------------
+    b, sp = complete_mini("truncate", gid="DENIM_9205")
+    assert b.gate().ready
+    lines = Path(b.store.manifest.path).read_text().strip().split("\n")
+    Path(b.store.manifest.path).write_text("\n".join(lines[:-6]) + "\n")
+    _, probs = b.store.manifest.read()
+    out.append(Result("truncating the end of the log is detected",
+                      any(p["kind"] in ("entries_missing", "head_mismatch") for p in probs)
+                      and not b.gate().ready,
+                      "removed 6 entries: %s" % [p["kind"] for p in probs][:3],
+                      "every prefix of a valid chain is a valid chain, so the head and the entry "
+                      "count are anchored beside it"))
+
+    # -- 29. a capture recorded without a hash ----------------------------------------------------
+    b = new("nohash", spec=mini_sp, gid="DENIM_9206")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    junk = b.dir / "images" / "before" / "not_a_photograph.png"
+    junk.parent.mkdir(parents=True, exist_ok=True)
+    junk.write_text("not a photograph")
+    b.store.append("capture", {"shot_id": "BEFORE.WHOLE.FAKE", "rep": 1,
+                               "path": str(junk.relative_to(b.dir)), "state": "before",
+                               "region_id": "whole_garment_front"},
+                   operator="forger", setup_hash=b.setup_hash)
+    v = b.gate()
+    unh = {}
+    for blk in v.blocks:
+        if blk.condition == "captures.files_intact":
+            unh = blk.evidence
+    out.append(Result("a capture recorded with no hash is not a photograph",
+                      bool(unh.get("unhashed")),
+                      "unhashed: %s" % (unh.get("unhashed") or [])[:2],
+                      "the hash comparison used to be conditional on a hash existing, so recording "
+                      "none skipped it and a text file counted as a capture"))
+
+    # -- 30. a line that is valid JSON but not an entry ---------------------------------------------
+    b = new("scalarline", spec=mini_sp, gid="DENIM_9207")
+    b.open_session()
+    with open(str(b.store.manifest.path), "a") as f:
+        f.write("12345\n")
+    crashed = False
+    try:
+        _, probs = b.store.manifest.read()
+        v = b.gate()
+    except Exception:
+        crashed = True
+        probs, v = [], None
+    out.append(Result("a JSON scalar in the log is a finding, not a crash",
+                      (not crashed) and any(p["kind"] == "not_an_entry" for p in probs)
+                      and v is not None and not v.ready,
+                      "crashed=%s problems=%s" % (crashed, [p["kind"] for p in probs][:3]),
+                      "a crash is not a refusal: it escapes the deny-by-default machinery and "
+                      "returns no verdict at all"))
+
+    # -- 31. a recorded refusal is not an approval ---------------------------------------------------
+    b, sp = complete_mini("refusal", gid="DENIM_9208")
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified", "value": False,
+                    "verifier_name": "second person", "operator": "selftest",
+                    "note": "NO - the marks are on the wrong leg",
+                    "measured_inseam_cm": 15.0, "measured_outseam_cm": 16.923},
+                   operator="selftest")
+    v = b.gate()
+    out.append(Result("a second person's REFUSAL blocks the cut",
+                      not v.ready and "cut.second_person_verified" in {x.condition for x in v.blocks},
+                      "recorded value=False with a note; ready=%s" % v.ready,
+                      "`value` was never read here, so a refusal was reported as an approval"))
+
+    # -- 32. a retraction supersedes an earlier approval ----------------------------------------------
+    b, sp = complete_mini("retract", gid="DENIM_9209")
+    assert b.gate().ready
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified", "value": True,
+                    "verifier_name": "second person", "operator": "selftest",
+                    "measured_inseam_cm": 20.0, "measured_outseam_cm": 21.923},
+                   operator="selftest")
+    out.append(Result("the latest cut verification wins, not the first one found",
+                      not b.gate().ready,
+                      "appended a later verification disagreeing by 5 cm; ready=%s" % b.gate().ready,
+                      "selecting by dictionary order let a retraction be discarded in favour of an "
+                      "older approval"))
+
+    # -- 33. NaN cannot disable the tolerance ------------------------------------------------------------
+    b, sp = complete_mini("nan", gid="DENIM_9210")
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified", "value": True,
+                    "verifier_name": "second person", "operator": "selftest",
+                    # A float NaN cannot even be written: canonical() sets allow_nan=False. The
+                    # attack that worked came through the HTTP API as the STRING "NaN", which
+                    # serialises fine and only becomes a NaN at float() inside the gate.
+                    "measured_inseam_cm": "NaN", "measured_outseam_cm": "NaN"},
+                   operator="selftest")
+    out.append(Result("a non-finite measurement cannot disable the tolerance",
+                      not b.gate().ready,
+                      "recorded the string \"NaN\" through the API's own path; ready=%s"
+                      % b.gate().ready,
+                      "NaN compares false against everything, so it slipped past `worst > "
+                      "tolerance` and switched the 3 mm check off"))
+
+    # -- 34. the second person must be a second person -------------------------------------------------
+    b = new("oneperson", spec=mini_sp, gid="DENIM_9211")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    for sh_ in b.activated()[0]:
+        for r_ in range(1, int(sh_.get("min_reps", 1)) + 1):
+            b.add(sh_, r_, b.synth_for(sh_, r_, relay=r_))
+    b.resolve_humans()
+    from . import cutspec as _CUT
+    st_, _ = b.store.fold()
+    m_ = st_["measurements"]
+    cs_ = _CUT.compute(target_inseam_cm=15.0, original_inseam_cm=m_["original_inseam_cm"]["mean"],
+                       thigh_cm=m_["thigh_cm"]["mean"], leg_opening_cm=m_["leg_opening_cm"]["mean"])
+    b.store.append("cut_spec", cs_, operator="alice")
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_marks_verified", "value": True,
+                    "verifier_name": "alice", "operator": "alice",
+                    "measured_inseam_cm": cs_["target_inseam_cm"],
+                    "measured_outseam_cm": cs_["predicted_outseam_cm"]}, operator="alice")
+    for claim in ("legs_cut_separately", "offcuts_retained_labelled"):
+        b.store.append("human_verification",
+                       {"shot_id": None, "rep": None, "claim": claim, "value": True,
+                        "verifier_name": "alice", "operator": "alice"}, operator="alice")
+    v = b.gate()
+    out.append(Result("one person cannot be their own second person",
+                      not v.ready and "cut.second_person_verified" in {x.condition for x in v.blocks},
+                      "operator alice verified alice's own marks; ready=%s" % v.ready,
+                      "verifier_name defaults to the operator when --verifier is omitted, which is "
+                      "the natural thing to do when one person is at the table"))
+
+    # -- 35. a confirmation does not survive a different photograph -------------------------------------
+    b = new("stalconf", spec=mini_sp, gid="DENIM_9212")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    front = [x for x in b.activated()[0] if x.get("garment_side") == "front"][0]
+    b.add(front, 1, b.synth_for(front, 1), confirm_all=False)
+    b.resolve_humans()
+    st_, _ = b.store.fold()
+    before_ok = _resolved(st_, front["shot_id"], 1)
+    back_img = b.synth_for(dict(front, garment_side="back"), 1, seed=4242)
+    b.add(front, 1, back_img, confirm_all=False)
+    st_, _ = b.store.fold()
+    after_ok = _resolved(st_, front["shot_id"], 1)
+    out.append(Result("a human confirmation does not carry over to a different photograph",
+                      before_ok and not after_ok,
+                      "confirmed the first frame (resolved=%s), then filed a different image under "
+                      "the same shot id (resolved=%s)" % (before_ok, after_ok),
+                      "re-ingesting under the same shot id left the old confirmation in place, so a "
+                      "frame of the back inherited a confirmation that the front was facing up"))
+
+    # -- 36. verifications recorded before the photograph do not pre-clear it ----------------------------
+    b = new("preclear", spec=mini_sp, gid="DENIM_9213")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    sh_ = b.activated()[0][0]
+    for claim in ("ruler_visible", "side_confirmed", "region_confirmed", "relay_confirmed",
+                  "subject_span", "garment_side", "anatomical_region", "camera_repositioned"):
+        b.store.append("human_verification",
+                       {"shot_id": sh_["shot_id"], "rep": 1, "claim": claim, "value": True,
+                        "verifier_name": "forger", "operator": "forger"}, operator="forger")
+    b.add(sh_, 1, b.synth_for(sh_, 1), confirm_all=False)
+    st_, _ = b.store.fold()
+    out.append(Result("verifications recorded before a photograph do not pre-clear it",
+                      not _resolved(st_, sh_["shot_id"], 1),
+                      "pre-recorded 8 confirmations, then took the photograph",
+                      "resolving a claim by name alone let every claim the plan can raise be "
+                      "confirmed in a loop before a single frame existed"))
+
+    # -- 37. concurrent appends must not break the chain --------------------------------------------------
+    b = new("concurrent", spec=mini_sp, gid="DENIM_9214")
+    b.open_session()
+    import threading as _th
+    errs = []
+
+    def _writer(i):
+        try:
+            for j in range(8):
+                b.store.append("note", {"text": "w%d-%d" % (i, j)}, operator="w%d" % i)
+        except Exception as e:      # noqa: BLE001
+            errs.append(repr(e))
+
+    ths = [_th.Thread(target=_writer, args=(i,)) for i in range(4)]
+    for t_ in ths:
+        t_.start()
+    for t_ in ths:
+        t_.join()
+    ents, probs = b.store.manifest.read()
+    out.append(Result("four concurrent writers do not break the chain",
+                      not probs and len(ents) == 33 and not errs,
+                      "%d entries, %d integrity problems, %d writer errors"
+                      % (len(ents), len(probs), len(errs)),
+                      "append read the head and wrote with no lock, so two writers stamped the same "
+                      "prev_chain and the chain broke permanently -- and the web app is threaded"))
+
+    # -- 38. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

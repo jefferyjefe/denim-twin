@@ -338,7 +338,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 if out == QA.PASS:
                     continue
                 if out == QA.HUMAN:
-                    if not _human_resolved(state, s["shot_id"], rep, q):
+                    if not _human_resolved(state, s["shot_id"], rep, q,
+                                           state["captures"].get(key)):
                         unresolved.append("%s r%d (awaiting human verification)" % key)
                     continue
                 failing.append("%s r%d (%s)" % (key[0], key[1], out))
@@ -360,11 +361,26 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                            "photograph is still on disk and unchanged is unknown"), \
                    "unknown is not permission: run `pilot.py precut` (or open the GATE tab), which " \
                    "hashes every file", {}
-        missing, changed = [], []
+        missing, changed, unhashed, misfiled = [], [], [], []
         for (sid, rep), c in sorted(state["captures"].items()):
             rel = c.get("path")
             if not rel:
                 missing.append("%s r%d (no path)" % (sid, rep))
+                continue
+            if not c.get("sha256"):
+                # The hash comparison used to be conditional on a hash having been recorded, so an
+                # entry that recorded none skipped it entirely and a 12-byte text file counted as a
+                # photograph while the gate reported "present and hash-matched".
+                unhashed.append("%s r%d" % (sid, rep))
+                continue
+            # Ingestion files a capture as <shot>__r<NN>__<sha12>.<ext>. An entry whose path does
+            # not encode its own shot, repeat and hash is pointing at some other shot's file, which
+            # is how a photograph that was never taken passed by pure append.
+            base = os.path.basename(rel)
+            safe = "".join(ch if (ch.isalnum() or ch in "._-") else "_" for ch in str(sid))
+            want = "%s__r%02d__%s" % (safe, int(rep), str(c["sha256"])[:12])
+            if not base.startswith(want):
+                misfiled.append("%s r%d -> %s" % (sid, rep, base))
                 continue
             p = garment_dir / rel
             if not p.exists():
@@ -373,11 +389,15 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
             want = c.get("sha256")
             if want and _hash_changed(p, want):
                 changed.append("%s r%d -> %s" % (sid, rep, rel))
-        if missing or changed:
-            return False, ("%d recorded photograph(s) are missing from disk and %d no longer match "
-                           "the hash recorded for them" % (len(missing), len(changed))), \
+        if missing or changed or unhashed or misfiled:
+            return False, ("%d recorded photograph(s) missing from disk, %d no longer matching "
+                           "their recorded hash, %d recorded without a hash at all, %d filed under "
+                           "a name that is not their own shot and hash"
+                           % (len(missing), len(changed), len(unhashed), len(misfiled))), \
                    "restore them from the phone, or re-capture. A manifest entry whose file is " \
-                   "gone is not evidence.", {"missing": missing[:8], "changed": changed[:8]}
+                   "gone, unhashed, or pointing at another shot's photograph is not evidence.", \
+                   {"missing": missing[:8], "changed": changed[:8], "unhashed": unhashed[:8],
+                    "misfiled": misfiled[:8]}
         return True, "all %d recorded photographs present and hash-matched" % len(state["captures"]), \
                None, {}
 
@@ -424,7 +444,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 if rc is None:
                     bad.append("%s r%d (never asked)" % (s["shot_id"], rep))
                 elif rc.get("outcome") != QA.PASS:
-                    if not _human_resolved(state, s["shot_id"], rep, q):
+                    if not _human_resolved(state, s["shot_id"], rep, q,
+                                           state["captures"].get((s["shot_id"], rep))):
                         bad.append("%s r%d (%s)" % (s["shot_id"], rep, rc.get("outcome")))
         if bad:
             return False, ("%d repeat capture(s) do not record that the camera was actually "
@@ -501,10 +522,18 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 {"cut_spec": {k: cs.get(k) for k in need}}
 
         def c_second_person():
-            v = None
-            for (sid, rep, claim), rec in state["verifications"].items():
-                if claim == "cut_marks_verified":
-                    v = rec
+            # The LATEST record, by time. Selecting by dictionary iteration order meant a retraction
+            # appended after an approval could be discarded in favour of the approval.
+            cands = [rec for (sid, rep, claim), rec in state["verifications"].items()
+                     if claim == "cut_marks_verified"]
+            v = max(cands, key=lambda r: float(r.get("ts") or 0)) if cands else None
+            if v is not None and v.get("value") is not True:
+                # `value` was never read here, so a recorded REFUSAL -- a second person writing
+                # "no, the marks are on the wrong leg" -- was reported as an approval.
+                return False, ("the second person did not approve the marks: %s"
+                               % (v.get("note") or "recorded as not verified")), \
+                       "re-mark the garment and have it verified again", \
+                       {"verifier": v.get("verifier_name"), "at": v.get("ts")}
             if not v:
                 return False, "no second person has verified the cut marks", \
                        "a second person measures both marks with a tape and records the reading; " \
@@ -513,6 +542,16 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 if not v.get(k):
                     return False, "the second-person verification is missing %s" % k, \
                            "re-record the verification with all fields", {"have": sorted(v.keys())}
+            if (v.get("verifier_name") or "").strip().lower() == \
+                    (v.get("operator") or "").strip().lower():
+                # PROTOCOL.md 3.2 asks for a SECOND person. verifier_name defaults to the operator
+                # when --verifier is omitted, which is the natural thing to do when one person is at
+                # the table -- and then the check was one person agreeing with themselves.
+                return False, ("the cut marks were verified by %r, who is the operator; the "
+                               "protocol requires a second person"
+                               % v.get("verifier_name")), \
+                       "have someone else measure both marks and record it with --verifier NAME", \
+                       {"operator": v.get("operator")}
             cs = state["cut_spec"] or {}
             errs = {}
             for field, target in (("measured_inseam_cm", cs.get("target_inseam_cm")),
@@ -520,9 +559,21 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 if target is None:
                     return False, "cannot check the verification against a cut spec that is absent", \
                            "run `pilot.py cutspec` first", {}
-                errs[field] = abs(float(v[field]) - float(target)) * 10.0     # cm -> mm
+                try:
+                    got = float(v[field])
+                except (TypeError, ValueError):
+                    return False, "the verification's %s is not a number" % field, \
+                           "re-record the verification", {"value": v.get(field)}
+                if not math.isfinite(got) or not math.isfinite(float(target)):
+                    # NaN compares false against everything, so a NaN reading slipped past
+                    # `worst > tolerance` and disabled the 3 mm tolerance entirely.
+                    return False, ("the verification's %s is not a finite measurement (%r), so the "
+                                   "%.0f mm tolerance cannot be applied to it"
+                                   % (field, v.get(field), CUT_MARK_TOLERANCE_MM)), \
+                           "re-measure and record a real number", {"value": v.get(field)}
+                errs[field] = abs(got - float(target)) * 10.0     # cm -> mm
             worst = max(errs.values())
-            if worst > CUT_MARK_TOLERANCE_MM:
+            if not math.isfinite(worst) or worst > CUT_MARK_TOLERANCE_MM:
                 return False, ("the second person's measurements differ from the specified cut by "
                                "%.1f mm, beyond the %.1f mm tolerance"
                                % (worst, CUT_MARK_TOLERANCE_MM)), \
@@ -536,9 +587,9 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                                                  "<GARMENT>_OFFCUT_L / _R"}
             missing = []
             for claim, how in need.items():
-                found = any(c == claim and rec.get("value") is True
-                            for (_, _, c), rec in state["verifications"].items())
-                if not found:
+                recs = [rec for (_, _, c), rec in state["verifications"].items() if c == claim]
+                latest = max(recs, key=lambda r: float(r.get("ts") or 0)) if recs else None
+                if latest is None or latest.get("value") is not True:
                     missing.append((claim, how))
             if missing:
                 return False, "%d cut-day confirmation(s) not recorded: %s" % (
@@ -581,19 +632,34 @@ def _hash_changed(path, want):
     return got != want
 
 
-def _human_resolved(state, shot_id, rep, qa_record):
-    """A HUMAN outcome counts only when every claim it raised has a recorded verification.
+def _human_resolved(state, shot_id, rep, qa_record, capture=None):
+    """A HUMAN outcome counts only when every claim it raised has a verification OF THIS PHOTOGRAPH.
 
-    Not "someone clicked ok once" -- each check that asked for a person names a claim, and each
-    claim needs its own answer, recorded with who gave it. Otherwise one confirmation would clear a
-    frame that raised three separate questions.
+    Three things were wrong with resolving a claim by name alone, and each was a false READY:
+
+    * The verification was not bound to the frame. Re-ingesting a different photograph under the
+      same shot id left the old confirmation in place, so a frame of the back of the garment
+      inherited a confirmation that the front was facing up.
+    * It was not bound in TIME either, so every claim the plan could ever raise could be confirmed
+      in a loop before a single photograph existed, and each frame arrived pre-cleared.
+    * A recorded refusal counted the same as an approval wherever `value` was not read.
+
+    So a verification clears a claim only when it names the capture's own hash, or -- for records
+    written before that field existed -- was made after the photograph it is about.
     """
     claims = [c.get("check_id") for c in (qa_record.get("checks") or [])
               if c.get("outcome") == QA.HUMAN]
     if not claims:
         return False
+    cap_sha = (capture or {}).get("sha256")
+    cap_ts = (capture or {}).get("ts")
     for claim in claims:
         rec = state["verifications"].get((shot_id, rep, claim))
         if not rec or rec.get("value") is not True or not rec.get("operator"):
+            return False
+        if rec.get("capture_sha256"):
+            if cap_sha and rec["capture_sha256"] != cap_sha:
+                return False
+        elif cap_ts is not None and float(rec.get("ts") or 0) < float(cap_ts):
             return False
     return True

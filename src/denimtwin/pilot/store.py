@@ -50,8 +50,13 @@ KINDS = (
 class Store(object):
     def __init__(self, garment_dir):
         self.dir = Path(garment_dir)
+        self.garment_id = self.dir.name
         self.pilot_dir = self.dir / "pilot"
-        self.manifest = Manifest(self.pilot_dir / "manifest.jsonl")
+        # The chain starts from THIS garment's identity, so a log copied from another garment fails
+        # at its first entry instead of verifying perfectly and satisfying the gate for a garment
+        # that was never photographed.
+        self.manifest = Manifest(self.pilot_dir / "manifest.jsonl",
+                                 seed=sha256_text("denim-twin/pilot/" + self.garment_id))
 
     # -- writing ------------------------------------------------------------------------------
 
@@ -75,7 +80,8 @@ class Store(object):
             "features": {}, "features_answered_at": None,
             "measurements": {},
             "captures": {},          # (shot_id, rep) -> capture record
-            "qa": {},                # (shot_id, rep) -> qa record
+            "qa": {},                # (shot_id, rep) -> the qa record for the CURRENT capture
+            "qa_all": {},            # (shot_id, rep) -> every qa record, in order
             "verifications": {},     # (shot_id, rep, claim) -> verification
             "reuse": [],
             "deviations": [],
@@ -109,7 +115,9 @@ class Store(object):
                     p, ts=e.get("ts"), setup_hash=e.get("setup_hash"), operator=e.get("operator"),
                     chain=e.get("chain"))
             elif k == "qa_result":
-                st["qa"][(p.get("shot_id"), int(p.get("rep", 1)))] = dict(p, ts=e.get("ts"))
+                key = (p.get("shot_id"), int(p.get("rep", 1)))
+                rec = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                st["qa_all"].setdefault(key, []).append(rec)
             elif k == "human_verification":
                 st["verifications"][(p.get("shot_id"), int(p.get("rep", 1)) if p.get("rep") else None,
                                      p.get("claim"))] = dict(p, ts=e.get("ts"),
@@ -136,6 +144,23 @@ class Store(object):
                 st["notes"].append(dict(p, ts=e.get("ts")))
             else:
                 st["unknown_kinds"].append({"kind": k, "seq": e.get("seq")})
+        # A verdict belongs to the photograph it judged. Folding qa_result last-write-wins let one
+        # appended line turn ten rejected frames into "all frames captured and passing" -- the
+        # cheapest false READY there was. A verdict now only counts when it names the sha256 of the
+        # capture currently filed under that shot and repeat, and the latest such verdict wins.
+        # Turning a RETAKE into a PASS therefore requires what it requires physically: another
+        # photograph.
+        for key, recs in st["qa_all"].items():
+            cap = st["captures"].get(key)
+            if cap is None:
+                continue
+            sha = cap.get("sha256")
+            for r in recs:
+                # No compatibility path for a verdict that does not name its photograph: an
+                # unbound verdict is exactly the forgery this guards against, and a shot with no
+                # usable verdict reads as unchecked, which blocks.
+                if sha and r.get("capture_sha256") == sha:
+                    st["qa"][key] = r
         return st, problems
 
     # -- convenience --------------------------------------------------------------------------
@@ -152,9 +177,11 @@ class Store(object):
         for (sid, rep), cap in st["captures"].items():
             if state is not None and cap.get("state") != state:
                 continue
+            if not cap.get("sha256"):
+                continue        # nothing to verify the file against; see gates.captures.files_intact
             q = st["qa"].get((sid, rep))
-            if q and q.get("outcome") == "RETAKE_REQUIRED":
-                continue
+            if q is None or q.get("outcome") == "RETAKE_REQUIRED":
+                continue        # never checked, or rejected: either way not an accepted capture
             out.add((sid, rep))
         for r in st["reuse"]:
             if state is not None and r.get("state") != state:

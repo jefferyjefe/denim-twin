@@ -313,10 +313,18 @@ def build_api(session):
         if not b.get("operator"):
             return 400, {"error": "a human verification needs a name on it"}
         st = session.store(m.group(1))
+        # Bind it to the photograph it is about, so re-ingesting a different frame under the same
+        # shot id cannot inherit the confirmation.
+        cap_sha = b.get("capture_sha256")
+        if cap_sha is None and b.get("shot_id"):
+            st_, _ = st.fold()
+            cap = st_["captures"].get((b.get("shot_id"), int(b.get("rep") or 1)))
+            cap_sha = (cap or {}).get("sha256")
         st.append("human_verification",
                   {"shot_id": b.get("shot_id"), "rep": b.get("rep"), "claim": b.get("claim"),
                    "value": bool(b.get("value", True)), "note": b.get("note"),
                    "verifier_name": b.get("verifier") or b.get("operator"),
+                   "operator": b.get("operator"), "capture_sha256": cap_sha,
                    "measured_inseam_cm": b.get("measured_inseam_cm"),
                    "measured_outseam_cm": b.get("measured_outseam_cm")},
                   operator=b.get("operator"))
@@ -405,7 +413,7 @@ def build_api(session):
                                       operator_assertions=assertions)
         outcome = QA.roll_up(checks)
         store.append("qa_result", {"shot_id": shot_id, "rep": rep, "outcome": outcome,
-                                   "shot_class": QA.shot_class(shot),
+                                   "shot_class": QA.shot_class(shot), "capture_sha256": sha,
                                    "checks": [c.as_dict() for c in checks],
                                    "not_applicable": na},
                      operator=fields.get("operator"))

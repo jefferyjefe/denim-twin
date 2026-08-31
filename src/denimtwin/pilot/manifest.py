@@ -154,12 +154,25 @@ def exif_timestamp(exif):
 
 
 class Manifest(object):
-    """Append-only, hash-chained capture log for one garment."""
+    """Append-only, hash-chained capture log for one garment.
+
+    The chain is seeded from the GARMENT'S OWN IDENTITY rather than from a constant. With a constant
+    seed nothing in the log named the garment it belonged to, so `cp -r` of a finished garment's
+    directory produced a log that verified perfectly and satisfied the gate for a garment that had
+    never been photographed. Binding the seed makes a transplanted log fail at its first entry.
+
+    What the chain is and is not: it detects edits, insertions, reorderings and -- with the sidecar
+    below -- truncations. It is keyless, so anyone who can write the file can also recompute it. It
+    is tamper-EVIDENCE against mistakes, interrupted writes and hurried fixes, not a defence against
+    a determined forger with write access. The only anchor outside the machine is git: once
+    `finalize` writes the sanitised manifest and it is committed, its head hash is in history.
+    """
 
     GENESIS = "0" * 64
 
-    def __init__(self, path):
+    def __init__(self, path, seed=None):
         self.path = Path(path)
+        self.seed = seed or self.GENESIS
 
     # -- reading ------------------------------------------------------------------------------
 
@@ -178,7 +191,17 @@ class Manifest(object):
             if not line.strip():
                 continue
             try:
-                entries.append(json.loads(line))
+                obj = json.loads(line)
+                if not isinstance(obj, dict):
+                    # A bare scalar or array is valid JSON and is not an entry. Left to reach
+                    # verify_chain it raised AttributeError out of the gate's guard and produced a
+                    # traceback instead of a verdict -- a crash is not a refusal.
+                    problems.append({"kind": "not_an_entry", "line_no": i + 1,
+                                     "detail": "line %d is valid JSON but not an object, so it is "
+                                               "not a log entry" % (i + 1),
+                                     "raw_prefix": line[:120]})
+                    continue
+                entries.append(obj)
             except ValueError:
                 if i == len(raw) - 1 or not any(x.strip() for x in raw[i + 1:]):
                     problems.append({"kind": "torn_final_line", "line_no": i + 1,
@@ -193,13 +216,52 @@ class Manifest(object):
                                      "raw_prefix": line[:120]})
         if verify:
             problems.extend(self.verify_chain(entries))
+            problems.extend(self.check_head(entries))
         return entries, problems
+
+    @property
+    def head_path(self):
+        return self.path.with_suffix(self.path.suffix + ".head")
+
+    def _write_head(self, chain, count):
+        atomic_write_text(self.head_path,
+                          canonical({"chain": chain, "count": int(count), "seed": self.seed}) + "\n")
+
+    def check_head(self, entries):
+        """Does the log still end where the sidecar says it ends?
+
+        Every prefix of a valid chain is itself a valid chain, so deleting entries off the END is
+        invisible to the chain alone -- and deleting the end is how a session would be trimmed back
+        to before something inconvenient. The sidecar records the head and the count after every
+        append, so a truncation has to be matched by an edit to a second file.
+        """
+        if not self.head_path.exists():
+            if not entries:
+                return []
+            return [{"kind": "head_missing",
+                     "detail": "the log has %d entries but no head record; it cannot be shown to be "
+                               "complete" % len(entries)}]
+        try:
+            rec = json.loads(self.head_path.read_text())
+        except ValueError:
+            return [{"kind": "head_unreadable", "detail": "the head record is not readable"}]
+        want_chain = entries[-1]["chain"] if entries else self.seed
+        out = []
+        if rec.get("count") != len(entries):
+            out.append({"kind": "entries_missing",
+                        "detail": "the head record was written after %s entries and the log now has "
+                                  "%d; entries have been removed from the end"
+                                  % (rec.get("count"), len(entries))})
+        if rec.get("chain") != want_chain:
+            out.append({"kind": "head_mismatch",
+                        "detail": "the log does not end where the head record says it ends"})
+        return out
 
     def verify_chain(self, entries=None):
         """Recompute the chain. Any break names the first entry that does not follow."""
         if entries is None:
             entries, _ = self.read(verify=False)
-        problems, prev = [], self.GENESIS
+        problems, prev = [], self.seed
         for e in entries:
             body = {k: v for k, v in e.items() if k != "chain"}
             want = sha256_text(prev + canonical(body))
@@ -216,12 +278,32 @@ class Manifest(object):
     def head_chain(self, entries=None):
         if entries is None:
             entries, _ = self.read(verify=False)
-        return entries[-1]["chain"] if entries else self.GENESIS
+        return entries[-1]["chain"] if entries else self.seed
 
     # -- writing ------------------------------------------------------------------------------
 
     def append(self, kind, payload, *, operator=None, setup_hash=None, now=None):
-        """Append one chained entry and return it. fsync'd before returning."""
+        """Append one chained entry and return it. fsync'd before returning.
+
+        Serialised with an exclusive lock across read-head-then-write. Without it two writers read
+        the same head, both stamp prev_chain with it, and the chain breaks permanently -- and the
+        web app is a ThreadingHTTPServer, so two photographs arriving together from one phone were
+        enough. The failure then accused the operator of tampering with their own log.
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        lock = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
+        try:
+            try:
+                import fcntl
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            except (ImportError, OSError):
+                pass                      # no flock here; the rest still runs, single-writer
+            return self._append_locked(kind, payload, operator=operator, setup_hash=setup_hash,
+                                       now=now)
+        finally:
+            lock.close()
+
+    def _append_locked(self, kind, payload, *, operator=None, setup_hash=None, now=None):
         entries, problems = self.read(verify=False)
         torn = [p for p in problems if p["kind"] == "torn_final_line"]
         if torn:
@@ -242,11 +324,11 @@ class Manifest(object):
         }
         entry["chain"] = sha256_text(prev + canonical(entry))
         line = canonical(entry) + "\n"
-        self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(str(self.path), "a") as f:
             f.write(line)
             f.flush()
             os.fsync(f.fileno())
+        self._write_head(entry["chain"], len(entries) + 1)
         return entry
 
     def _quarantine_torn(self):

@@ -265,7 +265,7 @@ def cmd_next(a):
     shots, _m = PLAN.activate(spec, state["features"], state["measurements"])
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
-    e = PLAN.next_action(spec, ordered, done)
+    e = PLAN.next_action(ordered, done)
     if e is None:
         print("nothing left in this order. Run `precut` to see whether the gate opens.")
         return OK
@@ -367,7 +367,7 @@ def cmd_add(a):
                                   operator_assertions=assertions)
     outcome = QA.roll_up(checks)
     st.append("qa_result", {"shot_id": a.shot, "rep": a.rep, "outcome": outcome,
-                            "shot_class": QA.shot_class(shot),
+                            "shot_class": QA.shot_class(shot), "capture_sha256": sha,
                             "checks": [c.as_dict() for c in checks],
                             "not_applicable": na}, operator=a.operator)
     print("%s r%d -> %s  [%s]" % (a.shot, a.rep, outcome, QA.shot_class(shot)))
@@ -384,9 +384,15 @@ def cmd_confirm(a):
     st = Store(garment_dir(a.garment))
     if not a.operator:
         raise SystemExit("--operator is required: a human verification without a name is not one")
+    cap_sha = None
+    if a.shot:
+        state, _ = st.fold()
+        cap = state["captures"].get((a.shot, int(a.rep or 1)))
+        cap_sha = (cap or {}).get("sha256")
     st.append("human_verification",
               {"shot_id": a.shot, "rep": a.rep, "claim": a.claim, "value": not a.deny,
                "note": a.note, "verifier_name": a.verifier or a.operator,
+               "operator": a.operator, "capture_sha256": cap_sha,
                "measured_inseam_cm": a.measured_inseam, "measured_outseam_cm": a.measured_outseam},
               operator=a.operator)
     print("recorded: %s = %s by %s" % (a.claim, not a.deny, a.operator))
@@ -627,7 +633,7 @@ def cmd_status(a):
     print("\n  cut gate: %s%s" % ("READY" if v.ready else "NOT READY",
                                   "" if v.ready else "  (%d blocks; run `precut` for the list)"
                                   % len(v.blocks)))
-    e = PLAN.next_action(spec, ordered, done)
+    e = PLAN.next_action(ordered, done)
     if e:
         print("  next: %s r%d -- %s" % (e["shot_id"], e["rep"], e["framing"][:70]))
     return OK
