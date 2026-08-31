@@ -63,6 +63,11 @@ Put a coin in the frame if you want any answer in centimetres.
     python tools/pilot.py precut DENIM_0003      # THE GATE: may this garment be cut?
     python tools/pilot.py finalize DENIM_0003    # the post-wash gate and the committable manifest
 
+`tools/pilot.py --help` lists the rest: `intake`, `measure`, `plan`, `next`, `add`, `confirm`,
+`reuse`, `cutspec`, `packet`, `hem`, `wash`, `offcut`, `gate`, `selftest`. Set `PILOT_GARMENTS` to a
+scratch directory to rehearse the whole thing without being able to write where the real garment
+records live.
+
 A local, phone-friendly web app over a CLI that does the whole job on its own. It walks the owner
 through every frame in an order chosen to minimise handling, checks each capture as it arrives, and
 refuses to say **READY TO CUT** until every required photograph, measurement, calibration reading,
