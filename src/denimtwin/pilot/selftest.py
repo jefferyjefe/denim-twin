@@ -1340,7 +1340,52 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "than a refusal, because the operator cannot tell it from slow work and the "
                       "gate never answers at all"))
 
-    # -- 63. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 63. frames that satisfy the numbers and show nothing ----------------------------------------
+    b = new("showsnothing", spec=mini_sp, gid="DENIM_9238")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    whole_ = [x for x in b.activated()[0]
+              if QA.shot_class(x) == QA.WHOLE_GARMENT][0]
+    board_, bspec_ = b.board
+    import cv2 as _cv2
+    import numpy as _np
+    from .fixtures import _board_image as _bimg, load_spec as _lspec
+    qq = QA.merged_quality(mini_sp.doc["quality_defaults"], whole_)
+    mm_ = (qq.get("max_mm_per_px") or 0.3) * 0.8
+    w_ = max(int(qq.get("min_long_edge_px") or 2000) + 200, 2000)
+    h_ = int(w_ * 0.75)
+    board_img = _bimg(_lspec(), mm_)
+    bh_, bw_ = board_img.shape[:2]
+    verdicts = {}
+    for label, field in (("an empty backdrop", None),
+                         ("pure noise", "noise"),
+                         ("a flat grey field", "flat")):
+        if field == "noise":
+            im = _np.random.default_rng(4).integers(30, 90, (h_, w_, 3), dtype=_np.uint8)
+        elif field == "flat":
+            im = _np.full((h_, w_, 3), 110, _np.uint8)
+        else:
+            im = None
+        pth = b.tmp / ("shows_nothing_%s.png" % (field or "empty"))
+        if im is None:
+            synth_capture(str(pth), subject="blank_backdrop", mm_per_px=mm_, size=(w_, h_),
+                          seed=1, board=True)
+        else:
+            if bh_ < h_ and bw_ < w_:
+                im[10:10 + bh_, w_ - bw_ - 10:w_ - 10] = board_img
+            _cv2.imwrite(str(pth), im)
+        ch, _na = QA.check_capture(pth, whole_, qq, rep=1, board=board_, board_spec=bspec_,
+                                   image=_cv2.imread(str(pth)),
+                                   operator_assertions={"operator": "p", "ruler_visible": True,
+                                                        "side_confirmed": True,
+                                                        "region_confirmed": True})
+        verdicts[label] = QA.roll_up(ch)
+    out.append(Result("a frame that satisfies the numbers and shows nothing does not pass",
+                      all(v != QA.PASS for v in verdicts.values()),
+                      "; ".join("%s -> %s" % kv for kv in sorted(verdicts.items())),
+                      "the operator can confirm the ruler and the side; nothing they can assert "
+                      "makes an empty backdrop a photograph of a garment"))
+
+    # -- 64. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
