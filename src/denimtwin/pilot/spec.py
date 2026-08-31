@@ -205,6 +205,22 @@ class Spec(object):
                 errs.append("%s: asks for %d repetitions but declares neither a re-lay nor a camera "
                             "reposition between them, so the repeats would measure nothing"
                             % (sid, s["min_reps"]))
+            if s.get("relay_between_reps") and int(s.get("min_reps", 1)) > 1:
+                # The gate requires relay independence to be ESTABLISHED for every such repeat, and
+                # only some shot classes can establish it -- a rig frame has no garment whose creases
+                # could be compared. A shot that demands the check from a class that cannot produce
+                # it is a permanently unopenable gate, which is worse than a wrong shot: the
+                # operator collects everything and is still refused, with no action that would help.
+                from .qa import WHOLE_GARMENT, shot_class
+                cls = shot_class(s)
+                if cls != WHOLE_GARMENT:
+                    errs.append(
+                        "%s: requires an independent re-lay between repeats, but it is a %r frame. "
+                        "A re-lay is an operation on a garment LAY, and only a whole-garment frame "
+                        "observes one -- at macro range there is no silhouette to measure the "
+                        "displacement of, so the check could only ever return UNAVAILABLE and the "
+                        "gate would never open. Use reposition_camera_between_reps instead."
+                        % (sid, cls))
         for r in self.regions:
             cond = r.get("conditional_on") or ""
             for k in feature_keys(cond):

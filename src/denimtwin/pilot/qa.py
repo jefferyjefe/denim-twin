@@ -41,6 +41,97 @@ BLOCKING = (RETAKE, UNAVAILABLE, HUMAN)
 DUPLICATE_CANDIDATE_HAMMING = 24
 
 
+# --------------------------------------------------------------------------------------------
+# Shot classes, and why the checks cannot all run on every frame.
+#
+# `capture/quality.check_image` does not have a garment model. Its "foreground" is an Otsu split on
+# Lab distance from the frame-border median, which is a good description of a dark garment on a
+# contrasting backdrop and a bad description of everything else. Measured on synthetic frames: on a
+# macro of a hem it selects the RULER as the subject and reports the exposure of white plastic; on a
+# care label it selects the LABEL; on an empty backdrop it selects sensor noise and reports 94.7%
+# clipping. Those are not failures of the photograph, they are the wrong object being measured, and
+# a RETAKE issued on that basis sends the operator to re-shoot a frame that was correct.
+#
+# So checks are dispatched by shot class, and a check that does not apply is recorded as
+# not-applicable with its reason rather than silently omitted -- an omitted check and a passed check
+# must never look the same in the record.
+# --------------------------------------------------------------------------------------------
+
+WHOLE_GARMENT = "whole_garment"
+MACRO = "macro"
+RIG = "rig"
+LABEL = "label"
+VIDEO = "video"
+
+#: Which checks the frame's own content can support, per class.
+APPLICABLE = {
+    WHOLE_GARMENT: {"readable", "resolution", "blur", "exposure", "clipping", "cropping",
+                    "subject_present", "board_corners", "scale", "camera_tilt", "subject_extent",
+                    "subject_span", "ruler_visible", "garment_side", "anatomical_region",
+                    "duplicate_content", "relay_independence", "camera_repositioned"},
+    MACRO: {"readable", "resolution", "blur", "board_corners", "scale", "camera_tilt",
+            "ruler_visible", "anatomical_region", "duplicate_content", "camera_repositioned"},
+    RIG: {"readable", "resolution", "blur", "board_corners", "scale", "camera_tilt",
+          "duplicate_content", "camera_repositioned"},
+    LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned"},
+    VIDEO: {"readable", "duplicate_content"},
+}
+
+NOT_APPLICABLE_WHY = {
+    (MACRO, "exposure"): "the frame is filled by the subject, so the border-sampled background "
+                         "model that this exposure check rests on has no background to sample",
+    (MACRO, "clipping"): "same: the clipping fraction would be measured over whichever bright "
+                         "object the foreground split picked, which at macro range is the rule",
+    (MACRO, "cropping"): "a macro is meant to be filled by its subject; 'the subject touches the "
+                         "frame edge' is the instruction, not a fault",
+    (MACRO, "subject_present"): "the subject fills the frame by design",
+    (MACRO, "subject_extent"): "the subject fills the frame by design",
+    (MACRO, "subject_span"): "measured from the rule, not from a silhouette",
+    (MACRO, "garment_side"): "which face is up is not visible at macro range",
+    (MACRO, "relay_independence"): "a re-lay is an operation on a garment lay; at macro range there "
+                                   "is no silhouette whose displacement could establish one",
+    (LABEL, "relay_independence"): "a label frame is not a garment lay",
+    (VIDEO, "relay_independence"): "a clip is not compared frame to frame here",
+    (RIG, "exposure"): "a rig frame has no garment; the exposure model would measure the backdrop "
+                       "against itself",
+    (RIG, "clipping"): "same -- on an empty backdrop the foreground split selects sensor noise",
+    (RIG, "cropping"): "there is no subject to be cropped",
+    (RIG, "subject_present"): "a rig frame is meant to have no garment in it",
+    (RIG, "subject_extent"): "there is no subject",
+    (RIG, "subject_span"): "there is no subject",
+    (RIG, "ruler_visible"): "recorded as a calibration reading rather than per frame",
+    (RIG, "garment_side"): "there is no garment",
+    (RIG, "anatomical_region"): "there is no garment",
+    (RIG, "relay_independence"): "a rig frame is not a garment lay",
+    (LABEL, "exposure"): "a bright label on dark denim inverts the foreground model; it would "
+                         "report the label's exposure as the garment's",
+    (LABEL, "clipping"): "same inversion",
+    (LABEL, "cropping"): "a label is framed to fill",
+    (LABEL, "subject_present"): "a label is framed to fill",
+    (LABEL, "board_corners"): "a label frame is too tight for the board; scale comes from the rule",
+    (LABEL, "scale"): "no board in frame; the label carries text, not a measurement",
+    (LABEL, "camera_tilt"): "no board, so scale variation cannot be measured",
+    (LABEL, "garment_side"): "not a view of the garment",
+    (VIDEO, "blur"): "a clip's sharpness is not a single frame's Laplacian",
+}
+
+#: Regions whose frames are labels or tags rather than views of the garment.
+LABEL_REGIONS = ("care_label", "size_tag")
+
+
+def shot_class(shot):
+    """Which model of a photograph this shot is, and therefore which checks can run on it."""
+    if shot.get("camera_angle") == "video":
+        return VIDEO
+    if shot.get("state") == "rig":
+        return RIG
+    if shot.get("region_id") in LABEL_REGIONS:
+        return LABEL
+    if shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
+        return MACRO
+    return WHOLE_GARMENT
+
+
 class Check(object):
     __slots__ = ("check_id", "outcome", "detail", "evidence", "fix")
 
@@ -79,7 +170,7 @@ def merged_quality(spec_defaults, shot):
     return q
 
 
-def check_capture(path, shot, quality, *, board=None, board_spec=None, image=None,
+def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, image=None,
                   compare_to=None, operator_assertions=None):
     """Run every applicable check on one capture and return a list of Check.
 
@@ -93,6 +184,20 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
     checks = []
     assertions = operator_assertions or {}
     path = Path(path)
+    cls = shot_class(shot)
+    ok_here = APPLICABLE[cls]
+
+    def applies(check_id):
+        return check_id in ok_here
+
+    def not_applicable():
+        """The checks this class cannot support, recorded so an omission is never read as a pass."""
+        out = []
+        for cid in sorted(set().union(*APPLICABLE.values()) - ok_here):
+            why = NOT_APPLICABLE_WHY.get((cls, cid))
+            if why:
+                out.append({"check_id": cid, "not_applicable_to": cls, "why": why})
+        return out
 
     try:
         import cv2
@@ -110,7 +215,7 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
 
     # -- resolution ---------------------------------------------------------------------------
     min_long = quality.get("min_long_edge_px")
-    if min_long:
+    if min_long and applies("resolution"):
         long_edge = max(w, h)
         checks.append(Check("resolution", PASS if long_edge >= min_long else RETAKE,
                             "long edge %d px (needs >= %d)" % (long_edge, min_long),
@@ -120,7 +225,7 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
     # -- the existing quality report ----------------------------------------------------------
     needs_board = quality.get("requires_board", shot.get("scale_reference") in
                               ("charuco_board", "both"))
-    rep = None
+    report = None
     if needs_board and board is None:
         checks.append(Check("board", UNAVAILABLE,
                             "this shot requires the calibration board but no board specification "
@@ -139,16 +244,18 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
             kwargs["mean_range"] = tuple(quality["mean_intensity_range"])
         if quality.get("min_board_corners") is not None:
             kwargs["min_corners"] = quality["min_board_corners"]
-        rep = check_image(str(path), board if needs_board else None,
+        report = check_image(str(path), board if needs_board else None,
                           board_spec if needs_board else None, **kwargs)
         for name, bad in (("blur", "blur"), ("exposure", "exposure"), ("clipping", "clipping"),
                           ("cropping", "frame edge"), ("subject_present", "foreground")):
-            hits = [r for r in rep.reasons if bad in r]
+            if not applies(name):
+                continue
+            hits = [r for r in report.reasons if bad in r]
             checks.append(Check(name, RETAKE if hits else PASS,
                                 "; ".join(hits) if hits else "ok",
-                                {"blur_score": rep.blur_score, "mean": rep.mean_intensity,
-                                 "clipped": rep.clipped_fraction, "border": rep.border_fraction,
-                                 "foreground_fraction": rep.foreground_fraction}
+                                {"blur_score": report.blur_score, "mean": report.mean_intensity,
+                                 "clipped": report.clipped_fraction, "border": report.border_fraction,
+                                 "foreground_fraction": report.foreground_fraction}
                                 if name == "blur" else {},
                                 fix={"blur": "steady the phone or increase light; the mount should "
                                              "carry the camera, not your hands",
@@ -158,17 +265,17 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                                  "frame with margin",
                                      "subject_present": "the garment is not filling enough of the "
                                                         "frame to measure"}[name]))
-        board_hits = [r for r in rep.reasons if "board corners" in r]
-        if needs_board:
+        board_hits = [r for r in report.reasons if "board corners" in r]
+        if needs_board and applies("board_corners"):
             checks.append(Check("board_corners", RETAKE if board_hits else PASS,
-                                "%d corners detected" % rep.board_corners,
-                                {"board_corners": rep.board_corners},
+                                "%d corners detected" % report.board_corners,
+                                {"board_corners": report.board_corners},
                                 fix="get the whole board in frame, flat, unshadowed and in focus"))
 
     # -- scale and tilt -----------------------------------------------------------------------
-    mm_per_px = rep.mm_per_px if rep is not None else None
+    mm_per_px = report.mm_per_px if report is not None else None
     srr = None
-    if needs_board:
+    if needs_board and applies("scale"):
         if mm_per_px is None:
             checks.append(Check("scale", UNAVAILABLE,
                                 "no metric scale could be recovered from this frame",
@@ -205,7 +312,7 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
     # -- subject extent -----------------------------------------------------------------------
     pose = Q.garment_pose(img)
     min_frac, max_frac = quality.get("min_subject_fraction"), quality.get("max_subject_fraction")
-    if min_frac is not None or max_frac is not None:
+    if (min_frac is not None or max_frac is not None) and applies("subject_extent"):
         if pose is None:
             checks.append(Check("subject_extent", UNAVAILABLE,
                                 "no subject outline could be measured",
@@ -219,7 +326,7 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                 fix="frame tighter" if min_frac and f < min_frac else "back off"))
 
     min_subject_px = quality.get("min_subject_px")
-    if min_subject_px:
+    if min_subject_px and applies("subject_span"):
         meaning = quality.get("subject_px_meaning", "subject width")
         if pose is None:
             checks.append(Check("subject_span", UNAVAILABLE,
@@ -234,7 +341,8 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                     "higher resolution"))
 
     # -- things a photograph cannot settle by itself ------------------------------------------
-    if shot.get("scale_reference") in ("ruler", "both") or quality.get("requires_ruler"):
+    if (shot.get("scale_reference") in ("ruler", "both") or quality.get("requires_ruler")) \
+            and applies("ruler_visible"):
         if assertions.get("ruler_visible") is True:
             checks.append(Check("ruler_visible", PASS,
                                 "operator confirmed the ruler is in frame, in the garment's plane, "
@@ -251,7 +359,7 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                 fix="confirm the ruler in the app"))
 
     side = shot.get("garment_side")
-    if side in ("front", "back"):
+    if side in ("front", "back") and applies("garment_side"):
         if assertions.get("side_confirmed") is True:
             checks.append(Check("garment_side", PASS,
                                 "operator confirmed the %s is facing up" % side))
@@ -262,7 +370,8 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                 "frame may show neither. Confirm the %s is up." % side,
                                 fix="confirm the facing side in the app"))
 
-    if shot.get("region_id") and shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
+    if shot.get("region_id") and applies("anatomical_region") \
+            and shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
         if assertions.get("region_confirmed") is True:
             checks.append(Check("anatomical_region", PASS,
                                 "operator confirmed this is %s" % shot["region_id"]))
@@ -304,7 +413,8 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                 {"ncc": n, "other_shot_id": other.get("shot_id"),
                                  "other_rep": other.get("rep")},
                                 fix="capture a new frame; this one is already recorded"))
-        if other.get("is_previous_rep") and shot.get("relay_between_reps"):
+        if other.get("is_previous_rep") and shot.get("relay_between_reps") \
+                and applies("relay_independence"):
             interior = Q.registered_interior_ncc(img, oimg, pose, other.get("pose")) \
                 if oimg is not None else None
             secs = None
@@ -316,7 +426,24 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
             checks.append(Check("relay_independence", o, d, ev,
                                 fix="lift the garment clear of the surface, shake it out, and lay "
                                     "it again before this repeat"))
+    # A camera reposition leaves no trace in the frame -- the phone coming off the mount and going
+    # back on is not visible in the photograph, and a frame taken without doing it looks the same.
+    # So it is asked, and the answer is recorded as an assertion with a name on it.
+    if shot.get("reposition_camera_between_reps") and int(rep) > 1 \
+            and applies("camera_repositioned"):
+        if assertions.get("camera_repositioned") is True:
+            checks.append(Check("camera_repositioned", PASS,
+                                "operator confirmed the camera was taken off the mount and "
+                                "remounted before this repeat"))
+        else:
+            checks.append(Check("camera_repositioned", HUMAN,
+                                "this repeat only measures mounting variance if the phone actually "
+                                "came off the mount, and nothing in the frame records whether it "
+                                "did. Confirm it.",
+                                fix="take the phone off the mount, remount it, and re-shoot -- or "
+                                    "confirm you already did"))
+
     if shot.get("relay_between_reps") and not (compare_to or []):
         pass    # the first repetition has nothing to be independent of; that is not a finding
 
-    return checks
+    return checks, not_applicable()

@@ -164,7 +164,7 @@ class Session(object):
             cov["next_macro"] = nm
             hems.append(cov)
 
-        gate = GATES.evaluate("ready_to_cut", spec, store, garment_dir=gdir, check_files=False)
+        gate = GATES.evaluate("ready_to_cut", spec, store, garment_dir=gdir, check_files=True)
         qa_counts = {}
         for q in st["qa"].values():
             qa_counts[q.get("outcome")] = qa_counts.get(q.get("outcome"), 0) + 1
@@ -388,15 +388,18 @@ def build_api(session):
         for k in (fields.get("confirm") or "").split(","):
             if k.strip():
                 assertions[k.strip()] = True
-        checks = QA.check_capture(dest, shot, quality, board=board, board_spec=bspec, image=img,
-                                  compare_to=compare, operator_assertions=assertions)
+        checks, na = QA.check_capture(dest, shot, quality, rep=rep, board=board,
+                                      board_spec=bspec, image=img, compare_to=compare,
+                                      operator_assertions=assertions)
         outcome = QA.roll_up(checks)
         store.append("qa_result", {"shot_id": shot_id, "rep": rep, "outcome": outcome,
-                                   "checks": [c.as_dict() for c in checks]},
+                                   "shot_class": QA.shot_class(shot),
+                                   "checks": [c.as_dict() for c in checks],
+                                   "not_applicable": na},
                      operator=fields.get("operator"))
         return 200, {"ok": True, "outcome": outcome, "path": rel,
-                     "already_present": already,
-                     "checks": [c.as_dict() for c in checks],
+                     "already_present": already, "shot_class": QA.shot_class(shot),
+                     "checks": [c.as_dict() for c in checks], "not_applicable": na,
                      "url": "/photo?p=%s/%s" % (gid, rel)}
 
     @api.route("POST", "/api/cutspec/(DENIM_[0-9]{4})")

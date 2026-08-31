@@ -38,17 +38,29 @@ function api(path, opts) {
   });
 }
 
-/* ------------------------------------------------------------------ tabs */
-Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
-  b.addEventListener('click', function () {
-    Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (x) {
-      x.classList.toggle('on', x === b);
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('main section'), function (s) {
-      s.classList.toggle('on', s.id === 's-' + b.dataset.tab);
-    });
+/* ------------------------------------------------------------------ tabs
+ * The tab also lives in location.hash, so a screenshot run (and a reload mid-session) lands on the
+ * panel it left rather than always on NOW. */
+function showTab(name) {
+  var found = false;
+  Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (x) {
+    var on = x.dataset.tab === name;
+    found = found || on;
+    x.classList.toggle('on', on);
   });
+  if (!found) return showTab('now');
+  Array.prototype.forEach.call(document.querySelectorAll('main section'), function (s) {
+    s.classList.toggle('on', s.id === 's-' + name);
+  });
+  if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+}
+Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
+  b.addEventListener('click', function () { showTab(b.dataset.tab); });
 });
+window.addEventListener('hashchange', function () {
+  showTab((location.hash || '#now').slice(1));
+});
+showTab((location.hash || '#now').slice(1));
 
 /* ------------------------------------------------------------------ map */
 function drawMap(svg, side, target, coverage, interactive) {
@@ -158,8 +170,29 @@ function renderNow() {
   $('handling').hidden = !h.length;
   $('handling').innerHTML = h.map(function (x) { return esc(x); }).join('<br><br>');
 
-  drawMap($('mini-front'), 'front', n.region_id, S.by_region, false);
-  drawMap($('mini-back'), 'back', n.region_id, S.by_region, false);
+  // A rig or label frame has no place on a drawing of a pair of jeans. Highlighting nothing while
+  // showing the whole map lights up every region as "not started", which reads as an instruction to
+  // photograph the entire garment. Say what the frame is of instead.
+  var target = MAP && MAP.regions.filter(function (r) { return r.region_id === n.region_id; })[0];
+  var onGarment = !!(target && target.d);
+  var maps = document.querySelector('#nextcard .maps');
+  var norig = document.getElementById('norigmap');
+  if (!onGarment) {
+    if (maps) maps.style.display = 'none';
+    if (!norig) {
+      norig = document.createElement('div');
+      norig.id = 'norigmap'; norig.className = 'norigmap';
+      if (maps && maps.parentNode) maps.parentNode.insertBefore(norig, maps);
+    }
+    norig.style.display = '';
+    norig.textContent = 'This frame is of ' + ((target && target.label) || n.region_id) +
+      ' — it is not a view of the garment, so there is nothing to highlight on the map.';
+  } else {
+    if (maps) maps.style.display = '';
+    if (norig) norig.style.display = 'none';
+    drawMap($('mini-front'), 'front', n.region_id, S.by_region, false);
+    drawMap($('mini-back'), 'back', n.region_id, S.by_region, false);
+  }
 
   // ghost overlay availability
   var gb = $('b-ghost');

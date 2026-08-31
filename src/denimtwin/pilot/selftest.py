@@ -22,6 +22,7 @@ import shutil
 import sys
 import tempfile
 import time
+import zlib
 from pathlib import Path
 
 from . import gates as GATES
@@ -119,23 +120,54 @@ class Bench(object):
         return PLAN.activate(self.spec, st["features"], st["measurements"])
 
     def synth_for(self, shot, rep, *, relay=None, seed=None, **kw):
-        """A synthetic frame sized for the shot's own quality requirements."""
+        """A synthetic frame that actually satisfies the shot it stands in for.
+
+        A fixture that cannot meet the requirement under test proves nothing about the requirement:
+        the positive control would fail on the fixture's resolution rather than on the system's
+        behaviour, and the failure would look identical to a real one. So the frame is sized from
+        the shot's own `min_long_edge_px` and scaled from its own `max_mm_per_px`, and the board is
+        drawn only when the shot actually asks for a board -- a macro that needs 0.05 mm/px has no
+        room for a 200 mm board, which is exactly why its scale reference is a rule.
+
+        Different shots are also given different crease fields, so two distinct shots do not collide
+        in the duplicate check the way two frames of one lay should.
+        """
         q = QA.merged_quality(self.spec.doc["quality_defaults"], shot)
         mm = q.get("max_mm_per_px")
-        mm = min(float(mm) * 0.75, 0.5) if mm else 0.35
-        mm = max(mm, 0.06)
-        long_edge = int(q.get("min_long_edge_px") or 1600)
-        long_edge = max(long_edge + 200, 1600)
-        w = min(long_edge, 2600)
+        mm = float(mm) * 0.8 if mm else 0.35
+        mm = max(mm, 0.02)
+        long_edge = max(int(q.get("min_long_edge_px") or 1600) + 200, 1600)
+        w = min(long_edge, 4200)
         h = int(w * 0.75)
         subject = "jeans_back" if shot.get("garment_side") == "back" else "jeans_front"
         if shot.get("camera_angle") in ("macro_perpendicular", "side_profile"):
             subject = "hem_macro"
         if shot["state"] == "rig":
             subject = "blank_backdrop"
+        wants_board = shot.get("scale_reference") in ("charuco_board", "both") \
+            or q.get("requires_board")
+        if wants_board:
+            # The board is 200 x 275 mm. At a fine scale it does not fit a frame sized only for the
+            # subject, and `synth_capture` then shrinks it -- which silently changes the frame's real
+            # mm/px and makes the fixture fail the scale requirement it was built to satisfy. Give
+            # the board room instead.
+            board_px = 275.0 / mm
+            w = max(w, int(board_px * 1.25))
+            h = int(w * 0.75)
+        # The seed must be unique per (shot, repeat). Deriving it by ADDING the repeat to a running
+        # counter collides -- frame 10 repeat 2 and frame 11 repeat 1 land on the same number, and
+        # two different shots then produce byte-identical images that the duplicate check correctly
+        # rejects. The bug was in the fixture, and it looked exactly like a system fault.
+        base = seed if seed is not None else 0
+        uniq = zlib.crc32(("%s|%d|%d" % (shot["shot_id"], rep, base)).encode()) % (2 ** 31)
         args = dict(subject=subject, mm_per_px=mm, size=(w, h),
-                    seed=(seed if seed is not None else abs(hash(shot["shot_id"])) % 9999) + rep,
-                    relay=(relay if relay is not None else rep),
+                    seed=uniq,
+                    # An explicit relay index means the caller is saying something specific about
+                    # the lay -- "this is the same lay as the last frame" is how the negative
+                    # scenarios are built -- so it is never perturbed. Only the default is offset
+                    # per shot, so two different shots do not share a crease field.
+                    relay=(relay if relay is not None else rep + (uniq % 977) * 1000),
+                    board=bool(wants_board),
                     ruler=shot.get("scale_reference") in ("ruler", "both"))
         args.update(kw)
         p = self.tmp / "synth" / ("%s_r%d.png" % (shot["shot_id"].replace(".", "_"), rep))
@@ -180,17 +212,19 @@ class Bench(object):
                             "is_previous_rep": prev})
         assertions = {"operator": "selftest"}
         if confirm_all:
-            for k in ("ruler_visible", "side_confirmed", "region_confirmed", "relay_confirmed"):
+            for k in ("ruler_visible", "side_confirmed", "region_confirmed",
+                      "relay_confirmed", "camera_repositioned"):
                 assertions[k] = True
         board, bspec = self.board
-        checks = QA.check_capture(dest, shot,
-                                  QA.merged_quality(self.spec.doc["quality_defaults"], shot),
-                                  board=board, board_spec=bspec, image=img, compare_to=compare,
-                                  operator_assertions=assertions)
+        checks, na = QA.check_capture(dest, shot,
+                                      QA.merged_quality(self.spec.doc["quality_defaults"], shot),
+                                      rep=rep, board=board, board_spec=bspec, image=img,
+                                      compare_to=compare, operator_assertions=assertions)
         outcome = QA.roll_up(checks)
         self.store.append("qa_result", {"shot_id": shot["shot_id"], "rep": rep,
-                                        "outcome": outcome,
-                                        "checks": [c.as_dict() for c in checks]},
+                                        "outcome": outcome, "shot_class": QA.shot_class(shot),
+                                        "checks": [c.as_dict() for c in checks],
+                                        "not_applicable": na},
                           operator="selftest")
         return outcome, checks
 

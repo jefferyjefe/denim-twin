@@ -10,7 +10,12 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
   font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
-body { padding-bottom: 74px; }
+/* A shot id is a long unbroken token and a storage path is longer. Left to themselves they set the
+   page's minimum width and the whole layout scrolls sideways on a phone, which on a one-handed
+   screen means the next action is off the edge. Everything that can carry a long token breaks. */
+body { padding-bottom: 74px; overflow-x: hidden; }
+main, section, .card, .maps > div, dl.spec, dl.spec dd { min-width: 0; }
+.shotid, .banner small, dl.spec dd, .meta, .block .w, .block .f, .satrow, td { overflow-wrap: anywhere; }
 
 header { position: sticky; top: 0; z-index: 20; background: rgba(13,17,23,.96);
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 8px 12px; }
@@ -41,6 +46,8 @@ section { display: none; } section.on { display: block; }
   font-weight: 800; font-size: 22px; letter-spacing: .04em; }
 .banner small { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0;
   margin-top: 6px; opacity: .95; }
+.banner { overflow-wrap: anywhere; }
+@media (max-width: 430px) { .banner { font-size: 19px; padding: 12px 10px; } }
 .b-PASS { background: rgba(63,185,80,.16); color: var(--ok); border: 1px solid rgba(63,185,80,.4); }
 .b-RETAKE_REQUIRED { background: rgba(248,81,73,.16); color: var(--bad); border: 1px solid rgba(248,81,73,.45); }
 .b-UNAVAILABLE_CHECK { background: rgba(210,153,34,.16); color: var(--warn); border: 1px solid rgba(210,153,34,.45); }
@@ -76,6 +83,9 @@ svg.jeans .region.sel { stroke: #fff; stroke-width: 2; }
 .maplabel { text-align: center; font-size: 11px; color: var(--faint); padding: 5px 0 2px;
   letter-spacing: .05em; text-transform: uppercase; font-weight: 700; }
 .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.maps.single { grid-template-columns: 1fr; }
+.norigmap { background: var(--panel2); border-radius: 10px; padding: 14px; text-align: center;
+  color: var(--dim); font-size: 13px; }
 
 .cam { display: block; width: 100%; padding: 16px; margin-top: 12px; border: 0; border-radius: 12px;
   background: var(--accent); color: #04121f; font-size: 17px; font-weight: 800; text-align: center;

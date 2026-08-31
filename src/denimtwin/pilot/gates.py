@@ -321,10 +321,16 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
         for s in req:
             for rep in range(1, int(s.get("min_reps", 1)) + 1):
                 key = (s["shot_id"], rep)
-                if key not in done:
-                    missing.append("%s r%d" % key)
-                    continue
                 q = state["qa"].get(key)
+                if key not in done:
+                    # `done` excludes frames the checker rejected, so "not done" covers two very
+                    # different situations and the operator's next move differs: take the
+                    # photograph, versus look at why the one you took was refused.
+                    if q and q.get("outcome") == QA.RETAKE:
+                        failing.append("%s r%d (%s)" % (key[0], key[1], q.get("outcome")))
+                    else:
+                        missing.append("%s r%d" % key)
+                    continue
                 if not q:
                     unresolved.append("%s r%d (never checked)" % key)
                     continue
@@ -350,8 +356,10 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
 
     def c_files_present():
         if not check_files:
-            return False, "file integrity was not checked", \
-                   "re-run without --no-file-check", {}
+            return False, ("file integrity was not verified in this view, so whether every recorded "
+                           "photograph is still on disk and unchanged is unknown"), \
+                   "unknown is not permission: run `pilot.py precut` (or open the GATE tab), which " \
+                   "hashes every file", {}
         missing, changed = [], []
         for (sid, rep), c in sorted(state["captures"].items()):
             rel = c.get("path")
@@ -363,10 +371,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                 missing.append("%s r%d -> %s" % (sid, rep, rel))
                 continue
             want = c.get("sha256")
-            if want:
-                from .manifest import sha256_file
-                if sha256_file(p) != want:
-                    changed.append("%s r%d -> %s" % (sid, rep, rel))
+            if want and _hash_changed(p, want):
+                changed.append("%s r%d -> %s" % (sid, rep, rel))
         if missing or changed:
             return False, ("%d recorded photograph(s) are missing from disk and %d no longer match "
                            "the hash recorded for them" % (len(missing), len(changed))), \
@@ -402,6 +408,33 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
                sum(int(s["min_reps"]) - 1 for s in need), None, {}
 
     _guard(blocks, satisfied, "captures.relays_independent", c_relays)
+
+    def c_repositions():
+        req = required_here()
+        need = [s for s in req if s.get("reposition_camera_between_reps")
+                and int(s.get("min_reps", 1)) > 1]
+        bad = []
+        for s in need:
+            for rep in range(2, int(s["min_reps"]) + 1):
+                q = state["qa"].get((s["shot_id"], rep)) or {}
+                rc = None
+                for c in (q.get("checks") or []):
+                    if c.get("check_id") == "camera_repositioned":
+                        rc = c
+                if rc is None:
+                    bad.append("%s r%d (never asked)" % (s["shot_id"], rep))
+                elif rc.get("outcome") != QA.PASS:
+                    if not _human_resolved(state, s["shot_id"], rep, q):
+                        bad.append("%s r%d (%s)" % (s["shot_id"], rep, rc.get("outcome")))
+        if bad:
+            return False, ("%d repeat capture(s) do not record that the camera was actually "
+                           "repositioned" % len(bad)), \
+                   "these repeats measure mounting variance only if the phone came off the mount; " \
+                   "confirm it in the app or re-shoot", {"failing": bad[:10]}
+        return True, "%d repeat capture(s) recorded a camera reposition" % \
+               sum(int(s["min_reps"]) - 1 for s in need), None, {}
+
+    _guard(blocks, satisfied, "captures.repositions_recorded", c_repositions)
 
     def c_reuse_legitimate():
         bad = []
@@ -494,6 +527,28 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
         ev["n_required"] = sum(int(s.get("min_reps", 1)) for s in activated
                                if s["state"] in states and s["necessity"] != "optional")
     return Verdict(gate_id, blocks, satisfied, ev)
+
+
+#: Re-hashing hundreds of photographs on every screen refresh is not affordable, and skipping the
+#: check is not acceptable, so the result is cached on the file's identity. A file whose size and
+#: modification time are both unchanged since it was last hashed has not been rewritten by anything
+#: that is not deliberately hiding, and the cache is per-process -- it never survives to make a
+#: later run trust a stale answer.
+_HASH_CACHE = {}
+
+
+def _hash_changed(path, want):
+    from .manifest import sha256_file
+    try:
+        st = os.stat(str(path))
+    except OSError:
+        return True
+    key = (str(path), st.st_size, st.st_mtime_ns)
+    got = _HASH_CACHE.get(key)
+    if got is None:
+        got = sha256_file(path)
+        _HASH_CACHE[key] = got
+    return got != want
 
 
 def _human_resolved(state, shot_id, rep, qa_record):

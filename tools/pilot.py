@@ -354,7 +354,7 @@ def cmd_add(a):
                           "already_present": already},
               operator=a.operator, setup_hash=state["setup_hash"])
     b, bspec = board()
-    quality = PLAN.__dict__ and QA.merged_quality(spec.doc["quality_defaults"], shot)
+    quality = QA.merged_quality(spec.doc["quality_defaults"], shot)
     cmp_ = _compare_set(spec, state, gdir, a.shot, a.rep, shot)
     for c in cmp_:
         c["self_sha256"] = sha
@@ -362,12 +362,15 @@ def cmd_add(a):
     assertions = {"operator": a.operator}
     for k in (a.confirm or []):
         assertions[k] = True
-    checks = QA.check_capture(dest, shot, quality, board=b, board_spec=bspec, image=img,
-                              compare_to=cmp_, operator_assertions=assertions)
+    checks, na = QA.check_capture(dest, shot, quality, rep=a.rep, board=b,
+                                  board_spec=bspec, image=img, compare_to=cmp_,
+                                  operator_assertions=assertions)
     outcome = QA.roll_up(checks)
     st.append("qa_result", {"shot_id": a.shot, "rep": a.rep, "outcome": outcome,
-                            "checks": [c.as_dict() for c in checks]}, operator=a.operator)
-    print("%s r%d -> %s" % (a.shot, a.rep, outcome))
+                            "shot_class": QA.shot_class(shot),
+                            "checks": [c.as_dict() for c in checks],
+                            "not_applicable": na}, operator=a.operator)
+    print("%s r%d -> %s  [%s]" % (a.shot, a.rep, outcome, QA.shot_class(shot)))
     print("  stored %s%s" % (rel, "  (already present, unchanged)" if already else ""))
     for c in checks:
         if c.outcome != QA.PASS:
