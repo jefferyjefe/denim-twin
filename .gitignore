@@ -48,3 +48,7 @@ experiments/pairs_lmprov_refit/
 data/garments/**/pilot/manifest.jsonl
 data/garments/**/pilot/manifest.jsonl.torn
 data/garments/**/pilot/.incoming/
+
+# Isolated worktrees created for adversarial agents. Their findings live in the selftest scenarios
+# and docs/PILOT_ADVERSARIAL_ROUNDS.md; the trees themselves are scratch.
+.claude/
