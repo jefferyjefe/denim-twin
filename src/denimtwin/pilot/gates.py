@@ -141,27 +141,77 @@ def _guard(blocks, satisfied, condition, fn):
         blocks.append(Block(condition, what, fix, ev))
 
 
-#: Which states' captures must be complete before each gate opens.
-GATE_STATES = {
-    "ready_to_cut": ("rig", "intake", "before", "marked"),
-    "ready_to_wash": ("rig", "intake", "before", "marked", "immediate_after"),
-    "ready_to_finalize": ("rig", "intake", "before", "marked", "immediate_after", "post_wash"),
+#: The LAST state each gate is responsible for. Everything at or below it in the specification's own
+#: ordering is required.
+#:
+#: The states were listed by hand before, and the list fell behind the plan: the specification
+#: declares eight states and the three tuples between them named six. offcut_before and
+#: offcut_after appeared in none, so a hundred required frames -- a fifth of the plan, and the whole
+#: offcut experiment -- were required by no gate at all. Deriving the set means adding a state to
+#: the document cannot leave it unguarded.
+GATE_LAST_STATE = {
+    "ready_to_cut": "marked",
+    "ready_to_wash": "offcut_before",
+    "ready_to_finalize": "offcut_after",
 }
+
+
+def gate_states(spec, gate_id):
+    """Every state at or below the one this gate guards, in the specification's own order."""
+    order = {st["state"]: st["order"] for st in spec.states}
+    last = GATE_LAST_STATE[gate_id]
+    if last not in order:
+        raise ValueError("the specification declares no state %r, which %s guards"
+                         % (last, gate_id))
+    cutoff = order[last]
+    return tuple(st["state"] for st in sorted(spec.states, key=lambda x: x["order"])
+                 if st["order"] <= cutoff)
 
 
 def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash=False):
     """Evaluate one gate. Returns a Verdict. Never raises for a data problem -- that is a block."""
-    if gate_id not in GATE_STATES:
+    if gate_id not in GATE_LAST_STATE:
         raise ValueError("unknown gate %r" % gate_id)
     blocks, satisfied = [], []
-    state, problems = store.fold()
+    # "AN ERROR IS A BLOCK" is this module's rule, and its own first line broke it: the fold ran
+    # above every guard, so anything the log or the replay raised escaped the gate entirely and
+    # returned a traceback instead of a verdict. A gate that cannot answer must still answer no.
+    try:
+        state, problems = store.fold()
+    except Exception as e:                     # noqa: BLE001
+        return Verdict(gate_id, [Block("log.readable",
+                                       "the capture log could not be read at all: %s: %s"
+                                       % (type(e).__name__, e),
+                                       "the log is damaged beyond replay. Do not cut. Recover from "
+                                       "the phone's own copies and re-ingest; a log this code "
+                                       "cannot read is not evidence.",
+                                       {"exception": type(e).__name__})], [],
+                       {"fold_failed": True})
     garment_dir = Path(garment_dir or store.dir)
-    states = GATE_STATES[gate_id]
+    states = gate_states(spec, gate_id)
 
     # --- the plan itself ------------------------------------------------------------------
+    # Screen the measurements the plan is SIZED from before handing them to it. A leg opening of
+    # 10^7 is refused by c_measurements, but c_measurements runs after the plan does, and expanding
+    # a hem series from it builds millions of frames first -- the gate never reaches the condition
+    # that would have refused the number.
+    safe_measurements = {}
+    for name, m in (state["measurements"] or {}).items():
+        lo_hi = MEASUREMENT_RANGE.get(name)
+        val = None
+        try:
+            from .store import mean_of
+            val = mean_of(m)
+        except Exception:                       # noqa: BLE001
+            val = None
+        if lo_hi and (val is None or not (lo_hi[0] <= val <= lo_hi[1])):
+            continue                            # c_measurements reports it; the plan never sees it
+        safe_measurements[name] = m
+
     activated = None
     try:
-        activated, meta = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
+        activated, meta = PLAN.activate(spec, state["features"], safe_measurements,
+                                        state.get("cut_spec"))
     except Exception as e:
         blocks.append(Block("plan.generated",
                             "no shot plan could be generated: %s" % e,
@@ -256,7 +306,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                {"setup_hash": state["setup_hash"], "changes": len(state["setup_history"])}
 
     def c_setup_checks():
-        have = state["setup_checks"]
+        # Only readings taken against the CURRENT rig count. Keyed on the check name alone, a
+        # re-freeze inherited the previous configuration's calibration wholesale -- so the rig could
+        # be moved and every reading about the old one still read as certifying the new.
+        cur = state["setup_hash"]
+        have = {k: v for k, v in state["setup_checks"].items()
+                if v.get("setup_hash") in (None, cur)} if cur else {}
         missing = [c for c in REQUIRED_SETUP_CHECKS if c not in have]
         # An explicit PASS, or nothing. `not in (None, QA.PASS)` treated a reading with NO outcome
         # at all as satisfied, so a calibration record posted with the check's name and no verdict
@@ -277,6 +332,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
 
     def c_board_square():
         m = state["setup_checks"].get("board_square_measured") or {}
+        if state["setup_hash"] and m.get("setup_hash") not in (None, state["setup_hash"]):
+            return False, ("the board-square measurement was taken against rig %s, not the one in "
+                           "effect (%s)" % (str(m.get("setup_hash"))[:8],
+                                            str(state["setup_hash"])[:8])), \
+                   "re-measure the board against the current rig", {}
         v = m.get("measured_mm")
         n = m.get("squares_spanned")
         if v is None or n in (None, 0):
@@ -357,9 +417,14 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         camera had moved. Every capture was individually 'attributable', and the session as a whole
         described two rigs.
         """
+        # Resolved from the PLAN, not from the capture's own claim about itself. Reading the
+        # self-reported state let a frame mislabel itself out of this condition while still counting
+        # as evidence for the condition next door.
+        in_scope = {(sh["shot_id"], rep) for sh in required_here()
+                    for rep in range(1, int(sh.get("min_reps", 1)) + 1)}
         used = {}
         for k, c in state["captures"].items():
-            if c.get("state") in states and c.get("setup_hash"):
+            if k in in_scope and c.get("setup_hash"):
                 used.setdefault(c["setup_hash"], []).append("%s r%d" % k)
         if len(used) <= 1:
             return True, "one rig configuration across %d captures" % len(state["captures"]), \
@@ -525,6 +590,19 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # Ingestion files a capture as <shot>__r<NN>__<sha12>.<ext>. An entry whose path does
             # not encode its own shot, repeat and hash is pointing at some other shot's file, which
             # is how a photograph that was never taken passed by pure append.
+            # The BASENAME was all that was checked, so "../../other/NAME" and an absolute path
+            # both satisfied it while pointing the evidence somewhere else entirely. Containment
+            # first, and through realpath, so a symlink cannot lead out either.
+            if os.path.isabs(rel) or ".." in Path(rel).parts:
+                misfiled.append("%s r%d -> %s (path escapes the garment directory)" % (sid, rep, rel))
+                continue
+            try:
+                real = Path(os.path.realpath(str(garment_dir / rel)))
+                real.relative_to(Path(os.path.realpath(str(garment_dir))))
+            except (ValueError, OSError):
+                misfiled.append("%s r%d -> %s (resolves outside the garment directory)"
+                                % (sid, rep, rel))
+                continue
             base = os.path.basename(rel)
             safe = "".join(ch if (ch.isalnum() or ch in "._-") else "_" for ch in str(sid))
             want = "%s__r%02d__%s" % (safe, int(rep), str(c["sha256"])[:12])
@@ -653,11 +731,31 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         question asked of the DURABLE record, where the hashes are, so it does not depend on what
         could be read at the time.
         """
+        # An exemption is honoured only when the log backs it: the source must be a capture that
+        # exists, the borrowed frame must be the same bytes, and the borrowing shot must carry its
+        # own verdict over those bytes. Otherwise a bare declaration naming any pair of shot ids
+        # removed them from duplicate detection whatever they actually held.
         declared = set()
         for r in state["reuse"]:
-            declared.add((r.get("shot_id"), int(r.get("rep", 1))))
-            if r.get("source_shot_id"):
-                declared.add((r.get("source_shot_id"), int(r.get("source_rep", 1))))
+            try:
+                tgt = (r.get("shot_id"), int(r.get("rep", 1)))
+                srck = (r.get("source_shot_id"), int(r.get("source_rep", 1)))
+            except (TypeError, ValueError):
+                continue
+            src_cap = state["captures"].get(srck)
+            tgt_cap = state["captures"].get(tgt)
+            tgt_qa = state["qa"].get(tgt)
+            if not src_cap or not tgt_cap:
+                continue
+            if not src_cap.get("sha256") or src_cap["sha256"] != tgt_cap.get("sha256"):
+                continue
+            if r.get("sha256") and r["sha256"] != src_cap["sha256"]:
+                continue
+            if not tgt_qa or tgt_qa.get("capture_sha256") != src_cap["sha256"] \
+                    or tgt_qa.get("outcome") != QA.PASS:
+                continue
+            declared.add(tgt)
+            declared.add(srck)
         by_sha = {}
         for key, c in sorted(state["captures"].items()):
             sha = c.get("sha256")
@@ -731,7 +829,10 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # appended after an approval could be discarded in favour of the approval.
             cands = [rec for (sid, rep, claim), rec in state["verifications"].items()
                      if claim == "cut_marks_verified"]
-            v = max(cands, key=lambda r: float(r.get("ts") or 0)) if cands else None
+            # By log POSITION. `ts` comes from the payload on any path that sets it, so ordering by
+            # it let a future-dated approval outrank a real retraction appended after it.
+            v = max(cands, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
+                if cands else None
             if v is not None and v.get("value") is not True:
                 # `value` was never read here, so a recorded REFUSAL -- a second person writing
                 # "no, the marks are on the wrong leg" -- was reported as an approval.
@@ -799,7 +900,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             missing = []
             for claim, how in need.items():
                 recs = [rec for (_, _, c), rec in state["verifications"].items() if c == claim]
-                latest = max(recs, key=lambda r: float(r.get("ts") or 0)) if recs else None
+                latest = max(recs, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
+                    if recs else None
                 if latest is None or latest.get("value") is not True:
                     missing.append((claim, how))
             if missing:
@@ -870,14 +972,19 @@ def _human_resolved(state, shot_id, rep, qa_record, capture=None):
     if not claims:
         return False
     cap_sha = (capture or {}).get("sha256")
-    cap_ts = (capture or {}).get("ts")
+    cap_seq = (capture or {}).get("seq")
     for claim in claims:
         rec = state["verifications"].get((shot_id, rep, claim))
         if not rec or rec.get("value") is not True or not rec.get("operator"):
             return False
-        if rec.get("capture_sha256"):
-            if cap_sha and rec["capture_sha256"] != cap_sha:
-                return False
-        elif cap_ts is not None and float(rec.get("ts") or 0) < float(cap_ts):
+        # Both, not either. The OR was the hole: a verification carrying a sha that no capture had
+        # yet -- the API takes capture_sha256 straight from the client -- satisfied the first branch
+        # and never reached the second, so every claim could still be pre-cleared before the
+        # photograph existed. And the ordering is log POSITION, because the payload's clock is
+        # writable while the sequence number is stamped by the appender.
+        if not cap_sha or rec.get("capture_sha256") != cap_sha:
+            return False
+        if cap_seq is not None and rec.get("seq") is not None \
+                and int(rec["seq"]) < int(cap_seq):
             return False
     return True

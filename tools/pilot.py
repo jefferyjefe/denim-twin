@@ -44,7 +44,7 @@ from denimtwin.pilot import hem as HEM              # noqa: E402
 from denimtwin.pilot import plan as PLAN            # noqa: E402
 from denimtwin.pilot import qa as QA                # noqa: E402
 from denimtwin.pilot import spec as SPEC            # noqa: E402
-from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual   # noqa: E402
+from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual, mean_of  # noqa: E402
 from denimtwin.pilot.manifest import ingest_photo, read_exif, exif_timestamp, sha256_file  # noqa: E402
 
 # The garment tree, overridable so a rehearsal cannot touch real evidence. data/garments holds the
@@ -218,7 +218,15 @@ def cmd_intake(a):
             v = _prompt("%s (y/n)" % f["prompt"], "y" if cur else ("n" if cur is False else
                                                                    ("y" if f["unanswered_means"] == "present" else "n")), _bool)
         elif f["type"] == "count":
-            v = _prompt("%s (number)" % f["prompt"], cur if cur is not None else 0, int)
+            # Bounded the way the HTTP API bounds it. A bare int() accepted -3, which read as zero
+            # instances and silently deleted the photographs that count was there to require, and
+            # accepted 10**9, which expands to one shot record per instance.
+            def _count(x, _k=f["key"]):
+                n = int(x)
+                if not (0 <= n <= PLAN.MAX_INSTANCES):
+                    raise ValueError("a count must be between 0 and %d" % PLAN.MAX_INSTANCES)
+                return n
+            v = _prompt("%s (number)" % f["prompt"], cur if cur is not None else 0, _count)
         elif f["type"] == "number":
             v = _prompt(f["prompt"], cur if cur is not None else f.get("default"), float)
         elif f["type"] == "enum":
@@ -492,7 +500,7 @@ def cmd_cutspec(a):
     m = state["measurements"]
 
     def need(k):
-        v = (m.get(k) or {}).get("mean")
+        v = mean_of(m.get(k))
         if v is None:
             raise SystemExit("%s has not been measured; run `measure` first" % k)
         return v
@@ -568,7 +576,7 @@ def cmd_gate(a):
 def cmd_hem(a):
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
-    lo = (state["measurements"].get("leg_opening_cm") or {}).get("mean")
+    lo = mean_of(state["measurements"].get("leg_opening_cm"))
     if lo is None:
         raise SystemExit("leg_opening_cm has not been measured; the hem loop's length is unknown, "
                          "so its coverage cannot be computed. That is UNAVAILABLE, not complete.")
@@ -809,7 +817,7 @@ def main(argv=None):
     s.add_argument("--json", default=None)
     s.add_argument("--no-file-check", action="store_true", dest="no_file_check")
     s = add("gate", cmd_gate)
-    s.add_argument("gate", choices=sorted(GATES.GATE_STATES))
+    s.add_argument("gate", choices=sorted(GATES.GATE_LAST_STATE))
     add("hem", cmd_hem)
     s = add("wash", cmd_wash)
     s.add_argument("--actual", action="store_true")

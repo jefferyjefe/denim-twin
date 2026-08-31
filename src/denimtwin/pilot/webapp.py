@@ -16,6 +16,7 @@ import math
 import os
 import re
 import sys
+import tempfile
 import time
 import webbrowser
 from pathlib import Path
@@ -525,11 +526,23 @@ def build_api(session):
         tmp = gdir / "pilot" / ".incoming"
         tmp.mkdir(parents=True, exist_ok=True)
         ext = os.path.splitext(blob.get("filename") or "capture.jpg")[1].lower() or ".jpg"
-        stage = tmp / ("upload%s" % ext)
-        with open(str(stage), "wb") as f:
-            f.write(blob["data"])
-            f.flush()
-            os.fsync(f.fileno())
+        # One staging path per REQUEST. A single fixed path per garment meant two photographs
+        # arriving together -- which is what a phone does when the operator taps twice, and the
+        # server is threaded -- wrote over each other, so one frame could be ingested under the
+        # other's shot id, or spliced from both.
+        fd, stage_name = tempfile.mkstemp(dir=str(tmp), prefix="upload-", suffix=ext)
+        stage = Path(stage_name)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(blob["data"])
+                f.flush()
+                os.fsync(f.fileno())
+        except BaseException:
+            try:
+                os.unlink(stage_name)
+            except OSError:
+                pass
+            raise
         dest_dir = gdir / "images" / shot["state"]
         dest, sha, already = ingest_photo(stage, dest_dir, shot_id, rep, move=True)
         rel = str(dest.relative_to(gdir))
@@ -635,7 +648,7 @@ def build_api(session):
     @api.route("GET", "/api/gate/(DENIM_[0-9]{4})/([a-z_]+)")
     def _gate(m, _q, _b):
         gid, gate = m.group(1), m.group(2)
-        if gate not in GATES.GATE_STATES:
+        if gate not in GATES.GATE_LAST_STATE:
             return 400, {"error": "unknown gate"}
         gdir = session.garments / gid
         v = GATES.evaluate(gate, session.spec, session.store(gid), garment_dir=gdir)

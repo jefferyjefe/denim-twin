@@ -224,8 +224,19 @@ class Manifest(object):
         return self.path.with_suffix(self.path.suffix + ".head")
 
     def _write_head(self, chain, count):
-        atomic_write_text(self.head_path,
-                          canonical({"chain": chain, "count": int(count), "seed": self.seed}) + "\n")
+        """Append the anchor rather than replacing it.
+
+        A single-value sidecar was re-blessed by the very next ordinary append: the appender reads
+        the log without verifying, so after a truncation it rewrote the anchor to match the shortened
+        log and the evidence of the truncation was gone. Appending means the HIGHEST count the log
+        ever reached stays on record, and a log shorter than that stays detectable however many
+        entries are added afterwards.
+        """
+        line = canonical({"chain": chain, "count": int(count), "seed": self.seed}) + "\n"
+        with open(str(self.head_path), "a") as f:
+            f.write(line)
+            f.flush()
+            os.fsync(f.fileno())
 
     def check_head(self, entries):
         """Does the log still end where the sidecar says it ends?
@@ -241,20 +252,31 @@ class Manifest(object):
             return [{"kind": "head_missing",
                      "detail": "the log has %d entries but no head record; it cannot be shown to be "
                                "complete" % len(entries)}]
-        try:
-            rec = json.loads(self.head_path.read_text())
-        except ValueError:
-            return [{"kind": "head_unreadable", "detail": "the head record is not readable"}]
+        recs = []
+        for line in self.head_path.read_text(errors="replace").split("\n"):
+            if not line.strip():
+                continue
+            try:
+                r = json.loads(line)
+            except ValueError:
+                return [{"kind": "head_unreadable", "detail": "the head record is not readable"}]
+            if isinstance(r, dict):
+                recs.append(r)
+        if not recs:
+            return [{"kind": "head_unreadable", "detail": "the head record is empty"}]
         want_chain = entries[-1]["chain"] if entries else self.seed
         out = []
-        if rec.get("count") != len(entries):
+        high = max(int(r.get("count") or 0) for r in recs)
+        if len(entries) < high:
             out.append({"kind": "entries_missing",
-                        "detail": "the head record was written after %s entries and the log now has "
-                                  "%d; entries have been removed from the end"
-                                  % (rec.get("count"), len(entries))})
-        if rec.get("chain") != want_chain:
+                        "detail": "this log reached %d entries and now has %d; entries have been "
+                                  "removed from the end" % (high, len(entries))})
+        if recs[-1].get("count") != len(entries) or recs[-1].get("chain") != want_chain:
             out.append({"kind": "head_mismatch",
-                        "detail": "the log does not end where the head record says it ends"})
+                        "detail": "the log does not end where its most recent anchor says it ends"})
+        if any(r.get("seed") != self.seed for r in recs):
+            out.append({"kind": "head_mismatch",
+                        "detail": "an anchor was written for a different garment"})
         return out
 
     def verify_chain(self, entries=None):

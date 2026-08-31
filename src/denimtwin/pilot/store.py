@@ -145,7 +145,10 @@ class Store(object):
             elif k == "setup_check":
                 key = self._key(p.get("check"), "check name", e.get("seq"), problems)
                 if key is not None:
-                    st["setup_checks"][key] = p
+                    # The rig it was taken against travels with it, so a re-freeze cannot inherit
+                    # the previous configuration's calibration.
+                    st["setup_checks"][key] = dict(p, setup_hash=e.get("setup_hash"),
+                                                   seq=e.get("seq"))
             elif k == "feature_answers":
                 st["features"].update(p.get("answers") or {})
                 st["features_answered_at"] = e.get("ts")
@@ -180,7 +183,8 @@ class Store(object):
                 # the second-person check, which refuses a verifier equal to the operator, compared
                 # a name against None and let it through.
                 st["verifications"][(p.get("shot_id"), rep, claim)] = dict(
-                    p, ts=e.get("ts"), operator=p.get("operator") or e.get("operator"))
+                    p, ts=e.get("ts"), seq=e.get("seq"),
+                    operator=p.get("operator") or e.get("operator"))
             elif k == "reuse_declaration":
                 st["reuse"].append(dict(p, ts=e.get("ts")))
             elif k == "deviation":
@@ -216,12 +220,16 @@ class Store(object):
             if cap is None:
                 continue
             sha = cap.get("sha256")
-            for r in recs:
-                # No compatibility path for a verdict that does not name its photograph: an
-                # unbound verdict is exactly the forgery this guards against, and a shot with no
-                # usable verdict reads as unchecked, which blocks.
-                if sha and r.get("capture_sha256") == sha:
-                    st["qa"][key] = r
+            # The WORST verdict bound to this photograph wins, not the latest. Taking the latest
+            # let a second verdict IMPROVE the first: name the same sha, carry a fabricated
+            # all-PASS check list, and a RETAKE became a PASS -- which is exactly what "turning a
+            # RETAKE into a PASS requires another photograph" was supposed to prevent. Re-running
+            # the checker on one frame is deterministic, so two verdicts that disagree about it are
+            # evidence of tampering, and the safe reading of a disagreement is the worse one.
+            bound = [r for r in recs if sha and r.get("capture_sha256") == sha]
+            if bound:
+                from .qa import SEVERITY as _SEV
+                st["qa"][key] = max(bound, key=lambda r: _SEV.get(r.get("outcome"), 3))
         return st, problems
 
     # -- convenience --------------------------------------------------------------------------

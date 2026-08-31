@@ -71,6 +71,14 @@ def resolve_features(spec, answers):
     return out, unanswered, blocking
 
 
+#: The most instances of one counted feature a plan will expand. A garment with more distinct tears
+#: than this is not a pilot garment, and the number exists because expansion is one full shot record
+#: per instance: a mistyped count made every plan, gate and screen refresh allocate until the
+#: machine gave up, which is a denial of the gate rather than a bypass of it -- and the operator
+#: cannot tell those apart from the outside.
+MAX_INSTANCES = 200
+
+
 def instance_count(features, key):
     """How many instances of a counted feature the garment has.
 
@@ -94,7 +102,7 @@ def instance_count(features, key):
         return 1
     if f <= 0:
         return 0
-    return max(1, int(math.ceil(f)))
+    return min(MAX_INSTANCES, max(1, int(math.ceil(f))))
 
 
 def expand_hem_series(shot, measurements, cut_spec=None):
