@@ -28,6 +28,11 @@ from pathlib import Path
 
 from .manifest import Manifest, canonical, sha256_text
 
+#: The kinds of deviation the gates recognise. Two conditions told the operator to "record the
+#: deviation deliberately" and no command or route could write one -- the remedy the message
+#: promised was unreachable, so the only way past those conditions was a hand-edited log.
+DEVIATION_KINDS = ("rig", "wash", "intake", "offcut_alternation", "protocol")
+
 KINDS = (
     "session_opened",        # garment id, spec version and hash
     "setup_frozen",          # the rig configuration and its hash
@@ -116,7 +121,7 @@ class Store(object):
             "spec_version": None, "spec_hash": None,
             "setup": None, "setup_hash": None, "setup_history": [],
             "setup_checks": {},
-            "features": {}, "features_answered_at": None,
+            "features": {}, "features_answered_at": None, "feature_changes": [],
             "measurements": {},
             "captures": {},          # (shot_id, rep) -> capture record
             "qa": {},                # (shot_id, rep) -> the qa record for the CURRENT capture
@@ -150,7 +155,16 @@ class Store(object):
                     st["setup_checks"][key] = dict(p, setup_hash=e.get("setup_hash"),
                                                    seq=e.get("seq"))
             elif k == "feature_answers":
-                st["features"].update(p.get("answers") or {})
+                # The newest answer wins, and the earlier one stays visible. Merging silently meant
+                # a later answer could delete the frames an earlier one required, with nothing to
+                # look at afterwards: the log still held both and no condition could see it.
+                prev = dict(st["features"])
+                answers = p.get("answers") or {}
+                for fk, fv in answers.items():
+                    if fk in prev and prev[fk] != fv:
+                        st["feature_changes"].append(
+                            {"key": fk, "was": prev[fk], "now": fv, "seq": e.get("seq")})
+                st["features"].update(answers)
                 st["features_answered_at"] = e.get("ts")
             elif k == "measurement":
                 key = self._key(p.get("name"), "measurement name", e.get("seq"), problems)
@@ -204,12 +218,18 @@ class Store(object):
                 else:
                     st["wash_plan_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_actual":
-                st["wash_actual"] = dict(p, ts=e.get("ts"))
+                st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
             elif k == "offcut":
                 lbl = self._key(p.get("label"), "offcut label", e.get("seq"), problems)
                 if lbl is None:
                     continue
                 cur = st["offcuts"].get(lbl, {})
+                # Remember WHEN each field was set, not just its final value. The merge kept only
+                # the last value, so an assignment written after the wash was indistinguishable
+                # from one written before it -- and the assignment exists to DECIDE the wash.
+                for fk in p:
+                    if fk != "label":
+                        cur.setdefault("_seq", {})[fk] = e.get("seq")
                 cur.update(p)
                 st["offcuts"][lbl] = cur
             elif k == "note":

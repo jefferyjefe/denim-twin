@@ -1385,7 +1385,96 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the operator can confirm the ruler and the side; nothing they can assert "
                       "makes an empty backdrop a photograph of a garment"))
 
-    # -- 64. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 64. replacing the earlier repeat after the later one passed -----------------------------
+    b, sp = complete_mini("stalerelay", gid="DENIM_9239")
+    assert b.gate().ready
+    rel_shot = None
+    for sh_ in b.activated()[0]:
+        if sh_.get("relay_between_reps") and int(sh_.get("min_reps", 1)) > 1:
+            rel_shot = sh_
+            break
+    if rel_shot is not None:
+        # File a NEW rep-1 that is the same lay as rep 2. The rep-2 verdict was made against the
+        # old rep 1 and is frozen; nothing re-ran it.
+        st_, _ = b.store.fold()
+        cap2 = st_["captures"][(rel_shot["shot_id"], 2)]
+        b.add(rel_shot, 1, b.synth_for(rel_shot, 1, relay=2, seed=999))
+        v = b.gate(check_files=False)
+        out.append(Result("replacing an earlier repeat invalidates the later one's relay verdict",
+                          not v.ready,
+                          "re-filed rep 1 after rep 2 passed; ready=%s" % v.ready,
+                          "the relay comparison happens once at ingest and the verdict is frozen, "
+                          "so replacing the frame it was about leaves a passing verdict describing "
+                          "a photograph that is no longer there"))
+    else:
+        out.append(Result("replacing an earlier repeat invalidates the later one's relay verdict",
+                          True, "no multi-rep relay shot in the small plan", "n/a"))
+
+    # -- 65. a wash plan written after the wash -------------------------------------------------
+    b = new("latePlan", spec=mini_sp, gid="DENIM_9240")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    fields = {k: (30.0 if k == "water_temp_c" else "x") for k in GATES.WASH_FIELDS}
+    b.store.append("wash_actual", dict(fields, water_temp_c=60.0), operator="selftest")
+    b.store.append("wash_planned", dict(fields, water_temp_c=60.0), operator="forger")
+    conds = {x.condition for x in b.gate("ready_to_finalize", check_files=False).blocks}
+    out.append(Result("a wash plan written after the wash is not a plan",
+                      "wash.planned" in conds,
+                      "actual appended first, then a matching 'plan'",
+                      "written afterwards the two collapse and every deviation computes to nothing"))
+
+    # -- 66. a deviation that names only the field ------------------------------------------------
+    b = new("tokenDev", spec=mini_sp, gid="DENIM_9241")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    b.store.append("wash_planned", dict(fields), operator="selftest")
+    for f_ in GATES.WASH_FIELDS:          # pre-register every field name, before the wash
+        b.store.append("deviation", {"kind": "wash", "field": f_, "reason": "just in case"},
+                       operator="forger")
+    b.store.append("wash_actual", dict(fields, water_temp_c=90.0), operator="selftest")
+    conds = {x.condition for x in b.gate("ready_to_finalize", check_files=False).blocks}
+    out.append(Result("a deviation that names only a field does not excuse whatever happened",
+                      "wash.actual" in conds,
+                      "pre-registered all %d field names, then washed at 90 C" % len(GATES.WASH_FIELDS),
+                      "matching on the field alone let every departure be excused in advance; a "
+                      "deviation has to describe what was planned and what happened"))
+
+    # -- 67. an offcut assignment made after the wash -----------------------------------------------
+    b = new("lateAssign", spec=mini_sp, gid="DENIM_9242")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    from . import offcut as _OFF2
+    for lbl, leg in (("DENIM_9242_OFFCUT_L", "left"), ("DENIM_9242_OFFCUT_R", "right")):
+        b.store.append("offcut", {"label": lbl, "originating_leg": leg}, operator="selftest")
+    b.store.append("wash_planned", dict(fields), operator="selftest")
+    b.store.append("wash_actual", dict(fields), operator="selftest")
+    for lbl, cond in (("DENIM_9242_OFFCUT_L", _OFF2.WITH_GARMENT),
+                      ("DENIM_9242_OFFCUT_R", _OFF2.SEPARATE_LOAD)):
+        b.store.append("offcut", {"label": lbl, "assigned_wash_condition": cond},
+                       operator="forger")
+    conds = {x.condition for x in b.gate("ready_to_finalize", check_files=False).blocks}
+    out.append(Result("an offcut wash condition assigned after the wash decides nothing",
+                      "offcuts.assigned" in conds,
+                      "both conditions appended after wash_actual",
+                      "the assignment exists to decide which offcut goes into the garment's load "
+                      "and to keep the left/right alternation unconfounded"))
+
+    # -- 68. an intake answer changed in the direction that deletes a photograph ----------------------
+    b = new("shrinkAnswer", spec=mini_sp, gid="DENIM_9243")
+    b.open_session(); b.freeze_rig()
+    ans1 = b.answer_features({"n_tears": 3})
+    b.measure()
+    b.store.append("feature_answers", {"answers": dict(ans1, n_tears=0)}, operator="forger")
+    blocked_ = b.blocked_conditions(check_files=False)
+    b.store.append("deviation", {"kind": "intake", "field": "n_tears",
+                                 "reason": "recounted; the third was a fold, not a tear"},
+                   operator="selftest")
+    after_ = b.blocked_conditions(check_files=False)
+    out.append(Result("an answer changed to delete required frames blocks until it is explained",
+                      "features.answered" in blocked_ and "features.answered" not in after_,
+                      "n_tears 3 -> 0 blocks; a recorded intake deviation clears it",
+                      "the newest answer won and the earlier one stayed in the log invisible to "
+                      "every condition, so a later answer could delete the frames an earlier one "
+                      "required with nothing to look at"))
+
+    # -- 69. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

@@ -556,6 +556,12 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
             o, d, ev = Q.relay_verdict(other.get("pose"), pose, mm_per_px, interior_ncc=interior,
                                        seconds_apart=secs,
                                        operator_confirmed=bool(assertions.get("relay_confirmed")))
+            # Name the frame this verdict is about. The comparison happens once, at ingest, against
+            # whatever was filed under the previous repeat at that moment, and the verdict is then
+            # frozen into the record -- so replacing the earlier repeat afterwards left a passing
+            # relay verdict describing a photograph that is no longer there.
+            ev = dict(ev, compared_against_sha256=other.get("sha256"),
+                      compared_against=("%s r%s" % (other.get("shot_id"), other.get("rep"))))
             checks.append(Check("relay_independence", o, d, ev,
                                 fix="lift the garment clear of the surface, shake it out, and lay "
                                     "it again before this repeat"))

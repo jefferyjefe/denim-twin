@@ -283,6 +283,31 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                            "unanswered: %s" % (len(missing_absent), ", ".join(sorted(missing_absent)[:8]))), \
                    "answer them in `pilot.py intake`; an unanswered question that defaults to " \
                    "'absent' would remove a photograph from the plan", {"keys": missing_absent}
+        shrinking = []
+        for ch in state["feature_changes"]:
+            was, now = ch["was"], ch["now"]
+            try:
+                shrank = (was is True and now is False) or \
+                         (not isinstance(was, bool) and not isinstance(now, bool)
+                          and float(now) < float(was))
+            except (TypeError, ValueError):
+                shrank = True
+            if shrank:
+                shrinking.append("%s: %r -> %r" % (ch["key"], was, now))
+        excused_keys = {d.get("field") for d in state["deviations"]
+                        if d.get("kind") == "intake"}
+        shrinking = [x for x in shrinking if x.split(":")[0] not in excused_keys]
+        if shrinking:
+            # The newest answer wins and the older one stays in the log, invisible to every
+            # condition -- so a later answer could delete the frames an earlier one required with
+            # nothing to look at. An answer that ADDS work needs no explanation; one that removes
+            # a photograph does.
+            return False, ("%d intake answer(s) were later changed in the direction that REMOVES "
+                           "required photographs: %s"
+                           % (len(shrinking), "; ".join(shrinking[:5]))), \
+                   "an answer that adds work needs no explanation; one that deletes a required " \
+                   "frame does. Record why with `pilot.py deviation --kind intake`, or restore " \
+                   "the earlier answer.", {"changes": shrinking[:8]}
         return True, "%d feature answers recorded (%d assumed present pending answer)" % (
             len(state["features"]), len(meta.get("assumed_present") or [])), None, \
             {"assumed_present": meta.get("assumed_present") or []}
@@ -651,6 +676,19 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     bad.append("%s r%d (relay independence never assessed)" % (s["shot_id"], rep))
                 elif rc.get("outcome") != QA.PASS:
                     bad.append("%s r%d (%s)" % (s["shot_id"], rep, rc.get("outcome")))
+                else:
+                    # The verdict was made against a particular earlier frame. If that frame has
+                    # since been replaced, the verdict describes a photograph that is no longer
+                    # there -- so two frames of the same lay can sit under reps 1 and 2 with a
+                    # passing relay verdict between them.
+                    against = (rc.get("evidence") or {}).get("compared_against_sha256")
+                    prev_cap = state["captures"].get((s["shot_id"], rep - 1)) or {}
+                    if not against:
+                        bad.append("%s r%d (its relay verdict does not name the frame it was "
+                                   "compared against)" % (s["shot_id"], rep))
+                    elif prev_cap.get("sha256") and against != prev_cap["sha256"]:
+                        bad.append("%s r%d (compared against a frame that has since been replaced)"
+                                   % (s["shot_id"], rep))
         if bad:
             return False, ("%d repeat capture(s) are not established as independent re-lays"
                            % len(bad)), \
@@ -821,6 +859,17 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                                "measures nothing" % ", ".join(sorted(conds))), \
                        "the two offcuts exist to be washed differently; re-assign", \
                        {"conditions": sorted(conds)}
+            wa_ = state["wash_actual"]
+            if wa_ and wa_.get("seq") is not None:
+                late = [lbl for lbl, v in oc.items()
+                        if (v.get("_seq") or {}).get("assigned_wash_condition") is not None
+                        and int((v["_seq"])["assigned_wash_condition"]) > int(wa_["seq"])]
+                if late:
+                    return False, ("the wash condition for %s was assigned AFTER the wash was "
+                                   "recorded" % ", ".join(sorted(late))), \
+                           "the assignment decides which offcut goes into the garment's load and " \
+                           "keeps the left/right alternation unconfounded; recorded afterwards it " \
+                           "decides nothing", {"late": sorted(late)}
             alt = OFF.check_alternation(garment_dir.parent)
             if alt.get("unclassified"):
                 return False, ("%d sibling garment(s) record an offcut condition this code cannot "
@@ -855,6 +904,14 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if missing:
                 return False, "the wash plan is missing %s" % ", ".join(missing[:6]), \
                        "re-record the plan with every field", {"missing": missing}
+            wa_ = state["wash_actual"]
+            if wa_ and wp.get("seq") is not None and wa_.get("seq") is not None \
+                    and int(wp["seq"]) > int(wa_["seq"]):
+                return False, ("the wash plan was written AFTER the wash it is supposed to have "
+                               "planned, so the two collapse and every deviation computes to "
+                               "nothing"), \
+                       "the plan is what the actual settings are measured against; it has to " \
+                       "exist before them", {"plan_seq": wp.get("seq"), "actual_seq": wa_.get("seq")}
             if state["wash_plan_rewrites"]:
                 return False, ("the wash plan was written %d more time(s) after the first; the "
                                "planned settings are what the deviation is measured against and "
@@ -885,13 +942,31 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                        "re-record it with every field", {"missing": missing}
             from .store import diff_planned_actual
             devs = diff_planned_actual(wp, wa)
-            recorded = {d.get("field") for d in state["deviations"] if d.get("kind") == "wash"}
-            unrecorded = [d["field"] for d in devs if d["field"] not in recorded]
+
+            def _same(a, b):
+                if isinstance(a, float) or isinstance(b, float):
+                    try:
+                        return abs(float(a) - float(b)) < 1e-9
+                    except (TypeError, ValueError):
+                        return False
+                return a == b
+
+            # A deviation has to DESCRIBE the departure, not merely name the field. Matching on the
+            # field alone meant pre-registering all fifteen field names before the wash excused
+            # whatever happened afterwards.
+            unrecorded = []
+            for d in devs:
+                if not any(x.get("kind") == "wash" and x.get("field") == d["field"]
+                           and _same(x.get("planned"), d["planned"])
+                           and _same(x.get("actual"), d["actual"])
+                           for x in state["deviations"]):
+                    unrecorded.append("%s (%s -> %s)" % (d["field"], d["planned"], d["actual"]))
             if unrecorded:
-                return False, ("%d wash setting(s) departed from the plan without a recorded "
-                               "deviation: %s" % (len(unrecorded), ", ".join(unrecorded[:6]))), \
-                       "record each departure; the planned settings are never overwritten, and a " \
-                       "deviation nobody wrote down is a deviation nobody can allow for", \
+                return False, ("%d wash setting(s) departed from the plan without a deviation "
+                               "that describes the departure: %s"
+                               % (len(unrecorded), "; ".join(unrecorded[:5]))), \
+                       "record each departure with what was planned and what happened; a " \
+                       "deviation that only names the field excuses any value", \
                        {"unrecorded": unrecorded}
             return True, "wash recorded, %d deviation(s) from the plan, all recorded" % len(devs), \
                    None, {"deviations": [d["field"] for d in devs]}

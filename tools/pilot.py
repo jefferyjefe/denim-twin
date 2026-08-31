@@ -10,6 +10,7 @@
     tools/pilot.py add        GARMENT SHOT F  ingest a photograph and check it
     tools/pilot.py confirm    GARMENT SHOT C  record a human verification
     tools/pilot.py reuse      GARMENT SRC TGT one frame also satisfying a second shot
+    tools/pilot.py deviation  GARMENT --kind K a deliberate departure from the frozen protocol
     tools/pilot.py cutspec    GARMENT --inseam N
     tools/pilot.py packet     GARMENT         the printable cut packet
     tools/pilot.py precut     GARMENT         THE GATE: may this garment be cut?
@@ -476,6 +477,28 @@ def cmd_reuse(a):
     return OK
 
 
+def cmd_deviation(a):
+    """Record a departure from the frozen protocol, deliberately and with a reason.
+
+    Two gate conditions -- the one-rig check and the offcut alternation -- name a deviation as the
+    way past them, and until now nothing could write one. A remedy a message promises and the tool
+    cannot perform is worse than no remedy: it reads as an option and is a dead end, and the only
+    route past the condition was to edit the log.
+    """
+    from denimtwin.pilot.store import DEVIATION_KINDS
+    if a.kind not in DEVIATION_KINDS:
+        raise SystemExit("deviation kind must be one of: %s" % ", ".join(DEVIATION_KINDS))
+    if not a.reason or len(a.reason.strip()) < 12:
+        raise SystemExit("a deviation needs a reason someone can read later, not a word")
+    st = Store(garment_dir(a.garment))
+    rec = {"kind": a.kind, "field": a.field, "planned": a.planned, "actual": a.actual,
+           "reason": a.reason.strip()}
+    st.append("deviation", rec, operator=a.operator)
+    print("recorded a %s deviation on %s: %s -> %s" % (a.kind, a.field, a.planned, a.actual))
+    print("  %s" % a.reason.strip())
+    return OK
+
+
 def cmd_confirm(a):
     st = Store(garment_dir(a.garment))
     if not a.operator:
@@ -814,6 +837,13 @@ def main(argv=None):
     s.add_argument("--rep", type=int, default=1)
     s.add_argument("--confirm", action="append",
                    help="record an operator assertion, e.g. --confirm ruler_visible")
+    s = add("deviation", cmd_deviation)
+    s.add_argument("--kind", required=True,
+                   help="rig, wash, intake, offcut_alternation or protocol")
+    s.add_argument("--field", required=True, help="what departed")
+    s.add_argument("--planned", default=None)
+    s.add_argument("--actual", default=None)
+    s.add_argument("--reason", required=True, help="why, in a sentence someone can read later")
     s = add("reuse", cmd_reuse)
     s.add_argument("source", help="the shot id whose photograph is being borrowed")
     s.add_argument("target", help="the shot id it should also satisfy")

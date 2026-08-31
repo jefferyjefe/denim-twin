@@ -665,6 +665,25 @@ def build_api(session):
         store.append("offcut", rec, operator=b.get("operator"))
         return 200, {"ok": True}
 
+    @api.route("POST", "/api/deviation/(DENIM_[0-9]{4})")
+    def _deviation(m, _q, b):
+        from .store import DEVIATION_KINDS
+        kind = b.get("kind")
+        if kind not in DEVIATION_KINDS:
+            return 400, {"error": "kind must be one of %s" % ", ".join(DEVIATION_KINDS)}
+        if not b.get("field"):
+            return 400, {"error": "a deviation must say what departed"}
+        reason = (b.get("reason") or "").strip()
+        if len(reason) < 12:
+            return 400, {"error": "a deviation needs a reason someone can read later"}
+        if not b.get("operator"):
+            return 400, {"error": "a deviation needs a name on it"}
+        session.store(m.group(1)).append(
+            "deviation", {"kind": kind, "field": str(b["field"]), "planned": b.get("planned"),
+                          "actual": b.get("actual"), "reason": reason},
+            operator=b.get("operator"))
+        return 200, {"ok": True}
+
     @api.route("GET", "/api/gate/(DENIM_[0-9]{4})/([a-z_]+)")
     def _gate(m, _q, _b):
         gid, gate = m.group(1), m.group(2)

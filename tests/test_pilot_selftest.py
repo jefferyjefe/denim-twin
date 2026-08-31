@@ -98,6 +98,11 @@ SCENARIOS = [
     'the wash plan cannot be rewritten after the wash to match what happened',
     'a source that is not a photograph is refused rather than hanging',
     'a frame that satisfies the numbers and shows nothing does not pass',
+    "replacing an earlier repeat invalidates the later one's relay verdict",
+    'a wash plan written after the wash is not a plan',
+    'a deviation that names only a field does not excuse whatever happened',
+    'an offcut wash condition assigned after the wash decides nothing',
+    'an answer changed to delete required frames blocks until it is explained',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 
