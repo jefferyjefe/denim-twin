@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://denim-twin/protocol/regions.schema.json",
+  "title": "Anatomical region map for a pair of jeans laid flat",
+  "type": "object",
+  "required": ["regions_version", "viewbox", "outlines", "regions"],
+  "additionalProperties": false,
+  "properties": {
+    "regions_version": {"type": "string"},
+    "left_right_convention": {"type": "string", "description": "which 'left' is meant, and where it appears on screen for the front and back views"},
+    "viewbox": {"type": "string"},
+    "outlines": {
+      "type": "object", "required": ["front", "back"], "additionalProperties": false,
+      "properties": {"front": {"type": "string"}, "back": {"type": "string"},
+                     "left_profile": {"type": "string"}, "right_profile": {"type": "string"}}
+    },
+    "regions": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["region_id", "label", "side", "group", "shape", "can_change_by_cut", "can_change_by_wash"],
+        "additionalProperties": false,
+        "properties": {
+          "region_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "label": {"type": "string"},
+          "side": {"enum": ["front", "back", "left_profile", "right_profile", "edge", "whole"]},
+          "group": {"type": "string"},
+          "shape": {"type": "string", "description": "SVG path 'd' in the shared viewBox"},
+          "centroid": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "can_change_by_cut": {"type": "boolean"},
+          "can_change_by_wash": {"type": "boolean"},
+          "conditional_on": {"type": "string"},
+          "below_cut_line": {"type": "boolean", "description": "region is removed by the cut, so it has no post-cut match"}
+        }
+      }
+    }
+  }
+}
