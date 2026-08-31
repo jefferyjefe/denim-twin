@@ -295,6 +295,19 @@ def cmd_next(a):
     return OK
 
 
+def _dhash_hex(img):
+    """The 32-byte perceptual signature stored with every capture, or None if it could not decode.
+
+    It exists so the duplicate check can decide which of the already-accepted frames are worth
+    decoding: comparing every new frame against every prior one is quadratic, and at a few hundred
+    frames that is minutes of image decoding per capture.
+    """
+    if img is None:
+        return None
+    from denimtwin.pilot import qa_primitives as Q
+    return Q.dhash_bits(img).hex()
+
+
 def _compare_set(spec, st_state, gdir, shot_id, rep, shot):
     """Captures this one must be compared against: every accepted frame, plus the previous repeat."""
     from denimtwin.pilot import qa_primitives as Q
@@ -306,11 +319,12 @@ def _compare_set(spec, st_state, gdir, shot_id, rep, shot):
         p = gdir / (c.get("path") or "")
         if not p.exists():
             continue
-        img = cv2.imread(str(p))
+        prev = (sid == shot_id and r == rep - 1)
+        img = cv2.imread(str(p)) if prev else None
         out.append({"shot_id": sid, "rep": r, "path": str(p), "sha256": c.get("sha256"),
-                    "image": img, "pose": Q.garment_pose(img) if img is not None else None,
-                    "exif_ts": c.get("exif_ts"),
-                    "is_previous_rep": (sid == shot_id and r == rep - 1)})
+                    "image": img, "dhash": c.get("dhash"),
+                    "pose": Q.garment_pose(img) if img is not None else None,
+                    "exif_ts": c.get("exif_ts"), "is_previous_rep": prev})
     return out
 
 
@@ -335,6 +349,7 @@ def cmd_add(a):
     h, w = (img.shape[:2] if img is not None else (None, None))
     st.append("capture", {"shot_id": a.shot, "rep": a.rep, "path": rel, "sha256": sha,
                           "exif": exif, "exif_ts": ts, "width": w, "height": h,
+                          "dhash": _dhash_hex(img),
                           "state": shot["state"], "region_id": shot.get("region_id"),
                           "already_present": already},
               operator=a.operator, setup_hash=state["setup_hash"])

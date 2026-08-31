@@ -36,6 +36,10 @@ HUMAN = "HUMAN_VERIFICATION_REQUIRED"
 SEVERITY = {PASS: 0, HUMAN: 1, UNAVAILABLE: 2, RETAKE: 3}
 BLOCKING = (RETAKE, UNAVAILABLE, HUMAN)
 
+#: Hamming distance between 256-bit perceptual signatures below which two frames are worth decoding
+#: and correlating properly. See the note at the duplicate check.
+DUPLICATE_CANDIDATE_HAMMING = 24
+
 
 class Check(object):
     __slots__ = ("check_id", "outcome", "detail", "evidence", "fix")
@@ -270,11 +274,28 @@ def check_capture(path, shot, quality, *, board=None, board_spec=None, image=Non
                                 fix="confirm the region in the app"))
 
     # -- duplicates and relays ----------------------------------------------------------------
+    # Comparing every new frame against every accepted one is quadratic, and at a few hundred
+    # frames it is minutes of image decoding per capture. The expensive comparison is only ever
+    # interesting for frames that might be the same picture, so a 32-byte perceptual signature
+    # recorded at capture time decides which images are worth decoding. Measured (EXP_0043): the
+    # same frame re-encoded or brightened sat at Hamming 0-12, genuinely distinct frames at 48-65,
+    # so a candidate threshold of 24 admits every near-duplicate with a wide margin and rejects the
+    # rest without opening a file.
+    self_sig = Q.dhash_bits(img)
     for other in (compare_to or []):
+        osig = other.get("dhash")
+        if isinstance(osig, str):
+            osig = bytes.fromhex(osig)
+        dist = Q.hamming(self_sig, osig) if osig else None
+        is_prev = bool(other.get("is_previous_rep"))
+        candidate = is_prev or dist is None or dist <= DUPLICATE_CANDIDATE_HAMMING
         oimg = other.get("image")
-        if oimg is None and other.get("path"):
+        if oimg is None and candidate and other.get("path"):
             oimg = cv2.imread(str(other["path"]))
         n = Q.ncc(img, oimg) if oimg is not None else None
+        if not candidate and n is None:
+            # Far apart on the signature: not the same frame, and no decode was needed to say so.
+            continue
         outcome, detail = Q.duplicate_verdict(other.get("sha256"), other.get("self_sha256"), n)
         if outcome != PASS:
             checks.append(Check("duplicate_content", outcome,

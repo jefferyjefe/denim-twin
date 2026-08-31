@@ -364,6 +364,7 @@ def build_api(session):
         h_, w_ = (img.shape[:2] if img is not None else (None, None))
         store.append("capture", {"shot_id": shot_id, "rep": rep, "path": rel, "sha256": sha,
                                  "exif": exif, "exif_ts": ts, "width": w_, "height": h_,
+                                 "dhash": Q.dhash_bits(img).hex() if img is not None else None,
                                  "state": shot["state"], "region_id": shot.get("region_id"),
                                  "already_present": already},
                      operator=fields.get("operator"), setup_hash=st["setup_hash"])
@@ -375,12 +376,14 @@ def build_api(session):
             p = gdir / (c.get("path") or "")
             if not p.exists() or (sid, r) == (shot_id, rep):
                 continue
-            oimg = cv2.imread(str(p))
+            prev = (sid == shot_id and r == rep - 1)
+            oimg = cv2.imread(str(p)) if prev else None
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg,
+                            "self_sha256": sha, "image": oimg, "path": str(p),
+                            "dhash": c.get("dhash"),
                             "pose": Q.garment_pose(oimg) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
-                            "is_previous_rep": (sid == shot_id and r == rep - 1)})
+                            "is_previous_rep": prev})
         assertions = {"operator": fields.get("operator")}
         for k in (fields.get("confirm") or "").split(","):
             if k.strip():

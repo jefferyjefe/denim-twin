@@ -159,6 +159,7 @@ class Bench(object):
                            "exif": exif, "exif_ts": ts,
                            "width": img.shape[1] if img is not None else None,
                            "height": img.shape[0] if img is not None else None,
+                           "dhash": Q.dhash_bits(img).hex() if img is not None else None,
                            "state": shot["state"], "region_id": shot.get("region_id")},
                           operator="selftest", setup_hash=sh)
         st, _ = self.store.fold()
@@ -169,12 +170,14 @@ class Bench(object):
             p = self.dir / (c.get("path") or "")
             if not p.exists():
                 continue
-            oimg = cv2.imread(str(p))
+            prev = (sid == shot["shot_id"] and r == rep - 1)
+            oimg = cv2.imread(str(p)) if prev else None
             compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg,
+                            "self_sha256": sha, "image": oimg, "path": str(p),
+                            "dhash": c.get("dhash"),
                             "pose": Q.garment_pose(oimg) if oimg is not None else None,
                             "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
-                            "is_previous_rep": (sid == shot["shot_id"] and r == rep - 1)})
+                            "is_previous_rep": prev})
         assertions = {"operator": "selftest"}
         if confirm_all:
             for k in ("ruler_visible", "side_confirmed", "region_confirmed", "relay_confirmed"):

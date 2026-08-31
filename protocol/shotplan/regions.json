@@ -1987,6 +1987,90 @@
     400
    ],
    "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, upper left leg (back)",
+   "region_id": "texture_upper_leg_back_left",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, mid left leg (back)",
+   "region_id": "texture_mid_leg_back_left",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, lower left leg (back)",
+   "region_id": "texture_lower_leg_back_left",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, upper right leg (back)",
+   "region_id": "texture_upper_leg_back_right",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, mid right leg (back)",
+   "region_id": "texture_mid_leg_back_right",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Fabric texture, lower right leg (back)",
+   "region_id": "texture_lower_leg_back_right",
+   "shape": "",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
    "group": "rig",
    "label": "Backdrop",
    "region_id": "rig_backdrop",
