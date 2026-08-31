@@ -13,34 +13,39 @@ this is safe' is not permission.
 
 | condition | what must be true |
 |---|---|
-| `spec.bound` | the session was opened under the shot plan that is on disk now |
-| `log.intact` | the capture log's hash chain verifies; nothing was edited |
-| `features.answered` | no unanswered question whose silence would drop a photograph |
-| `plan.fully_expanded` | every templated series was sized; none silently expanded to zero |
-| `rig.frozen` | the rig configuration is frozen and hashed |
-| `rig.calibrated` | all 10 calibration readings recorded and passing |
-| `rig.board_square_measured` | the printed squares measure 25.0 mm within 0.5 mm |
-| `rig.captures_attributable` | every photograph carries the rig hash in effect when it was taken |
-| `rig.one_configuration` | the session used one rig, or the change is recorded as a deviation |
-| `measurements.complete` | all 8 measurements, each with its independent readings, in tolerance |
-| `captures.required_complete` | every required frame captured and passing |
-| `captures.files_intact` | every recorded photograph still on disk, hash unchanged |
+| `captures.files_intact` | every recorded photograph on disk, hash unchanged, filed under its own name inside the garment directory |
+| `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared reuse |
 | `captures.relays_independent` | each repeat followed a real re-lay |
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
+| `captures.required_complete` | every required frame captured, checked, and passing |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
-| `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared reuse |
-| `cut.specified` | the cut is defined and its outseam offset computed |
-| `cut.second_person_verified` | a second person measured both marks within 3 mm |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
+| `cut.second_person_verified` | a second person -- not the operator -- measured both marks within 3 mm, and did not refuse |
+| `cut.specified` | the cut is defined and its outseam offset computed |
+| `features.answered` | no unanswered question whose silence would drop a photograph |
+| `log.intact` | the capture log's hash chain verifies, and it ends where its anchor says |
+| `measurements.complete` | every measurement present, with its independent readings, in tolerance and inside a plausible range |
+| `plan.fully_expanded` | every templated series was sized; none silently expanded to zero |
+| `plan.generated` | a shot plan could be generated at all from the answers given |
+| `rig.board_square_measured` | the printed squares measure 25.0 mm within 0.5, over a run of at least four whole squares |
+| `rig.calibrated` | every calibration reading recorded against THIS rig and explicitly passing |
+| `rig.captures_attributable` | every photograph carries the rig hash in effect when it was taken |
+| `rig.frozen` | the rig configuration is frozen and hashed |
+| `rig.one_configuration` | the session used one rig, or the change is recorded as a deviation |
+| `spec.bound` | the session was opened under the shot plan that is on disk now |
 
-Two later gates add their own, and `pilot.py gate ready_to_wash` / `ready_to_finalize` check them:
+`pilot.py gate ready_to_wash` adds:
 
 | condition | what must be true |
 |---|---|
 | `offcuts.assigned` | exactly two offcuts, one per leg, two defined conditions, the left/right alternation intact across garments |
 | `wash.planned` | a complete wash plan, written once and not revised |
-| `wash.actual` | what actually happened, with every departure from the plan recorded |
 
+`pilot.py gate ready_to_finalize` adds:
+
+| condition | what must be true |
+|---|---|
+| `wash.actual` | what actually happened, with every departure from the plan recorded |
 On the most demanding garment the plan can describe, that is **201 required frames** before
 the cut.
 

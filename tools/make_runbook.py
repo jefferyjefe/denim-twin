@@ -389,6 +389,77 @@ def doc_recovery(spec, shots, ordered):
              "reason the gate exists."), ""])
 
 
+#: One line per gate condition. Written here rather than derived from the code's docstrings because
+#: the operator needs a sentence, not an implementation note -- but WHICH conditions appear is
+#: derived by running the gate, so a condition added to gates.py cannot go unlisted. A condition
+#: with no sentence here is a build failure rather than a silent omission.
+CONDITION_LINES = {
+    "spec.bound": "the session was opened under the shot plan that is on disk now",
+    "log.intact": "the capture log's hash chain verifies, and it ends where its anchor says",
+    "features.answered": "no unanswered question whose silence would drop a photograph",
+    "plan.generated": "a shot plan could be generated at all from the answers given",
+    "plan.fully_expanded": "every templated series was sized; none silently expanded to zero",
+    "rig.frozen": "the rig configuration is frozen and hashed",
+    "rig.calibrated": "every calibration reading recorded against THIS rig and explicitly passing",
+    "rig.board_square_measured": "the printed squares measure 25.0 mm within 0.5, over a run of "
+                                 "at least four whole squares",
+    "rig.captures_attributable": "every photograph carries the rig hash in effect when it was taken",
+    "rig.one_configuration": "the session used one rig, or the change is recorded as a deviation",
+    "measurements.complete": "every measurement present, with its independent readings, in "
+                             "tolerance and inside a plausible range",
+    "captures.required_complete": "every required frame captured, checked, and passing",
+    "captures.files_intact": "every recorded photograph on disk, hash unchanged, filed under its "
+                             "own name inside the garment directory",
+    "captures.relays_independent": "each repeat followed a real re-lay",
+    "captures.repositions_recorded": "each repeat that needed a camera reposition records one",
+    "captures.reuse_legitimate": "any reused image passed the borrowing shot's own checks",
+    "captures.no_undeclared_reuse": "no photograph satisfies two shots without a declared reuse",
+    "cut.specified": "the cut is defined and its outseam offset computed",
+    "cut.second_person_verified": "a second person -- not the operator -- measured both marks "
+                                  "within 3 mm, and did not refuse",
+    "cut.confirmations": "legs cut separately, offcuts retained and labelled",
+    "offcuts.assigned": "exactly two offcuts, one per leg, two defined conditions, the left/right "
+                        "alternation intact across garments",
+    "wash.planned": "a complete wash plan, written once and not revised",
+    "wash.actual": "what actually happened, with every departure from the plan recorded",
+}
+
+
+def gate_condition_table(spec):
+    """The conditions each gate actually names, discovered by running it.
+
+    Listing them by hand is how the green sheet falls behind the gate, which is the one document
+    where that must not happen.
+    """
+    import tempfile
+    from denimtwin.pilot.store import Store
+
+    rows, seen = [], set()
+    for gate_id in ("ready_to_cut", "ready_to_wash", "ready_to_finalize"):
+        tmp = Path(tempfile.mkdtemp()) / "DENIM_0000"
+        v = GATES.evaluate(gate_id, spec, Store(tmp), garment_dir=tmp, check_files=False)
+        names = sorted({b.condition for b in v.blocks}
+                       | {x["condition"] for x in v.satisfied})
+        fresh = [n for n in names if n not in seen]
+        if not fresh:
+            continue
+        seen.update(fresh)
+        if gate_id != "ready_to_cut":
+            rows += ["", "`pilot.py gate %s` adds:" % gate_id, "",
+                     "| condition | what must be true |", "|---|---|"]
+        else:
+            rows += ["| condition | what must be true |", "|---|---|"]
+        for n in fresh:
+            line = CONDITION_LINES.get(n)
+            if line is None:
+                raise SystemExit(
+                    "gate condition %r has no sentence in make_runbook.CONDITION_LINES. The green "
+                    "sheet is the one document that may not fall behind the gate; add a line for "
+                    "it." % n)
+            rows.append("| `%s` | %s |" % (n, line))
+    return rows
+
+
 def doc_green_sheet(spec, shots, ordered):
     req = [e for e in ordered if e["state"] in ("rig", "intake", "before", "marked")
            and e["necessity"] != "optional"]
@@ -400,43 +471,8 @@ def doc_green_sheet(spec, shots, ordered):
              "message is that a condition could not be evaluated -- means do not cut. "
              "'We could not determine whether this is safe' is not permission."), "",
         "## What it is checking, in one line each", "",
-        "| condition | what must be true |", "|---|---|",
-        "| `spec.bound` | the session was opened under the shot plan that is on disk now |",
-        "| `log.intact` | the capture log's hash chain verifies; nothing was edited |",
-        "| `features.answered` | no unanswered question whose silence would drop a photograph |",
-        "| `plan.fully_expanded` | every templated series was sized; none silently expanded to zero |",
-        "| `rig.frozen` | the rig configuration is frozen and hashed |",
-        "| `rig.calibrated` | all %d calibration readings recorded and passing |"
-        % len(GATES.REQUIRED_SETUP_CHECKS),
-        "| `rig.board_square_measured` | the printed squares measure %.1f mm within %.1f mm |"
-        % (GATES.BOARD_SQUARE_MM, GATES.BOARD_SQUARE_TOLERANCE_MM),
-        "| `rig.captures_attributable` | every photograph carries the rig hash in effect when it "
-        "was taken |",
-        "| `rig.one_configuration` | the session used one rig, or the change is recorded as a "
-        "deviation |",
-        "| `measurements.complete` | all %d measurements, each with its independent readings, in "
-        "tolerance |" % len(GATES.REQUIRED_MEASUREMENTS),
-        "| `captures.required_complete` | every required frame captured and passing |",
-        "| `captures.files_intact` | every recorded photograph still on disk, hash unchanged |",
-        "| `captures.relays_independent` | each repeat followed a real re-lay |",
-        "| `captures.repositions_recorded` | each repeat that needed a camera reposition records one |",
-        "| `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |",
-        "| `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared "
-        "reuse |",
-        "| `cut.specified` | the cut is defined and its outseam offset computed |",
-        "| `cut.second_person_verified` | a second person measured both marks within %.0f mm |"
-        % CUT.verification_tolerance_mm(),
-        "| `cut.confirmations` | legs cut separately, offcuts retained and labelled |",
-        "",
-        "Two later gates add their own, and `pilot.py gate ready_to_wash` / `ready_to_finalize` "
-        "check them:",
-        "",
-        "| condition | what must be true |", "|---|---|",
-        "| `offcuts.assigned` | exactly two offcuts, one per leg, two defined conditions, the "
-        "left/right alternation intact across garments |",
-        "| `wash.planned` | a complete wash plan, written once and not revised |",
-        "| `wash.actual` | what actually happened, with every departure from the plan recorded |",
-        "", wrap("On the most demanding garment the plan can describe, that is **%d required "
+    ] + gate_condition_table(spec) + [
+wrap("On the most demanding garment the plan can describe, that is **%d required "
                  "frames** before the cut." % len(req)), "",
         "## The four results a photograph can get", "",
         "| result | meaning | what to do |", "|---|---|---|",
