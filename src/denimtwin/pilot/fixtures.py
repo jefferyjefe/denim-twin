@@ -96,11 +96,42 @@ def synth_capture(path, *, mm_per_px=0.5, size=(1600, 1200), subject="jeans_fron
     rng = np.random.default_rng(seed)
     img = _fabric((h, w), rng, BACKDROP_BGR, strength=4)
 
+    # Where the board will go, decided BEFORE the garment is drawn. PROTOCOL.md 1 puts the board on
+    # the same surface as the garment and in the same corner of every frame -- beside it, not on top
+    # of it. Pasting it last put it OVER the garment, and at a fine scale a 200 x 275 mm board covers
+    # most of the frame, so the only garment left to measure was whatever stuck out. Every
+    # measurement of the subject was then a measurement of that sliver.
+    board_box = None
+    subject_box = (0, 0, w, h)
+    if board:
+        _b = _board_image(spec, mm_per_px)
+        _bh, _bw = _b.shape[:2]
+        _k = 1.0
+        if _bh >= h * 0.92 or _bw >= w * 0.92:
+            _k = min((h * 0.9) / float(_bh), (w * 0.9) / float(_bw))
+            _bh, _bw = int(_bh * _k), int(_bw * _k)
+        _m = max(2, int(0.01 * min(h, w)))
+        _y0 = _m if board_corner[0] == "t" else max(0, h - _bh - _m)
+        _x0 = _m if board_corner[1] == "l" else max(0, w - _bw - _m)
+        board_box = (_x0, _y0, _bw, _bh, _k)
+        # The subject gets the larger of the two strips the board does not occupy.
+        free_w = w - (_bw + 2 * _m)
+        free_h = h - (_bh + 2 * _m)
+        if free_w >= free_h:
+            sx = 0 if board_corner[1] == "r" else (_bw + 2 * _m)
+            subject_box = (sx, 0, max(8, free_w), h)
+        else:
+            sy = 0 if board_corner[0] == "b" else (_bh + 2 * _m)
+            subject_box = (0, sy, w, max(8, free_h))
+
     truth = {"mm_per_px": float(mm_per_px), "width": w, "height": h, "subject": subject,
              "board": bool(board), "seed": int(seed)}
 
     if subject in ("jeans_front", "jeans_back"):
-        poly, crotch_y = _jeans_polygon(w, h, subject.split("_")[1], legs_touching)
+        sx, sy, sw, sh = subject_box[0], subject_box[1], subject_box[2], subject_box[3]
+        poly, crotch_y = _jeans_polygon(sw, sh, subject.split("_")[1], legs_touching)
+        poly = poly + np.array([int(sx), int(sy)], np.int32)
+        crotch_y = crotch_y + sy
         if relay is not None:
             # What a genuine re-lay looks like: the garment is lifted and put down again, so it
             # lands a centimetre or two off and a degree or two rotated, and the cloth falls into a
@@ -141,7 +172,7 @@ def synth_capture(path, *, mm_per_px=0.5, size=(1600, 1200), subject="jeans_fron
         img = np.where(mask[:, :, None] > 0, fab, img)
         # waistband band, so a "waistband spans >= N px" check has something real to measure
         wb_h = max(2, int(round(38.0 / mm_per_px)))
-        top = int(h * 0.06)
+        top = int(sy + sh * 0.06)
         cv2.rectangle(img, (0, top), (w, top + wb_h), (0, 0, 0), 0)
         band = np.zeros((h, w), np.uint8)
         cv2.rectangle(band, (0, top), (w, top + wb_h), 255, -1)
@@ -202,20 +233,15 @@ def synth_capture(path, *, mm_per_px=0.5, size=(1600, 1200), subject="jeans_fron
             cv2.line(img, (tx, y0), (tx, y0 + tl), (30, 30, 30), 1)
         truth["ruler_mm"] = 150.0
 
-    if board:
+    if board and board_box is not None:
+        x0, y0, bw, bh, k = board_box
         b = _board_image(spec, mm_per_px).astype(np.float32)
-        bh, bw = b.shape[:2]
-        if bh >= h or bw >= w:
-            k = min((h - 4) / float(bh), (w - 4) / float(bw)) * 0.98
-            b = cv2.resize(b, (int(bw * k), int(bh * k)), interpolation=cv2.INTER_AREA)
+        if k != 1.0:
+            b = cv2.resize(b, (bw, bh), interpolation=cv2.INTER_AREA)
             truth["mm_per_px"] = float(mm_per_px) / k
-            bh, bw = b.shape[:2]
-        m = max(2, int(0.01 * min(h, w)))
-        y0 = m if board_corner[0] == "t" else h - bh - m
-        x0 = m if board_corner[1] == "l" else w - bw - m
-        y0, x0 = max(0, y0), max(0, x0)
-        img[y0:y0 + bh, x0:x0 + bw] = b[:min(bh, h - y0), :min(bw, w - x0)]
-        truth["board_rect"] = [x0, y0, bw, bh]
+        bh2, bw2 = b.shape[:2]
+        img[y0:y0 + bh2, x0:x0 + bw2] = b[:min(bh2, h - y0), :min(bw2, w - x0)]
+        truth["board_rect"] = [x0, y0, bw2, bh2]
 
     if tilt_deg:
         # A perspective warp about the horizontal axis: this is what a non-overhead camera does to

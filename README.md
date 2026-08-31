@@ -54,6 +54,44 @@ Writes three renders (conservative / median / aggressive), `diff.png` (exactly w
 `modification.json` (the cut as structured parameters) and `prediction.json` (interval + provenance).
 Put a coin in the frame if you want any answer in centimetres.
 
+## Collecting the evidence from a real garment (the Pilot Capture Navigator)
+
+    python tools/pilot.py new                    # create the garment, open a session
+    python tools/pilot.py setup DENIM_0003       # freeze the rig, record the calibration readings
+    python tools/pilot.py serve DENIM_0003 --lan # the phone app; the URL it prints carries the token
+    python tools/pilot.py status DENIM_0003      # coverage, quality, next action
+    python tools/pilot.py precut DENIM_0003      # THE GATE: may this garment be cut?
+    python tools/pilot.py finalize DENIM_0003    # the post-wash gate and the committable manifest
+
+A local, phone-friendly web app over a CLI that does the whole job on its own. It walks the owner
+through every frame in an order chosen to minimise handling, checks each capture as it arrives, and
+refuses to say **READY TO CUT** until every required photograph, measurement, calibration reading,
+hash, cut specification and human verification is present and valid. Photographs never leave the
+machine: the server binds to loopback unless `--lan` is passed, mints a session token either way, and
+stores captures in the gitignored garment directory it shows you on screen.
+
+The capture list is not in the code. [`protocol/shotplan/shotplan.json`](protocol/shotplan) is a
+versioned, schema-checked document of 290 shots over 157 anatomical regions, and the gate enumerates
+its requirements from that document — so a shot added there extends the gate, and a shot that is not
+there is not required. `tools/make_runbook.py` generates the printed pack
+([`protocol/pilot/`](protocol/pilot)) from the same document, including the one-page
+[do-not-cut-until-green sheet](protocol/pilot/DO_NOT_CUT_UNTIL_GREEN.md).
+
+Every capture gets one of four outcomes, and three of them block: **PASS**, **RETAKE REQUIRED**,
+**UNAVAILABLE CHECK** (the check could not run — no scale, no board, no dependency), and **HUMAN
+VERIFICATION REQUIRED** (no measurement can settle it). A missing model, image, scale or confirmation
+never becomes a pass. The thresholds behind the three checks that had no implementation here — camera
+tilt, relay independence and duplicate content — are measured in
+[EXP_0043](experiments/EXP_0043_capture_qa_primitives/NOTE.md) rather than chosen, and the experiment
+records a negative result as well: image similarity **cannot** tell five independent re-lays from one
+photograph submitted five times, so the system does not pretend to.
+
+    python tools/pilot.py selftest               # 25 scenarios, on synthetic images, in a temp dir
+
+Twenty-four of them try to obtain a pass that is not deserved. The twenty-fifth drives a complete
+session to READY and asserts the gate opens — a gate that cannot be opened by valid evidence is
+broken, not safe.
+
 ## Verification
 
     python tools/verify.py --profile ci      # hermetic: no torch, no weights, no photos, no network
