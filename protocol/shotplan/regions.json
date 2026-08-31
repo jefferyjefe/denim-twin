@@ -1,0 +1,2125 @@
+{
+ "left_right_convention": "LEFT/RIGHT CONVENTION (normative). Every 'left'/'right' in a region_id or label is the WEARER's left/right, i.e. the leg the wearer's own left leg goes into. On the FRONT drawing (garment laid front-up, waistband at top, camera overhead) the wearer's LEFT is at LARGE x (screen right, x > 200) and the wearer's RIGHT is at SMALL x (screen left, x < 200) -- you are looking at the garment as you would look at the person facing you. On the BACK drawing (same garment flipped over about its own vertical axis, back-up, waistband still at top) the wearer's LEFT is at SMALL x (screen left) and the wearer's RIGHT is at LARGE x. Consequence to expect and not to 'fix': hem_left_front and hem_right_back carry identical polygons, as do thigh_front_left and thigh_back_right, because the same outer silhouette edge swaps screen sides when the garment is turned over. The app must print the wearer-side word next to the highlight, never rely on which side of the screen it is on.",
+ "outlines": {
+  "back": "M 56 20 L 344 20 L 346 54 C 358 76, 366 112, 370 156 C 369 230, 367 290, 366 320 C 364 400, 363 462, 362 506 L 356 780 L 250 780 C 249 700, 247 600, 245 506 C 243 462, 236 380, 230 340 C 222 302, 210 274, 200 262 C 190 274, 178 302, 170 340 C 164 380, 157 462, 155 506 C 153 600, 151 700, 150 780 L 44 780 L 38 506 C 37 462, 36 400, 34 320 C 33 290, 31 230, 30 156 C 34 112, 42 76, 54 54 Z",
+  "front": "M 56 20 L 344 20 L 346 54 C 358 76, 366 112, 370 156 C 369 230, 367 290, 366 320 C 364 400, 363 462, 362 506 L 356 780 L 250 780 C 249 700, 247 600, 245 506 C 243 462, 236 380, 230 340 C 222 302, 210 274, 200 262 C 190 274, 178 302, 170 340 C 164 380, 157 462, 155 506 C 153 600, 151 700, 150 780 L 44 780 L 38 506 C 37 462, 36 400, 34 320 C 33 290, 31 230, 30 156 C 34 112, 42 76, 54 54 Z"
+ },
+ "regions": [
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front waistband (whole band, side seam to side seam)",
+   "region_id": "waistband_front_full",
+   "shape": "M 56 20 L 344 20 L 346 54 L 54 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    272.5,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front waistband, wearer's LEFT half",
+   "region_id": "waistband_front_left",
+   "shape": "M 200 20 L 344 20 L 346 54 L 200 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    127.5,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front waistband, wearer's RIGHT half",
+   "region_id": "waistband_front_right",
+   "shape": "M 56 20 L 200 20 L 200 54 L 54 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    331.5,
+    37.5
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Waistband end corner, wearer's LEFT (waistband meets outseam)",
+   "region_id": "waistband_corner_left",
+   "shape": "M 314 17 L 347 17 L 349 58 L 316 58 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    68.5,
+    37.5
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Waistband end corner, wearer's RIGHT (waistband meets outseam)",
+   "region_id": "waistband_corner_right",
+   "shape": "M 53 17 L 86 17 L 84 58 L 51 58 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    24.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front waistband top edge + topstitch row",
+   "region_id": "waistband_top_edge_front",
+   "shape": "M 56 17 L 344 17 L 344 31 L 56 31 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    53.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front waistband-to-body seam",
+   "region_id": "waistband_bottom_seam_front",
+   "shape": "M 54 46 L 346 46 L 348 60 L 52 60 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    196.0,
+    38.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Waist shank button (head visible on the overlap)",
+   "region_id": "waist_button",
+   "shape": "M 190 28 L 202 28 L 206 32 L 206 44 L 202 48 L 190 48 L 186 44 L 186 32 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    197.0,
+    38.5
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Waistband buttonhole and its bar-tacked overlap",
+   "region_id": "waistband_buttonhole",
+   "shape": "M 179 27 L 215 27 L 215 50 L 179 50 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back waistband (whole band, side seam to side seam)",
+   "region_id": "waistband_back_full",
+   "shape": "M 56 20 L 344 20 L 346 54 L 54 54 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    127.5,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back waistband, wearer's LEFT half",
+   "region_id": "waistband_back_left",
+   "shape": "M 56 20 L 200 20 L 200 54 L 54 54 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    272.5,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back waistband, wearer's RIGHT half",
+   "region_id": "waistband_back_right",
+   "shape": "M 200 20 L 344 20 L 346 54 L 200 54 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    24.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back waistband top edge + topstitch row",
+   "region_id": "waistband_top_edge_back",
+   "shape": "M 56 17 L 344 17 L 344 31 L 56 31 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    53.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back waistband-to-body seam",
+   "region_id": "waistband_bottom_seam_back",
+   "shape": "M 54 46 L 346 46 L 348 60 L 52 60 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    37.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Centre-back waistband seam / notch",
+   "region_id": "waistband_center_back_seam",
+   "shape": "M 190 17 L 210 17 L 210 57 L 190 57 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    75.0
+   ],
+   "conditional_on": "has_care_label",
+   "group": "waist_upper",
+   "label": "Care + size label (inside centre back below the waistband)",
+   "region_id": "care_label",
+   "shape": "M 168 52 L 232 52 L 232 98 L 168 98 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    316.0,
+    75.0
+   ],
+   "conditional_on": "has_brand_patch",
+   "group": "waist_upper",
+   "label": "Brand patch (leather / jacron) at the back waistband",
+   "region_id": "brand_patch_back",
+   "shape": "M 282 52 L 350 52 L 350 98 L 282 98 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    242.0,
+    39.5
+   ],
+   "conditional_on": "has_belt_loops",
+   "group": "waist_upper",
+   "label": "Front belt loop, wearer's LEFT of the fly",
+   "region_id": "belt_loop_front_left",
+   "shape": "M 234 15 L 250 15 L 250 64 L 234 64 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    158.0,
+    39.5
+   ],
+   "conditional_on": "has_belt_loops",
+   "group": "waist_upper",
+   "label": "Front belt loop, wearer's RIGHT of the fly",
+   "region_id": "belt_loop_front_right",
+   "shape": "M 150 15 L 166 15 L 166 64 L 150 64 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    344.0,
+    39.5
+   ],
+   "conditional_on": "has_belt_loops",
+   "group": "waist_upper",
+   "label": "Side belt loop on the wearer's LEFT outseam",
+   "region_id": "belt_loop_side_left",
+   "shape": "M 336 15 L 352 15 L 352 64 L 336 64 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    56.0,
+    39.5
+   ],
+   "conditional_on": "has_belt_loops",
+   "group": "waist_upper",
+   "label": "Side belt loop on the wearer's RIGHT outseam",
+   "region_id": "belt_loop_side_right",
+   "shape": "M 48 15 L 64 15 L 64 64 L 48 64 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    132.0,
+    39.5
+   ],
+   "conditional_on": "has_back_belt_loops",
+   "group": "waist_upper",
+   "label": "Back belt loop, wearer's LEFT",
+   "region_id": "belt_loop_back_left",
+   "shape": "M 124 15 L 140 15 L 140 64 L 124 64 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    268.0,
+    39.5
+   ],
+   "conditional_on": "has_back_belt_loops",
+   "group": "waist_upper",
+   "label": "Back belt loop, wearer's RIGHT",
+   "region_id": "belt_loop_back_right",
+   "shape": "M 260 15 L 276 15 L 276 64 L 260 64 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    39.5
+   ],
+   "conditional_on": "has_back_belt_loops",
+   "group": "waist_upper",
+   "label": "Centre-back belt loop",
+   "region_id": "belt_loop_center_back",
+   "shape": "M 192 15 L 208 15 L 208 64 L 192 64 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    194.0,
+    140.3
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Fly placket (overlap panel, waistband to fly bottom)",
+   "region_id": "fly_placket_front",
+   "shape": "M 168 54 L 214 54 L 214 158 L 208 184 L 192 198 L 168 194 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    187.8,
+    149.0
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Fly J topstitch (the curved seam that ends at the bartack)",
+   "region_id": "fly_topstitch_j",
+   "shape": "M 172 54 L 184 54 L 184 156 L 192 180 L 206 188 L 206 201 L 186 193 L 172 166 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200.0,
+    115.0
+   ],
+   "conditional_on": "has_zip_fly",
+   "group": "pockets_hardware",
+   "label": "Fly zipper tape, teeth and top stop",
+   "region_id": "fly_zipper",
+   "shape": "M 188 52 L 212 52 L 212 178 L 188 178 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    199.0,
+    124.0
+   ],
+   "conditional_on": "has_button_fly",
+   "group": "pockets_hardware",
+   "label": "Button-fly button row",
+   "region_id": "fly_button_row",
+   "shape": "M 186 56 L 212 56 L 212 192 L 186 192 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    194.0,
+    196.0
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Fly bottom bartack (end of the J stitch)",
+   "region_id": "fly_bottom_bartack",
+   "shape": "M 181 186 L 207 186 L 207 206 L 181 206 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.3,
+    146.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Front rise: waistband top to crotch seam along the fly",
+   "region_id": "front_rise",
+   "shape": "M 186 20 L 214 20 L 216 156 L 212 262 L 190 262 L 184 156 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.3,
+    146.0
+   ],
+   "conditional_on": "",
+   "group": "waist_upper",
+   "label": "Back rise: waistband top to crotch seam down centre back",
+   "region_id": "back_rise",
+   "shape": "M 186 20 L 214 20 L 218 156 L 212 262 L 190 262 L 182 156 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.7,
+    187.3
+   ],
+   "conditional_on": "has_yoke",
+   "group": "legs_seams",
+   "label": "Centre-back rise seam (yoke seam to crotch)",
+   "region_id": "back_rise_seam",
+   "shape": "M 190 112 L 210 112 L 214 188 L 210 262 L 192 262 L 188 188 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    259.3
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Front crotch seam (rise seam running into both inseams)",
+   "region_id": "front_crotch_seam",
+   "shape": "M 166 244 L 200 258 L 234 244 L 238 264 L 200 282 L 162 264 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    259.3
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Back crotch seam (rise seam running into both inseams)",
+   "region_id": "back_crotch_seam",
+   "shape": "M 166 244 L 200 258 L 234 244 L 238 264 L 200 282 L 162 264 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    265.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Front seam intersection: rise + left inseam + right inseam",
+   "region_id": "crotch_junction_front",
+   "shape": "M 181 248 L 219 248 L 219 282 L 181 282 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    265.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Back seam intersection: rise + left inseam + right inseam",
+   "region_id": "crotch_junction_back",
+   "shape": "M 181 248 L 219 248 L 219 282 L 181 282 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    97.2
+   ],
+   "conditional_on": "has_yoke",
+   "group": "waist_upper",
+   "label": "Back yoke panel (waistband seam down to the V of the yoke seam)",
+   "region_id": "yoke_back",
+   "shape": "M 54 54 L 346 54 L 350 110 L 200 158 L 50 110 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    127.0
+   ],
+   "conditional_on": "has_yoke",
+   "group": "legs_seams",
+   "label": "Back yoke seam (the V across the seat)",
+   "region_id": "yoke_seam_back",
+   "shape": "M 50 104 L 200 150 L 350 104 L 351 119 L 200 166 L 49 119 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    195.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Back seat panel (yoke seam to crotch, both sides of centre back)",
+   "region_id": "seat_panel_back",
+   "shape": "M 46 114 L 200 158 L 354 114 L 369 196 L 369 258 L 200 266 L 31 258 L 31 196 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    340.0,
+    66.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Seam intersection: waistband end + outseam, wearer's LEFT",
+   "region_id": "junction_waistband_outseam_left",
+   "shape": "M 324 42 L 350 42 L 356 90 L 330 90 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    60.0,
+    66.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Seam intersection: waistband end + outseam, wearer's RIGHT",
+   "region_id": "junction_waistband_outseam_right",
+   "shape": "M 76 42 L 50 42 L 44 90 L 70 90 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    321.7,
+    110.3
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Front pocket opening (scoop), wearer's LEFT",
+   "region_id": "front_pocket_opening_left",
+   "shape": "M 296 56 L 328 100 L 364 158 L 348 168 L 314 112 L 280 68 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    307.0,
+    122.0
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Front pocket opening topstitch row, wearer's LEFT",
+   "region_id": "front_pocket_stitch_left",
+   "shape": "M 280 68 L 314 112 L 348 168 L 334 180 L 300 124 L 266 80 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    297.0,
+    57.0
+   ],
+   "conditional_on": "has_rivets",
+   "group": "pockets_hardware",
+   "label": "Front pocket rivet, upper end, wearer's LEFT",
+   "region_id": "rivet_front_pocket_left_upper",
+   "shape": "M 288 48 L 306 48 L 306 66 L 288 66 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    360.0,
+    160.0
+   ],
+   "conditional_on": "has_rivets",
+   "group": "pockets_hardware",
+   "label": "Front pocket rivet, lower end at the outseam, wearer's LEFT",
+   "region_id": "rivet_front_pocket_left_lower",
+   "shape": "M 350 150 L 370 150 L 370 170 L 350 170 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    78.3,
+    110.3
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Front pocket opening (scoop), wearer's RIGHT",
+   "region_id": "front_pocket_opening_right",
+   "shape": "M 104 56 L 72 100 L 36 158 L 52 168 L 86 112 L 120 68 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    93.0,
+    122.0
+   ],
+   "conditional_on": "",
+   "group": "pockets_hardware",
+   "label": "Front pocket opening topstitch row, wearer's RIGHT",
+   "region_id": "front_pocket_stitch_right",
+   "shape": "M 120 68 L 86 112 L 52 168 L 66 180 L 100 124 L 134 80 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    103.0,
+    57.0
+   ],
+   "conditional_on": "has_rivets",
+   "group": "pockets_hardware",
+   "label": "Front pocket rivet, upper end, wearer's RIGHT",
+   "region_id": "rivet_front_pocket_right_upper",
+   "shape": "M 112 48 L 94 48 L 94 66 L 112 66 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    40.0,
+    160.0
+   ],
+   "conditional_on": "has_rivets",
+   "group": "pockets_hardware",
+   "label": "Front pocket rivet, lower end at the outseam, wearer's RIGHT",
+   "region_id": "rivet_front_pocket_right_lower",
+   "shape": "M 50 150 L 30 150 L 30 170 L 50 170 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    124.0,
+    87.0
+   ],
+   "conditional_on": "has_coin_pocket",
+   "group": "pockets_hardware",
+   "label": "Coin / watch pocket (inside the wearer's RIGHT front pocket)",
+   "region_id": "coin_pocket",
+   "shape": "M 100 62 L 148 62 L 146 112 L 102 112 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    124.0,
+    65.5
+   ],
+   "conditional_on": "has_coin_pocket",
+   "group": "pockets_hardware",
+   "label": "Coin pocket opening edge and topstitch",
+   "region_id": "coin_pocket_opening",
+   "shape": "M 98 58 L 150 58 L 150 73 L 98 73 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    101.0,
+    65.0
+   ],
+   "conditional_on": "has_watch_pocket_rivets",
+   "group": "pockets_hardware",
+   "label": "Coin pocket rivet, outer corner",
+   "region_id": "coin_pocket_rivet_outer",
+   "shape": "M 92 56 L 110 56 L 110 74 L 92 74 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    149.0,
+    65.0
+   ],
+   "conditional_on": "has_watch_pocket_rivets",
+   "group": "pockets_hardware",
+   "label": "Coin pocket rivet, inner corner",
+   "region_id": "coin_pocket_rivet_inner",
+   "shape": "M 140 56 L 158 56 L 158 74 L 140 74 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    113.0,
+    228.8
+   ],
+   "conditional_on": "has_left_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket, wearer's LEFT (whole patch)",
+   "region_id": "back_pocket_left",
+   "shape": "M 160 168 L 66 168 L 70 258 L 113 292 L 156 258 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    113.0,
+    171.0
+   ],
+   "conditional_on": "has_left_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket opening / hem band, wearer's LEFT",
+   "region_id": "back_pocket_left_opening",
+   "shape": "M 162 162 L 64 162 L 64 180 L 162 180 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    113.0,
+    213.8
+   ],
+   "conditional_on": "has_left_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket decorative (arcuate) stitching, wearer's LEFT",
+   "region_id": "back_pocket_left_stitching",
+   "shape": "M 150 196 L 113 224 L 76 196 L 76 213 L 113 241 L 150 213 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    287.0,
+    228.8
+   ],
+   "conditional_on": "has_right_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket, wearer's RIGHT (whole patch)",
+   "region_id": "back_pocket_right",
+   "shape": "M 240 168 L 334 168 L 330 258 L 287 292 L 244 258 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    287.0,
+    171.0
+   ],
+   "conditional_on": "has_right_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket opening / hem band, wearer's RIGHT",
+   "region_id": "back_pocket_right_opening",
+   "shape": "M 238 162 L 336 162 L 336 180 L 238 180 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    287.0,
+    213.8
+   ],
+   "conditional_on": "has_right_back_pocket",
+   "group": "pockets_hardware",
+   "label": "Back pocket decorative (arcuate) stitching, wearer's RIGHT",
+   "region_id": "back_pocket_right_stitching",
+   "shape": "M 250 196 L 287 224 L 324 196 L 324 213 L 287 241 L 250 213 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200.0,
+    113.0
+   ],
+   "conditional_on": "has_decorative_hardware",
+   "group": "pockets_hardware",
+   "label": "Decorative hardware on the front (nominal zone; re-anchor per instance)",
+   "region_id": "decorative_hardware_front",
+   "shape": "M 148 78 L 252 78 L 252 148 L 148 148 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    290.0,
+    323.0
+   ],
+   "conditional_on": "has_decorative_hardware",
+   "group": "pockets_hardware",
+   "label": "Decorative hardware on the back (nominal zone; re-anchor per instance)",
+   "region_id": "decorative_hardware_back",
+   "shape": "M 240 288 L 340 288 L 340 358 L 240 358 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    294.3,
+    328.8
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Thigh front, wearer's LEFT leg",
+   "region_id": "thigh_front_left",
+   "shape": "M 206 274 L 214 290 L 223.6 320 L 230 340 L 240 420 L 363.8 420 L 365.6 340 L 366 320 L 366.7 290 L 367.1 274 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    502.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Knee front, wearer's LEFT leg",
+   "region_id": "knee_front_left",
+   "shape": "M 240 420 L 245 506 L 246.5 580 L 360.4 580 L 362 506 L 363.8 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.3,
+    664.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Shin front, wearer's LEFT leg",
+   "region_id": "shin_front_left",
+   "shape": "M 246.5 580 L 248 650 L 249.7 762 L 356.4 762 L 358.8 650 L 360.4 580 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    105.7,
+    328.8
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Thigh front, wearer's RIGHT leg",
+   "region_id": "thigh_front_right",
+   "shape": "M 194 274 L 186 290 L 176.4 320 L 170 340 L 160 420 L 36.2 420 L 34.4 340 L 34 320 L 33.3 290 L 32.9 274 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    502.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Knee front, wearer's RIGHT leg",
+   "region_id": "knee_front_right",
+   "shape": "M 160 420 L 155 506 L 153.5 580 L 39.6 580 L 38 506 L 36.2 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    96.7,
+    664.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Shin front, wearer's RIGHT leg",
+   "region_id": "shin_front_right",
+   "shape": "M 153.5 580 L 152 650 L 150.3 762 L 43.6 762 L 41.2 650 L 39.6 580 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    105.7,
+    328.8
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Thigh back, wearer's LEFT leg",
+   "region_id": "thigh_back_left",
+   "shape": "M 194 274 L 186 290 L 176.4 320 L 170 340 L 160 420 L 36.2 420 L 34.4 340 L 34 320 L 33.3 290 L 32.9 274 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    502.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Knee back, wearer's LEFT leg",
+   "region_id": "knee_back_left",
+   "shape": "M 160 420 L 155 506 L 153.5 580 L 39.6 580 L 38 506 L 36.2 420 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    96.7,
+    664.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Shin back, wearer's LEFT leg",
+   "region_id": "shin_back_left",
+   "shape": "M 153.5 580 L 152 650 L 150.3 762 L 43.6 762 L 41.2 650 L 39.6 580 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    294.3,
+    328.8
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Thigh back, wearer's RIGHT leg",
+   "region_id": "thigh_back_right",
+   "shape": "M 206 274 L 214 290 L 223.6 320 L 230 340 L 240 420 L 363.8 420 L 365.6 340 L 366 320 L 366.7 290 L 367.1 274 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    502.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Knee back, wearer's RIGHT leg",
+   "region_id": "knee_back_right",
+   "shape": "M 240 420 L 245 506 L 246.5 580 L 360.4 580 L 362 506 L 363.8 420 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.3,
+    664.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Shin back, wearer's RIGHT leg",
+   "region_id": "shin_back_right",
+   "shape": "M 246.5 580 L 248 650 L 249.7 762 L 356.4 762 L 358.8 650 L 360.4 580 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    353.5,
+    259.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Outseam upper (waistband to knee), wearer's LEFT leg",
+   "region_id": "outseam_left_upper_front",
+   "shape": "M 346 54 L 370 156 L 366 320 L 362 506 L 347 506 L 351 320 L 355 156 L 331 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    351.5,
+    643.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Outseam lower (knee to hem), wearer's LEFT leg",
+   "region_id": "outseam_left_lower_front",
+   "shape": "M 362 506 L 356 780 L 341 780 L 347 506 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    233.3,
+    363.6
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Inseam upper (crotch to knee), wearer's LEFT leg",
+   "region_id": "inseam_left_upper_front",
+   "shape": "M 200 262 L 214 290 L 230 340 L 240 420 L 245 506 L 260 506 L 255 420 L 245 340 L 229 290 L 215 262 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    255.2,
+    645.3
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Inseam lower (knee to hem), wearer's LEFT leg",
+   "region_id": "inseam_left_lower_front",
+   "shape": "M 245 506 L 248 650 L 250 780 L 265 780 L 263 650 L 260 506 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    46.5,
+    259.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Outseam upper (waistband to knee), wearer's RIGHT leg",
+   "region_id": "outseam_right_upper_front",
+   "shape": "M 54 54 L 30 156 L 34 320 L 38 506 L 53 506 L 49 320 L 45 156 L 69 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    48.5,
+    643.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Outseam lower (knee to hem), wearer's RIGHT leg",
+   "region_id": "outseam_right_lower_front",
+   "shape": "M 38 506 L 44 780 L 59 780 L 53 506 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    166.7,
+    363.6
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Inseam upper (crotch to knee), wearer's RIGHT leg",
+   "region_id": "inseam_right_upper_front",
+   "shape": "M 200 262 L 186 290 L 170 340 L 160 420 L 155 506 L 140 506 L 145 420 L 155 340 L 171 290 L 185 262 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    144.8,
+    645.3
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Inseam lower (knee to hem), wearer's RIGHT leg",
+   "region_id": "inseam_right_lower_front",
+   "shape": "M 155 506 L 152 650 L 150 780 L 135 780 L 137 650 L 140 506 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    350.8,
+    675.0
+   ],
+   "conditional_on": "has_selvedge",
+   "group": "legs_seams",
+   "label": "Selvedge outseam ID, wearer's LEFT leg (visible only cuffed or turned)",
+   "region_id": "selvedge_outseam_left",
+   "shape": "M 360.6 570 L 356 780 L 341 780 L 345.6 570 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    49.2,
+    675.0
+   ],
+   "conditional_on": "has_selvedge",
+   "group": "legs_seams",
+   "label": "Selvedge outseam ID, wearer's RIGHT leg (visible only cuffed or turned)",
+   "region_id": "selvedge_outseam_right",
+   "shape": "M 39.4 570 L 44 780 L 59 780 L 54.4 570 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    297.8,
+    340.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Upper-leg fabric texture macro patch, wearer's LEFT leg, front",
+   "region_id": "texture_upper_leg_front_left",
+   "shape": "M 266.8 309 L 328.8 309 L 328.8 371 L 266.8 371 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    102.2,
+    340.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Upper-leg fabric texture macro patch, wearer's RIGHT leg, front",
+   "region_id": "texture_upper_leg_front_right",
+   "shape": "M 71.2 309 L 133.2 309 L 133.2 371 L 71.2 371 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.5,
+    506.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Mid-leg fabric texture macro patch, wearer's LEFT leg, front",
+   "region_id": "texture_mid_leg_front_left",
+   "shape": "M 272.5 475 L 334.5 475 L 334.5 537 L 272.5 537 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    96.5,
+    506.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Mid-leg fabric texture macro patch, wearer's RIGHT leg, front",
+   "region_id": "texture_mid_leg_front_right",
+   "shape": "M 65.5 475 L 127.5 475 L 127.5 537 L 65.5 537 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.2,
+    706.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Lower-leg fabric texture macro patch, wearer's LEFT leg, front",
+   "region_id": "texture_lower_leg_front_left",
+   "shape": "M 272.2 675 L 334.2 675 L 334.2 737 L 272.2 737 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    96.8,
+    706.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Lower-leg fabric texture macro patch, wearer's RIGHT leg, front",
+   "region_id": "texture_lower_leg_front_right",
+   "shape": "M 65.8 675 L 127.8 675 L 127.8 737 L 65.8 737 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    300.7,
+    396.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Planned cut line band, wearer's LEFT leg, front (nominal; y from target_inseam_cm)",
+   "region_id": "cutline_left_front",
+   "shape": "M 235.8 386 L 364.6 386 L 364.2 406 L 238.2 406 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    99.3,
+    396.0
+   ],
+   "conditional_on": "",
+   "group": "legs_seams",
+   "label": "Planned cut line band, wearer's RIGHT leg, front (nominal; y from target_inseam_cm)",
+   "region_id": "cutline_right_front",
+   "shape": "M 164.2 386 L 35.4 386 L 35.8 406 L 161.8 406 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    771.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem band, wearer's LEFT leg, front face",
+   "region_id": "hem_left_front",
+   "shape": "M 249.7 762 L 250 780 L 356 780 L 356.4 762 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    771.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem band, wearer's LEFT leg, back face",
+   "region_id": "hem_left_back",
+   "shape": "M 150.3 762 L 150 780 L 44 780 L 43.6 762 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    254.0,
+    764.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Inseam-to-hem junction, wearer's LEFT leg",
+   "region_id": "hem_left_inseam_junction",
+   "shape": "M 236 744 L 268 744 L 272 784 L 240 784 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    348.0,
+    764.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Outseam-to-hem junction, wearer's LEFT leg",
+   "region_id": "hem_left_outseam_junction",
+   "shape": "M 334 744 L 366 744 L 362 784 L 330 784 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    766.0
+   ],
+   "conditional_on": "has_factory_hem",
+   "group": "hems",
+   "label": "Hem fold + stitch construction (turn-up depth, stitch rows), wearer's LEFT leg",
+   "region_id": "hem_left_fold_construction",
+   "shape": "M 249.6 752 L 250 780 L 356 780 L 356.6 752 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.1,
+    748.0
+   ],
+   "conditional_on": "has_cuffs",
+   "group": "hems",
+   "label": "Turn-up cuff, wearer's LEFT leg",
+   "region_id": "hem_left_cuff",
+   "shape": "M 249 716 L 250 780 L 356 780 L 357.4 716 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    298.0,
+    713.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem edge seen edge-on (thickness, curl), wearer's LEFT leg",
+   "region_id": "hem_left_edge_profile",
+   "shape": "M 236 690 L 360 690 L 360 736 L 236 736 Z",
+   "side": "edge"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    301.2,
+    406.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge after cutting, wearer's LEFT leg, front face",
+   "region_id": "raw_edge_left_front",
+   "shape": "M 236.5 392 L 364.5 392 L 363.8 420 L 240 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    98.8,
+    406.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge after cutting, wearer's LEFT leg, back face",
+   "region_id": "raw_edge_left_back",
+   "shape": "M 163.5 392 L 35.5 392 L 36.2 420 L 160 420 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    298.0,
+    323.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge seen edge-on (curl + thread length), wearer's LEFT leg",
+   "region_id": "raw_edge_left_profile",
+   "shape": "M 236 300 L 360 300 L 360 346 L 236 346 Z",
+   "side": "edge"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    771.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem band, wearer's RIGHT leg, front face",
+   "region_id": "hem_right_front",
+   "shape": "M 150.3 762 L 150 780 L 44 780 L 43.6 762 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    771.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem band, wearer's RIGHT leg, back face",
+   "region_id": "hem_right_back",
+   "shape": "M 249.7 762 L 250 780 L 356 780 L 356.4 762 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    146.0,
+    764.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Inseam-to-hem junction, wearer's RIGHT leg",
+   "region_id": "hem_right_inseam_junction",
+   "shape": "M 164 744 L 132 744 L 128 784 L 160 784 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    52.0,
+    764.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Outseam-to-hem junction, wearer's RIGHT leg",
+   "region_id": "hem_right_outseam_junction",
+   "shape": "M 66 744 L 34 744 L 38 784 L 70 784 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    766.0
+   ],
+   "conditional_on": "has_factory_hem",
+   "group": "hems",
+   "label": "Hem fold + stitch construction (turn-up depth, stitch rows), wearer's RIGHT leg",
+   "region_id": "hem_right_fold_construction",
+   "shape": "M 150.4 752 L 150 780 L 44 780 L 43.4 752 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    96.9,
+    748.0
+   ],
+   "conditional_on": "has_cuffs",
+   "group": "hems",
+   "label": "Turn-up cuff, wearer's RIGHT leg",
+   "region_id": "hem_right_cuff",
+   "shape": "M 151 716 L 150 780 L 44 780 L 42.6 716 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    102.0,
+    713.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Original hem edge seen edge-on (thickness, curl), wearer's RIGHT leg",
+   "region_id": "hem_right_edge_profile",
+   "shape": "M 164 690 L 40 690 L 40 736 L 164 736 Z",
+   "side": "edge"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    98.8,
+    406.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge after cutting, wearer's RIGHT leg, front face",
+   "region_id": "raw_edge_right_front",
+   "shape": "M 163.5 392 L 35.5 392 L 36.2 420 L 160 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    301.2,
+    406.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge after cutting, wearer's RIGHT leg, back face",
+   "region_id": "raw_edge_right_back",
+   "shape": "M 236.5 392 L 364.5 392 L 363.8 420 L 240 420 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    102.0,
+    323.0
+   ],
+   "conditional_on": "",
+   "group": "hems",
+   "label": "Cut raw edge seen edge-on (curl + thread length), wearer's RIGHT leg",
+   "region_id": "raw_edge_right_profile",
+   "shape": "M 164 300 L 40 300 L 40 346 L 164 346 Z",
+   "side": "edge"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    328.0
+   ],
+   "conditional_on": "n_printed_fade > 0",
+   "group": "unique_features",
+   "label": "Whiskering / printed fade, front upper thighs",
+   "region_id": "printed_fade_whiskers_front",
+   "shape": "M 32 270 L 368 270 L 365 386 L 35 386 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    496.0
+   ],
+   "conditional_on": "n_distressing > 0",
+   "group": "unique_features",
+   "label": "Distressing / abrasion (nominal zone; one region per instance)",
+   "region_id": "distressing_zone",
+   "shape": "M 35 412 L 365 412 L 362 580 L 38 580 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    494.0
+   ],
+   "conditional_on": "n_tears > 0",
+   "group": "unique_features",
+   "label": "Tear / hole (nominal zone; one region per instance)",
+   "region_id": "tear_zone",
+   "shape": "M 35 392 L 365 392 L 361 596 L 39 596 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    494.0
+   ],
+   "conditional_on": "n_repairs > 0",
+   "group": "unique_features",
+   "label": "Repair / darn / patchwork (nominal zone; one region per instance)",
+   "region_id": "repair_zone",
+   "shape": "M 35 392 L 365 392 L 361 596 L 39 596 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    391.0
+   ],
+   "conditional_on": "n_paint > 0",
+   "group": "unique_features",
+   "label": "Paint / painted print (nominal zone; one region per instance)",
+   "region_id": "paint_zone_back",
+   "shape": "M 32 270 L 368 270 L 362 512 L 38 512 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    231.0
+   ],
+   "conditional_on": "n_embroidery > 0",
+   "group": "unique_features",
+   "label": "Embroidery (nominal zone; one region per instance)",
+   "region_id": "embroidery_zone",
+   "shape": "M 52 162 L 348 162 L 348 300 L 52 300 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    289.0,
+    84.0
+   ],
+   "conditional_on": "n_logos > 0",
+   "group": "unique_features",
+   "label": "Woven / printed logo or tag (nominal zone; one region per instance)",
+   "region_id": "logo_zone",
+   "shape": "M 230 50 L 346 50 L 350 118 L 230 118 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    244.0
+   ],
+   "conditional_on": "n_patches > 0",
+   "group": "unique_features",
+   "label": "Sewn-on patch (nominal zone; one region per instance)",
+   "region_id": "patch_zone",
+   "shape": "M 52 158 L 348 158 L 348 330 L 52 330 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    291.0
+   ],
+   "conditional_on": "n_stains > 0",
+   "group": "unique_features",
+   "label": "Stain / discolouration (nominal zone; one region per instance)",
+   "region_id": "stain_zone",
+   "shape": "M 31 158 L 369 158 L 369 424 L 31 424 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    349.0,
+    405.0
+   ],
+   "conditional_on": "has_unusual_seams",
+   "group": "unique_features",
+   "label": "Non-standard seam or construction (nominal zone; one per instance)",
+   "region_id": "unusual_seam_zone",
+   "shape": "M 330 52 L 370 156 L 356 780 L 338 780 L 348 506 L 352 156 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    469.0
+   ],
+   "conditional_on": "has_asymmetry",
+   "group": "unique_features",
+   "label": "Left/right asymmetry evidence (both legs in one frame)",
+   "region_id": "asymmetry_zone",
+   "shape": "M 31 158 L 369 158 L 356 780 L 44 780 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    741.0
+   ],
+   "conditional_on": "has_previous_alteration",
+   "group": "unique_features",
+   "label": "Previous alteration (re-hem, taper, shortening)",
+   "region_id": "previous_alteration_zone",
+   "shape": "M 38 700 L 362 700 L 356 782 L 44 782 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    768.0
+   ],
+   "conditional_on": "has_hem_curl_visible",
+   "group": "unique_features",
+   "label": "Visible hem / raw-edge curl",
+   "region_id": "hem_curl_zone",
+   "shape": "M 38 752 L 362 752 L 356 784 L 44 784 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    374.2
+   ],
+   "conditional_on": "",
+   "group": "whole_garment",
+   "label": "Whole garment, front-up flat lay (F00)",
+   "region_id": "whole_garment_front",
+   "shape": "M 56 20 L 344 20 L 346 54 L 370 156 L 366 320 L 362 506 L 356 780 L 250 780 L 245 506 L 240 420 L 230 340 L 214 290 L 200 262 L 186 290 L 170 340 L 160 420 L 155 506 L 150 780 L 44 780 L 38 506 L 34 320 L 30 156 L 54 54 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    374.2
+   ],
+   "conditional_on": "",
+   "group": "whole_garment",
+   "label": "Whole garment, back-up flat lay (B00)",
+   "region_id": "whole_garment_back",
+   "shape": "M 56 20 L 344 20 L 346 54 L 370 156 L 366 320 L 362 506 L 356 780 L 250 780 L 245 506 L 240 420 L 230 340 L 214 290 L 200 262 L 186 290 L 170 340 L 160 420 L 155 506 L 150 780 L 44 780 L 38 506 L 34 320 L 30 156 L 54 54 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    400.0
+   ],
+   "conditional_on": "",
+   "group": "whole_garment",
+   "label": "Whole garment seen from the wearer's LEFT edge (drape / thickness)",
+   "region_id": "whole_garment_left_profile",
+   "shape": "M 150 20 L 250 20 L 250 780 L 150 780 Z",
+   "side": "left_profile"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    200.0,
+    400.0
+   ],
+   "conditional_on": "",
+   "group": "whole_garment",
+   "label": "Whole garment seen from the wearer's RIGHT edge (drape / thickness)",
+   "region_id": "whole_garment_right_profile",
+   "shape": "M 150 20 L 250 20 L 250 780 L 150 780 Z",
+   "side": "right_profile"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    302.7,
+    583.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut (cut-off lower leg), wearer's LEFT leg, whole piece",
+   "region_id": "offcut_left_whole",
+   "shape": "M 237 396 L 245 506 L 248 650 L 250 780 L 356 780 L 358.8 650 L 362 506 L 364.4 396 Z",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.3,
+    583.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut reverse face, wearer's LEFT leg",
+   "region_id": "offcut_left_face_back",
+   "shape": "M 163 396 L 155 506 L 152 650 L 150 780 L 44 780 L 41.2 650 L 38 506 L 35.6 396 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    301.3,
+    408.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut raw cut edge, wearer's LEFT leg",
+   "region_id": "offcut_left_raw_edge",
+   "shape": "M 237 396 L 364.4 396 L 363.8 420 L 240 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    303.0,
+    766.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut original hem, wearer's LEFT leg",
+   "region_id": "offcut_left_original_hem",
+   "shape": "M 249.6 752 L 250 780 L 356 780 L 356.6 752 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    251.5,
+    550.4
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut inseam, wearer's LEFT leg",
+   "region_id": "offcut_left_inseam",
+   "shape": "M 237 396 L 240 420 L 245 506 L 248 650 L 250 780 L 265 780 L 263 650 L 260 506 L 255 420 L 252 396 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    353.3,
+    560.7
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut outseam, wearer's LEFT leg",
+   "region_id": "offcut_left_outseam",
+   "shape": "M 364.4 396 L 362 506 L 356 780 L 341 780 L 347 506 L 349.4 396 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.3,
+    583.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut (cut-off lower leg), wearer's RIGHT leg, whole piece",
+   "region_id": "offcut_right_whole",
+   "shape": "M 163 396 L 155 506 L 152 650 L 150 780 L 44 780 L 41.2 650 L 38 506 L 35.6 396 Z",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    302.7,
+    583.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut reverse face, wearer's RIGHT leg",
+   "region_id": "offcut_right_face_back",
+   "shape": "M 237 396 L 245 506 L 248 650 L 250 780 L 356 780 L 358.8 650 L 362 506 L 364.4 396 Z",
+   "side": "back"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    98.7,
+    408.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut raw cut edge, wearer's RIGHT leg",
+   "region_id": "offcut_right_raw_edge",
+   "shape": "M 163 396 L 35.6 396 L 36.2 420 L 160 420 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    97.0,
+    766.0
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut original hem, wearer's RIGHT leg",
+   "region_id": "offcut_right_original_hem",
+   "shape": "M 150.4 752 L 150 780 L 44 780 L 43.4 752 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    148.5,
+    550.4
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut inseam, wearer's RIGHT leg",
+   "region_id": "offcut_right_inseam",
+   "shape": "M 163 396 L 160 420 L 155 506 L 152 650 L 150 780 L 135 780 L 137 650 L 140 506 L 145 420 L 148 396 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": true,
+   "can_change_by_wash": true,
+   "centroid": [
+    46.7,
+    560.7
+   ],
+   "conditional_on": "",
+   "group": "offcut",
+   "label": "Offcut outseam, wearer's RIGHT leg",
+   "region_id": "offcut_right_outseam",
+   "shape": "M 35.6 396 L 38 506 L 44 780 L 59 780 L 53 506 L 50.6 396 Z",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "labels",
+   "label": "Size tag",
+   "region_id": "size_tag",
+   "shape": "",
+   "side": "front"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Backdrop",
+   "region_id": "rig_backdrop",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Calibration board",
+   "region_id": "rig_board",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Camera and mount",
+   "region_id": "rig_camera",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Lighting",
+   "region_id": "rig_lighting",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Board/garment plane",
+   "region_id": "rig_plane",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Scale chain",
+   "region_id": "rig_scale_chain",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Macro station",
+   "region_id": "rig_macro_station",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Grazing-light station",
+   "region_id": "rig_grazing_station",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Oblique camera stations",
+   "region_id": "rig_oblique_stations",
+   "shape": "",
+   "side": "whole"
+  },
+  {
+   "can_change_by_cut": false,
+   "can_change_by_wash": false,
+   "centroid": [
+    200,
+    400
+   ],
+   "conditional_on": "",
+   "group": "rig",
+   "label": "Lay footprint",
+   "region_id": "rig_lay_footprint",
+   "shape": "",
+   "side": "whole"
+  }
+ ],
+ "regions_version": "1.0.0",
+ "viewbox": "0 0 400 800"
+}

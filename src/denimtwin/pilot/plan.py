@@ -79,7 +79,56 @@ def instance_count(features, key):
         return 0
 
 
-def activate(spec, answers):
+def expand_hem_series(spec, shot, measurements):
+    """A hem-loop template becomes one frame per macro position, from the MEASURED leg opening.
+
+    The count cannot be written into the specification, because it is a property of the garment: a
+    17 cm opening needs five macros and a 25 cm opening needs seven. When the measurement is absent
+    the template does NOT quietly expand to zero frames -- that would delete the entire fray series
+    from the plan and the gate would then find nothing missing. It stays as one entry carrying the
+    reason it could not be expanded, and the gate blocks on it.
+    """
+    from . import hem as HEM
+
+    hs = shot.get("hem_series") or {}
+    lo = (measurements or {}).get("leg_opening_cm")
+    lo = lo.get("mean") if isinstance(lo, dict) else lo
+    if lo is None:
+        c = dict(shot)
+        c["expansion_blocked"] = (
+            "the hem loop's length comes from leg_opening_cm, which has not been measured, so the "
+            "number of macro frames this series needs is unknown")
+        return [c]
+    kw = {}
+    if hs.get("arc_mm_per_frame"):
+        kw["arc_mm"] = float(hs["arc_mm_per_frame"])
+    if hs.get("position_spacing_mm"):
+        kw["position_spacing_mm"] = float(hs["position_spacing_mm"])
+    if hs.get("overlap_mm"):
+        kw["edge_margin_mm"] = float(hs["overlap_mm"]) / 2.0
+    try:
+        g = HEM.HemGeometry.from_leg_opening(hs.get("leg", "left"), float(lo), **kw)
+        macros = g.macros()
+    except ValueError as e:
+        c = dict(shot)
+        c["expansion_blocked"] = "the hem series geometry is not usable: %s" % e
+        return [c]
+    out = []
+    for m in macros:
+        c = dict(shot)
+        c["shot_id"] = shot["shot_id"].replace(".PNN", "." + m["shot_suffix"])
+        c["hem_position"] = m
+        c["matched_shot_ids"] = [x.replace(".PNN", "." + m["shot_suffix"])
+                                 for x in (shot.get("matched_shot_ids") or [])]
+        c["framing"] = (shot["framing"] + "  [frame %d of %d around the loop: arc %.0f-%.0f mm from "
+                        "the inseam seam, covering measurement position(s) %s]"
+                        % (m["index"], len(macros), m["usable_start_mm"], m["usable_end_mm"],
+                           ", ".join(str(i) for i in m["supports_positions"]) or "none"))
+        out.append(c)
+    return out
+
+
+def activate(spec, answers, measurements=None):
     """The shots this garment actually requires. Returns (shots, meta).
 
     A conditional shot whose condition cannot be evaluated is INCLUDED, and the reason is recorded.
@@ -102,6 +151,9 @@ def activate(spec, answers):
                                 "resolution": "included, because an unknown answer is not a no"})
         if not include:
             continue
+        if s.get("hem_series"):
+            out.extend(expand_hem_series(spec, s, measurements))
+            continue
         inst = s.get("instance_of")
         if inst:
             n = instance_count(features, inst)
@@ -115,7 +167,9 @@ def activate(spec, answers):
         else:
             out.append(dict(s))
     return out, {"features": features, "assumed_present": unanswered,
-                 "unevaluatable_conditions": assumed}
+                 "unevaluatable_conditions": assumed,
+                 "expansion_blocked": [{"shot_id": x["shot_id"], "why": x["expansion_blocked"]}
+                                       for x in out if x.get("expansion_blocked")]}
 
 
 def _lay_key(shot):

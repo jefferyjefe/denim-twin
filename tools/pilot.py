@@ -208,7 +208,7 @@ def cmd_intake(a):
             v = _prompt(f["prompt"], cur or f.get("default", ""))
         answers[k] = v
     st.append("feature_answers", {"answers": answers}, operator=a.operator)
-    shots, meta = PLAN.activate(spec, answers)
+    shots, meta = PLAN.activate(spec, answers, state.get("measurements"))
     ordered = PLAN.order(spec, shots)
     print("\n%d shots activated, %d frames including repeats, estimated %s"
           % (len(shots), len(ordered), _fmt_time(PLAN.estimate_seconds(spec, ordered))))
@@ -238,7 +238,7 @@ def cmd_plan(a):
     spec = load_spec()
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
-    shots, meta = PLAN.activate(spec, state["features"])
+    shots, meta = PLAN.activate(spec, state["features"], state["measurements"])
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     print("%s -- %d frames, %s remaining\n"
@@ -262,7 +262,7 @@ def cmd_next(a):
     spec = load_spec()
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
-    shots, _m = PLAN.activate(spec, state["features"])
+    shots, _m = PLAN.activate(spec, state["features"], state["measurements"])
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     e = PLAN.next_action(spec, ordered, done)
@@ -319,7 +319,7 @@ def cmd_add(a):
     gdir = garment_dir(a.garment)
     st = Store(gdir)
     state, problems = st.fold()
-    shots, _m = PLAN.activate(spec, state["features"])
+    shots, _m = PLAN.activate(spec, state["features"], state["measurements"])
     by_id = {s["shot_id"]: s for s in shots}
     shot = by_id.get(a.shot)
     if shot is None:
@@ -545,7 +545,7 @@ def cmd_status(a):
     gdir = garment_dir(a.garment)
     st = Store(gdir)
     state, problems = st.fold()
-    shots, meta = PLAN.activate(spec, state["features"])
+    shots, meta = PLAN.activate(spec, state["features"], state["measurements"])
     ordered = PLAN.order(spec, shots)
     done = st.done_keys()
     print("%s   state=%s   spec=%s   rig=%s"

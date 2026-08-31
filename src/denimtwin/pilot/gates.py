@@ -136,7 +136,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
     # --- the plan itself ------------------------------------------------------------------
     activated = None
     try:
-        activated, meta = PLAN.activate(spec, state["features"])
+        activated, meta = PLAN.activate(spec, state["features"], state["measurements"])
     except Exception as e:
         blocks.append(Block("plan.generated",
                             "no shot plan could be generated: %s" % e,
@@ -208,6 +208,19 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True):
             {"assumed_present": meta.get("assumed_present") or []}
 
     _guard(blocks, satisfied, "features.answered", c_features)
+
+    def c_plan_expanded():
+        stuck = (meta.get("expansion_blocked") or []) if isinstance(meta, dict) else []
+        if stuck:
+            return False, ("%d templated shot series could not be expanded into frames: %s"
+                           % (len(stuck), "; ".join("%s (%s)" % (x["shot_id"], x["why"])
+                                                    for x in stuck[:3]))), \
+                   "supply the measurement the series is sized from, then re-run. An unexpanded " \
+                   "series is not an empty requirement -- it is an unknown one.", \
+                   {"blocked": stuck[:8]}
+        return True, "every templated series expanded into frames", None, {}
+
+    _guard(blocks, satisfied, "plan.fully_expanded", c_plan_expanded)
 
     # --- rig ------------------------------------------------------------------------------
     def c_setup_frozen():

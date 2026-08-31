@@ -87,7 +87,7 @@ class Session(object):
         store = self.store(gid)
         st, problems = store.fold()
         try:
-            shots, meta = PLAN.activate(spec, st["features"])
+            shots, meta = PLAN.activate(spec, st["features"], st["measurements"])
         except PLAN.PlanError as e:
             shots, meta = [], {"error": str(e), "features": st["features"],
                                "assumed_present": [], "unevaluatable_conditions": []}
@@ -339,7 +339,7 @@ def build_api(session):
         st, _ = store.fold()
         spec = session.spec
         try:
-            shots, _m = PLAN.activate(spec, st["features"])
+            shots, _m = PLAN.activate(spec, st["features"], st["measurements"])
         except PLAN.PlanError as e:
             return 400, {"error": str(e)}
         shot = {s["shot_id"]: s for s in shots}.get(shot_id)
