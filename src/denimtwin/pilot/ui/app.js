@@ -256,8 +256,16 @@ function renderDash() {
   var m = S.matched || [];
   var done = m.filter(function (x) { return x.status === 'complete'; }).length;
   $('d-matched').innerHTML = '<div class="srow"><div><b>' + done + '</b> <span>of ' + m.length +
-    ' matched pairs complete</span></div></div><div class="bar"><i style="width:' +
+    ' before/after pairs complete</span></div></div><div class="bar"><i style="width:' +
     (m.length ? Math.round(100 * done / m.length) : 0) + '%"></i></div>' +
+    '<div class="muted" style="margin:6px 0">' + (S.companion_pairs || 0) +
+    ' same-state companion links (framed alike, not a before/after pair)' +
+    ((S.unmatched_changing_regions || []).length
+      ? ' &middot; <span style="color:var(--warn)">' + S.unmatched_changing_regions.length +
+        ' region(s) change with washing and have no later-state frame: ' +
+        esc(S.unmatched_changing_regions.slice(0, 6).join(', ')) + '</span>'
+      : ' &middot; every region that survives the cut and changes with washing has a later frame') +
+    '</div>' +
     m.filter(function (x) { return x.status !== 'complete'; }).slice(0, 25).map(function (x) {
       return '<div class="satrow"><b>' + esc(x.earlier) + '</b> → ' + esc(x.later) +
         ' <span class="muted">' + esc(x.status.replace(/_/g, ' ')) + '</span></div>';

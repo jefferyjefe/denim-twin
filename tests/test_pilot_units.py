@@ -180,3 +180,37 @@ def test_setup_hash_ignores_float_representation_but_not_values():
     b = setup_hash({"lens": "main", "height_cm": 82.50000000000001})
     c = setup_hash({"lens": "main", "height_cm": 82.6})
     assert a == b and a != c
+
+
+# -- before/after coverage -----------------------------------------------------------------------
+
+def test_matched_pairs_span_states_and_companions_do_not():
+    """A link between two shots in the same state is not a before/after pair.
+
+    Counting same-state links as matched pairs inflates the tally and, worse, hides the pairs that
+    are genuinely missing: a region with no later-state frame looks covered because some same-state
+    link filled the count.
+    """
+    s = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
+    order = {st["state"]: st["order"] for st in s.states}
+    pairs, companions = s.matched_pairs(), s.companion_pairs()
+    assert pairs and companions, "the plan should contain both kinds"
+    for a, b in pairs:
+        assert order[s.by_id[a]["state"]] < order[s.by_id[b]["state"]], (a, b)
+    for a, b in companions:
+        assert order[s.by_id[a]["state"]] == order[s.by_id[b]["state"]], (a, b)
+    assert not set(pairs) & {tuple(sorted(c)) for c in companions}
+
+
+def test_every_region_that_survives_the_cut_and_changes_with_washing_has_a_later_frame():
+    """The requirement, asked of the regions rather than of the links.
+
+    A region that declares no links declares none missing, so asking the links whether they are
+    complete cannot find this. Regions the cut removes are exempt: their after-state evidence lives
+    on the offcut, because the garment no longer has them.
+    """
+    s = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
+    missing = s.unmatched_changing_regions()
+    assert not missing, (
+        "%d region(s) change with washing, survive the cut, are photographed before it and have no "
+        "frame in any later state: %s" % (len(missing), missing[:10]))

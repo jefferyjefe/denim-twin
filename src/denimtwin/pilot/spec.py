@@ -232,22 +232,63 @@ class Spec(object):
                 errs.append("feature %s: type enum with no options" % f["key"])
         return errs
 
-    def matched_pairs(self):
-        """(earlier, later) shot-id pairs the before/after check must hold. Symmetric: a link
-        declared on either end counts, so one-sided authoring does not lose the pair."""
+    def _links(self):
+        """Every declared match, split by whether it crosses a state boundary.
+
+        A link between two shots in the SAME state is not a before/after pair -- it is an
+        instruction to frame two frames alike (the two halves of one hem, say). Counting those as
+        matched before/after pairs inflates the count and, worse, hides the pairs that are genuinely
+        missing: a region that changes with washing and has no later-state counterpart looks covered
+        because some same-state link filled the tally.
+        """
         order = {st["state"]: st["order"] for st in self.states}
-        pairs = set()
+        across, within = set(), set()
         for s in self.shots:
             for m in s.get("matched_shot_ids") or []:
                 o = self.by_id.get(m)
-                if not o:
+                if not o or m == s["shot_id"]:
                     continue
-                a, b = s["shot_id"], m
-                if order.get(o["state"], 0) < order.get(s["state"], 0):
-                    a, b = b, a
-                if a != b:
-                    pairs.add((a, b))
-        return sorted(pairs)
+                oa, ob = order.get(s["state"], 0), order.get(o["state"], 0)
+                if oa == ob:
+                    within.add(tuple(sorted((s["shot_id"], m))))
+                else:
+                    across.add((s["shot_id"], m) if oa < ob else (m, s["shot_id"]))
+        return sorted(across), sorted(within)
+
+    def matched_pairs(self):
+        """(earlier, later) pairs that genuinely span states. Symmetric: a link declared on either
+        end counts, so one-sided authoring does not lose the pair."""
+        return self._links()[0]
+
+    def companion_pairs(self):
+        """Same-state links: two frames that must be framed alike, but are not a before/after pair."""
+        return self._links()[1]
+
+    def unmatched_changing_regions(self):
+        """Regions that change with washing and have no frame in any later state.
+
+        This is the question the before/after requirement actually asks, and it is asked of the
+        REGIONS rather than of the links, because a region with no later-state frame at all declares
+        no links to be missing.
+        """
+        order = {st["state"]: st["order"] for st in self.states}
+        before_order = order.get("before", 2)
+        seen_later = set()
+        seen_before = set()
+        for s in self.shots:
+            o = order.get(s["state"], 0)
+            for rid in [s["region_id"]] + list(s.get("also_covers_regions") or []):
+                if o > before_order:
+                    seen_later.add(rid)
+                elif o == before_order:
+                    seen_before.add(rid)
+        out = []
+        for r in self.regions:
+            if not r["can_change_by_wash"] or r["can_change_by_cut"]:
+                continue          # removed by the cut: its later evidence is on the offcut
+            if r["region_id"] in seen_before and r["region_id"] not in seen_later:
+                out.append(r["region_id"])
+        return sorted(out)
 
 
 def load(spec_path, regions_path=None):

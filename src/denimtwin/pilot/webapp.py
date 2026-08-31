@@ -131,6 +131,8 @@ class Session(object):
         # matched before/after
         matched = []
         by_sid = {s["shot_id"]: s for s in shots}
+        companions = len(spec.companion_pairs())
+        unmatched_regions = spec.unmatched_changing_regions()
         for a, b in spec.matched_pairs():
             if a not in by_sid and b not in by_sid:
                 continue
@@ -218,7 +220,8 @@ class Session(object):
             "n_total": len(ordered), "n_done": len(done & {(e["shot_id"], e["rep"]) for e in ordered}),
             "seconds_remaining": PLAN.estimate_seconds(spec, remaining),
             "by_state": by_state, "by_region": by_region,
-            "matched": matched,
+            "matched": matched, "companion_pairs": companions,
+            "unmatched_changing_regions": unmatched_regions,
             "hems": hems,
             "qa_counts": qa_counts,
             "gate": gate.as_dict(),
