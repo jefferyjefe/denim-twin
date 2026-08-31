@@ -126,7 +126,7 @@ class Bench(object):
 
     def activated(self):
         st, _ = self.store.fold()
-        return PLAN.activate(self.spec, st["features"], st["measurements"])
+        return PLAN.activate(self.spec, st["features"], st["measurements"], st.get("cut_spec"))
 
     def synth_for(self, shot, rep, *, relay=None, seed=None, **kw):
         """A synthetic frame that actually satisfies the shot it stands in for.

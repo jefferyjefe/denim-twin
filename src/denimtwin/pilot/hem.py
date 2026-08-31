@@ -54,9 +54,36 @@ class HemGeometry(object):
         self.profile_spacing_mm = float(profile_spacing_mm)
 
     @classmethod
-    def from_leg_opening(cls, leg, leg_opening_flat_cm, **kw):
-        """A flat leg-opening measurement is half the loop: the hem is measured folded."""
-        return cls(leg, 2.0 * float(leg_opening_flat_cm) * 10.0, **kw)
+    def from_leg_opening(cls, leg, leg_opening_cm, **kw):
+        """Size the loop from `leg_opening_cm`, which is ALREADY A FULL CIRCUMFERENCE.
+
+        This is the repository's own convention, stated in every record.json:
+        "waist_cm/leg_opening_cm/thigh_cm are full circumferences (flat x2)". An earlier version
+        doubled it again on the reasoning that a hem is measured folded -- which is true of the tape
+        reading, and is exactly why the stored value is already doubled. The effect was a loop
+        described as 801 mm when the garment's was 400, so the plan demanded eleven macros where six
+        cover it, and `cutspec` -- which halves the same field to get a flat width -- disagreed with
+        it about the same garment.
+        """
+        return cls(leg, float(leg_opening_cm) * 10.0, **kw)
+
+    @classmethod
+    def from_cut_spec(cls, leg, cut_spec, leg_opening_cm=None, **kw):
+        """Size a POST-CUT loop from the cut's own predicted circumference.
+
+        A jorts cut lands high on the leg, where the leg is WIDER than at the original hem, so
+        sizing the cut hem's series from the original leg opening under-counts the macros -- and
+        under-counting leaves gaps in the fray profile, which is the direction that loses the
+        measurement. The larger of the two is used when both are known.
+        """
+        cands = []
+        if cut_spec and cut_spec.get("predicted_hem_circumference_cm"):
+            cands.append(float(cut_spec["predicted_hem_circumference_cm"]))
+        if leg_opening_cm:
+            cands.append(float(leg_opening_cm))
+        if not cands:
+            raise ValueError("neither a cut specification nor a leg opening is available")
+        return cls(leg, max(cands) * 10.0, **kw)
 
     @property
     def usable_arc_mm(self):
@@ -160,10 +187,13 @@ class HemGeometry(object):
         return best[1] if best else None
 
 
-def required_macro_count(leg_opening_flat_cm, arc_mm=DEFAULT_ARC_MM,
+def required_macro_count(leg_opening_cm, arc_mm=DEFAULT_ARC_MM,
                          edge_margin_mm=DEFAULT_EDGE_MARGIN_MM):
-    """How many macros one leg needs. Stated as arithmetic so the runbook can show its working."""
-    g = HemGeometry("x", 2.0 * float(leg_opening_flat_cm) * 10.0, arc_mm=arc_mm,
+    """How many macros one leg needs. Stated as arithmetic so the runbook can show its working.
+
+    `leg_opening_cm` is a full circumference, as everywhere else in this repository.
+    """
+    g = HemGeometry("x", float(leg_opening_cm) * 10.0, arc_mm=arc_mm,
                     edge_margin_mm=edge_margin_mm)
     return len(g.macros())
 

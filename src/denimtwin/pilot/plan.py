@@ -79,7 +79,7 @@ def instance_count(features, key):
         return 0
 
 
-def expand_hem_series(shot, measurements):
+def expand_hem_series(shot, measurements, cut_spec=None):
     """A hem-loop template becomes one frame per macro position, from the MEASURED leg opening.
 
     The count cannot be written into the specification, because it is a property of the garment: a
@@ -106,8 +106,14 @@ def expand_hem_series(shot, measurements):
         kw["position_spacing_mm"] = float(hs["position_spacing_mm"])
     if hs.get("overlap_mm"):
         kw["edge_margin_mm"] = float(hs["overlap_mm"]) / 2.0
+    post_cut = shot.get("state") in ("immediate_after", "post_wash", "offcut_before",
+                                     "offcut_after")
     try:
-        g = HEM.HemGeometry.from_leg_opening(hs.get("leg", "left"), float(lo), **kw)
+        if post_cut and cut_spec:
+            g = HEM.HemGeometry.from_cut_spec(hs.get("leg", "left"), cut_spec,
+                                              leg_opening_cm=float(lo), **kw)
+        else:
+            g = HEM.HemGeometry.from_leg_opening(hs.get("leg", "left"), float(lo), **kw)
         macros = g.macros()
     except ValueError as e:
         c = dict(shot)
@@ -128,7 +134,7 @@ def expand_hem_series(shot, measurements):
     return out
 
 
-def activate(spec, answers, measurements=None):
+def activate(spec, answers, measurements=None, cut_spec=None):
     """The shots this garment actually requires. Returns (shots, meta).
 
     A conditional shot whose condition cannot be evaluated is INCLUDED, and the reason is recorded.
@@ -152,7 +158,7 @@ def activate(spec, answers, measurements=None):
         if not include:
             continue
         if s.get("hem_series"):
-            out.extend(expand_hem_series(s, measurements))
+            out.extend(expand_hem_series(s, measurements, cut_spec))
             continue
         inst = s.get("instance_of")
         if inst:

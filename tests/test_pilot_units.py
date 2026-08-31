@@ -139,8 +139,29 @@ def test_swapped_thigh_and_opening_are_refused():
 
 # -- the hem loop ---------------------------------------------------------------------------------
 
+def test_leg_opening_is_a_full_circumference_not_a_folded_one():
+    """The repository's own convention, stated in every record.json.
+
+    from_leg_opening doubled it again -- true of the tape reading, and exactly why the stored value
+    is already doubled -- so a 40 cm opening described an 801 mm loop and demanded eleven macros
+    where six cover it, while cutspec halved the same field and disagreed about the same garment.
+    """
+    g = HEM.HemGeometry.from_leg_opening("left", 40.0)
+    assert g.circumference_mm == pytest.approx(400.0)
+
+
+def test_a_post_cut_loop_is_sized_from_the_cut_not_the_original_hem():
+    """A jorts cut lands high on the leg, where the leg is wider. Sizing the cut hem's series from
+    the original opening under-counts the macros, and under-counting leaves gaps in the fray
+    profile -- the direction that loses the measurement."""
+    g = HEM.HemGeometry.from_cut_spec("left", {"predicted_hem_circumference_cm": 56.0},
+                                      leg_opening_cm=40.0)
+    assert g.circumference_mm == pytest.approx(560.0)
+    assert len(g.macros()) > len(HEM.HemGeometry.from_leg_opening("left", 40.0).macros())
+
+
 def test_macros_advance_by_the_usable_arc_so_the_loop_has_no_gap():
-    g = HEM.HemGeometry.from_leg_opening("left", 20.0)
+    g = HEM.HemGeometry.from_leg_opening("left", 40.0)
     cov = g.coverage([m["index"] for m in g.macros()])
     assert cov["complete"] and cov["n_gaps"] == 0
     # and the count follows the usable arc, not the full one

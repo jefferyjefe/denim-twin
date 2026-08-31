@@ -33,7 +33,7 @@ this is safe' is not permission.
 | `cut.second_person_verified` | a second person measured both marks within 3 mm |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
 
-On the most demanding garment the plan can describe, that is **221 required frames** before
+On the most demanding garment the plan can describe, that is **209 required frames** before
 the cut.
 
 ## The four results a photograph can get

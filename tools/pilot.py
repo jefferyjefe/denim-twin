@@ -46,7 +46,10 @@ from denimtwin.pilot import spec as SPEC            # noqa: E402
 from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual   # noqa: E402
 from denimtwin.pilot.manifest import ingest_photo, read_exif, exif_timestamp, sha256_file  # noqa: E402
 
-GARMENTS = ROOT / "data" / "garments"
+# The garment tree, overridable so a rehearsal cannot touch real evidence. data/garments holds the
+# only copies of two real garments' records, and "run the whole thing once to see how it feels" is
+# exactly the request that should not be able to write there.
+GARMENTS = Path(os.environ.get("PILOT_GARMENTS") or (ROOT / "data" / "garments"))
 SPEC_PATH = ROOT / "protocol" / "shotplan" / "shotplan.json"
 BOARD_PATH = ROOT / "protocol" / "charuco_board.json"
 STATES = ["before", "marked", "immediate_after", "post_wash"]
@@ -112,12 +115,27 @@ def _bool(s):
 # --------------------------------------------------------------------------------------------
 
 def cmd_new(a):
+    import re as _re
     import subprocess
-    out = subprocess.run([sys.executable, str(ROOT / "tools" / "new_garment.py")],
-                         capture_output=True, text=True)
-    if out.returncode != 0:
-        raise SystemExit(out.stderr or "new_garment.py failed")
-    gid = out.stdout.strip()
+    if os.environ.get("PILOT_GARMENTS"):
+        # new_garment.py writes into the repository by construction (it resolves its own ROOT), so
+        # a rehearsal makes its own directory rather than borrowing that one.
+        GARMENTS.mkdir(parents=True, exist_ok=True)
+        ids = [int(m.group(1)) for p_ in GARMENTS.iterdir()
+               if (m := _re.fullmatch(r"DENIM_(\d{4})", p_.name))]
+        gid = "DENIM_%04d" % ((max(ids) + 1) if ids else 9001)
+        for sub in ("images/rig", "images/intake", "images/before", "images/marked",
+                    "images/immediate_after", "images/post_wash", "masks", "landmarks",
+                    "measurements", "meshes", "renders"):
+            (GARMENTS / gid / sub).mkdir(parents=True, exist_ok=True)
+        (GARMENTS / gid / "record.json").write_text(
+            json.dumps({"garment_id": gid, "protocol_version": "0.1"}, indent=2) + "\n")
+    else:
+        out = subprocess.run([sys.executable, str(ROOT / "tools" / "new_garment.py")],
+                             capture_output=True, text=True)
+        if out.returncode != 0:
+            raise SystemExit(out.stderr or "new_garment.py failed")
+        gid = out.stdout.strip()
     spec = load_spec()
     st = Store(GARMENTS / gid)
     st.append("session_opened", {"spec_version": spec.version, "spec_hash": spec.content_hash,
@@ -238,7 +256,7 @@ def cmd_plan(a):
     spec = load_spec()
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
-    shots, meta = PLAN.activate(spec, state["features"], state["measurements"])
+    shots, meta = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     print("%s -- %d frames, %s remaining\n"
@@ -262,7 +280,7 @@ def cmd_next(a):
     spec = load_spec()
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
-    shots, _m = PLAN.activate(spec, state["features"], state["measurements"])
+    shots, _m = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     e = PLAN.next_action(ordered, done)
@@ -333,7 +351,7 @@ def cmd_add(a):
     gdir = garment_dir(a.garment)
     st = Store(gdir)
     state, problems = st.fold()
-    shots, _m = PLAN.activate(spec, state["features"], state["measurements"])
+    shots, _m = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
     by_id = {s["shot_id"]: s for s in shots}
     shot = by_id.get(a.shot)
     if shot is None:
@@ -591,7 +609,7 @@ def cmd_status(a):
     gdir = garment_dir(a.garment)
     st = Store(gdir)
     state, problems = st.fold()
-    shots, meta = PLAN.activate(spec, state["features"], state["measurements"])
+    shots, meta = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
     ordered = PLAN.order(spec, shots)
     done = st.done_keys()
     print("%s   state=%s   spec=%s   rig=%s"

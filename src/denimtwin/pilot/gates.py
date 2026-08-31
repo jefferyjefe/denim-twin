@@ -161,7 +161,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     # --- the plan itself ------------------------------------------------------------------
     activated = None
     try:
-        activated, meta = PLAN.activate(spec, state["features"], state["measurements"])
+        activated, meta = PLAN.activate(spec, state["features"], state["measurements"], state.get("cut_spec"))
     except Exception as e:
         blocks.append(Block("plan.generated",
                             "no shot plan could be generated: %s" % e,

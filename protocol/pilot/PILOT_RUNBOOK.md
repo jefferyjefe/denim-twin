@@ -17,13 +17,13 @@ class. Treat the totals as an order of magnitude.
 |---|---|---|---|
 | Rig calibration | 28 | 27 | 1 h 32 min |
 | Garment intake | 37 | 37 | 1 h 16 min |
-| Before cut | 148 | 147 | 4 h 12 min |
+| Before cut | 136 | 135 | 3 h 57 min |
 | Marked for cutting | 10 | 10 | 15 min |
-| Immediately after cutting | 30 | 30 | 42 min |
-| Offcuts before wash | 30 | 30 | 32 min |
-| After washing | 106 | 94 | 2 h 46 min |
-| Offcuts after wash | 30 | 30 | 32 min |
-| **total** | **419** | **405** | **11 h 57 min** |
+| Immediately after cutting | 24 | 24 | 36 min |
+| Offcuts before wash | 18 | 18 | 20 min |
+| After washing | 88 | 82 | 2 h 22 min |
+| Offcuts after wash | 18 | 18 | 20 min |
+| **total** | **359** | **351** | **10 h 48 min** |
 
 That total is the most demanding garment the plan can describe: every optional feature present
 and one instance of each. A plain pair with no paint, no repairs and no coin pocket is
@@ -487,7 +487,7 @@ materially shorter, and the app tells you your own number after intake.
       Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
       the outseam crossing are shot garment front-up; positions from the outseam crossing
       back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      without reset.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2, 3, 4]
       *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
 - [ ] `BEFORE.HEM.LEFT.RULER_MACRO.P02` (1/1, required)
@@ -500,7 +500,7 @@ materially shorter, and the app tells you your own number after intake.
       Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
       the outseam crossing are shot garment front-up; positions from the outseam crossing
       back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam,
+      without reset.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam,
       covering measurement position(s) 5, 6, 7, 8]
       *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
 - [ ] `BEFORE.HEM.LEFT.RULER_MACRO.P03` (1/1, required)
@@ -513,47 +513,8 @@ materially shorter, and the app tells you your own number after intake.
       Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
       the outseam crossing are shot garment front-up; positions from the outseam crossing
       back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 9, 10, 11, 12]
-      *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
-- [ ] `BEFORE.HEM.LEFT.RULER_MACRO.P04` (1/1, required)
-      PARAMETERISED SERIES. The generator emits one instance per macro centre index c,
-      with the shot_id segment Pnn replaced by that zero-padded index (P01, P04, P08,
-      ...). For each instance: fill the frame with about 100 mm of the ORIGINAL hem edge
-      centred on loop position Pc, optical axis perpendicular to the fabric plane,
-      certified loop tape flat on the surface 10 mm outboard of the edge with the
-      graduation for Pc legible near the frame centre and the graduations for Pc-2 and
-      Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
-      the outseam crossing are shot garment front-up; positions from the outseam crossing
-      back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 13, 14, 15, 16]
-      *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
-- [ ] `BEFORE.HEM.LEFT.RULER_MACRO.P05` (1/1, required)
-      PARAMETERISED SERIES. The generator emits one instance per macro centre index c,
-      with the shot_id segment Pnn replaced by that zero-padded index (P01, P04, P08,
-      ...). For each instance: fill the frame with about 100 mm of the ORIGINAL hem edge
-      centred on loop position Pc, optical axis perpendicular to the fabric plane,
-      certified loop tape flat on the surface 10 mm outboard of the edge with the
-      graduation for Pc legible near the frame centre and the graduations for Pc-2 and
-      Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
-      the outseam crossing are shot garment front-up; positions from the outseam crossing
-      back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 17, 18, 19, 20]
-      *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
-- [ ] `BEFORE.HEM.LEFT.RULER_MACRO.P06` (1/1, required)
-      PARAMETERISED SERIES. The generator emits one instance per macro centre index c,
-      with the shot_id segment Pnn replaced by that zero-padded index (P01, P04, P08,
-      ...). For each instance: fill the frame with about 100 mm of the ORIGINAL hem edge
-      centred on loop position Pc, optical axis perpendicular to the fabric plane,
-      certified loop tape flat on the surface 10 mm outboard of the edge with the
-      graduation for Pc legible near the frame centre and the graduations for Pc-2 and
-      Pc+2 both legible and both at least 10 mm inside the frame edge. Positions P01 to
-      the outseam crossing are shot garment front-up; positions from the outseam crossing
-      back to P01 are shot with the leg turned back-up, the tape coordinate continuing
-      without reset.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2, 3, 20]
+      without reset.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 2, 9, 10]
       *why:* The finished-hem negative control at fray-measurement resolution, captured with exactly the geometry, overlap and position indexing that the post-wash cut edge will get. hem_roughness's own negative control is a finished hem, and EXP_0024 showed that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - so the only way to know what this project's pipeline reports for a genuinely unfrayed edge is to feed it this garment's own finished hem, shot at the same scale as the raw edge it will be compared against.
 - [ ] `BEFORE.HEM.LEFT.INSEAM_JUNCTION.MACRO` (1/2, required)
       Fill the frame with about 100 mm of hem edge CENTRED on the point where the inseam
@@ -592,43 +553,22 @@ materially shorter, and the app tells you your own number after intake.
       As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
       N_positions and macro centres are computed from the RIGHT leg's own measured hem
       circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      leg's indices.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2, 3, 4]
       *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
 - [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P02` (1/1, required)
       As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
       N_positions and macro centres are computed from the RIGHT leg's own measured hem
       circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam,
+      leg's indices.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam,
       covering measurement position(s) 5, 6, 7, 8]
       *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
 - [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P03` (1/1, required)
       As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
       N_positions and macro centres are computed from the RIGHT leg's own measured hem
       circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 9, 10, 11, 12]
-      *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
-- [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P04` (1/1, required)
-      As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
-      N_positions and macro centres are computed from the RIGHT leg's own measured hem
-      circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 13, 14, 15, 16]
-      *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
-- [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P05` (1/1, required)
-      As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
-      N_positions and macro centres are computed from the RIGHT leg's own measured hem
-      circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 17, 18, 19, 20]
-      *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
-- [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P06` (1/1, required)
-      As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
-      N_positions and macro centres are computed from the RIGHT leg's own measured hem
-      circumference and may differ from the left's; the generator must not reuse the left
-      leg's indices.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2, 3, 20]
+      leg's indices.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 2, 9, 10]
       *why:* Finished-hem negative control for the right leg. Both legs are needed because PROTOCOL section 7 sends the two offcuts (which carry these two hems) to different wash conditions, so each is a control for a different comparison.
 - [ ] `BEFORE.HEM.RIGHT.INSEAM_JUNCTION.MACRO` (1/2, required)
       As BEFORE.HEM.LEFT.INSEAM_JUNCTION.MACRO but for the right leg, same working
@@ -992,7 +932,7 @@ materially shorter, and the app tells you your own number after intake.
       stood on the surface at the frame centre with its zero touching the surface. Frame
       about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
       frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam, covering
+      series.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam, covering
       measurement position(s) 1, 2]
       *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
 - [ ] `BEFORE.HEM.LEFT.SIDE_CURL.P02` (1/1, required)
@@ -1003,7 +943,7 @@ materially shorter, and the app tells you your own number after intake.
       stood on the surface at the frame centre with its zero touching the surface. Frame
       about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
       frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam, covering
+      series.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam, covering
       measurement position(s) 3, 4]
       *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
 - [ ] `BEFORE.HEM.LEFT.SIDE_CURL.P03` (1/1, required)
@@ -1014,41 +954,8 @@ materially shorter, and the app tells you your own number after intake.
       stood on the surface at the frame centre with its zero touching the surface. Frame
       about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
       frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 5, 6]
-      *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
-- [ ] `BEFORE.HEM.LEFT.SIDE_CURL.P04` (1/1, required)
-      PARAMETERISED SERIES sharing the macro centres. For each centre index c the
-      generator emits one instance with Pnn replaced by the zero-padded index. Grazing
-      station: optical axis in the surface plane, horizontal, perpendicular to the local
-      edge tangent at position Pc, dark card standing behind the leg, vertical steel rule
-      stood on the surface at the frame centre with its zero touching the surface. Frame
-      about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
-      frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 7, 8]
-      *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
-- [ ] `BEFORE.HEM.LEFT.SIDE_CURL.P05` (1/1, required)
-      PARAMETERISED SERIES sharing the macro centres. For each centre index c the
-      generator emits one instance with Pnn replaced by the zero-padded index. Grazing
-      station: optical axis in the surface plane, horizontal, perpendicular to the local
-      edge tangent at position Pc, dark card standing behind the leg, vertical steel rule
-      stood on the surface at the frame centre with its zero touching the surface. Frame
-      about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
-      frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 9, 10]
-      *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
-- [ ] `BEFORE.HEM.LEFT.SIDE_CURL.P06` (1/1, required)
-      PARAMETERISED SERIES sharing the macro centres. For each centre index c the
-      generator emits one instance with Pnn replaced by the zero-padded index. Grazing
-      station: optical axis in the surface plane, horizontal, perpendicular to the local
-      edge tangent at position Pc, dark card standing behind the leg, vertical steel rule
-      stood on the surface at the frame centre with its zero touching the surface. Frame
-      about 100 mm of edge in silhouette so that positions Pc-2 .. Pc+2 are all inside the
-      frame. Front-up lay only; do not re-lay, smooth or lift the garment anywhere in the
-      series.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2]
+      series.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 5]
       *why:* Baseline edge curl of the finished hem around the loop, in the geometry PROTOCOL section 5 defines (garment laid front-up, max vertical lift of the edge from the surface). A finished hem's curl is small but not zero, and the post-wash cut-edge curl is only interpretable as a change against it.
 - [ ] `BEFORE.HEM.RIGHT.EDGE_PROFILE.SIDE` (1/1, required)
       As BEFORE.HEM.LEFT.EDGE_PROFILE.SIDE but for the right leg, same station geometry
@@ -1056,33 +963,18 @@ materially shorter, and the app tells you your own number after intake.
       *why:* Per-leg thickness and baseline curl, for the same reason as the left leg.
 - [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P01` (1/1, required)
       As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      centre indices.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2]
       *why:* Per-leg baseline curl, for the same reason as the left leg.
 - [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P02` (1/1, required)
       As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam,
+      centre indices.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam,
       covering measurement position(s) 3, 4]
       *why:* Per-leg baseline curl, for the same reason as the left leg.
 - [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P03` (1/1, required)
       As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 5, 6]
-      *why:* Per-leg baseline curl, for the same reason as the left leg.
-- [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P04` (1/1, required)
-      As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 7, 8]
-      *why:* Per-leg baseline curl, for the same reason as the left leg.
-- [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P05` (1/1, required)
-      As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 9, 10]
-      *why:* Per-leg baseline curl, for the same reason as the left leg.
-- [ ] `BEFORE.HEM.RIGHT.SIDE_CURL.P06` (1/1, required)
-      As BEFORE.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2]
+      centre indices.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 5]
       *why:* Per-leg baseline curl, for the same reason as the left leg.
 
 ### Before cut — either face, lay 1, mount_macro_fov120, macro lens
@@ -1506,7 +1398,7 @@ materially shorter, and the app tells you your own number after intake.
       frame edge. Front-panel positions front-up, back-panel positions with the leg
       turned, coordinate continuing. Handle the cut edge as little as possible: an
       unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 1 of 6 around the loop: arc 0-76 mm
+      the post-wash comparison never sees.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
 - [ ] `IMMEDIATE_AFTER.HEM.LEFT.MACRO.P02` (1/1, required)
@@ -1519,7 +1411,7 @@ materially shorter, and the app tells you your own number after intake.
       frame edge. Front-panel positions front-up, back-panel positions with the leg
       turned, coordinate continuing. Handle the cut edge as little as possible: an
       unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 2 of 6 around the loop: arc 76-152 mm
+      the post-wash comparison never sees.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
 - [ ] `IMMEDIATE_AFTER.HEM.LEFT.MACRO.P03` (1/1, required)
@@ -1532,83 +1424,26 @@ materially shorter, and the app tells you your own number after intake.
       frame edge. Front-panel positions front-up, back-panel positions with the leg
       turned, coordinate continuing. Handle the cut edge as little as possible: an
       unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
-- [ ] `IMMEDIATE_AFTER.HEM.LEFT.MACRO.P04` (1/1, required)
-      PARAMETERISED SERIES, identical geometry to POSTWASH.HEM.LEFT.MACRO.Pnn and shot at
-      the same station with the same lens, working distance and tape offset. For each
-      macro centre index c: about 100 mm of the freshly cut RAW edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge, zero at the inseam seam, with the
-      graduations for Pc-2, Pc and Pc+2 all legible and all at least 10 mm inside the
-      frame edge. Front-panel positions front-up, back-panel positions with the leg
-      turned, coordinate continuing. Handle the cut edge as little as possible: an
-      unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
-- [ ] `IMMEDIATE_AFTER.HEM.LEFT.MACRO.P05` (1/1, required)
-      PARAMETERISED SERIES, identical geometry to POSTWASH.HEM.LEFT.MACRO.Pnn and shot at
-      the same station with the same lens, working distance and tape offset. For each
-      macro centre index c: about 100 mm of the freshly cut RAW edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge, zero at the inseam seam, with the
-      graduations for Pc-2, Pc and Pc+2 all legible and all at least 10 mm inside the
-      frame edge. Front-panel positions front-up, back-panel positions with the leg
-      turned, coordinate continuing. Handle the cut edge as little as possible: an
-      unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
-- [ ] `IMMEDIATE_AFTER.HEM.LEFT.MACRO.P06` (1/1, required)
-      PARAMETERISED SERIES, identical geometry to POSTWASH.HEM.LEFT.MACRO.Pnn and shot at
-      the same station with the same lens, working distance and tape offset. For each
-      macro centre index c: about 100 mm of the freshly cut RAW edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge, zero at the inseam seam, with the
-      graduations for Pc-2, Pc and Pc+2 all legible and all at least 10 mm inside the
-      frame edge. Front-panel positions front-up, back-panel positions with the leg
-      turned, coordinate continuing. Handle the cut edge as little as possible: an
-      unwashed raw edge sheds threads on contact and every thread lost here is a thread
-      the post-wash comparison never sees.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      the post-wash comparison never sees.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* Fray is a CHANGE, and a post-wash loop map on its own cannot express one. This is the unwashed state of the same physical edge at the same positions and the same scale, so every post-wash position has a matched zero. It also captures the shear's own edge signature - a single continuous stroke and a stepped stroke leave different edges - which is the largest non-wash source of variation around the loop. Ownership note: this series mirrors part (b) into the immediate_after state and may overlap another agent's scope; if so, keep this geometry and drop the duplicate.
 - [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P01` (1/1, required)
       As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
       own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam
+      edge circumference.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam
       seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
 - [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P02` (1/1, required)
       As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
       own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam
+      edge circumference.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam
       seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
 - [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P03` (1/1, required)
       As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
       own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam
-      seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
-- [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P04` (1/1, required)
-      As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
-      own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam
-      seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
-- [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P05` (1/1, required)
-      As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
-      own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam
-      seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
-- [ ] `IMMEDIATE_AFTER.HEM.RIGHT.MACRO.P06` (1/1, required)
-      As IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn but for the right leg, using the right leg's
-      own N_positions and centre indices, computed from the right leg's own measured cut-
-      edge circumference.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam
-      seam, covering measurement position(s) 1, 2, 3, 20]
+      edge circumference.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam
+      seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* Unwashed baseline for the right leg's cut edge, matched position by position to the post-wash series.
 
 ### Immediately after cutting — FRONT up, lay 1, mount_low_macro, macro lens
@@ -1709,14 +1544,14 @@ materially shorter, and the app tells you your own number after intake.
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 1 of 6 around the
+      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 1 of 3 around the
       loop: arc 0-76 mm from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
 - [ ] `OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 2 of 6 around the
+      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 2 of 3 around the
       loop: arc 76-152 mm from the inseam seam, covering measurement position(s) 5, 6, 7,
       8]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
@@ -1724,33 +1559,9 @@ materially shorter, and the app tells you your own number after intake.
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 3 of 6 around the
-      loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 9, 10,
-      11, 12]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 4 of 6 around the
-      loop: arc 228-304 mm from the inseam seam, covering measurement position(s) 13, 14,
-      15, 16]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 5 of 6 around the
-      loop: arc 304-380 mm from the inseam seam, covering measurement position(s) 17, 18,
-      19, 20]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 6 of 6 around the
-      loop: arc 380-456 mm from the inseam seam, covering measurement position(s) 1, 2, 3,
-      20]
+      IMMEDIATE_AFTER.HEM.LEFT.MACRO.Pnn. Shot before washing.  [frame 3 of 3 around the
+      loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 1, 2, 9,
+      10]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION; the generator expands LEFT to LEFT and RIGHT.
@@ -1758,7 +1569,7 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      section 7.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2, 3, 4]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
@@ -1767,7 +1578,7 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam,
+      section 7.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam,
       covering measurement position(s) 5, 6, 7, 8]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
@@ -1776,48 +1587,21 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 9, 10, 11, 12]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands LEFT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 13, 14, 15, 16]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands LEFT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 17, 18, 19, 20]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands LEFT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.LEFT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2, 3, 20]
+      section 7.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 2, 9, 10]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 - [ ] `OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 1 of 6 around the
+      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 1 of 3 around the
       loop: arc 0-76 mm from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
 - [ ] `OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 2 of 6 around the
+      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 2 of 3 around the
       loop: arc 76-152 mm from the inseam seam, covering measurement position(s) 5, 6, 7,
       8]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
@@ -1825,33 +1609,9 @@ materially shorter, and the app tells you your own number after intake.
       PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
       garment's, made by the same stroke of the same shears - laid flat, same station,
       lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 3 of 6 around the
-      loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 9, 10,
-      11, 12]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 4 of 6 around the
-      loop: arc 228-304 mm from the inseam seam, covering measurement position(s) 13, 14,
-      15, 16]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 5 of 6 around the
-      loop: arc 304-380 mm from the inseam seam, covering measurement position(s) 17, 18,
-      19, 20]
-      *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
-- [ ] `OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. The offcut's raw cut edge - the mirror of the
-      garment's, made by the same stroke of the same shears - laid flat, same station,
-      lens, working distance, 10 mm tape offset, 100 mm framing and centre set as
-      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 6 of 6 around the
-      loop: arc 380-456 mm from the inseam seam, covering measurement position(s) 1, 2, 3,
-      20]
+      IMMEDIATE_AFTER.HEM.RIGHT.MACRO.Pnn. Shot before washing.  [frame 3 of 3 around the
+      loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 1, 2, 9,
+      10]
       *why:* The offcut's cut edge is the same stroke as the garment's, so it is a same-shears, same-fabric replicate that can be sent to a different wash condition. Its pre-wash state must be captured with matched geometry or the scrap-versus-garment comparison in section 7 has no common baseline.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION; the generator expands RIGHT to LEFT and RIGHT.
@@ -1859,7 +1619,7 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      section 7.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2, 3, 4]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
@@ -1868,7 +1628,7 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam seam,
+      section 7.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam seam,
       covering measurement position(s) 5, 6, 7, 8]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 - [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
@@ -1877,35 +1637,8 @@ materially shorter, and the app tells you your own number after intake.
       outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
       framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
       are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam seam,
-      covering measurement position(s) 9, 10, 11, 12]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands RIGHT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam seam,
-      covering measurement position(s) 13, 14, 15, 16]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands RIGHT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam seam,
-      covering measurement position(s) 17, 18, 19, 20]
-      *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
-- [ ] `OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION; the generator expands RIGHT to LEFT and RIGHT.
-      The offcut labelled <GARMENT_ID>_OFFCUT_L or _R laid flat, original hem edge
-      outermost. Same station, lens, working distance, 10 mm tape offset and 100 mm
-      framing as BEFORE.HEM.RIGHT.RULER_MACRO.Pnn, and the same centre set, so the frames
-      are directly comparable to the in-garment series. Shot BEFORE washing, per PROTOCOL
-      section 7.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam seam,
-      covering measurement position(s) 1, 2, 3, 20]
+      section 7.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam seam,
+      covering measurement position(s) 1, 2, 9, 10]
       *why:* Carries the finished-hem negative control forward. After the cut, the original hem is no longer on the garment - it leaves with the offcut - so the only way to wash a finished edge under this project's own protocol and measure it with this project's own pipeline is on the offcut. This is the pre-wash state of that control.
 
 ### Offcuts before wash — either face, lay 1, mount_overhead, main lens
@@ -2018,7 +1751,7 @@ materially shorter, and the app tells you your own number after intake.
       longest thread. Positions from P01 to the outseam crossing are shot with the garment
       front-up; the remaining positions are shot with the leg turned back-up and the tape
       coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 1 of 6 around the loop: arc 0-76 mm from
+      the fringe anywhere in the series.  [frame 1 of 3 around the loop: arc 0-76 mm from
       the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
 - [ ] `POSTWASH.HEM.LEFT.MACRO.P02` (1/1, required)
@@ -2035,7 +1768,7 @@ materially shorter, and the app tells you your own number after intake.
       longest thread. Positions from P01 to the outseam crossing are shot with the garment
       front-up; the remaining positions are shot with the leg turned back-up and the tape
       coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 2 of 6 around the loop: arc 76-152 mm
+      the fringe anywhere in the series.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
 - [ ] `POSTWASH.HEM.LEFT.MACRO.P03` (1/1, required)
@@ -2052,59 +1785,8 @@ materially shorter, and the app tells you your own number after intake.
       longest thread. Positions from P01 to the outseam crossing are shot with the garment
       front-up; the remaining positions are shot with the leg turned back-up and the tape
       coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
-- [ ] `POSTWASH.HEM.LEFT.MACRO.P04` (1/1, required)
-      PARAMETERISED SERIES - THE LOOP MAP. The generator emits one instance per macro
-      centre index c, with Pnn replaced by that zero-padded index; the centre set is
-      computed from the measured post-wash cut-edge circumference (see rationale). For
-      each instance: fill the frame with about 100 mm of the raw cut edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge (never on the fabric and never
-      touching the fringe), zero on the inseam seam, running toward the FRONT of the leg
-      first. The graduations for Pc-2, Pc-1, Pc, Pc+1 and Pc+2 must all be legible and all
-      at least 10 mm inside every frame edge, and the full fringe depth at every one of
-      those positions must be inside the frame with at least 10 mm of backdrop beyond the
-      longest thread. Positions from P01 to the outseam crossing are shot with the garment
-      front-up; the remaining positions are shot with the leg turned back-up and the tape
-      coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
-- [ ] `POSTWASH.HEM.LEFT.MACRO.P05` (1/1, required)
-      PARAMETERISED SERIES - THE LOOP MAP. The generator emits one instance per macro
-      centre index c, with Pnn replaced by that zero-padded index; the centre set is
-      computed from the measured post-wash cut-edge circumference (see rationale). For
-      each instance: fill the frame with about 100 mm of the raw cut edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge (never on the fabric and never
-      touching the fringe), zero on the inseam seam, running toward the FRONT of the leg
-      first. The graduations for Pc-2, Pc-1, Pc, Pc+1 and Pc+2 must all be legible and all
-      at least 10 mm inside every frame edge, and the full fringe depth at every one of
-      those positions must be inside the frame with at least 10 mm of backdrop beyond the
-      longest thread. Positions from P01 to the outseam crossing are shot with the garment
-      front-up; the remaining positions are shot with the leg turned back-up and the tape
-      coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
-- [ ] `POSTWASH.HEM.LEFT.MACRO.P06` (1/1, required)
-      PARAMETERISED SERIES - THE LOOP MAP. The generator emits one instance per macro
-      centre index c, with Pnn replaced by that zero-padded index; the centre set is
-      computed from the measured post-wash cut-edge circumference (see rationale). For
-      each instance: fill the frame with about 100 mm of the raw cut edge centred on loop
-      position Pc, optical axis perpendicular to the fabric plane, certified loop tape
-      flat on the surface 10 mm outboard of the edge (never on the fabric and never
-      touching the fringe), zero on the inseam seam, running toward the FRONT of the leg
-      first. The graduations for Pc-2, Pc-1, Pc, Pc+1 and Pc+2 must all be legible and all
-      at least 10 mm inside every frame edge, and the full fringe depth at every one of
-      those positions must be inside the frame with at least 10 mm of backdrop beyond the
-      longest thread. Positions from P01 to the outseam crossing are shot with the garment
-      front-up; the remaining positions are shot with the leg turned back-up and the tape
-      coordinate continuing without reset. Do not smooth, lift, blow on or otherwise touch
-      the fringe anywhere in the series.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      the fringe anywhere in the series.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* This is the measurement. PROTOCOL section 5 requires fray depth and thread count at every 2 cm position around the closed cut-edge loop, and this overlapping series is what makes 'every position' provable rather than asserted: consecutive frames share at least one position, so the coverage of the loop can be checked frame to frame, and any gap is visible as a position no frame supports. Shot at 0.10 mm/px so a 0.5 mm fray depth is readable, which is the resolution EXP_0016 says the whole-garment route never reaches.
 - [ ] `POSTWASH.HEM.RIGHT.INSEAM_DATUM.MACRO.P01` (1/2, required)
       As POSTWASH.HEM.LEFT.INSEAM_DATUM.MACRO.P01 but for the right leg.
@@ -2116,43 +1798,22 @@ materially shorter, and the app tells you your own number after intake.
       As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
       N_positions and centre set computed from the right leg's own measured post-wash cut-
       edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 1 of 6 around the loop: arc 0-76 mm
+      the two legs are directly comparable.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
 - [ ] `POSTWASH.HEM.RIGHT.MACRO.P02` (1/1, required)
       As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
       N_positions and centre set computed from the right leg's own measured post-wash cut-
       edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 2 of 6 around the loop: arc 76-152 mm
+      the two legs are directly comparable.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
 - [ ] `POSTWASH.HEM.RIGHT.MACRO.P03` (1/1, required)
       As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
       N_positions and centre set computed from the right leg's own measured post-wash cut-
       edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
-- [ ] `POSTWASH.HEM.RIGHT.MACRO.P04` (1/1, required)
-      As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
-      N_positions and centre set computed from the right leg's own measured post-wash cut-
-      edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
-- [ ] `POSTWASH.HEM.RIGHT.MACRO.P05` (1/1, required)
-      As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
-      N_positions and centre set computed from the right leg's own measured post-wash cut-
-      edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
-- [ ] `POSTWASH.HEM.RIGHT.MACRO.P06` (1/1, required)
-      As POSTWASH.HEM.LEFT.MACRO.Pnn but for the right leg, with the right leg's own
-      N_positions and centre set computed from the right leg's own measured post-wash cut-
-      edge circumference. Same station, lens, working distance and 10 mm tape offset so
-      the two legs are directly comparable.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      the two legs are directly comparable.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* The right leg's loop map, the second of the two independent cut edges this garment produces.
 
 ### After washing — FRONT up, lay 1, mount_macro_fov150_tex, macro lens
@@ -2318,7 +1979,7 @@ materially shorter, and the app tells you your own number after intake.
       fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
       inside it, with the surface line visible right across the frame. Do not re-lay,
       smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 1 of 6 around the loop: arc 0-76 mm
+      series in one uninterrupted session.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2]
       *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P02` (1/1, required)
@@ -2331,7 +1992,7 @@ materially shorter, and the app tells you your own number after intake.
       fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
       inside it, with the surface line visible right across the frame. Do not re-lay,
       smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 2 of 6 around the loop: arc 76-152 mm
+      series in one uninterrupted session.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 3, 4]
       *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P03` (1/1, required)
@@ -2344,54 +2005,15 @@ materially shorter, and the app tells you your own number after intake.
       fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
       inside it, with the surface line visible right across the frame. Do not re-lay,
       smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 5, 6]
-      *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P04` (1/1, required)
-      PARAMETERISED SERIES sharing the loop map's macro centres, restricted to centres
-      whose supported positions lie on the FRONT panel. Garment laid front-up after the
-      section 4 conditioning period and not touched since. Grazing station: optical axis
-      in the surface plane, horizontal, perpendicular to the local cut-edge tangent at
-      position Pc; plain dark card stood behind the leg; vertical steel rule stood on the
-      surface at the frame centre with its zero touching the surface, just outside the
-      fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
-      inside it, with the surface line visible right across the frame. Do not re-lay,
-      smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 7, 8]
-      *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P05` (1/1, required)
-      PARAMETERISED SERIES sharing the loop map's macro centres, restricted to centres
-      whose supported positions lie on the FRONT panel. Garment laid front-up after the
-      section 4 conditioning period and not touched since. Grazing station: optical axis
-      in the surface plane, horizontal, perpendicular to the local cut-edge tangent at
-      position Pc; plain dark card stood behind the leg; vertical steel rule stood on the
-      surface at the frame centre with its zero touching the surface, just outside the
-      fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
-      inside it, with the surface line visible right across the frame. Do not re-lay,
-      smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 9, 10]
-      *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P06` (1/1, required)
-      PARAMETERISED SERIES sharing the loop map's macro centres, restricted to centres
-      whose supported positions lie on the FRONT panel. Garment laid front-up after the
-      section 4 conditioning period and not touched since. Grazing station: optical axis
-      in the surface plane, horizontal, perpendicular to the local cut-edge tangent at
-      position Pc; plain dark card stood behind the leg; vertical steel rule stood on the
-      surface at the frame centre with its zero touching the surface, just outside the
-      fabric. Frame about 100 mm of edge in silhouette so positions Pc-2 .. Pc+2 are all
-      inside it, with the surface line visible right across the frame. Do not re-lay,
-      smooth, lift or press the garment anywhere in this series, and shoot the whole
-      series in one uninterrupted session.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2]
+      series in one uninterrupted session.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 5]
       *why:* Edge curl is the third PROTOCOL section 5 measurand and the only one that cannot be recovered from any overhead frame at any resolution. It is also the most perishable: section 5 defines it on the garment laid front-up after conditioning, so it exists only in that single untouched lay and is destroyed by the first re-lay, turn or press. If this series is not shot in the conditioning window, curl is UNAVAILABLE_CHECK for the whole garment and no later capture can substitute.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P01` (1/1, optional)
       PARAMETERISED SERIES over the macro centres whose supported positions lie on the
       BACK panel. Only after the entire front-up front-panel series is complete: turn the
       leg back-up, let it settle for the same dwell time at every position (record that
       dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam
+      continues without reset.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam
       seam, covering measurement position(s) 1, 2]
       *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P02` (1/1, optional)
@@ -2399,7 +2021,7 @@ materially shorter, and the app tells you your own number after intake.
       BACK panel. Only after the entire front-up front-panel series is complete: turn the
       leg back-up, let it settle for the same dwell time at every position (record that
       dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 2 of 6 around the loop: arc 76-152 mm from the
+      continues without reset.  [frame 2 of 3 around the loop: arc 76-152 mm from the
       inseam seam, covering measurement position(s) 3, 4]
       *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P03` (1/1, optional)
@@ -2407,32 +2029,8 @@ materially shorter, and the app tells you your own number after intake.
       BACK panel. Only after the entire front-up front-panel series is complete: turn the
       leg back-up, let it settle for the same dwell time at every position (record that
       dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 3 of 6 around the loop: arc 152-228 mm from the
-      inseam seam, covering measurement position(s) 5, 6]
-      *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P04` (1/1, optional)
-      PARAMETERISED SERIES over the macro centres whose supported positions lie on the
-      BACK panel. Only after the entire front-up front-panel series is complete: turn the
-      leg back-up, let it settle for the same dwell time at every position (record that
-      dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 4 of 6 around the loop: arc 228-304 mm from the
-      inseam seam, covering measurement position(s) 7, 8]
-      *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P05` (1/1, optional)
-      PARAMETERISED SERIES over the macro centres whose supported positions lie on the
-      BACK panel. Only after the entire front-up front-panel series is complete: turn the
-      leg back-up, let it settle for the same dwell time at every position (record that
-      dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 5 of 6 around the loop: arc 304-380 mm from the
-      inseam seam, covering measurement position(s) 9, 10]
-      *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
-- [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P06` (1/1, optional)
-      PARAMETERISED SERIES over the macro centres whose supported positions lie on the
-      BACK panel. Only after the entire front-up front-panel series is complete: turn the
-      leg back-up, let it settle for the same dwell time at every position (record that
-      dwell), and shoot the same grazing geometry as the front series. The tape coordinate
-      continues without reset.  [frame 6 of 6 around the loop: arc 380-456 mm from the
-      inseam seam, covering measurement position(s) 1, 2]
+      continues without reset.  [frame 3 of 3 around the loop: arc 152-228 mm from the
+      inseam seam, covering measurement position(s) 1, 5]
       *why:* Recovers something rather than nothing for the roughly half of each loop that lies on the back panel, where PROTOCOL section 5 as written defines no curl measurand at all because the garment is specified front-up. Captured under an explicitly different and recorded condition so that the gap in the protocol is visible in the data instead of being papered over.
 - [ ] `POSTWASH.HEM.RIGHT.CURL_INSTANCE.INN.MACRO.I01` (1/1, conditional, n_curl_positions > 0)
       PARAMETERISED OVER LEG AND INSTANCE. One instance per visually conspicuous curl or
@@ -2445,66 +2043,33 @@ materially shorter, and the app tells you your own number after intake.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P01` (1/1, required)
       As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
       centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 1 of 6 around the loop: arc 0-76 mm from the inseam seam,
+      one untouched lay.  [frame 1 of 3 around the loop: arc 0-76 mm from the inseam seam,
       covering measurement position(s) 1, 2]
       *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P02` (1/1, required)
       As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
       centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 2 of 6 around the loop: arc 76-152 mm from the inseam
+      one untouched lay.  [frame 2 of 3 around the loop: arc 76-152 mm from the inseam
       seam, covering measurement position(s) 3, 4]
       *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P03` (1/1, required)
       As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
       centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 3 of 6 around the loop: arc 152-228 mm from the inseam
-      seam, covering measurement position(s) 5, 6]
-      *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P04` (1/1, required)
-      As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 4 of 6 around the loop: arc 228-304 mm from the inseam
-      seam, covering measurement position(s) 7, 8]
-      *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P05` (1/1, required)
-      As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 5 of 6 around the loop: arc 304-380 mm from the inseam
-      seam, covering measurement position(s) 9, 10]
-      *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P06` (1/1, required)
-      As POSTWASH.HEM.LEFT.SIDE_CURL.Pnn but for the right leg, using the right leg's own
-      centre indices. Both legs must be shot within the one conditioning window and the
-      one untouched lay.  [frame 6 of 6 around the loop: arc 380-456 mm from the inseam
-      seam, covering measurement position(s) 1, 2]
+      one untouched lay.  [frame 3 of 3 around the loop: arc 152-228 mm from the inseam
+      seam, covering measurement position(s) 1, 5]
       *why:* Front-panel edge curl for the right leg, in the same single untouched lay as the left.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P01` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 1 of 6 around
+      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 1 of 3 around
       the loop: arc 0-76 mm from the inseam seam, covering measurement position(s) 1, 2]
       *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P02` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 2 of 6 around
+      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 2 of 3 around
       the loop: arc 76-152 mm from the inseam seam, covering measurement position(s) 3, 4]
       *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P03` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 3 of 6 around
-      the loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 5,
-      6]
-      *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P04` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 4 of 6 around
-      the loop: arc 228-304 mm from the inseam seam, covering measurement position(s) 7,
-      8]
-      *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P05` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 5 of 6 around
-      the loop: arc 304-380 mm from the inseam seam, covering measurement position(s) 9,
-      10]
-      *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
-- [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL_BACK.P06` (1/1, optional)
-      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 6 of 6 around
-      the loop: arc 380-456 mm from the inseam seam, covering measurement position(s) 1,
-      2]
+      As POSTWASH.HEM.LEFT.SIDE_CURL_BACK.Pnn but for the right leg.  [frame 3 of 3 around
+      the loop: arc 152-228 mm from the inseam seam, covering measurement position(s) 1,
+      5]
       *why:* Back-panel curl for the right leg under the same explicitly deviant condition.
 
 ### After washing — either face, lay 1, mount_low_macro, tele lens
@@ -2754,146 +2319,74 @@ materially shorter, and the app tells you your own number after intake.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 1 of 6 around the loop: arc 0-76 mm
+      same station, framing and centre set.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 2 of 6 around the loop: arc 76-152 mm
+      same station, framing and centre set.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.LEFT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.LEFT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      same station, framing and centre set.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 1 of 6 around the loop: arc 0-76 mm
+      same station, framing and centre set.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 2 of 6 around the loop: arc 76-152 mm
+      same station, framing and centre set.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.LEFT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.LEFT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      same station, framing and centre set.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 1 of 6 around the loop: arc 0-76 mm
+      same station, framing and centre set.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 2 of 6 around the loop: arc 76-152 mm
+      same station, framing and centre set.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
       after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
-- [ ] `OFFCUT_AFTER.CUT_EDGE.RIGHT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.CUT_EDGE.RIGHT.MACRO.Pnn but
-      after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      same station, framing and centre set.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* The washed raw edge on scrap: the positive control that says what this shears, this fabric and this wash produce when no garment-scale effects (weight, tumbling against the rest of the garment, seam bulk) are present. Together with the garment's own map it separates the fabric's fray behaviour from the garment's.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P01` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 1 of 6 around the loop: arc 0-76 mm
+      same station, framing and centre set.  [frame 1 of 3 around the loop: arc 0-76 mm
       from the inseam seam, covering measurement position(s) 1, 2, 3, 4]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P02` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 2 of 6 around the loop: arc 76-152 mm
+      same station, framing and centre set.  [frame 2 of 3 around the loop: arc 76-152 mm
       from the inseam seam, covering measurement position(s) 5, 6, 7, 8]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 - [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P03` (1/1, conditional, has_offcuts_retained)
       PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
       but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 3 of 6 around the loop: arc 152-228 mm
-      from the inseam seam, covering measurement position(s) 9, 10, 11, 12]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P04` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 4 of 6 around the loop: arc 228-304 mm
-      from the inseam seam, covering measurement position(s) 13, 14, 15, 16]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P05` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 5 of 6 around the loop: arc 304-380 mm
-      from the inseam seam, covering measurement position(s) 17, 18, 19, 20]
-      *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
-- [ ] `OFFCUT_AFTER.ORIGINAL_HEM.RIGHT.MACRO.P06` (1/1, conditional, has_offcuts_retained)
-      PARAMETERISED OVER LEG AND POSITION. As OFFCUT_BEFORE.ORIGINAL_HEM.RIGHT.MACRO.Pnn
-      but after the offcut's assigned wash and the same conditioning dwell as the garment,
-      same station, framing and centre set.  [frame 6 of 6 around the loop: arc 380-456 mm
-      from the inseam seam, covering measurement position(s) 1, 2, 3, 20]
+      same station, framing and centre set.  [frame 3 of 3 around the loop: arc 152-228 mm
+      from the inseam seam, covering measurement position(s) 1, 2, 9, 10]
       *why:* The washed finished hem: this project's own negative control, produced under its own frozen wash and measured by its own pipeline at fray-measurement resolution. If hem_roughness reports this edge as frayed, every fray number the project publishes for the cut edge is suspect, and there is no other way to find that out.
 
 ### Offcuts after wash — either face, lay 1, mount_overhead, main lens
