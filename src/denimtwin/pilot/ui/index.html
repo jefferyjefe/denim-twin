@@ -1,0 +1,141 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Pilot Capture Navigator</title>
+<link rel="stylesheet" href="/style.css">
+
+<header>
+  <div class="hrow">
+    <select id="garment"></select>
+    <span id="clock" class="muted" style="margin-left:auto"></span>
+  </div>
+  <div class="meta">
+    <b>plan</b> <span id="specv">-</span> &nbsp; <b>rig</b> <span id="setuph">-</span><br>
+    <b>photographs</b> <span id="storage">-</span>
+  </div>
+</header>
+
+<main>
+  <div id="err" class="err" hidden></div>
+
+  <!-- ---------------------------------------------------------------- NOW -->
+  <section id="s-now" class="on">
+    <div id="banner" class="banner b-UNAVAILABLE_CHECK">LOADING<small>reading the capture log</small></div>
+
+    <div class="card" id="nextcard">
+      <h2>Next action</h2>
+      <div class="shotid" id="shotid">-</div>
+      <div style="margin-top:7px">
+        <span class="pill" id="necessity">-</span>
+        <span class="pill p-optional" id="repbadge">-</span>
+        <span class="pill p-optional" id="statebadge">-</span>
+      </div>
+
+      <div class="maps" style="margin-top:10px">
+        <div><div class="maplabel">front</div><div class="mapwrap"><svg id="mini-front" class="jeans" viewBox="0 0 400 800"></svg></div></div>
+        <div><div class="maplabel">back</div><div class="mapwrap"><svg id="mini-back" class="jeans" viewBox="0 0 400 800"></svg></div></div>
+      </div>
+
+      <dl class="spec">
+        <dt>Side up</dt>      <dd id="f-side">-</dd>
+        <dt>Region</dt>       <dd id="f-region">-</dd>
+        <dt>Camera</dt>       <dd id="f-camera">-</dd>
+        <dt>Stand</dt>        <dd id="f-position">-</dd>
+        <dt>Framing</dt>      <dd id="f-framing">-</dd>
+        <dt>Scale ref</dt>    <dd id="f-scale">-</dd>
+        <dt>Quality</dt>      <dd id="f-quality">-</dd>
+        <dt>Matched</dt>      <dd id="f-matched">-</dd>
+        <dt>Time</dt>         <dd id="f-time">-</dd>
+      </dl>
+
+      <div id="handling" class="warnbox" hidden></div>
+      <div class="why" id="f-why">-</div>
+
+      <label class="cam" id="camlabel" for="file">TAKE THIS PHOTOGRAPH</label>
+      <input type="file" id="file" accept="image/*" capture="environment">
+
+      <div class="btnrow">
+        <button class="sec" id="b-ruler">ruler visible</button>
+        <button class="sec" id="b-side">side confirmed</button>
+        <button class="sec" id="b-region">region confirmed</button>
+        <button class="sec" id="b-relay">re-lay done</button>
+      </div>
+      <div class="btnrow">
+        <button class="sec" id="b-ghost">ghost overlay: off</button>
+        <button class="sec" id="b-skip">skip to next</button>
+      </div>
+
+      <div class="preview" id="preview" hidden>
+        <img id="pv-main"><img id="pv-ghost" class="ghost" hidden>
+      </div>
+      <div class="ghostnote" id="ghostnote" hidden>
+        Ghost overlay is a capture aid only. It is never used as evidence.
+      </div>
+
+      <table class="chk" id="checks"></table>
+    </div>
+
+    <div class="card">
+      <h2>Session</h2>
+      <div class="srow"><div><b id="p-done">0</b> <span>of <span id="p-total">0</span> frames</span></div>
+        <div class="muted" id="p-eta">-</div></div>
+      <div class="bar"><i id="p-bar" style="width:0%"></i></div>
+      <div class="muted" id="p-note" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- MAP -->
+  <section id="s-map">
+    <div class="card">
+      <h2>Garment coverage map</h2>
+      <div class="muted" id="lrnote" style="margin-bottom:8px"></div>
+      <div class="maps">
+        <div><div class="maplabel">front</div><div class="mapwrap"><svg id="big-front" class="jeans" viewBox="0 0 400 800"></svg></div></div>
+        <div><div class="maplabel">back</div><div class="mapwrap"><svg id="big-back" class="jeans" viewBox="0 0 400 800"></svg></div></div>
+      </div>
+      <div class="muted" style="margin-top:8px">
+        <span style="color:var(--bad)">&#9632;</span> next &nbsp;
+        <span style="color:var(--ok)">&#9632;</span> complete &nbsp;
+        <span style="color:var(--warn)">&#9632;</span> partial &nbsp;
+        <span style="color:var(--info)">&#9632;</span> not started
+      </div>
+      <div id="regioninfo" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- DASH -->
+  <section id="s-dash">
+    <div class="card"><h2>Coverage by state</h2><div id="d-states"></div></div>
+    <div class="card"><h2>Quality results</h2><div id="d-qa" class="grid2"></div></div>
+    <div class="card"><h2>Matched before / after</h2><div id="d-matched"></div></div>
+    <div class="card"><h2>Measurements</h2><div id="d-meas"></div></div>
+    <div class="card"><h2>Wash</h2><div id="d-wash"></div></div>
+    <div class="card"><h2>Protocol deviations</h2><div id="d-dev"></div></div>
+    <div class="card"><h2>Region coverage</h2><div id="d-regions"></div></div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- HEM -->
+  <section id="s-hem">
+    <div class="card"><h2>Cut-hem circumference coverage</h2>
+      <div class="muted">Roughly 10 cm of edge fills each macro frame; consecutive frames overlap so
+        no measurement position sits at a frame edge. A gap here is a hole in the fray profile.</div>
+      <div id="hemwrap"></div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- GATE -->
+  <section id="s-gate">
+    <div id="gatebanner" class="banner b-RETAKE_REQUIRED">NOT READY TO CUT</div>
+    <div class="card"><h2>Blocking</h2><div id="g-blocks"></div></div>
+    <div class="card"><h2>Satisfied</h2><div id="g-sat"></div></div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="now" class="on">NOW</button>
+  <button data-tab="map">MAP</button>
+  <button data-tab="dash">DASH</button>
+  <button data-tab="hem">HEM</button>
+  <button data-tab="gate">GATE</button>
+</nav>
+
+<script src="/app.js"></script>

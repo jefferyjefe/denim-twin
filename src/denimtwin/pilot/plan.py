@@ -185,11 +185,12 @@ def estimate_seconds(spec, ordered):
     for e in ordered:
         total += float(e.get("est_seconds", 30))
         if prev is not None:
-            if ORIENTATION.get(prev["garment_side"], "either") != \
-                    ORIENTATION.get(e["garment_side"], "either") and "either" not in (
-                    ORIENTATION.get(prev["garment_side"]), ORIENTATION.get(e["garment_side"])):
+            po = ORIENTATION.get(prev.get("garment_side"), "either")
+            eo = ORIENTATION.get(e.get("garment_side"), "either")
+            if po != eo and "either" not in (po, eo):
                 total += float(o["flip_cost_seconds"])
-            if e["relay_generation"] != prev["relay_generation"] or e.get("needs_relay_before"):
+            if e.get("relay_generation", 1) != prev.get("relay_generation", 1) \
+                    or e.get("needs_relay_before"):
                 total += float(o["relay_cost_seconds"])
             if e.get("lens") != prev.get("lens"):
                 total += float(o["lens_change_cost_seconds"])
@@ -218,3 +219,98 @@ def next_action(spec, ordered, done_keys, blocked_keys=()):
             continue
         return e
     return None
+
+
+# --------------------------------------------------------------------------------------------
+# Time estimation
+#
+# The specification carries an `est_seconds` per shot, and it is a DECLARED planning figure, not a
+# measurement of anything -- nobody has yet timed this rig. Presenting it as "time remaining" would
+# be the same defect this repository keeps finding elsewhere: a confident number whose provenance is
+# a guess. So once the session's own log contains enough observations, the estimate is recomputed
+# from the operator's ACTUAL pace, and the two are reported separately with a note saying which is
+# which and how much of the plan each covers.
+# --------------------------------------------------------------------------------------------
+
+#: A median with an interior point and a spread needs three observations. This is a property of the
+#: estimator, not a measurement of anything.
+MIN_PACE_OBSERVATIONS = 3
+
+
+def cost_class(shot):
+    """Shots whose handling is alike enough that their durations pool.
+
+    Keyed on what actually costs time: the rig position, the lens, whether a ruler has to be laid,
+    and whether the frame is a macro or a whole-garment shot.
+    """
+    return "|".join([
+        str(shot.get("camera_height_group") or "-"),
+        str(shot.get("lens") or "-"),
+        "ruler" if shot.get("scale_reference") in ("ruler", "both") else "noruler",
+        str(shot.get("camera_angle") or "-"),
+    ])
+
+
+def measured_pace(spec, captures, ordered):
+    """cost_class -> {median_seconds, n}, measured from the gaps between this session's captures.
+
+    The gap between one accepted capture and the next is the time the operator took on it, including
+    the handling before it. Gaps longer than an hour are dropped: they are breaks, not frames, and
+    a median that includes a lunch is not a pace.
+    """
+    by_key = {}
+    for e in ordered:
+        by_key[(e["shot_id"], e["rep"])] = e
+    rows = sorted(((c.get("ts"), k) for k, c in captures.items() if c.get("ts")),
+                  key=lambda x: x[0])
+    buckets = {}
+    for i in range(1, len(rows)):
+        dt = rows[i][0] - rows[i - 1][0]
+        if not (1.0 <= dt <= 3600.0):
+            continue
+        shot = by_key.get(rows[i][1])
+        if shot is None:
+            continue
+        buckets.setdefault(cost_class(shot), []).append(dt)
+    out = {}
+    for cls, vals in buckets.items():
+        if len(vals) >= MIN_PACE_OBSERVATIONS:
+            vals = sorted(vals)
+            n = len(vals)
+            med = vals[n // 2] if n % 2 else 0.5 * (vals[n // 2 - 1] + vals[n // 2])
+            out[cls] = {"median_seconds": round(med, 1), "n": n}
+    return out
+
+
+def estimate_remaining(spec, remaining, pace=None):
+    """Both estimates, and an honest account of what each covers.
+
+    Returns a dict whose `status` is PASS only when every remaining step has a measured pace. When
+    it does not, the declared figure is still given -- an operator planning an evening needs a
+    number -- but it is labelled, and the count of unmeasured classes travels with it.
+    """
+    pace = pace or {}
+    declared = estimate_seconds(spec, remaining)
+    measured, unmeasured, covered = 0.0, set(), 0
+    for e in remaining:
+        p = pace.get(cost_class(e))
+        if p is None:
+            unmeasured.add(cost_class(e))
+            measured += float(e.get("est_seconds", 30))
+        else:
+            measured += p["median_seconds"]
+            covered += 1
+    return {
+        "declared_seconds": round(declared),
+        "blended_seconds": round(measured),
+        "n_steps": len(remaining),
+        "n_steps_with_measured_pace": covered,
+        "n_classes_unmeasured": len(unmeasured),
+        "status": "PASS" if not unmeasured and remaining else
+                  ("UNAVAILABLE_CHECK" if remaining else "PASS"),
+        "note": ("every remaining step has a measured pace from this session"
+                 if not unmeasured else
+                 "%d of %d remaining steps use the specification's DECLARED time, which nobody has "
+                 "timed on this rig; the rest use this session's measured pace"
+                 % (len(remaining) - covered, len(remaining))),
+    }
