@@ -3,7 +3,7 @@
 #
 # com.denimtwin.pairs-daily runs its whole sequence as one inline shell string in the plist, at
 # 03:30, unattended, ending in `git add … && git commit && git push`. Four things are wrong with
-# that, and all four fired on 2026-08-30:
+# that, and all four fired on the first unattended run:
 #
 #  1. It runs against the WORKING TREE, not against a commit. That night the tree held an
 #     uncommitted change to tools/run_pair.py, so the job regenerated eight pair directories with

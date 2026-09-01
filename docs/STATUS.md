@@ -1,10 +1,10 @@
-# Status — 2026-08-29 (end of first autonomous hour)
+# Status — step log (first autonomous hour)
 
-> **Correction (EXP_0034).** Entries below dated 2026-08-29 report the product path as "a dead heat with
+> **Correction (EXP_0034).** Entries below from the first autonomous hour report the product path as "a dead heat with
 > crop-only". That comparison is **void**: the crop-only null is built from predict's own keep mask
 > (`compare.py:42` + `score_predict.py --keep`), so it crops at the cut line the model predicted — the
 > prediction compared with itself. Any "dead heat", "0.768 against 0.771", or "0.8026 against 0.8026" below
-> should be read with that in mind. Entries are left as written because this file is a dated log; the current
+> should be read with that in mind. Entries are left as written because this file is a step log; the current
 > position is in README.md, docs/BACKLOG.md and EXP_0034.
 >
 > **Correction (EXP_0037).** Any entry attributing 443d1d4658's bench regression to before and after being
@@ -36,17 +36,17 @@ gate_0 ✔, **gate_2 ✔ for the pixel-copy configuration (nothing outside the c
 Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discovery/OUTREACH.md`. Every downstream step
 (fringe prior, fabric/fringe classifier, calibrated depth) is gated on ≥5 usable pairs (`docs/GATES.md` tuning rule).
 
-- 2026-08-29 (morning): procedural wash v0 added (`canon/wash.py`, off by default). Shrinkage is a prior, not measured: found-photo landmarks are ~50× too noisy (EXP_0013). Identity metrics need an alignment-aware version before any wash preset can be judged.
-- 2026-08-29: `tools/predict.py` — the thesis' actual product path (one photo + a cut spec -> three renders + an 80% fringe interval + provenance, no after-photo). It runs; its numbers rest on an unvalidated prior and uncalibrated intervals, and it says so in every output. (Superseded 2026-08-29 by review 5: fringe depth withdrawn as evidence — see the entry below.)
-- 2026-08-29: EXP_0014 — the product path (what a user actually gets) scores mean silhouette IoU **0.768** on the 11 found pairs, against 0.819 for the evaluation path that reads the real after-photo, and 0.771 for crop-only. Also found: `inseam_fraction` means different things in run_pair (image space) and modification.py (canonical), differing by up to 0.21 of the leg.
-- 2026-08-29: EXP_0015 — fringe depth has never actually been measured here. SAM's fringe mask measures fabric (10–50x too deep, confirmed by eye); the new direct thread measurement (`eval/fringe_measure.py`) paints the right pixels but scores finished-hem controls (0.0081 mean depth_rel) the same as frayed washed garments (0.0077), so it has no discriminative power at found-photo resolution. All fringe numbers, including EXP_0008's held-out comparison, are void until a resolvable photo exists.
-- 2026-08-29: EXP_0016/0017 (both CORRECTED after review 6) — resolution does not rescue fringe depth: the mask-boundary floor scales with the image at 58% of the signal's rate (the first version said 80%, computed on two pairs `exclude.txt` bans). **Hem roughness** separates frayed from finished hems — 0 false positives on 9 high-resolution controls with consensus segmentation and no gate; the contour-compactness gate introduced earlier was removed after review 6 showed it is a garment-shape statistic that refuses full-length jeans (3.95) and the deepest frays. Scored on the pairs (RETRACTED — see EXP_0017: the quoted 6-3-2 / p=0.51 was not in the artefacts; corrected to 4-1-2 on 7 decidable pairs at the time, and after switching to a scale-free metric only 2 pairs are decidable at p=1.0).
-- 2026-08-29 (review 5): fringe DEPTH withdrawn as evidence project-wide — it returns mask-boundary error, displaced drop shadows and patterned backdrops as fringe. The prior now declares itself unvalidated and insufficient regardless of sample count, exposes which of its numbers are rule outputs, and carries one sourced assumption (12.7 mm, tutorial-stated, fray arrested by a stitch line). Leave-one-out excludes by photograph, not page id; the contributor TEST record was deleted for duplicating a tutorial's image. Hem roughness is the surviving fray observable.
-- 2026-08-29: 9 high-resolution finished-hem controls harvested and measured. Hem roughness: 0 false positives in 11 accepted control measurements, 6/8 frayed detected — but 2 of the 9 needed a new mask-quality gate (contour compactness > 3.0 is refused) because SAM's broken masks read exactly like fray. Rolled cuffs remain untested at high resolution.
-- 2026-08-29: EXP_0018 — segmentation is the real bottleneck. Two photos of the same garment give waist 874 px vs 191 px (SAM segmented a pocket, score 0.906); elsewhere it segmented a wall at 0.992. Five automatic validity checks all fail on at least one real photo, so human mask verification is now required before any measurement enters a prior. Gate 1 is recorded as failed with this as the reason.
-- 2026-08-29 (review 6, 12 findings): the contour-compactness gate was removed — it is a garment-shape statistic that refuses full-length jeans and silently zeroes the deepest frays. EXP_0017 retracted (its numbers were not in the artefacts); EXP_0016 recomputed without two pairs `exclude.txt` bans. Requiring explicit single-wash evidence cut the harvested channel from 7 candidates to 1 and the after-wash prior to n=2 — the evidence was always this thin. Nine all-rights-reserved retailer photos were committed and untracked the same hour. New: `tools/check_claims.py` + `tests/test_experiment_claims.py` re-derive every quoted number from its artefact, so notes cannot drift from their data again.
+- Step 1 (morning): procedural wash v0 added (`canon/wash.py`, off by default). Shrinkage is a prior, not measured: found-photo landmarks are ~50× too noisy (EXP_0013). Identity metrics need an alignment-aware version before any wash preset can be judged.
+- Step 2: `tools/predict.py` — the thesis' actual product path (one photo + a cut spec -> three renders + an 80% fringe interval + provenance, no after-photo). It runs; its numbers rest on an unvalidated prior and uncalibrated intervals, and it says so in every output. (Superseded this step by review 5: fringe depth withdrawn as evidence — see the entry below.)
+- Step 3: EXP_0014 — the product path (what a user actually gets) scores mean silhouette IoU **0.768** on the 11 found pairs, against 0.819 for the evaluation path that reads the real after-photo, and 0.771 for crop-only. Also found: `inseam_fraction` means different things in run_pair (image space) and modification.py (canonical), differing by up to 0.21 of the leg.
+- Step 4: EXP_0015 — fringe depth has never actually been measured here. SAM's fringe mask measures fabric (10–50x too deep, confirmed by eye); the new direct thread measurement (`eval/fringe_measure.py`) paints the right pixels but scores finished-hem controls (0.0081 mean depth_rel) the same as frayed washed garments (0.0077), so it has no discriminative power at found-photo resolution. All fringe numbers, including EXP_0008's held-out comparison, are void until a resolvable photo exists.
+- Step 5: EXP_0016/0017 (both CORRECTED after review 6) — resolution does not rescue fringe depth: the mask-boundary floor scales with the image at 58% of the signal's rate (the first version said 80%, computed on two pairs `exclude.txt` bans). **Hem roughness** separates frayed from finished hems — 0 false positives on 9 high-resolution controls with consensus segmentation and no gate; the contour-compactness gate introduced earlier was removed after review 6 showed it is a garment-shape statistic that refuses full-length jeans (3.95) and the deepest frays. Scored on the pairs (RETRACTED — see EXP_0017: the quoted 6-3-2 / p=0.51 was not in the artefacts; corrected to 4-1-2 on 7 decidable pairs at the time, and after switching to a scale-free metric only 2 pairs are decidable at p=1.0).
+- Step 6 (review 5): fringe DEPTH withdrawn as evidence project-wide — it returns mask-boundary error, displaced drop shadows and patterned backdrops as fringe. The prior now declares itself unvalidated and insufficient regardless of sample count, exposes which of its numbers are rule outputs, and carries one sourced assumption (12.7 mm, tutorial-stated, fray arrested by a stitch line). Leave-one-out excludes by photograph, not page id; the contributor TEST record was deleted for duplicating a tutorial's image. Hem roughness is the surviving fray observable.
+- Step 7: 9 high-resolution finished-hem controls harvested and measured. Hem roughness: 0 false positives in 11 accepted control measurements, 6/8 frayed detected — but 2 of the 9 needed a new mask-quality gate (contour compactness > 3.0 is refused) because SAM's broken masks read exactly like fray. Rolled cuffs remain untested at high resolution.
+- Step 8: EXP_0018 — segmentation is the real bottleneck. Two photos of the same garment give waist 874 px vs 191 px (SAM segmented a pocket, score 0.906); elsewhere it segmented a wall at 0.992. Five automatic validity checks all fail on at least one real photo, so human mask verification is now required before any measurement enters a prior. Gate 1 is recorded as failed with this as the reason.
+- Step 9 (review 6, 12 findings): the contour-compactness gate was removed — it is a garment-shape statistic that refuses full-length jeans and silently zeroes the deepest frays. EXP_0017 retracted (its numbers were not in the artefacts); EXP_0016 recomputed without two pairs `exclude.txt` bans. Requiring explicit single-wash evidence cut the harvested channel from 7 candidates to 1 and the after-wash prior to n=2 — the evidence was always this thin. Nine all-rights-reserved retailer photos were committed and untracked the same hour. New: `tools/check_claims.py` + `tests/test_experiment_claims.py` re-derive every quoted number from its artefact, so notes cannot drift from their data again.
 
-- 2026-08-29: EXP_0021 — **repeatability, and the first tolerance numbers this project has.** Three parts.
+- Step 10: EXP_0021 — **repeatability, and the first tolerance numbers this project has.** Three parts.
   (A) The one same-garment pair (front and back of one pair of cut-offs) agrees to 8% on rise/waist under consensus
   segmentation, against a 2.16x disagreement and a 4.58x waist-width disagreement under best-score: **EXP_0018's
   Gate 1 failure was a segmentation failure and it is fixed**. (B) 16 photographs x 14 simulated re-captures x 2
@@ -57,26 +57,26 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   ~30% swing in shape ratios at 8° of tilt is **not** segmentation: rotating an already-correct mask reproduces it,
   and on an exact synthetic silhouette a 5° tilt already costs more than 5%. `predict.py`/`run_pair.py` only correct
   tilt above 8°, which is on the wrong side of the effect (left unchanged: it needs its own A/B).
-- 2026-08-29: EXP_0021 also puts a number on the fray metric's reproducibility, and it is bad. Re-encoding the same
+- Step 11: EXP_0021 also puts a number on the fray metric's reproducibility, and it is bad. Re-encoding the same
   photograph at JPEG 15 changes hem roughness by 80% of its value; the fray *verdict* flips on **6 of 16 photos**,
   and **2 of the 9 high-resolution finished-hem controls read "frayed"** under at least one perturbation. EXP_0016's
   "0 false positives on 9 controls" is a statement about one photograph each and does not survive a re-encode.
   `p90 > 0` was also shown to be exactly `rough_fraction > 0.10` (verified on all 239 real measurements), which names
   the detection limit: a fray touching fewer than a tenth of the hem columns is invisible, and real finished hems
   already deviate on up to 7.3% — a 2.7-point margin. The threshold is NOT moved; 16 photographs cannot set it.
-- 2026-08-29: the product path (`tools/predict.py`) gained `--seg consensus` — it could not use the segmentation that
+- Step 12: the product path (`tools/predict.py`) gained `--seg consensus` — it could not use the segmentation that
   fixes catastrophic object-identity failures — and every prediction now records which segmentation produced it.
-- 2026-08-29: review 5 and review 6's test files are now **in the repository and green** (they were local and
+- Step 13: review 5 and review 6's test files are now **in the repository and green** (they were local and
   excluded from git). The remaining findings were fixed rather than argued: the wash/fray evidence gate is one
   implementation shared by both intake channels (`denimtwin/evidence.py`) instead of two that disagreed, with the
   polarity bug ("the hem did not fray" read as evidence of fray) fixed; the control-roughness artefact that EXP_0016
   cites now has a script that produces it (`tools/measure_controls.py`) instead of being an ad-hoc leftover that
   still described a removed gate; and one finding stands as an accepted, documented limitation (a scalloped hem reads
   as fray) marked xfail with its reason.
-- 2026-08-29: `tests/test_no_dead_parameters.py` — a declared parameter that the body never reads is a silent lie to
+- Step 14: `tests/test_no_dead_parameters.py` — a declared parameter that the body never reads is a silent lie to
   the caller. It found five, including `hem_chamfer(band_px=40)`: `tools/compare.py` computed a 15 mm band and passed
   it positionally for nothing on every pair report ever produced.
-- 2026-08-29: EXP_0022 — the tilt correction was switched off exactly where it was needed. Measured against known
+- Step 15: EXP_0022 — the tilt correction was switched off exactly where it was needed. Measured against known
   rotations of 16 real masks, the principal-axis estimate has median error **0.00°**, p90 1.64°, and correcting was
   never worse than not correcting (0 of 176). Its one failure mode is structural: on a near-isotropic silhouette
   (a squat pair of shorts, elongation < 1.2) it is off by up to 4.67° at 8° of tilt and 10.45° at 15°, against
@@ -90,7 +90,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   hem 13.35 → 13.31 px, fringe IoU 0.0570 → 0.0746 (3 better, 0 worse, 4 tied, p = 0.25). `bench.py` shows no
   regression on any tracked metric, and the baseline is deliberately **not** re-frozen — the older baseline is the
   stricter test.
-- 2026-08-29: two problems found while committing EXP_0022, both bigger than the experiment.
+- Step 16: two problems found while committing EXP_0022, both bigger than the experiment.
   **(1) 2035 derived images were tracked in git.** `.gitignore` covered `experiments/pairs/` and two siblings but not
   `pairs_wash/`, `pairs_consensus/`, `pairs_predict*/`, nor `experiments/pairs/*/panel.jpg` (the `*.png` rule misses
   it by extension). Every render, mask, diff and side-by-side panel built from the found-pair tutorial photographs was
@@ -104,7 +104,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `fit_fringe.py` now takes `--out-dir`, the test uses a temporary one, and
   `tests/test_tools_do_not_touch_tracked_data.py` fails if a tool given an explicit destination touches the tracked
   prior anyway. The committed prior has since been regenerated deliberately from the re-run pairs.
-- 2026-08-29: EXP_0023 — EXP_0022's fix did not fire on this project's own subject. Re-measuring EXP_0021's numbers
+- Step 17: EXP_0023 — EXP_0022's fix did not fire on this project's own subject. Re-measuring EXP_0021's numbers
   with uprighting on showed 8 of 16 photographs unchanged, because `tilt_angle` read the silhouette's **long** axis,
   and a pair of shorts laid flat is **wider than tall** (9 of 16 photographs have height/width 0.60–0.85), so the
   long axis runs sideways and the estimate came back at ~±88° — outside the correctable range, so uprighting silently
@@ -115,7 +115,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   hem +19.6 px), recorded and left visible rather than tuned away. Its cause is named: before and after are uprighted
   independently and end up 8.4° apart. The fix is for `run_pair` to put the after photo in the before's frame using
   the registration it already computes — the next experiment.
-- 2026-08-29: EXP_0024 — **hem roughness measures the resampler.** It counts pixel-scale deviations of the hem
+- Step 18: EXP_0024 — **hem roughness measures the resampler.** It counts pixel-scale deviations of the hem
   boundary; a mask rotated by anything but a multiple of 90° has a boundary that steps by a pixel. Rotate the twelve
   reference masks that read p90 = 0 and nothing else: at 3° **7 of 12** read frayed, at 8° **12 of 12**, median false
   p90/waist **0.00194**. EXP_0017's headline is 0.00194 for the prediction against 0.00231 for the crop-only null —
@@ -126,7 +126,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `hem_roughness` now takes `resampled=` and marks such results `valid_for_fray: false`; every pair `metrics.json`
   carries the flag. **EXP_0016's control result is unaffected** — those masks were measured in the frame they were
   segmented in, which is why they read zero.
-- 2026-08-29: EXP_0025 — **EXP_0017 retracted in full, for the second time and for a better reason.** Roughness is
+- Step 19: EXP_0025 — **EXP_0017 retracted in full, for the second time and for a better reason.** Roughness is
   scale-free, so the two sides never needed a shared frame; `run_pair` now keeps the after mask as segmented and
   `compare.py` measures the real hem on it. The registration warp had been inflating the real garment's roughness
   **six-fold** (mean 0.00043 native against 0.00260 warped, rougher on 5 of 7 pairs). Scored natively the ordering
@@ -136,7 +136,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   less texture, and a clean cut renders none. Both the original ordering and its reversal are that artefact seen from
   two sides. `hem_rough_*` is a diagnostic until an after-photo with ≥600 px of waistband exists — which is what
   `CONTRIBUTING_PAIRS.md` and the issue form already ask for.
-- 2026-08-29: EXP_0026 — a better tilt estimator that makes the pipeline worse, and is therefore not adopted. Fitting
+- Step 20: EXP_0026 — a better tilt estimator that makes the pipeline worse, and is therefore not adopted. Fitting
   a line to the waistband edge by RANSAC beats the principal axis on every measurement of the estimator itself
   (p90 error **0.22° against 1.64°**, never missing by a degree, though it declines on 38% of masks) and gets the one
   case with independent ground truth right (−1.9° against +4.8° on 443d1d4658, whose cutting-mat grid shows the
@@ -146,7 +146,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   precise when it answers is not the same as answering about the waistband — sometimes the straight line across the
   top of a mask is a fold, a belt or a shadow. `tilt_estimate(prefer_waistband=True)` is kept, tested and **off**.
   The 443d1d4658 bench regression stands; what this rules out is the cheap fix.
-- 2026-08-29: EXP_0027 — the product path recomputed. `tools/score_predict.py` never read `data/priors/exclude.txt`,
+- Step 21: EXP_0027 — the product path recomputed. `tools/score_predict.py` never read `data/priors/exclude.txt`,
   so EXP_0014's headline was over 11 pairs of which 4 are banned; it is the third experiment in this repo caught doing
   that. On the 7 pairs the list allows, and after the tilt fix: **product path 0.8026 silhouette IoU against a
   crop-only null of 0.8026** — a dead heat, winning on 2 pairs and losing on 4 by thousandths. What a user gets is
@@ -154,7 +154,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   already implied (0.768 against 0.771) and this sharpens. The evaluation path did improve: 0.819 → **0.857** IoU and
   48.4 → **7.8 px** of hem error, mostly from the tilt fix. The 0.857-vs-0.803 gap between reading the after-photo and
   predicting without it is the actual research problem, and it is larger than any appearance work downstream of it.
-- 2026-08-29: EXP_0028 — the product path's remaining gap is **not the cut specification**. `predict.py` gained
+- Step 22: EXP_0028 — the product path's remaining gap is **not the cut specification**. `predict.py` gained
   `--cut-path`, the cut as a polyline in canonical coordinates — the most a user interface can carry — and
   `score_predict.py --path-source fitted` hands it the line the evaluation path fitted to the real garment. The
   ladder: one canonical height **0.8232**, + the fitted angle 0.8168, + the whole fitted cut line 0.8190, against the
@@ -168,7 +168,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   `before_native.png`/`after_native.png` and the harness uses them; EXP_0027's headline is corrected 0.803 → **0.823**
   (the null moves with it, so the dead heat stands); and `tests/test_upright.py` pins the invariant that broke —
   uprighting an already-uprighted image, re-segmenting in between, must not rotate it again.
-- 2026-08-29: EXP_0029 — **canonical space does not give the garment back.** `docs/PLAN_PROGRESS.md` has recorded
+- Step 23: EXP_0029 — **canonical space does not give the garment back.** `docs/PLAN_PROGRESS.md` has recorded
   `canon/warp.py` since Phase 1 as "sub-pixel round-trip; exact per-pixel maps". True — at the landmarks.
   `CanonicalMap` fits **two independent** thin-plate splines, image→canonical and canonical→image, from the same
   correspondences; two independent fits agree exactly where they were fitted and nowhere in particular between.
@@ -181,7 +181,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   that the representation the cut is expressed in does not survive being used. The fix — one TPS inverted numerically
   instead of two fitted independently — changes every canonical coordinate in the project and is the most valuable
   experiment on the board.
-- 2026-08-29: EXP_0030 — the canonical inverse is fixed (round trip over the garment **10.7 px → 0.02 px**, region
+- Step 24: EXP_0030 — the canonical inverse is fixed (round trip over the garment **10.7 px → 0.02 px**, region
   IoU 0.638 → 0.972, faithful on 5 of 7 pairs instead of 2) **and nothing in the pipeline uses it**. Grepping every
   caller of the canonical→image direction finds `run_baseline.py`, the measurement tools, and tests — not `run_pair`
   and not `predict`, because `apply_cut` maps garment pixels *forward* into canonical space and looks the cut up
@@ -193,7 +193,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   records the fraction; on the found-pair set that is **2 of 7 garments refused outright**. That refusal is why the
   A/B scores 5 pairs, and its numbers are **not comparable** with the seven-pair means in EXP_0027/0028 — a mistake
   made once here before it was caught.
-- 2026-08-29: EXP_0031 — **the fold was two landmarks sitting on top of each other.** Both folding garments were
+- Step 25: EXP_0031 — **the fold was two landmarks sitting on top of each other.** Both folding garments were
   photographed with their legs touching, so `landmarks_from_mask` puts the two legs' inner hem landmarks 1–2 px apart
   while the canonical template wants them 160 px apart — a **135×** and **106×** stretch, against 1.5× on a garment
   that does not fold. A thin-plate spline asked to pull two coincident points apart can only tear.
@@ -209,7 +209,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   Still open: `2b0123d732` folds 5.3% and has the worst round trip (0.603); its landmark set puts the **crotch above
   the hips**, a physically impossible garment, which is a landmark-extraction failure and cheap to detect.
 
-- 2026-08-30: EXP_0041 — the waistband correspondence EXP_0040 proposed was measured on seven pairs and
+- Step 26: EXP_0041 — the waistband correspondence EXP_0040 proposed was measured on seven pairs and
   **not adopted**, and establishing why overturned EXP_0040's headline. The waistband corner sits a median
   of **16.6 px** from an existing landmark (a held-out `SURVIVING` landmark sits **136.0 px** from its
   nearest support), so it is redundant rather than missing: matched on cardinality it beats the
@@ -221,7 +221,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   the pair that flips is the one with the largest coarse-vs-refined disagreement. Its band decomposition
   stands. Two controls the first draft lacked — matched reach, and the paired uncertainty on the primary
   residual — are what caught both errors, in this note's own numbers.
-- 2026-08-30: EXP_0042 — **the before photograph is segmented twice and nothing recorded which one a
+- Step 27: EXP_0042 — **the before photograph is segmented twice and nothing recorded which one a
   landmark came from.** `run_pair.py` refines the before mask with landmark prompts above 14 landmarks
   and keeps the coarse landmarks; refinement **never shrinks the mask** (area ratio 1.0014–1.1161 on the
   5 pairs it runs on, 0 below 1), so the landmarks are anchored on a systematically smaller silhouette
@@ -234,7 +234,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   A/B attached. `landmarks.json` now records `before_landmark_source` regardless. The reason the current
   behaviour was chosen is **not recoverable** — `run_pair.py` cites EXP_0004 for a claim that note does
   not make, on a pair that no longer exists.
-- 2026-08-30 (infrastructure): three experiment tools resolved `data/priors/exclude.txt` against the
+- Step 28 (infrastructure): three experiment tools resolved `data/priors/exclude.txt` against the
   *working directory*, so running them from anywhere else silently produced an empty exclude set and let
   four banned pairs into the result — the fourth time a tool here has been caught ignoring that list. Two
   more made the scored-pair filter an opt-in flag while their committed reports had been generated with
@@ -242,7 +242,7 @@ Contributed pairs with a coin/ruler in frame: `CONTRIBUTING_PAIRS.md` + `discove
   level up the exact hole it was written to close. Ten `pytest.skip`s on committed reports became
   assertions, and `tests/test_guards_are_not_optional.py` now fails if a new skip appears. Reports with
   builders and staleness checks: 4 → 10.
-- 2026-08-30 (hazard): `com.denimtwin.pairs-daily` fired at 03:30 while `tools/run_pair.py` held an
+- Step 29 (hazard): `com.denimtwin.pairs-daily` fired at 03:30 while `tools/run_pair.py` held an
   uncommitted change, regenerated eight pair directories with code that is in no commit, and was on its
   way to `git commit && git push` — it never runs `verify.py`. Stopped mid-batch, tracked files restored,
   `experiments/pairs` verified byte-identical. **The job is unloaded**; `ops/pairs-daily.sh` is the same

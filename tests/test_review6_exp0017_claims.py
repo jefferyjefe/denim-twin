@@ -195,8 +195,8 @@ def test_the_three_documents_quote_the_same_result():
       * README.md no longer publishes a win/loss/tie split for this comparison at all; the score was withdrawn.
         Demanding that it quote one would be demanding it re-publish a retracted result, so (b) instead binds the
         NOTE's split to result.json and requires that any split README ever quotes again agree with it.
-      * docs/STATUS.md is EXEMPT from (a) and (b), and the exemption is not a hole. It is a dated log and says so
-        in its own banner ("Entries are left as written because this file is a dated log; the current position is
+      * docs/STATUS.md is EXEMPT from (a) and (b), and the exemption is not a hole. It is a step log and says so
+        in its own banner ("Entries are left as written because this file is a step log; the current position is
         in README.md, docs/BACKLOG.md and EXP_0034"), so repo policy is that its 6-3-2, 4-1-2 and 1-3-3 entries
         are the historical record and corrections go in banners, never by editing the record. Rewriting them to
         match today's number would destroy the evidence that the drift happened. (c) therefore checks the only
@@ -241,8 +241,8 @@ def test_the_three_documents_quote_the_same_result():
         f"{re.findall(SPLIT, body)}")
 
     # (c) docs/STATUS.md, exempt but not unchecked -- see the docstring for why it is not rewritten.
-    assert "this file is a dated log" in STATUS, (
-        "docs/STATUS.md no longer declares itself a dated log; that declaration is the whole basis on which "
+    assert "this file is a step log" in STATUS, (
+        "docs/STATUS.md no longer declares itself a step log; that declaration is the whole basis on which "
         "its superseded EXP_0017 numbers are exempt from the comparison above")
     unmarked = [b.splitlines()[0][:80] for b in re.split(r"\n(?=- )", STATUS)
                 if "EXP_0017" in b and re.search(SPLIT, b)

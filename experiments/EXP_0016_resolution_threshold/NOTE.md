@@ -1,4 +1,4 @@
-> **CORRECTED 2026-08-29 (review 6).** The first version was computed on a subject set that included two pairs banned
+> **CORRECTED step 16 (review 6).** The first version was computed on a subject set that included two pairs banned
 > by the project's own `data/priors/exclude.txt` — one of them excluded for having *two overlapping garments in the
 > after photo*, precisely the failure this experiment is about — and on web samples a later, stricter wash-count gate
 > removed. `tools/experiment_resolution.py` now honours `exclude.txt`. Everything below is recomputed and some

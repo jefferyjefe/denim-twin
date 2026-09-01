@@ -80,7 +80,7 @@ Reject and retake if: garment cropped, uneven lighting, motion blur, board missi
 - Wash two machine-washable pilot garments twice under identical protocol; measure
   fray-metric noise floor. Offcuts (§7) may serve as the repeat-wash samples.
 
-## 7. Offcut swatches (added 2026-08-28)
+## 7. Offcut swatches (added later)
 Retained lower-leg sections carry a raw edge identical to the garment's. Label each
 `<GARMENT_ID>_OFFCUT_L` / `_R`, photograph before washing, then assign wash conditions:
 - Default: one offcut follows the standard §4 protocol **in the same load as the garment**; the

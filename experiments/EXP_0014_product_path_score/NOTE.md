@@ -25,7 +25,7 @@ and mis-scored another because of exactly that.
 | product path, canonical height + the fitted cut angle (outseam-higher sign) | 0.772 | 80.2 px |
 | crop-only null on the product path's own mask | 0.771 | — |
 
-*(all conditions re-run 2026-08-29 after review 4 fixed `apply_cut`, which had been discarding cut angles entirely)*
+*(all conditions re-run step 14 after review 4 fixed `apply_cut`, which had been discarding cut angles entirely)*
 
 ## Finding 1 (bug): the two paths do not mean the same thing by "inseam fraction"
 `modification.py` documents `inseam_fraction` as *canonical* ("0 = crotch, 1 = original hem, canonical inseam

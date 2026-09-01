@@ -1,6 +1,6 @@
 # EXP_0005 — Yield of found tutorial pairs through the automatic pipeline
 
-**Date:** 2026-08-29. **Input:** 14 pages found by the seed agent (95 images). **Tools:** validate_pairs.py (CLIP roles) → run_pairs_batch.py → run_pair.py (collage split, sanity gates, auto landmarks, hem fit, v1 fringe, scoring).
+**Step:** 5 **Input:** 14 pages found by the seed agent (95 images). **Tools:** validate_pairs.py (CLIP roles) → run_pairs_batch.py → run_pair.py (collage split, sanity gates, auto landmarks, hem fit, v1 fringe, scoring).
 
 ## Funnel
 | stage | pages |

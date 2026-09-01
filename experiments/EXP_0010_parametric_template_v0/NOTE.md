@@ -1,6 +1,6 @@
 # EXP_0010 — Parametric 2D jeans template v0 (Phase 3 start) — not yet better than heuristic landmarks
 
-**Date:** 2026-08-29 07:25 UTC (Gate 2 recorded as passed the same day, which unlocks Phase 3).
+**Step:** 10. Gate 2 is recorded as passed, which unlocks Phase 3.
 **What:** `canon/template.py`: 11-parameter symmetric polygon (waist, hip, rise, thigh, knee, hem widths, leg length, spread)
 fitted to a silhouette mask by Nelder–Mead on 1 − IoU, then with an added between-leg-gap IoU term and soft bounds.
 

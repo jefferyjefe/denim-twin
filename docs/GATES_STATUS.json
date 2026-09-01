@@ -1,18 +1,18 @@
 {
  "gate_0": {
   "passed": true,
-  "date": "2026-08-28",
-  "evidence": "charter + protocol v0.1"
+  "evidence": "charter + protocol v0.1",
+  "step": 0
  },
  "gate_1": {
   "passed": false,
-  "date": "2026-08-29",
-  "evidence": "EXP_0021. The segmentation blocker recorded in EXP_0018 is fixed: under consensus segmentation the two photographs of the one same-garment pair agree to 8% on rise/waist (they disagreed by 2.16x, and by 4.58x on waist width, when SAM's best-scoring mask was a back pocket), and across 16 photographs x 14 simulated re-captures the mask is unchanged under every photometric perturbation (0 of 96 runs below IoU 0.8, against 16 for best-score) and under almost every geometric one (6 of 96, plus 10 refusals it names). What fails Gate 1 now is one level up: (a) the landmark heuristic is not rotation-invariant \u2014 on an exact silhouette a 5\u00b0 tilt already moves every shape ratio more than 5% and 8\u00b0 moves them 18-33%, while the mask IoU is still 0.994, and 6 of 16 real masks lose 5% by 5\u00b0 of tilt; (b) the fray verdict is not reproducible \u2014 re-encoding the same photograph flips it on 6 of 16 photos, and 2 of the 9 high-resolution finished-hem controls read 'frayed' under at least one perturbation; (c) no real repeat capture exists. A simulated re-capture cannot move the fabric or the light, so every number above bounds repeatability from ABOVE. Two photographs of one garment with the phone picked up in between would settle it (CONTRIBUTING_PAIRS.md)."
+  "evidence": "EXP_0021. The segmentation blocker recorded in EXP_0018 is fixed: under consensus segmentation the two photographs of the one same-garment pair agree to 8% on rise/waist (they disagreed by 2.16x, and by 4.58x on waist width, when SAM's best-scoring mask was a back pocket), and across 16 photographs x 14 simulated re-captures the mask is unchanged under every photometric perturbation (0 of 96 runs below IoU 0.8, against 16 for best-score) and under almost every geometric one (6 of 96, plus 10 refusals it names). What fails Gate 1 now is one level up: (a) the landmark heuristic is not rotation-invariant \u2014 on an exact silhouette a 5\u00b0 tilt already moves every shape ratio more than 5% and 8\u00b0 moves them 18-33%, while the mask IoU is still 0.994, and 6 of 16 real masks lose 5% by 5\u00b0 of tilt; (b) the fray verdict is not reproducible \u2014 re-encoding the same photograph flips it on 6 of 16 photos, and 2 of the 9 high-resolution finished-hem controls read 'frayed' under at least one perturbation; (c) no real repeat capture exists. A simulated re-capture cannot move the fabric or the light, so every number above bounds repeatability from ABOVE. Two photographs of one garment with the phone picked up in between would settle it (CONTRIBUTING_PAIRS.md).",
+  "step": 1
  },
  "gate_2": {
   "passed": true,
-  "date": "2026-08-29",
-  "evidence": "2D baseline preserves everything outside the cut by construction: changed_pixel_fraction_outside == 0.0 on every real pair (EXP_0003/0004, experiments/pairs/*/cmp_median/metrics.json); logos/pockets/seams untouched (judge report 2026-08-29: 5/5 same-garment for the prediction). Cut geometry reproduced automatically on the found pairs. SCOPE (2026-08-29, review 4 finding 13): this holds for the pixel-copy configuration (run_pair default, predict.py --wash none). tools/predict.py defaults to --wash median, whose shrink/hem-roll/dye-loss terms DO alter kept pixels; every prediction.json therefore reports changed_fraction_of_kept_region, and the gate does not certify that configuration."
+  "evidence": "2D baseline preserves everything outside the cut by construction: changed_pixel_fraction_outside == 0.0 on every real pair (EXP_0003/0004, experiments/pairs/*/cmp_median/metrics.json); logos/pockets/seams untouched (judge report this step: 5/5 same-garment for the prediction). Cut geometry reproduced automatically on the found pairs. SCOPE (this step, review 4 finding 13): this holds for the pixel-copy configuration (run_pair default, predict.py --wash none). tools/predict.py defaults to --wash median, whose shrink/hem-roll/dye-loss terms DO alter kept pixels; every prediction.json therefore reports changed_fraction_of_kept_region, and the gate does not certify that configuration.",
+  "step": 2
  },
  "gate_3": {
   "passed": false

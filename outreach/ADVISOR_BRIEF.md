@@ -21,7 +21,7 @@ flat-lay captures; physically meaningful evaluation of raw-edge fraying.
 
 **Ask.** A 30-minute meeting; potential independent study or collaboration.
 
-**Status (2026-08-29).** Working 2D pipeline: phone/found photo → SAM garment mask → mask-derived landmarks →
+**Status (this step).** Working 2D pipeline: phone/found photo → SAM garment mask → mask-derived landmarks →
 canonical TPS space → cut (angled, per leg) → procedural fringe (density band, SAM-segmented fringe on real
 after-photos) → registration of the real after-photo → metrics vs null baselines (no-op, crop-only). On 6 found
 before/after pairs the cut geometry is reproduced automatically (silhouette IoU 0.75–0.95, hem error 7–31 px);

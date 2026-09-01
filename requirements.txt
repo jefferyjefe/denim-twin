@@ -45,7 +45,7 @@
 #
 # VERSIONS
 # ---------------------------------------------------------------------------------------------
-# All read from `.venv/bin/python -m pip list` on 2026-08-30. These are the versions the artefacts
+# All read from `.venv/bin/python -m pip list` on this step. These are the versions the artefacts
 # under reports/ and experiments/ were produced with. See constraints.txt for full provenance and
 # for the transitive pins.
 -c constraints.txt

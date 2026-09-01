@@ -1,4 +1,4 @@
-# Pair harvest, 2026-08-30 — three unsearched segments, one real pair, and why text evidence is not enough
+# Pair harvest, this step — three unsearched segments, one real pair, and why text evidence is not enough
 
 EXP_0005 declared the found-pair channel exhausted at 32 tutorial pages → 6 cut pairs + 1 fray pair.
 That was one search strategy: English, German and French craft blogs. This pass widened it. The

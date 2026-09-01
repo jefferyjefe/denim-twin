@@ -62,7 +62,7 @@ coin, where the floor (a few px of mask error) is small against the signal. The 
 coin; it should also ask for one close-up of the hem. Until then `predict.py` should say the fringe depth is a
 placeholder — it already prints "INSUFFICIENT (n<5)", which understates the problem, so the wording is now stronger.
 
-## Rebuild of the prior on one method (2026-08-29, same day)
+## Rebuild of the prior on one method (step 15, same day)
 Every channel now measures the same way (`eval/fringe_measure.py`); the SAM-derived numbers are gone from
 `data/priors/*`, and `fringe.json` carries `measurement_method`, `validated: false` and the control result as fields so
 no consumer can quote it as evidence by accident.
@@ -89,7 +89,7 @@ finding of record: **we cannot yet measure fray depth from these photos.**
 
 Gate 5 verdict is unchanged: INSUFFICIENT (1 after-wash pair with a held-out prediction; needs ≥10).
 
-## Part F — fifth adversarial review (2026-08-29): fringe DEPTH withdrawn as evidence
+## Part F — fifth adversarial review (step 15): fringe DEPTH withdrawn as evidence
 A reviewer agent attacked the direct measurement and the rebuilt prior with 22 failing tests. The important ones:
 
 | # | finding | response |

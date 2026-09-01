@@ -15,7 +15,7 @@
 > metric and never recomputed. README and STATUS quoted two further different versions of the same result. All three
 > are corrected to what follows.
 
-## Recomputed 2026-08-29 (after the compactness gate was removed)
+## Recomputed step 17 (after the compactness gate was removed)
 The restatement below was itself written between two changes and is superseded: with the gate gone, **all 10 usable
 pairs are decidable**, not 2. The numbers are re-derived from the artefacts by `result.json` in this directory, and
 `claims.json` checks this note against it in CI — the mechanism that exists precisely because this note has now drifted

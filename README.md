@@ -65,7 +65,7 @@ report a pass at all when the evidence it needs is absent: it names every missin
 command that would supply it, and exits 2 rather than 0. The two are not interchangeable; see
 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
-## Status (2026-08-29, honest)
+## Status (current)
 - Product path (`tools/predict.py`): one photo + a cut spec → three renders + an 80% fringe-depth interval, every
   number labelled with where it came from. It runs end-to-end; its intervals are **not calibrated**, and its fringe
   depth rests on **no validated measurement at all** — depth was withdrawn as evidence after five reviews (EXP_0015).
