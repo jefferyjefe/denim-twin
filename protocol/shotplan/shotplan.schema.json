@@ -1,0 +1,422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://denim-twin/protocol/shotplan.schema.json",
+  "title": "Pilot capture shot-plan specification",
+  "description": "The versioned, machine-readable capture list. It is the ONLY source of what a state requires: the readiness gate enumerates required shots from this document, so a shot that is not here is not required, and a shot that is here cannot be skipped by application code.",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "protocol_version",
+    "states",
+    "features",
+    "shots",
+    "ordering",
+    "quality_defaults"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "regions_file": {
+      "type": "string"
+    },
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "state",
+          "label",
+          "order",
+          "irreversible_after"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer"
+          },
+          "irreversible_after": {
+            "type": "boolean",
+            "description": "true when the physical act that follows this state cannot be undone, so the gate must hold before it"
+          },
+          "gate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "id of the gate that must pass before leaving this state"
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "prompt",
+          "type",
+          "unanswered_means"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "help": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "bool",
+              "count",
+              "number",
+              "enum",
+              "text"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unit": {
+            "type": "string"
+          },
+          "default": {},
+          "unanswered_means": {
+            "enum": [
+              "present",
+              "absent",
+              "blocks"
+            ],
+            "description": "What the plan assumes before the operator answers. 'present' is the safe default for anything that gates a shot: an unanswered question must never silently drop a capture. 'absent' is permitted only where assuming presence would demand an impossible shot. 'blocks' means the plan cannot be generated at all until answered."
+          },
+          "group": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "shots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/shot"
+      }
+    },
+    "ordering": {
+      "type": "object",
+      "required": [
+        "sort_keys",
+        "flip_cost_seconds",
+        "relay_cost_seconds",
+        "lens_change_cost_seconds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sort_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "flip_cost_seconds": {
+          "type": "number"
+        },
+        "relay_cost_seconds": {
+          "type": "number"
+        },
+        "lens_change_cost_seconds": {
+          "type": "number"
+        },
+        "height_change_cost_seconds": {
+          "type": "number"
+        },
+        "setup_seconds": {
+          "type": "object"
+        }
+      }
+    },
+    "quality_defaults": {
+      "$ref": "#/$defs/quality"
+    }
+  },
+  "$defs": {
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_blur": {
+          "type": "number"
+        },
+        "min_board_corners": {
+          "type": "integer"
+        },
+        "max_mm_per_px": {
+          "type": "number",
+          "description": "resolution ceiling: a smaller number is a finer image"
+        },
+        "min_mm_per_px": {
+          "type": "number"
+        },
+        "max_scale_range_ratio": {
+          "type": "number",
+          "description": "tilt gate; see EXP_0043"
+        },
+        "min_subject_px": {
+          "type": "number"
+        },
+        "subject_px_meaning": {
+          "type": "string"
+        },
+        "min_long_edge_px": {
+          "type": "integer"
+        },
+        "max_clipped_fraction": {
+          "type": "number"
+        },
+        "max_border_fraction": {
+          "type": "number"
+        },
+        "mean_intensity_range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "requires_ruler": {
+          "type": "boolean"
+        },
+        "requires_board": {
+          "type": "boolean"
+        },
+        "min_subject_fraction": {
+          "type": "number"
+        },
+        "max_subject_fraction": {
+          "type": "number"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "string",
+          "description": "free-text note from the shot's author: derivations, caveats, and which existing repo function this shot's check must call"
+        },
+        "span_axis": {
+          "enum": [
+            "horizontal",
+            "vertical",
+            "path"
+          ],
+          "description": "which silhouette dimension min_subject_px is measured along. Absent, or 'path' for a distance along the cloth, means the check bounds the requirement rather than asserting it -- no path inside a subject exceeds its bounding box."
+        }
+      }
+    },
+    "shot": {
+      "type": "object",
+      "required": [
+        "shot_id",
+        "state",
+        "garment_side",
+        "region_id",
+        "camera_angle",
+        "framing",
+        "scale_reference",
+        "min_reps",
+        "necessity",
+        "est_seconds",
+        "purpose",
+        "camera_height_group",
+        "lens"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "shot_id": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+(\\.[A-Z0-9_]+)+$",
+          "description": "stable dotted id; never reused for a different frame"
+        },
+        "state": {
+          "type": "string"
+        },
+        "garment_side": {
+          "enum": [
+            "front",
+            "back",
+            "left_profile",
+            "right_profile",
+            "edge",
+            "n/a"
+          ]
+        },
+        "region_id": {
+          "type": "string"
+        },
+        "also_covers_regions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "camera_angle": {
+          "enum": [
+            "overhead",
+            "oblique_30",
+            "oblique_45",
+            "side_profile",
+            "macro_perpendicular",
+            "handheld_free",
+            "video"
+          ]
+        },
+        "framing": {
+          "type": "string"
+        },
+        "frame_guide": {
+          "type": "string"
+        },
+        "camera_position": {
+          "type": "string",
+          "description": "where the operator and camera stand"
+        },
+        "scale_reference": {
+          "enum": [
+            "charuco_board",
+            "ruler",
+            "both",
+            "none"
+          ]
+        },
+        "scale_placement": {
+          "type": "string"
+        },
+        "min_reps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "relay_between_reps": {
+          "type": "boolean"
+        },
+        "reposition_camera_between_reps": {
+          "type": "boolean"
+        },
+        "necessity": {
+          "enum": [
+            "required",
+            "conditional",
+            "optional"
+          ]
+        },
+        "conditional_on": {
+          "type": "string"
+        },
+        "instance_of": {
+          "type": "string",
+          "description": "feature key this shot is templated over; one shot is emitted per counted instance"
+        },
+        "matched_shot_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quality": {
+          "$ref": "#/$defs/quality"
+        },
+        "est_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "camera_height_group": {
+          "type": "string"
+        },
+        "lens": {
+          "enum": [
+            "main",
+            "ultrawide",
+            "tele",
+            "macro"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 12
+        },
+        "needs_second_person": {
+          "type": "boolean"
+        },
+        "video_seconds": {
+          "type": "number"
+        },
+        "hem_series": {
+          "type": "object",
+          "description": "present on templated hem-circumference macros",
+          "additionalProperties": false,
+          "properties": {
+            "leg": {
+              "enum": [
+                "left",
+                "right"
+              ]
+            },
+            "kind": {
+              "enum": [
+                "macro",
+                "side_profile"
+              ]
+            },
+            "arc_mm_per_frame": {
+              "type": "number"
+            },
+            "overlap_mm": {
+              "type": "number"
+            },
+            "position_spacing_mm": {
+              "type": "number"
+            }
+          }
+        },
+        "requires_human": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "claims a person must confirm for this frame, named by the check id. For frames whose content no automatic check can judge -- an empty backdrop, a lighting test, a coplanarity proof -- this is the only thing standing between the requirement and a photograph of anything."
+        },
+        "relay_after": {
+          "type": "string",
+          "description": "the shot_id this frame must be an independent RE-LAY of. relay_between_reps chains repeats within one shot id; a repeatability series written as separate shot ids (F00.R1..R5) needs this, or the relay check has nothing to compare against and the series is five photographs of one lay."
+        },
+        "must_be_empty": {
+          "type": "boolean",
+          "description": "this frame must show an EMPTY surface. 'A person confirmed it' is the weakest possible evidence for the one frame whose whole content is an absence, and an absence is the easiest thing in this system to measure."
+        }
+      }
+    }
+  }
+}
