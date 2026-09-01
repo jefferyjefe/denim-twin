@@ -78,12 +78,13 @@ SCENARIOS = [
     'the board-square measurement refuses one square spanned',
     'the board-square measurement refuses a fractional count',
     'the board-square measurement refuses more squares than the board has',
-    'a verdict that disagrees with its own checks is refused',
+    "a forged verdict that IMPROVES on the checker's is inert",
+    "a frame's only verdict must follow from the checks stored beside it",
     'one photograph cannot satisfy two shots without a declared reuse',
     'a photograph swapped with its size and mtime restored is still detected',
     'repairing a torn tail does not delete an interior entry',
     'a reuse declaration with no re-run checks is refused',
-    'a verdict backed by invented checks does not clear a frame',
+    'a verdict backed by invented checks does not become the operative one',
     'a payload that cannot identify anything is a finding, not a crash',
     'a fabricated mean does not size the hem series or place the cut',
     'a cut verification that names nobody does not verify',
@@ -104,6 +105,7 @@ SCENARIOS = [
     'an offcut wash condition assigned after the wash decides nothing',
     'an answer changed to delete required frames blocks until it is explained',
     'a macro whose cloth is out of focus is refused even when its rule is sharp',
+    'a motion clip can pass',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

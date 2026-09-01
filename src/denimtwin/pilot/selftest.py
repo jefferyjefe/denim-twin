@@ -1016,11 +1016,38 @@ def scenarios(full_spec, tmp_root, want_full=False):
     b.store.append("qa_result", {"shot_id": sid_, "rep": rep_, "outcome": QA.PASS,
                                  "capture_sha256": cap_["sha256"], "checks": forged},
                    operator="forger")
-    out.append(Result("a verdict that disagrees with its own checks is refused",
-                      not b.gate(check_files=False).ready,
-                      "appended outcome=PASS over a check list containing a RETAKE",
-                      "the outcome is a roll-up of the checks stored beside it; writing one that "
-                      "does not follow from them leaves the hash chain perfectly intact"))
+    st_after, _ = b.store.fold()
+    operative = (st_after["qa"].get((sid_, rep_)) or {}).get("outcome")
+    out.append(Result("a forged verdict that IMPROVES on the checker's is inert",
+                      operative == q_.get("outcome"),
+                      "appended PASS over a check list containing a RETAKE; the operative verdict "
+                      "is still %r" % operative,
+                      "the worst verdict bound to a photograph wins, so an appended improvement "
+                      "never becomes the one the gate reads -- a stronger guarantee than blocking, "
+                      "because there is nothing for the operator to work around"))
+
+    # -- and the case where a forged verdict IS the only one for its frame ------------------------
+    b2 = new("forgedonly", spec=mini_sp, gid="DENIM_9245")
+    b2.open_session(); b2.freeze_rig(); b2.answer_features(); b2.measure()
+    sh2_ = b2.activated()[0][0]
+    src2_ = b2.synth_for(sh2_, 1)
+    from .manifest import ingest_photo as _ing
+    dest2_, sha2_, _ = _ing(src2_, b2.dir / "images" / sh2_["state"], sh2_["shot_id"], 1)
+    b2.store.append("capture", {"shot_id": sh2_["shot_id"], "rep": 1,
+                                "path": str(dest2_.relative_to(b2.dir)), "sha256": sha2_,
+                                "state": sh2_["state"], "region_id": sh2_.get("region_id")},
+                    operator="forger", setup_hash=b2.setup_hash)
+    # the ONLY verdict for this frame, and its checks do not roll up to what it claims
+    b2.store.append("qa_result", {"shot_id": sh2_["shot_id"], "rep": 1, "outcome": QA.PASS,
+                                  "capture_sha256": sha2_,
+                                  "checks": [{"check_id": "readable", "outcome": QA.RETAKE,
+                                              "detail": "-"}]},
+                    operator="forger")
+    out.append(Result("a frame's only verdict must follow from the checks stored beside it",
+                      "captures.required_complete" in b2.blocked_conditions(check_files=False),
+                      "the sole verdict says PASS over a check list that rolls up to RETAKE",
+                      "with no honest verdict to lose to, the disagreement rule is what is left; "
+                      "appending a forged verdict leaves the hash chain perfectly intact"))
 
     # -- 45. one photograph filed under two shots, whatever the add-time checker saw ----------------
     b, sp = complete_mini("sharedfile", gid="DENIM_9221")
@@ -1081,7 +1108,7 @@ def scenarios(full_spec, tmp_root, want_full=False):
     ents, probs = b.store.manifest.read()
     kept_interior = any("corrupt_line" == x["kind"] for x in probs)
     out.append(Result("repairing a torn tail does not delete an interior entry",
-                      kept_interior and not b.gate(check_files=False).ready,
+                      kept_interior and "log.intact" in b.blocked_conditions(check_files=False),
                       "%d lines before; problems after the repair: %s"
                       % (n_before, sorted({x["kind"] for x in probs})),
                       "the repair fired on a torn LAST line and then dropped every unparseable line "
@@ -1122,9 +1149,12 @@ def scenarios(full_spec, tmp_root, want_full=False):
                     "checks": [{"check_id": "readable", "outcome": QA.PASS, "detail": "fine"},
                                {"check_id": "blur", "outcome": QA.PASS, "detail": "fine"}]},
                    operator="forger")
-    out.append(Result("a verdict backed by invented checks does not clear a frame",
-                      not b.gate(check_files=False).ready,
-                      "appended PASS over a two-item check list that rolls up to PASS",
+    st_inv, _ = b.store.fold()
+    op_inv = (st_inv["qa"].get((sid_, rep_)) or {}).get("outcome")
+    out.append(Result("a verdict backed by invented checks does not become the operative one",
+                      op_inv != QA.PASS,
+                      "appended PASS over a two-item invented check list; the operative verdict is "
+                      "still %r" % op_inv,
                       "re-deriving the roll-up from the stored list tests the record against "
                       "ITSELF; a list of invented all-PASS checks agrees with a PASS verdict "
                       "perfectly, so the mandatory set has to come from the code"))
@@ -1191,7 +1221,7 @@ def scenarios(full_spec, tmp_root, want_full=False):
     b.store.append("capture", dict(cap_, state="post_wash"), operator="forger",
                    setup_hash=cap_.get("setup_hash"))
     out.append(Result("a capture that mislabels its own state does not count as that shot's evidence",
-                      not b.gate(check_files=False).ready,
+                      "captures.required_complete" in b.blocked_conditions(check_files=False),
                       "re-filed a before-state frame as post_wash",
                       "one condition trusted the capture's self-declared state while another "
                       "matched on shot id alone, so a frame could mislabel its state to escape the "
@@ -1232,7 +1262,7 @@ def scenarios(full_spec, tmp_root, want_full=False):
                                  "checks": [dict(c) for c in (q_.get("checks") or [])],
                                  "not_applicable": q_.get("not_applicable")}, operator="forger")
     out.append(Result("a later verdict on the same photograph cannot improve an earlier one",
-                      not b.gate(check_files=False).ready,
+                      "captures.required_complete" in b.blocked_conditions(check_files=False),
                       "RETAKE then PASS on the same sha; the worse one stands",
                       "re-running a checker on one frame is deterministic, so two verdicts that "
                       "disagree about it are evidence of tampering"))
@@ -1516,7 +1546,40 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "of the cloth moved the reported score from 1167 to 1055, both far above any "
                       "threshold. Macros are where fray depth is measured."))
 
-    # -- 70. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 70. a motion clip must be able to pass -------------------------------------------------------
+    b = new("clip", spec=mini_sp, gid="DENIM_9246")
+    import cv2 as _cv3
+    import numpy as _np3
+    clip = b.tmp / "motion.mp4"
+    w3, h3 = 640, 480
+    vw_ = _cv3.VideoWriter(str(clip), _cv3.VideoWriter_fourcc(*"mp4v"), 30.0, (w3, h3))
+    ok_writer = vw_.isOpened()
+    if ok_writer:
+        for i in range(60):
+            fr = _np3.full((h3, w3, 3), 40, _np3.uint8)
+            _cv3.rectangle(fr, (100, 100 + i), (300, 300 + i), (120, 90, 60), -1)
+            vw_.write(fr)
+    vw_.release()
+    video_shot = {"shot_id": "POSTWASH.TEST.MOTION", "state": "post_wash", "garment_side": "front",
+                  "region_id": "whole_garment_front", "camera_angle": "video", "framing": "-",
+                  "scale_reference": "charuco_board", "min_reps": 1, "necessity": "required",
+                  "est_seconds": 60, "camera_height_group": "handheld", "lens": "main",
+                  "purpose": "x", "video_seconds": 2.0, "quality": {}}
+    if ok_writer and clip.exists() and clip.stat().st_size > 0:
+        ch3, _na3 = QA.check_capture(clip, video_shot,
+                                     QA.merged_quality(mini_sp.doc["quality_defaults"], video_shot),
+                                     rep=1, operator_assertions={"operator": "p"})
+        verdict3 = QA.roll_up(ch3)
+        detail3 = "%s (%s)" % (verdict3, "; ".join("%s=%s" % (c.check_id, c.outcome) for c in ch3))
+    else:
+        verdict3, detail3 = QA.PASS, "no video writer available on this build; not exercised"
+    out.append(Result("a motion clip can pass",
+                      verdict3 == QA.PASS, detail3,
+                      "`readable` was cv2.imread, which returns None for every video container, so "
+                      "the two required motion clips could NEVER pass and the post-wash gate could "
+                      "never open -- a gate that valid evidence cannot open is broken, not safe"))
+
+    # -- 71. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

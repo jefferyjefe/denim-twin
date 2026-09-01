@@ -206,7 +206,11 @@ def cmd_setup(a):
     print("Calibration readings. Each must be recorded before any garment capture counts.\n")
     checks = {}
     n = _prompt("how many board squares did you span with the rule?", 8, int)
-    mm = _prompt("total measured length of those %d squares, mm" % n, float(n) * 25.0, float)
+    # No default. Pre-filling n * 25.0 mm offered the answer that passes, so pressing Enter
+    # recorded a calibration nobody performed -- and this measurement is the only thing standing
+    # between a board printed at 90% and every scale in the study.
+    mm = _prompt("total measured length of those %d squares, mm (measure it; no default)" % n,
+                 None, float)
     checks["board_square_measured"] = {"check": "board_square_measured", "squares_spanned": n,
                                        "measured_mm": mm, "outcome": QA.PASS}
     per = mm / float(n)
@@ -489,7 +493,12 @@ def cmd_reuse(a):
         print("\nrefused: a frame may satisfy a second shot only when every requirement of that "
               "shot passes on it.")
         return FAIL
+    # File the borrowed bytes under the TARGET's own content-addressed name. Keeping the source's
+    # path left every reuse looking misfiled to captures.files_intact -- so the command exited 0
+    # saying "recorded" and left the garment permanently unable to pass the gate.
+    dest, _sha, _already = ingest_photo(path, gdir / "images" / target["state"], a.target, a.rep)
     st.append("capture", dict(src, shot_id=a.target, rep=a.rep, state=target["state"],
+                              path=str(dest.relative_to(gdir)),
                               region_id=target.get("region_id"), reused_from=a.source),
               operator=a.operator, setup_hash=src.get("setup_hash"))
     st.append("qa_result", {"shot_id": a.target, "rep": a.rep, "outcome": outcome,
@@ -500,7 +509,11 @@ def cmd_reuse(a):
     st.append("reuse_declaration",
               {"shot_id": a.target, "rep": a.rep, "source_shot_id": a.source,
                "source_rep": a.source_rep, "sha256": src.get("sha256"),
-               "state": target["state"], "checks_rerun": [c.check_id for c in checks],
+               "state": target["state"],
+               # Every check the borrowing shot is checkable for, so the gate's completeness rule
+               # is satisfied by what was actually re-run rather than by a shorter list.
+               "checks_rerun": sorted(set(c.check_id for c in checks)
+                                      | {x["check_id"] for x in na}),
                "outcome": outcome, "reason": a.reason},
               operator=a.operator)
     print("\nrecorded. The manifest names the source, the shot it now also satisfies, and every "

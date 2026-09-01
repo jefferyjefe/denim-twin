@@ -75,7 +75,7 @@ APPLICABLE = {
           "duplicate_content", "camera_repositioned"},
     LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned",
             "anatomical_region", "ruler_visible"},
-    VIDEO: {"readable", "duplicate_content"},
+    VIDEO: {"readable", "resolution", "duplicate_content"},
 }
 
 NOT_APPLICABLE_WHY = {
@@ -287,6 +287,39 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
         return [Check("dependencies", UNAVAILABLE,
                       "OpenCV is not installed, so no image check can run",
                       fix="pip install -r requirements.txt")], not_applicable(["dependencies"])
+
+    if cls == VIDEO:
+        # `readable` was cv2.imread, which returns None for every video container -- so the two
+        # required motion clips could NEVER pass, and ready_to_finalize could never open. A gate
+        # that cannot be opened by valid evidence is broken, not safe.
+        cap_ = cv2.VideoCapture(str(path))
+        try:
+            n_frames = int(cap_.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+            fps = float(cap_.get(cv2.CAP_PROP_FPS) or 0.0)
+            vw = int(cap_.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+            vh = int(cap_.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+            got, first = cap_.read()
+        finally:
+            cap_.release()
+        if not got or n_frames < 2 or min(vw, vh) < 8:
+            return [Check("readable", RETAKE,
+                          "this file does not open as a video clip (%d frames, %dx%d)"
+                          % (n_frames, vw, vh), {"frames": n_frames, "width": vw, "height": vh},
+                          fix="re-transfer the clip, or re-record it")], not_applicable(["readable"])
+        secs = (n_frames / fps) if fps > 0 else None
+        checks.append(Check("readable", PASS,
+                            "%dx%d, %d frames%s" % (vw, vh, n_frames,
+                                                    "" if secs is None else ", %.1f s" % secs),
+                            {"frames": n_frames, "fps": fps, "width": vw, "height": vh,
+                             "seconds": secs}))
+        want = shot.get("video_seconds")
+        if want and secs is not None:
+            lo_, hi_ = 0.5 * float(want), 2.5 * float(want)
+            checks.append(Check("resolution", PASS if lo_ <= secs <= hi_ else RETAKE,
+                                "%.1f s (the shot asks for about %.0f s)" % (secs, float(want)),
+                                {"seconds": secs, "wanted": want},
+                                fix="re-record the clip at about the stated length"))
+        return checks, not_applicable(c.check_id for c in checks)
 
     img = image if image is not None else cv2.imread(str(path))
     if img is None:
