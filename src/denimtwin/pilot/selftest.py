@@ -974,7 +974,7 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "vanishing is the one outcome a required photograph may not have"))
 
     # -- 41. a photograph taken before the rig was frozen ------------------------------------------
-    b = new("backdated", spec=mini_sp, gid="DENIM_9215")
+    b = new("pre_freeze", spec=mini_sp, gid="DENIM_9215")
     b.open_session()
     sh_ = mini_sp.shots[0]
     # A capture recorded BEFORE any setup_frozen entry, citing a hash frozen later.
@@ -986,7 +986,7 @@ def scenarios(full_spec, tmp_root, want_full=False):
     out.append(Result("a photograph taken before the rig was frozen is not attributable to it",
                       "rig.captures_attributable" in b.blocked_conditions(check_files=False),
                       "capture at sequence 1 citing a rig frozen at sequence 2",
-                      "attribution was set membership over the whole log, so a frame back-dated a "
+                      "attribution was set membership over the whole log, so a frame logged a "
                       "week before the freeze became attributable to a configuration that did not "
                       "exist when it was taken"))
 

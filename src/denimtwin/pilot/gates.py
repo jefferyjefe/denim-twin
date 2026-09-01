@@ -512,7 +512,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
 
     def c_captures_carry_setup():
         # Set membership was not enough. `known` was every rig hash appearing ANYWHERE in the log,
-        # so a photograph taken (or back-dated) a week before the rig was frozen became attributable
+        # so a photograph taken (or logged before freeze) a week before the rig was frozen became attributable
         # to a configuration that did not exist when it was taken -- attribution by coincidence of
         # spelling. Resolve each capture against the freeze IN EFFECT AT ITS OWN POSITION in the log.
         freezes = sorted(((h.get("seq"), h.get("setup_hash")) for h in state["setup_history"]
