@@ -60,8 +60,14 @@ class Store(object):
         # The chain starts from THIS garment's identity, so a log copied from another garment fails
         # at its first entry instead of verifying perfectly and satisfying the gate for a garment
         # that was never photographed.
+        # The witness sits BESIDE the garments, not inside this one. Re-chaining a log is easy --
+        # the chain is keyless and its seed is public -- and rewriting the .head sidecar next to it
+        # makes the forgery self-consistent. Nothing on one filesystem fixes that. What this catches
+        # is the realistic version: an operator tidying up their own garment directory, who does not
+        # know a second record exists one level up and shared with every other garment.
         self.manifest = Manifest(self.pilot_dir / "manifest.jsonl",
-                                 seed=sha256_text("denim-twin/pilot/" + self.garment_id))
+                                 seed=sha256_text("denim-twin/pilot/" + self.garment_id),
+                                 witness=self.dir.parent / ".pilot_witness.jsonl")
 
     # -- writing ------------------------------------------------------------------------------
 

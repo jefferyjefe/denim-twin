@@ -1749,6 +1749,39 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "while this process holds the exclusive one waits on itself forever. A hang "
                       "is worse than a refusal: the operator cannot tell it from slow work"))
 
+    # -- 70j. a self-consistent forgery of the whole garment directory ----------------------------
+    # The honest limit of a keyless chain: its seed is public, so anyone who can write the garment
+    # directory can re-chain the log, and rewriting the .head beside it makes the forgery agree with
+    # itself. Nothing on one filesystem prevents that. What can be done is to keep one record
+    # OUTSIDE the directory being edited -- which is the realistic version of this: an operator
+    # tidying up their own log, who does not know a second copy exists one level up.
+    b = new("forgeall", gid="DENIM_9260")
+    b.open_session()
+    for i in range(5):
+        b.store.append("note", {"i": i}, operator="selftest")
+    mp_ = pathlib.Path(str(b.store.manifest.path))
+    objs_ = [json.loads(ln) for ln in mp_.read_text().splitlines() if ln.strip()][:3]
+    prev_ = b.store.manifest.seed
+    lines_ = []
+    for o_ in objs_:
+        o_["prev_chain"] = prev_
+        o_["chain"] = MF.sha256_text(prev_ + MF.canonical(
+            {k: v for k, v in o_.items() if k != "chain"}))
+        prev_ = o_["chain"]
+        lines_.append(MF.canonical(o_))
+    mp_.write_text("\n".join(lines_) + "\n")
+    pathlib.Path(str(b.store.manifest.head_path)).write_text("\n".join(
+        MF.canonical({"chain": json.loads(lines_[i])["chain"], "count": i + 1,
+                      "seed": b.store.manifest.seed}) for i in range(len(lines_))) + "\n")
+    caught_ = {x["kind"] for x in b.store.manifest.read()[1]}
+    out.append(Result("a forgery consistent within the garment directory is caught from outside it",
+                      bool(caught_),
+                      "re-chained the log AND rewrote its anchor; caught as %s" % (sorted(caught_)
+                                                                                  or "NOTHING"),
+                      "the chain is keyless and its seed is public, so a forger who can write the "
+                      "directory can make the log and its sidecar agree perfectly. The witness "
+                      "beside the garments is the copy they did not know to edit"))
+
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")
     b.open_session()

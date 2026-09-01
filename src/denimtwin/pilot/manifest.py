@@ -184,9 +184,17 @@ class Manifest(object):
 
     GENESIS = "0" * 64
 
-    def __init__(self, path, seed=None):
+    def __init__(self, path, seed=None, witness=None):
         self.path = Path(path)
         self.seed = seed or self.GENESIS
+        #: A second anchor, OUTSIDE this garment's directory. The chain is keyless and its seed is
+        #: public, so anyone who can write the garment directory can re-chain the log; re-writing
+        #: the .head sidecar beside it then makes the forgery self-consistent and nothing here can
+        #: tell. This does not fix that -- nothing on the same filesystem can -- but it moves one
+        #: record out of the directory an operator edits when they are "tidying up" their own log,
+        #: which is the realistic version of this failure and the one worth catching. Every garment
+        #: writes to the same file, so a forger has to keep the story straight across all of them.
+        self.witness = Path(witness) if witness else None
 
     # -- reading ------------------------------------------------------------------------------
 
@@ -247,6 +255,8 @@ class Manifest(object):
             # integrity problems with the sidecar still on disk saying otherwise.
             if verify and self.head_path.exists():
                 problems.extend(self.check_head(entries))
+            if verify:
+                problems.extend(self.check_witness(entries))
             return entries, problems
         raw = self.path.read_text(errors="replace").split("\n")
         for i, line in enumerate(raw):
@@ -285,6 +295,7 @@ class Manifest(object):
         if verify:
             problems.extend(self.verify_chain(entries))
             problems.extend(self.check_head(entries))
+            problems.extend(self.check_witness(entries))
         return entries, problems
 
     @property
@@ -305,6 +316,57 @@ class Manifest(object):
             f.write(line)
             f.flush()
             os.fsync(f.fileno())
+
+    def _write_witness(self, chain, count):
+        """Append this garment's head to the shared witness. Never fatal: a witness that cannot be
+        written must not stop a photograph being recorded."""
+        if self.witness is None:
+            return
+        try:
+            self.witness.parent.mkdir(parents=True, exist_ok=True)
+            line = canonical({"seed": self.seed, "chain": chain, "count": int(count)}) + "\n"
+            with open(str(self.witness), "a") as f:
+                f.write(line)
+                f.flush()
+                os.fsync(f.fileno())
+        except OSError:
+            pass
+
+    def check_witness(self, entries):
+        """The same rule as check_head, against the copy that lives somewhere else."""
+        if self.witness is None or not self.witness.exists():
+            return []
+        mine = []
+        try:
+            for line in self.witness.read_text(errors="replace").split("\n"):
+                if not line.strip():
+                    continue
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(r, dict) and r.get("seed") == self.seed:
+                    try:
+                        mine.append((int(r.get("count") or 0), r.get("chain")))
+                    except (TypeError, ValueError):
+                        continue
+        except OSError:
+            return []
+        if not mine:
+            return []
+        out = []
+        high = max(c for c, _h in mine)
+        if len(entries) < high:
+            out.append({"kind": "entries_missing",
+                        "detail": "the witness outside this garment's directory records %d entries "
+                                  "and the log has %d" % (high, len(entries))})
+        for count, chain in sorted(mine):
+            if 0 < count <= len(entries) and entries[count - 1].get("chain") != chain:
+                out.append({"kind": "history_rewritten",
+                            "detail": "entry %d does not match the witness written when the log "
+                                      "first reached that length" % count})
+                break
+        return out
 
     def check_head(self, entries):
         """Does the log still end where the sidecar says it ends?
@@ -455,6 +517,7 @@ class Manifest(object):
             f.flush()
             os.fsync(f.fileno())
         self._write_head(entry["chain"], len(entries) + 1)
+        self._write_witness(entry["chain"], len(entries) + 1)
         return entry
 
     def _quarantine_torn(self):
