@@ -198,6 +198,101 @@ the honest answer, and it is recorded as an assertion with a name on it — but 
 can still confirm something untrue. No arrangement of software fixes that. What the system can do is
 make the claim attributable, and it does.
 
+## Round 4 — four angles, twenty-five findings, every one reproduced
+
+Round 4 ran four attackers in isolated worktrees and then sent every finding at medium or above to
+an independent verifier in a fresh worktree, with instructions to reproduce it from the claimant's
+own steps or say precisely what happened instead. **Twenty-five findings, twenty-five reproduced,
+none rejected.** Six critical, eight high, eleven medium.
+
+| angle | what it attacked | findings |
+|---|---|---|
+| chain | the append-only log and its head sidecar | 6 |
+| checks | what each check can and cannot see | 5 |
+| gate | the conditions themselves | 8 |
+| surface | the HTTP server and the command line | 6 |
+
+Rounds 1 and 2 found ways to reach READY without the evidence. Round 3 found checks that could not
+fail. Round 4 found both, and something worse than either.
+
+### The log could be rewritten
+
+`_write_head`'s own docstring claimed the appended anchor made a truncation "detectable however many
+entries are added afterwards". It was a pure length comparison, and the appender repaired it: chop
+five entries, take five more photographs, and the log verifies clean. Delete one and add one and it
+was never detectable at all.
+
+Which matters because the chain is **keyless and its seed is public**. An attacker who can write the
+file can recompute the whole chain. Round 4 did: delete the RETAKE verdict, re-chain the file, run
+one ordinary command, and `precut` printed READY TO CUT with the forged all-PASS verdict standing.
+
+The sidecar records the chain at *every count the log has ever reached*. Two anchors agreeing on a
+count and disagreeing on the chain is proof of a rewrite whatever the log now looks like, and an
+anchor whose count still exists must name that entry's chain. Both variants now stay detected
+however much honest work follows.
+
+### The gate believed the record
+
+Every defence built in rounds 1-3 tests the record against itself: the roll-up must match the
+checks, the checks must cover what the class supports, the excuses must be ones the checker would
+have written. All of it is satisfied by a sufficiently complete forgery. One appended `qa_result`
+carrying an invented all-PASS check list made **a photograph of an empty backdrop** into a passing
+primary whole-garment frame — a pure append, so the hash chain stayed perfect.
+
+The photograph is the one thing an appended line cannot change. The cut gate now re-runs the twelve
+pixel checks on the files themselves and blocks a recorded PASS that does not reproduce. It costs a
+few minutes on a run that happens once, before something irreversible.
+
+### The requirement the whole repeatability arm exists for was unenforced
+
+`relay_between_reps` was only ever checked between repeats *inside* one shot id. The five
+front-overhead and three back-overhead re-lays are written as separate shot ids with `min_reps: 1`,
+so the eight frames the requirement is about were the eight it never saw. Five photographs of one
+lay — re-shot with sensor noise and shake, which is what a hurried operator actually produces —
+passed with `duplicate_content` recording a confident PASS on each.
+
+Fixing it exposed a fixture that was doing exactly the same thing: the positive control had been
+feeding one lay to all five, and passed only because nothing checked.
+
+### Round 3's own fix did not work
+
+`quality_is_evaluable` read the shot's own quality block while every consumer reads
+`merged_quality(defaults, shot)`. Stripping the board-only thresholds from 151 boardless shots left
+them inheriting the same numbers from `quality_defaults`. The fix passed its own check and changed
+nothing for the shots that had never written the key down themselves.
+
+### Two findings punished the honest operator
+
+Worth separating out, because a system that blocks valid evidence is broken in the same way as one
+that accepts invalid evidence, and only round 4 went looking for it.
+
+`append()` had been serialised against other appends since round 1; `read()` — which every fold,
+every gate and every CLI command goes through — took no lock at all. One phone uploading while the
+GATE tab refreshes is two ordinary things at once on a threading server, and the operator was told
+their own log was torn. And a rejected `POST /api/setup` had *already* re-frozen the rig, orphaning
+every calibration reading in the session and turning a READY garment into NOT READY with a 400
+saying nothing had happened.
+
+### The phone app signed nothing
+
+Round 3 concluded: "a determined operator can still confirm something untrue. What the system can do
+is make the claim attributable, and it does." On the front door the operator actually uses, it did
+not. `app.js` read `localStorage.pilot_operator` and **nothing ever set it**, so a session driven
+from the phone recorded the rig freeze, all ten calibration readings, all eight measurements, every
+photograph and every confirmation against the empty string. The server now refuses an unsigned write
+— in `dispatch`, not per handler — and the app asks who is operating.
+
+### The rest
+
+A required motion clip could be a 16x16, two-frame, 0.1-second file. `/api/measure` exploded a JSON
+string into one reading per character, so `"111"` satisfied "three independent caliper readings". A
+completely out-of-focus care label passed, because the blur check was re-taken on `cloth_blur()`,
+which discards bright unsaturated pixels to keep the steel rule out — and a care label is white.
+`precut` hung forever on a manifest entry pointing at a FIFO. Half a session could be shot under a
+rig that was never calibrated. A deviation naming nothing excused everything of its kind, forever,
+and could be written before the departure existed. `rm manifest.jsonl` reported zero integrity
+problems.
+
 ## What the attacks did not break
 
 Worth recording, because they are the parts that held:
@@ -216,4 +311,21 @@ Worth recording, because they are the parts that held:
 
 A finding is not closed by a fix. It is closed by a fix **and** a scenario that fails without it.
 `tools/verify.py` runs the whole suite, so a regression is a red build rather than a discovery on
-cut day.
+cut day. The scenario suite went 25 -> 49 -> 64 -> 78 -> 82 across the rounds, and every number in
+that sequence is an attack somebody actually ran.
+
+## What four rounds are evidence of, and what they are not
+
+Rounds 1, 2, 3 and 4 found 31, 33, 31 and 25 issues. The count is not falling much, and it would be
+dishonest to read the fourth round as convergence. What did change is the KIND: rounds 1 and 2 found
+false READYs, round 3 found checks that could not fail, and round 4 found the two structural
+assumptions underneath all of it — that the log could not be rewritten, and that a record could be
+trusted about the photograph it describes. Neither was true.
+
+So the standing claim is narrow. **These are the attacks that have been tried.** Four rounds of
+independent agents, every finding reproduced by a second agent before it was touched, and every one
+pinned as a scenario. That is a much weaker statement than "the gate cannot be fooled", and it is
+the only one the evidence supports. The chain is keyless; anyone who can write the garment directory
+can write anything in it. What the system offers is that a rewrite is *detectable*, that a verdict
+must survive re-derivation from the photograph, and that every claim carries a name — not that a
+determined person with filesystem access cannot lie.
