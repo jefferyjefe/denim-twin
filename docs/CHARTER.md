@@ -52,7 +52,7 @@ ranges; locked-test-set evaluation; baselines + ablations; demo; report.
 Build the smallest system that makes a falsifiable prediction, then compare it
 with reality. Every added layer must improve the measured prediction.
 
-## Amendment 2026-08-29 — online-only data variant (owner decision)
+## Amendment — online-only data variant (owner decision)
 
 No physical cutting/washing is performed by the project owner. Data comes from online sources:
 (1) **tutorial pairs** — DIY posts/videos showing the same garment before and after a cut-off

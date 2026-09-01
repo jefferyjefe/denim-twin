@@ -1,6 +1,6 @@
 # EXP_0003 — First found before/after pair through the full pipeline
 
-**Date:** 2026-08-29. **Pair:** Thrifted & Taylor'd "DIY Denim Shorts" (thrifted Levi's; front panels of the
+**Step:** 3 **Pair:** Thrifted & Taylor'd "DIY Denim Shorts" (thrifted Levi's; front panels of the
 before/after collages; same wooden hanger in both). Source: data/external/pairs.jsonl, page 4bfef03bd7.
 **Scale:** none in the images; **1.33 mm/px is a placeholder** (hanger bar assumed 40 cm) — all mm numbers are provisional.
 **Cut input:** the tutorial's cut isn't recorded, so the fabric hem was estimated from the registered after-photo

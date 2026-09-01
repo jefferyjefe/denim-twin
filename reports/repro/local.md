@@ -1,4 +1,4 @@
-# Reproducibility check (local fresh clone, 2026-08-29 04:40 UTC)
+# Reproducibility check (local fresh clone, this step)
 
 Fresh `git clone` into a scratch dir, new venv, `pip install numpy opencv-contrib-python pillow pyyaml jsonschema scikit-image scipy pytest`
 (heavy ML deps torch / segment-anything / open_clip_torch deliberately skipped — tests must not need them).

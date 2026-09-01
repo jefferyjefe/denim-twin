@@ -1,6 +1,6 @@
 # EXP_0008 — Is fringe depth predictable from a prior, held out? (first attempt: no)
 
-**Date:** 2026-08-29 06:45 UTC. **Prior:** `data/priors/fringe.json` = paired runs (4 passing the quality bar) + 8 unpaired
+**Step:** 8 **Prior:** `data/priors/fringe.json` = paired runs (4 passing the quality bar) + 8 unpaired
 after-wash samples (`tools/fringe_unpaired.py`, SAM fringe mask, depth / waist width), **conditional on state**
 (after_cut vs after_wash) after the unconditional version over-predicted fringe on cut-only pairs by 10×.
 **Protocol:** `run_pairs_batch.py` with `PAIRS_USE_PRIOR=1` → `run_pair --prior --exclude <self> --state <kind>` (leave-one-out).

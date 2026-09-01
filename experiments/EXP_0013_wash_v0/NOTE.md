@@ -13,7 +13,7 @@ Cut-only pairs (no wash) move by up to ±0.5 — landmark noise on re-laid found
 1–3% shrinkage signal. Shrinkage parameters therefore stay **priors** until metric-scale contributed pairs (coin in frame,
 same lay) exist; the contributor form already asks for exactly that.
 
-## Part B — batch A/B, `--wash median` vs none, 11 usable pairs (RECOMPUTED 2026-08-29 after review 4)
+## Part B — batch A/B, `--wash median` vs none, 11 usable pairs (RECOMPUTED step 13 after review 4)
 The first version of this table was scored against a moving reference: `run_pair --wash` reassigned the garment/removed
 masks to the *shrunk* ones, and those masks define `garment_before` in `compare.py`, i.e. the null baselines themselves
 (review 4, finding 5 — null IoU drifted by up to 0.017, the same size as the effects being claimed). Scoring masks are
@@ -61,7 +61,7 @@ Caveat recorded by the same review (finding 11): on the real-pairs path `compare
 both masks, so the moment initialisation is the identity there and the whole recovery comes from ECC. The moment step
 does its job in the synthetic tests, where the two masks genuinely differ.
 
-## Part D — the shrinkage prior has no verified source behind its anisotropy (2026-08-29)
+## Part D — the shrinkage prior has no verified source behind its anisotropy (step 13)
 The module says "~1–3% warp, ~0.5–2% weft" for sanforized denim. Searching for the primary evidence found exactly one
 verifiable measurement paper (LITERATURE.md entry 14, Talu 2021): a printed 50 cm square photographed before and after
 washing, six denim types × five samples, dimensional change 0.04–5.0% in one direction and 0.04–1.3% in the other, with
@@ -74,7 +74,7 @@ Consequence: `shrink_along_frac` / `shrink_across_frac` stay unsupported priors,
 and the honest statement is "we do not know the anisotropy". A single contributed pair with a coin in frame would
 measure it directly at ~0.5% precision — the same precision the published vision method achieves.
 
-## Part E — fourth adversarial review (2026-08-29): 8 code bugs, 6 documentation overclaims
+## Part E — fourth adversarial review (step 13): 8 code bugs, 6 documentation overclaims
 A reviewer agent was pointed at everything written today and told to write failing tests, not fixes. It found:
 
 | # | bug | consequence | fixed in |

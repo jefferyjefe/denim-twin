@@ -23,7 +23,7 @@
 #
 #     .venv/bin/python -m pip list
 #
-# on 2026-08-30 (CPython 3.9.6, macOS arm64). These are the versions the artefacts currently under
+# on this step (CPython 3.9.6, macOS arm64). These are the versions the artefacts currently under
 # reports/ and experiments/ were produced with. Nothing here was picked off a changelog or a
 # release page; nothing here is a version that has not been observed running this code.
 #

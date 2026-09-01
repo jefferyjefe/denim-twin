@@ -94,7 +94,7 @@ field is missing, because a rights field invented by a tool is worth nothing.
 {
   "dataset": "EditGarment",
   "source_url": "https://<the page you obtained access through>",
-  "retrieved_at": "2026-07-04",
+  "retrieved_at": "<ISO-8601>",
   "generation_method": "<how the edited frames were produced, per the dataset's own paper>",
   "rights": {
     "license_id": "<the identifier or name of the agreement you accepted>",

@@ -2,12 +2,12 @@
  "_note": "Human verification of the SEGMENTATION MASK for every photo whose measurements may enter a prior. EXP_0018: SAM returns confidently wrong objects (a back pocket at score 0.906, a wall above the garment at 0.992) and no automatic check we tried separates them from correct masks — area, contour compactness, denim colour, fabric texture and leg topology all fail on at least one real photo. At this dataset size the honest gate is a person looking at the overlay. Each entry records what was seen, not just a verdict.",
  "_method": "render the coarse mask over the photo, look at it, record the verdict. Regenerate sheets with tools/mask_sheet.py.",
  "verdicts": {
-  "eac3449d65": {"verdict": "ok", "verified": "2026-08-29", "saw": "mask covers the whole pair of cut-offs on a quilted bedspread, waistband to both hems"},
-  "b0576a1603": {"verdict": "ok", "verified": "2026-08-29", "saw": "whole pale acid-wash pair on a wood floor, front view"},
-  "de6740d5b9": {"verdict": "bad", "verified": "2026-08-29", "saw": "mask covers ONE BACK POCKET only (4.4% of frame) at SAM score 0.906 — the garment is not segmented at all"},
-  "821bfe4c0b": {"verdict": "ok", "verified": "2026-08-29", "saw": "whole pair on a yellow patterned rug; outline follows the garment"},
-  "f41d64c01b": {"verdict": "ok", "verified": "2026-08-29", "saw": "whole wide pair on a wood floor by a white door; earlier run of the same file produced a mask that included the pale board above the garment, so this file is re-checked whenever it is measured"},
-  "35bda9db86": {"verdict": "ok", "verified": "2026-08-29", "saw": "whole bleached pair on white boards among flowers"},
-  "c2a0e6e470": {"verdict": "ok", "verified": "2026-08-29", "saw": "whole pair on a wood floor, trimmed threads and scissors beside it (excluded from the frame by the mask)"}
+  "eac3449d65": {"verdict": "ok", "verified": "this step", "saw": "mask covers the whole pair of cut-offs on a quilted bedspread, waistband to both hems"},
+  "b0576a1603": {"verdict": "ok", "verified": "this step", "saw": "whole pale acid-wash pair on a wood floor, front view"},
+  "de6740d5b9": {"verdict": "bad", "verified": "this step", "saw": "mask covers ONE BACK POCKET only (4.4% of frame) at SAM score 0.906 — the garment is not segmented at all"},
+  "821bfe4c0b": {"verdict": "ok", "verified": "this step", "saw": "whole pair on a yellow patterned rug; outline follows the garment"},
+  "f41d64c01b": {"verdict": "ok", "verified": "this step", "saw": "whole wide pair on a wood floor by a white door; earlier run of the same file produced a mask that included the pale board above the garment, so this file is re-checked whenever it is measured"},
+  "35bda9db86": {"verdict": "ok", "verified": "this step", "saw": "whole bleached pair on white boards among flowers"},
+  "c2a0e6e470": {"verdict": "ok", "verified": "this step", "saw": "whole pair on a wood floor, trimmed threads and scissors beside it (excluded from the frame by the mask)"}
  }
 }

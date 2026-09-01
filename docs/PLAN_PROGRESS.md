@@ -1,4 +1,4 @@
-# Plan → implementation map (2026-08-29)
+# Plan → implementation map
 
 Every artefact traced to the section of the original plan it serves. "Evidence" = the experiment note with numbers.
 
@@ -30,7 +30,7 @@ Every artefact traced to the section of the original plan it serves. "Evidence" 
 | §2/§3 the product itself | one photo + cut spec -> prediction with interval, no ground truth needed | `tools/predict.py`, `tools/score_predict.py` | end-to-end tested. **The "dead heat with crop-only" this row used to report is VOID (EXP_0034):** `compare.py:42` builds the crop-only null from the `--keep` mask `score_predict.py` hands it, which is predict's OWN keep mask, so the null crops at the cut line the model predicted and the comparison was the prediction against itself. Against an independent baseline (cut at the leave-one-out median inseam fraction of the other pairs) the product path wins — see README.md and EXP_0034 for current numbers, which are regenerated after EXP_0038 changed the pair artefacts. |
 | §7 Phase 0/1/2 | charter, protocol, literature, 2D baseline | `docs/`, `protocol/`, `canon/` | gate_0 ✔, gate_2 ✔; gate_1 still unmet but for a stated, measured reason (EXP_0021) — a real repeat capture is the only thing that can close it |
 | §9 collaboration | advisor brief | `outreach/ADVISOR_BRIEF.md` | draft |
-| §12 weekly cadence | weekly note | `notes/weekly/2026-W35.md` | written |
+| §12 weekly cadence | weekly note | `notes/weekly/step-log.md` | written |
 | §13/§14 risks, kill rules | tuning rule, benchmark, scope check | `docs/GATES.md`, `bench.py`, `scope_check.py` | enforced |
 | §15 discovery | interview guide, outreach copy | `discovery/` | not yet run (owner action) |
 
