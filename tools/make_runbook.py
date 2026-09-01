@@ -50,7 +50,17 @@ def all_present_answers(spec):
 
 def build(spec):
     answers = all_present_answers(spec)
-    shots, meta = PLAN.activate(spec, answers, {"leg_opening_cm": {"mean": 20.0}})
+    # A measurement carries READINGS; its mean is recomputed from them and never read off the
+    # record. Supplying only a mean here described an UNMEASURED leg opening, so every templated hem
+    # series silently failed to expand and the runbook's own totals -- the ones the operator plans
+    # their day around -- were short by about a hundred frames and two hours. 40 cm is a plausible
+    # adult leg-opening circumference; the app replaces it with the real one after `measure`.
+    shots, meta = PLAN.activate(
+        spec, answers, {"leg_opening_cm": {"name": "leg_opening_cm", "readings": [40.0, 40.1]}})
+    if meta["expansion_blocked"]:
+        raise SystemExit("templated series did not expand; the runbook's totals would be wrong:\n  "
+                         + "\n  ".join("%s: %s" % (x["shot_id"], x["why"])
+                                       for x in meta["expansion_blocked"]))
     ordered = PLAN.order(spec, shots)
     return shots, ordered
 

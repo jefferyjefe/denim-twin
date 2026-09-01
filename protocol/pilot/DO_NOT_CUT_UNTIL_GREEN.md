@@ -46,7 +46,7 @@ this is safe' is not permission.
 | condition | what must be true |
 |---|---|
 | `wash.actual` | what actually happened, with every departure from the plan recorded |
-On the most demanding garment the plan can describe, that is **201 required frames** before
+On the most demanding garment the plan can describe, that is **221 required frames** before
 the cut.
 
 ## The four results a photograph can get

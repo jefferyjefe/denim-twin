@@ -12,24 +12,24 @@ treated as PRESENT, so the frame is planned rather than dropped.
 |---|---|---|---|
 | `hem_left_back`  | back | 1 | yes / yes |
 | `hem_left_cuff` *(conditional)* | front | 4 | yes / yes |
-| `hem_left_edge_profile`  | edge | 2 | yes / yes |
+| `hem_left_edge_profile`  | edge | 7 | yes / yes |
 | `hem_left_fold_construction` *(conditional)* | front | 1 | yes / yes |
-| `hem_left_front`  | front | 8 | yes / yes |
+| `hem_left_front`  | front | 13 | yes / yes |
 | `hem_left_inseam_junction`  | front | 4 | yes / yes |
 | `hem_left_outseam_junction`  | front | 2 | yes / yes |
 | `hem_right_back`  | back | 1 | yes / yes |
 | `hem_right_cuff` *(conditional)* | front | 2 | yes / yes |
-| `hem_right_edge_profile`  | edge | 2 | yes / yes |
+| `hem_right_edge_profile`  | edge | 7 | yes / yes |
 | `hem_right_fold_construction` *(conditional)* | front | 1 | yes / yes |
-| `hem_right_front`  | front | 2 | yes / yes |
+| `hem_right_front`  | front | 7 | yes / yes |
 | `hem_right_inseam_junction`  | front | 4 | yes / yes |
 | `hem_right_outseam_junction`  | front | 2 | yes / yes |
 | `raw_edge_left_back`  | back | 1 | yes / yes |
-| `raw_edge_left_front`  | front | 9 | yes / yes |
-| `raw_edge_left_profile`  | edge | 4 | yes / yes |
+| `raw_edge_left_front`  | front | 19 | yes / yes |
+| `raw_edge_left_profile`  | edge | 14 | yes / yes |
 | `raw_edge_right_back`  | back | 1 | yes / yes |
-| `raw_edge_right_front`  | front | 9 | yes / yes |
-| `raw_edge_right_profile`  | edge | 4 | yes / yes |
+| `raw_edge_right_front`  | front | 19 | yes / yes |
+| `raw_edge_right_profile`  | edge | 14 | yes / yes |
 
 ## labels
 
@@ -93,15 +93,15 @@ treated as PRESENT, so the frame is planned rather than dropped.
 |---|---|---|---|
 | `offcut_left_face_back`  | back | 2 | yes / yes |
 | `offcut_left_inseam`  | front | 0 | yes / yes |
-| `offcut_left_original_hem`  | front | 2 | yes / yes |
+| `offcut_left_original_hem`  | front | 12 | yes / yes |
 | `offcut_left_outseam`  | front | 0 | yes / yes |
-| `offcut_left_raw_edge`  | front | 2 | yes / yes |
+| `offcut_left_raw_edge`  | front | 12 | yes / yes |
 | `offcut_left_whole`  | whole | 4 | yes / yes |
 | `offcut_right_face_back`  | back | 2 | yes / yes |
 | `offcut_right_inseam`  | front | 0 | yes / yes |
-| `offcut_right_original_hem`  | front | 2 | yes / yes |
+| `offcut_right_original_hem`  | front | 12 | yes / yes |
 | `offcut_right_outseam`  | front | 0 | yes / yes |
-| `offcut_right_raw_edge`  | front | 2 | yes / yes |
+| `offcut_right_raw_edge`  | front | 12 | yes / yes |
 | `offcut_right_whole`  | whole | 4 | yes / yes |
 
 ## pockets hardware
