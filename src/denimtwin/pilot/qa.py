@@ -360,6 +360,26 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                                  "frame with margin",
                                      "subject_present": "the garment is not filling enough of the "
                                                         "frame to measure"}[name]))
+        # On any frame that carries a rule, the blur verdict is re-taken on the CLOTH. The rule is
+        # the sharpest thing in a macro and dominated the score, so an out-of-focus fabric passed.
+        if applies("blur") and (shot.get("scale_reference") in ("ruler", "both")
+                                or quality.get("requires_ruler")):
+            cb = Q.cloth_blur(img)
+            floor = quality.get("min_blur", 80.0)
+            for c in checks:
+                if c.check_id == "blur":
+                    if cb is None:
+                        c.outcome = UNAVAILABLE
+                        c.detail = ("the fabric could not be separated from the rule, so the "
+                                    "sharpness of the CLOTH could not be measured")
+                    elif cb < floor:
+                        c.outcome = RETAKE
+                        c.detail = ("the fabric is out of focus (cloth sharpness %.0f, needs %.0f). "
+                                    "The frame's overall blur score is dominated by the rule, which "
+                                    "can be sharp while the cloth is not." % (cb, floor))
+                    else:
+                        c.detail = "%s; cloth sharpness %.0f" % (c.detail, cb)
+                    c.evidence = dict(c.evidence or {}, cloth_blur=cb)
         board_hits = [r for r in report.reasons if "board corners" in r]
         if needs_board and applies("board_corners"):
             checks.append(Check("board_corners", RETAKE if board_hits else PASS,

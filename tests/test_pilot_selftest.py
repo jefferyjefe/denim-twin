@@ -103,6 +103,7 @@ SCENARIOS = [
     'a deviation that names only a field does not excuse whatever happened',
     'an offcut wash condition assigned after the wash decides nothing',
     'an answer changed to delete required frames blocks until it is explained',
+    'a macro whose cloth is out of focus is refused even when its rule is sharp',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

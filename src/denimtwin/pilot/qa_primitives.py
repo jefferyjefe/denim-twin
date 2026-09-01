@@ -247,6 +247,45 @@ def _angle_delta(a, b):
 
 # --- similarity ------------------------------------------------------------------------------
 
+#: A steel rule is bright and almost colourless. These are the bands that identify it well enough to
+#: keep it out of a measurement of the CLOTH; they are deliberately conservative, because excluding
+#: a little denim costs nothing and including the rule costs the whole check.
+RULE_MIN_VALUE = 170
+RULE_MAX_SATURATION = 60
+
+
+def cloth_blur(img, exclude_rect=None):
+    """Sharpness of the FABRIC, with the rule and the board kept out of it.
+
+    `capture/quality.check_image` scores blur over its Otsu foreground and excludes the calibration
+    board from it -- but nothing excluded the steel rule, and on a macro the rule is the sharpest,
+    highest-contrast thing in the frame. Measured: blurring the cloth of a hem macro with a 6-sigma
+    Gaussian moved the reported blur score from 1167 to 1055, both far above any threshold, so a
+    completely out-of-focus fabric passed. Macros are where fray depth is measured; a blurred one is
+    not a measurement of anything.
+
+    Returns None when there is not enough cloth left to judge.
+    """
+    if img is None:
+        return None
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    keep = ~((hsv[:, :, 2] >= RULE_MIN_VALUE) & (hsv[:, :, 1] <= RULE_MAX_SATURATION))
+    if exclude_rect:
+        x, y, w, h = [int(v) for v in exclude_rect]
+        keep[max(0, y - 8):y + h + 8, max(0, x - 8):x + w + 8] = False
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Resolution-normalised, the same way check_image does it, so the numbers are comparable.
+    scale = 1500.0 / max(gray.shape)
+    if scale < 1:
+        gray = cv2.resize(gray, None, fx=scale, fy=scale)
+        keep = cv2.resize(keep.astype(np.uint8), (gray.shape[1], gray.shape[0]),
+                          interpolation=cv2.INTER_NEAREST).astype(bool)
+    if keep.sum() < 1000:
+        return None
+    lap = cv2.Laplacian(gray, cv2.CV_64F)
+    return float(lap[keep].var())
+
+
 def content_sha256(path):
     h = hashlib.sha256()
     with open(str(path), "rb") as f:

@@ -1480,7 +1480,43 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "every condition, so a later answer could delete the frames an earlier one "
                       "required with nothing to look at"))
 
-    # -- 69. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 69. a macro whose cloth is out of focus and whose rule is sharp ------------------------------
+    b = new("blurcloth", spec=mini_sp, gid="DENIM_9244")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    import cv2 as _cv
+    macro_shot = {"shot_id": "BEFORE.TEST.MACRO", "state": "before", "garment_side": "n/a",
+                  "region_id": "hem_left_front", "camera_angle": "macro_perpendicular",
+                  "framing": "-", "scale_reference": "ruler", "min_reps": 1,
+                  "necessity": "required", "est_seconds": 30,
+                  "camera_height_group": "m", "lens": "macro", "purpose": "x",
+                  "quality": {"min_blur": 80.0, "requires_ruler": True}}
+    sharp = b.tmp / "macro_sharp.png"
+    synth_capture(str(sharp), subject="hem_macro", mm_per_px=0.04, size=(2600, 1950), seed=3,
+                  board=False, ruler=True)
+    im = _cv.imread(str(sharp))
+    y0 = int(1950 * 0.86)
+    soft = im.copy()
+    soft[:y0] = _cv.GaussianBlur(im[:y0], (0, 0), 6.0)
+    softp = b.tmp / "macro_cloth_blurred.png"
+    _cv.imwrite(str(softp), soft)
+    qm = QA.merged_quality(mini_sp.doc["quality_defaults"], macro_shot)
+    verdicts = {}
+    for lbl, path_ in (("sharp", sharp), ("cloth blurred, rule sharp", softp)):
+        ch, _na = QA.check_capture(path_, macro_shot, qm, rep=1, board=None, board_spec=None,
+                                   image=_cv.imread(str(path_)),
+                                   operator_assertions={"operator": "p", "ruler_visible": True,
+                                                        "region_confirmed": True})
+        verdicts[lbl] = [c.outcome for c in ch if c.check_id == "blur"][0]
+    out.append(Result("a macro whose cloth is out of focus is refused even when its rule is sharp",
+                      verdicts.get("sharp") == QA.PASS
+                      and verdicts.get("cloth blurred, rule sharp") == QA.RETAKE,
+                      "; ".join("%s -> blur %s" % kv for kv in sorted(verdicts.items())),
+                      "blur was scored over a foreground that excluded the board and not the rule, "
+                      "and on a macro the rule is the sharpest thing in the frame -- a 6-sigma blur "
+                      "of the cloth moved the reported score from 1167 to 1055, both far above any "
+                      "threshold. Macros are where fray depth is measured."))
+
+    # -- 70. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

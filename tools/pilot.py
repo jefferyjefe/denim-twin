@@ -69,10 +69,30 @@ def load_spec():
 
 
 def garment_dir(gid):
+    # The same shape the API's route regex enforces. A value the CLI accepts and the API refuses is
+    # a second way in with a different set of rules, and the API's comments record what such values
+    # did to a garment the last time.
+    import re as _re
+    if not _re.fullmatch(r"DENIM_[0-9]{4}", str(gid or "")):
+        raise SystemExit("%r is not a garment id; they look like DENIM_0003" % gid)
     d = GARMENTS / gid
     if not d.exists():
         raise SystemExit("no such garment: %s (looked in %s)" % (gid, d))
     return d
+
+
+def _rep_arg(v):
+    n = int(v)
+    if not (1 <= n <= 99):
+        raise argparse.ArgumentTypeError("a repeat index is between 1 and 99")
+    return n
+
+
+def _claim_arg(v):
+    v = str(v).strip()
+    if not v or not len(v) <= 64:
+        raise argparse.ArgumentTypeError("a claim must say what it verifies, briefly")
+    return v
 
 
 def board():
@@ -91,17 +111,28 @@ def _fmt_time(seconds):
 
 
 def _prompt(text, default=None, cast=str):
+    """Ask, and cast. The DEFAULT goes through the cast too.
+
+    Returning the default uncast meant a bool feature whose default is the string "y" was logged as
+    a string, and the condition language reads a non-empty string as true while `instance_count`
+    and the intake validator read it as something else -- so accepting the default on a second pass
+    through the questionnaire could change what the plan required.
+    """
     suffix = " [%s]" % default if default is not None else ""
     while True:
         raw = input("%s%s: " % (text, suffix)).strip()
-        if not raw and default is not None:
-            return default
         if not raw:
-            continue
+            if default is None:
+                continue
+            raw = default
         try:
             return cast(raw)
         except (ValueError, TypeError) as e:
             print("  not valid (%s)" % e)
+            if raw == default:
+                # The default itself does not survive its own cast, so stop offering it rather than
+                # looping on it forever.
+                default = None
 
 
 def _bool(s):
@@ -834,7 +865,7 @@ def main(argv=None):
     s = add("add", cmd_add)
     s.add_argument("shot")
     s.add_argument("file")
-    s.add_argument("--rep", type=int, default=1)
+    s.add_argument("--rep", type=_rep_arg, default=1)
     s.add_argument("--confirm", action="append",
                    help="record an operator assertion, e.g. --confirm ruler_visible")
     s = add("deviation", cmd_deviation)
@@ -847,14 +878,14 @@ def main(argv=None):
     s = add("reuse", cmd_reuse)
     s.add_argument("source", help="the shot id whose photograph is being borrowed")
     s.add_argument("target", help="the shot id it should also satisfy")
-    s.add_argument("--source-rep", type=int, default=1, dest="source_rep")
-    s.add_argument("--rep", type=int, default=1)
+    s.add_argument("--source-rep", type=_rep_arg, default=1, dest="source_rep")
+    s.add_argument("--rep", type=_rep_arg, default=1)
     s.add_argument("--reason", default=None)
     s.add_argument("--confirm", action="append")
     s = add("confirm", cmd_confirm)
-    s.add_argument("claim")
+    s.add_argument("claim", type=_claim_arg)
     s.add_argument("--shot", default=None)
-    s.add_argument("--rep", type=int, default=None)
+    s.add_argument("--rep", type=_rep_arg, default=None)
     s.add_argument("--deny", action="store_true")
     s.add_argument("--note", default=None)
     s.add_argument("--verifier", default=None)
