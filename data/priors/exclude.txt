@@ -8,4 +8,4 @@ d52a3ff876  # jeans at ~45° on a patterned rug; coarse mask + waistband gate fa
 f542c57cec  # before is a folded, text-overlaid graphic (one leg over the other); the after-wash photo is a good UNPAIRED fringe sample
 964dc8a1f9  # before folded lengthwise; after-wash shorts are cuffed + slashed (distressing sample, not a raw fringe hem)
 4c30342e20  # TEST submission (issue #1): plumbing dry run using two DIFFERENT garments; never use for priors or bench
-4c30342e20  TEST submission (issue #1) REMOVED from pairs.jsonl 2026-08-29: it re-used thriftedandtaylord's after-wash photo, so one photograph carried two pair ids and leave-one-out could not exclude it (review 5, finding 4)
+4c30342e20  TEST submission (issue #1) REMOVED from pairs.jsonl this step: it re-used thriftedandtaylord's after-wash photo, so one photograph carried two pair ids and leave-one-out could not exclude it (review 5, finding 4)

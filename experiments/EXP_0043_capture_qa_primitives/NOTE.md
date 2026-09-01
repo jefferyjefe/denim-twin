@@ -41,7 +41,7 @@ the frame.
 
 ## B. What separates five re-lays from one lay photographed five times
 
-> **Corrected 2026-08-31.** The first version of this section reported that image similarity
+> **Corrected step 43.** The first version of this section reported that image similarity
 > *cannot* separate the two cases, and built the check on a high-pass of the registered garment
 > interior. Both were artefacts of a wrong model of the control. It modelled "the same lay
 > photographed again" as a FRESH RENDER with a new texture seed — which changes the cloth's own

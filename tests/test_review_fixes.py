@@ -1,4 +1,4 @@
-"""Regression tests from the 2026-08-28 adversarial review (each originally demonstrated a bug)."""
+"""Regression tests from the first adversarial review (each originally demonstrated a bug)."""
 import sys, os, json, subprocess
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 sys.path.insert(0, os.path.dirname(__file__))

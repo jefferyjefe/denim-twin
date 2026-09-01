@@ -1,6 +1,6 @@
 # EXP_0009 — First calibration audit of fringe-depth prediction intervals (plan §4.9 / §6.4)
 
-**Date:** 2026-02-19 07:15 UTC. **Intervals:** run_pair now emits an 80% interval for fringe depth per pair
+**Step:** 9 **Intervals:** run_pair now emits an 80% interval for fringe depth per pair
 (median = state-conditional leave-one-out prior × waist width; half-width = 1.28 × prior sd × waist width).
 **Audit:** `tools/calibration_audit.py` on 8 LOO runs.
 

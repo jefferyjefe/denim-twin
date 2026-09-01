@@ -22,7 +22,7 @@ cases (0.009 vs 0.075). Both are reported; neither is a fray classifier on its o
 **`p90 > 0` IS a threshold on `rough_fraction`, at 0.10.** They are the same test: the 90th percentile of a
 non-negative integer array is positive exactly when more than a tenth of its entries are. Everything the p90 rule
 does is therefore "call it frayed when more than 10% of hem columns deviate", and the interesting question is where
-that 0.10 sits relative to real photographs. Measured on the 16 photographs available 2026-08-29 under consensus
+that 0.10 sits relative to real photographs. Measured on the 16 photographs available under consensus
 segmentation (`reports/fringe_methods/controls_roughness.json`, `reports/repeatability/rows.json`):
 
     9 finished-hem controls   rough_fraction 0.000 - 0.073
@@ -40,7 +40,7 @@ but *decorative* hem (scallops with a period near that window) reads as fray at 
 garments measure. It is a spatial-frequency statistic, not a fray detector, and it is only meaningful on a mask that
 has been verified to be the garment (EXP_0018/0019).
 
-Measured on the photos available 2026-08-29 with consensus segmentation: p90 > 0 on 0 of 9 high-resolution
+Measured on the photos available with consensus segmentation: p90 > 0 on 0 of 9 high-resolution
 finished-hem controls and 4 of 7 frayed garments.
 """
 import numpy as np

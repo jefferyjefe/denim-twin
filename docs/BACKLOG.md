@@ -101,7 +101,7 @@ most found pairs lack — so it is **blocked on data**, not on code.
   the WORKING TREE.** The whole job is one inline shell command in the plist: pull --rebase, ingest,
   fetch, `run_pairs_batch.py`, `report_pairs.py`, `fit_fringe.py` (which rewrites the tracked prior),
   `make_gallery.py`, `bench.py`, then `git add … && git commit && git push`. It never runs
-  `tools/verify.py`. On 2026-08-30 it fired while `tools/run_pair.py` held an uncommitted change and
+  `tools/verify.py`. In a later step it fired while `tools/run_pair.py` held an uncommitted change and
   regenerated eight pair directories with code that was not in any commit — the review-7 defect
   (artefacts whose producer is not in history), automated and self-pushing. It was stopped
   mid-batch and the tracked files restored; `experiments/pairs` verified byte-identical afterwards.

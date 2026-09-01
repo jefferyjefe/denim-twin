@@ -13,7 +13,7 @@ Good photos (any phone is fine):
 
 Photos are released under CC BY 4.0 with your GitHub username as credit (or anonymously). Only submit photos you took.
 
-## Leave the cut edge RAW, if you have the choice (added 2026-08-29)
+## Leave the cut edge RAW, if you have the choice (added later)
 
 The single most useful thing a contribution can do right now. A **raw** (unfinished) cut edge is the
 only kind that frays; a cuffed or hemmed edge does not, however it is washed and however good the
@@ -32,7 +32,7 @@ So, in order of usefulness to us:
 
 If you were going to cuff them anyway, a photograph of the raw edge *before* you cuff is enough.
 
-## Please also send one close-up of the hem (added 2026-08-29)
+## Please also send one close-up of the hem (added later)
 
 We found (EXP_0015) that at ordinary flat-lay distance the fringe is only a few pixels deep, which is the same size as
 the error in the garment outline — so a cuffed hem and a frayed hem measure identically and **no fringe depth we have
@@ -45,7 +45,7 @@ recorded is real**. One extra photo fixes it:
 That single photo is worth more to this project than the rest of the set, because it is the only one where the thing we
 are trying to predict is actually resolvable.
 
-## How big does the photo need to be? (added 2026-08-29)
+## How big does the photo need to be? (added later)
 
 Our fray measurement only works above a certain scale, and we measured where: in the whole-garment photo the
 **waistband should span at least ~800 pixels** — any phone photo taken from about a metre away does this, so it is
@@ -54,7 +54,7 @@ rarely a problem in practice. Below roughly 600 px of waistband we cannot tell a
 The hem close-up described above is still the reliable route, because it puts the fringe at a scale where it is
 resolvable rather than a few pixels deep.
 
-## Take the after-wash photo twice (added 2026-08-29)
+## Take the after-wash photo twice (added later)
 
 If you send one extra thing, send this: after the after-wash flat-lay, **put the phone down, pick it up again, and take
 the same photo a second time.** Nothing about the garment changes between the two.

@@ -36,7 +36,7 @@
 # ---------------------------------------------------------------------------------------------
 # `-c constraints.txt` pins the transitive closure as well as the packages named here, and makes
 # it impossible for this file and requirements.txt to disagree about a shared version without pip
-# aborting. Every version was read from the maintainer's working virtualenv on 2026-08-30; these
+# aborting. Every version was read from the maintainer's working virtualenv on this step; these
 # are the versions the committed results were produced with. See constraints.txt for provenance.
 -c constraints.txt
 

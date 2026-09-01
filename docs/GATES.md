@@ -9,7 +9,7 @@
 - **Gate 6** — Learned residual improves real-outcome similarity without degrading unchanged-region identity.
 - **Gate 7** — Full system beats generative + procedural baselines on physical matching AND identity.
 
-**Baseline rule (2026-08-29, EXP_0034):** a baseline a gate is claimed against must not be derived from the
+**Baseline rule (EXP_0034):** a baseline a gate is claimed against must not be derived from the
 model's own output. `null:crop-only` fails this: `compare.py` builds it from the `--keep` mask it is handed and
 `score_predict.py` hands it predict's own keep mask, so it crops at the cut line the model predicted. With
 `--wash none` the fringe is 0.0 px and the null and the prediction are the same object (median IoU 0.99959, one
@@ -38,7 +38,7 @@ this gate should not be pursued as posed. What remains open is converting **stat
 (a named length, a length in mm, a line marked on the photo) — not a garment feature, untested here, and blocked
 on the mm/px scale most found pairs lack.
 
-**Tuning rule (2026-08-29):** heuristic thresholds in `canon/autolm.py`, `canon/hemfit.py`, `canon/upright.py` and `canon/warp.py`
+**Tuning rule:** heuristic thresholds in `canon/autolm.py`, `canon/hemfit.py`, `canon/upright.py` and `canon/warp.py`
 change only when evaluated on ≥5 usable pairs with `tools/report_pairs.py` output attached to the commit.
 `canon/upright.py` was added to the rule by EXP_0022, which changed the upright deadband from 8° to 0°; that
 A/B (7 pairs, `tools/compare_upright_ab.py`) was **inconclusive on the pair metrics** and the change rests on a

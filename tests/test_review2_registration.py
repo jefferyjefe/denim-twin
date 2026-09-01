@@ -1,4 +1,4 @@
-"""Review 2 (2026-08-29): registration + auto-landmark interaction. Each test demonstrates a bug (expected to FAIL)."""
+"""Review 2: registration + auto-landmark interaction. Each test demonstrates a bug (expected to FAIL)."""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src")); sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np

@@ -21,7 +21,7 @@ Rules: only the harvester and report-only agents write to `main`, and only under
 `data/external/`. Anything touching `src/`, `tools/`, `tests/`, `docs/` goes to an `agent/*` branch.
 Local plists live in `ops/`; install with `cp ops/*.plist ~/Library/LaunchAgents/ && launchctl load ...`.
 
-## Status 2026-08-29 (06:55 UTC): ALL cloud routines DISABLED
+## Status: ALL cloud routines DISABLED
 Every cloud run (including a no-tool smoke test) stalls after "Claude Code process started" with no transcript
 events. A no-tool smoke test also never produced a transcript event, so every routine was disabled to stop stuck sessions piling up. Re-enable in https://claude.ai/code/routines if the environment is fixed. GitHub Actions (`.github/workflows/tests.yml`) now runs the test suite on every push.
 Local launchd jobs (ops/*.plist) are the working automation: capture-QA (5 min), harvest curator (hourly),

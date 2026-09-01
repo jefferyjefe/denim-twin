@@ -1,6 +1,6 @@
 # EXP_0001 — Can marketplace / retail listing photos feed the pipeline?
 
-**Date:** 2026-01-07  **Code:** commit after "Manual landmark annotator"  **Data:** 1 Levi's retail photo set, 1 Grailed used listing
+**Step:** 1  **Code:** commit after "Manual landmark annotator"  **Data:** 1 Levi's retail photo set, 1 Grailed used listing
 
 ## Hypothesis
 Listing photos (new retail + second-hand) are usable as (a) pipeline test inputs and (b) pretraining data for segmentation/landmarks.

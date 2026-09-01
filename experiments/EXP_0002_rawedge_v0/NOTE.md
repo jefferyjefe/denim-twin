@@ -1,6 +1,6 @@
 # EXP_0002 — Procedural raw edge v0 on a real photo (qualitative only)
 
-**Date:** 2026-01-11  **Input:** Grailed 501 cutout (EXP_0001), SAM mask, hand landmarks, cut at 35% inseam.
+**Step:** 2  **Input:** Grailed 501 cutout (EXP_0001), SAM mask, hand landmarks, cut at 35% inseam.
 **Scale:** no fiducial in this photo; mm_per_px=0.42 assumed for the demo. Backdrop recoloured grey so pale threads are visible.
 
 ## What v0 does (src/denimtwin/canon/rawedge.py)

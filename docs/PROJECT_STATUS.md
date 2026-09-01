@@ -5,7 +5,7 @@ a log.
 
 Two other documents look like this one and are not:
 
-- `docs/STATUS.md` is a **dated historical log**. Its entries are left as written, with correction
+- `docs/STATUS.md` is a **step historical log**. Its entries are left as written, with correction
   banners on top, because a record you edit is not a record. Read it for how the project got here.
 - `experiments/*/NOTE.md` are **experiment records**, likewise never rewritten. When a later
   experiment overturns an earlier one, the earlier NOTE gets a banner naming the one that overturned
