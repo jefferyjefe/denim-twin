@@ -167,6 +167,16 @@ class Spec(object):
         """Every reference resolves, or the specification is not usable. Returns a list of errors."""
         errs = []
         seen = {}
+        # A numeric requirement no check can evaluate is worse than no requirement: it reads, to
+        # anyone auditing the plan, as a threshold being enforced. 146 shots carried a
+        # max_scale_range_ratio and 144 a max_mm_per_px with no calibration board in frame, so
+        # nothing ever compared anything to them. Either the shot carries a board or it does not
+        # get to claim a number that only a board can produce.
+        from .qa import quality_is_evaluable
+        for s in self.shots:
+            for key, why in quality_is_evaluable(s):
+                errs.append("%s declares quality.%s, and nothing can evaluate it: %s"
+                            % (s.get("shot_id"), key, why))
         for s in self.shots:
             sid = s["shot_id"]
             if sid in seen:

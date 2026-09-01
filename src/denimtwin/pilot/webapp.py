@@ -78,8 +78,19 @@ class Session(object):
     def list_garments(self):
         return sorted(p.name for p in self.garments.glob("DENIM_*") if p.is_dir())
 
+    # The one place a garment id becomes a directory. The route patterns check the shape of an id
+    # in the URL, but /api/upload reads its id from a MULTIPART FIELD, which no route pattern ever
+    # sees -- so the shape check has to live here, where every path in has to come through, rather
+    # than on the way in. Containment is checked too: is_dir() alone is happy to be pointed
+    # somewhere else entirely.
     def store(self, gid):
-        d = self.garments / gid
+        if not re.match(r"^DENIM_[0-9]{4}$", str(gid or "")):
+            raise KeyError(gid)
+        d = self.garments / str(gid)
+        try:
+            d.resolve().relative_to(self.garments.resolve())
+        except (ValueError, OSError):
+            raise KeyError(gid)
         if not d.is_dir():
             raise KeyError(gid)
         return Store(d)

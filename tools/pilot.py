@@ -646,7 +646,12 @@ def cmd_gate(a):
     gdir = garment_dir(a.garment)
     v = GATES.evaluate(a.gate, spec, Store(gdir), garment_dir=gdir, rehash=True)
     _print_verdict(v)
-    return OK if v.ready else FAIL
+    if v.ready:
+        return OK
+    # A gate blocked only by conditions that could not RUN exits 2, not 1. Both are closed; the
+    # difference is whether the operator should go and photograph something or go and fix the
+    # system, and a script that cannot tell them apart will loop capturing into a bug.
+    return UNAVAILABLE if v.unavailable else FAIL
 
 
 def cmd_hem(a):
@@ -700,8 +705,18 @@ def cmd_wash(a):
               ("conditioning_end", str, "conditioning end (HH:MM)"),
               ("garment_in_load", str, "which samples were in this load")]
     base = state["wash_planned"] or {}
+    if a.actual:
+        if state["wash_actual"]:
+            raise SystemExit("the actual wash is already recorded for %s. It is written once, like "
+                             "the plan: a correction that overwrites is indistinguishable from the "
+                             "wash never having deviated. Record the difference with\n"
+                             "  tools/pilot.py deviation %s --kind wash --field <field> ..."
+                             % (a.garment, a.garment))
+        print("Read each setting off the machine. There are no defaults here: the planned value is\n"
+              "shown so you can see what was intended, and you type what the machine actually did.")
     for key, cast, label in fields:
-        rec[key] = _prompt("  %s" % label, base.get(key) if a.actual else None, cast)
+        hint = ("  %s [planned: %s]" % (label, base.get(key))) if a.actual else ("  %s" % label)
+        rec[key] = _prompt(hint, None, cast)
     st.append(which, rec, operator=a.operator)
     if a.actual:
         d = diff_planned_actual(state["wash_planned"], rec)
@@ -946,6 +961,18 @@ def main(argv=None):
         return a.fn(a) or OK
     except SystemExit:
         raise
+    except EOFError:
+        # stdin ran out mid-questionnaire -- a pipe, a closed terminal, a script that fed fewer
+        # answers than there were questions. Nothing was written that had not already been
+        # appended, but the operator has to be told the session is incomplete rather than shown a
+        # traceback that looks like a crash.
+        print("\nrefused: input ended before the questions did. Nothing further was recorded; "
+              "re-run the command and answer the rest.", file=sys.stderr)
+        return FAIL
+    except KeyboardInterrupt:
+        print("\ninterrupted. Everything answered so far is already in the log; re-run to "
+              "continue.", file=sys.stderr)
+        return FAIL
     except (CUT.CutSpecError, SPEC.SpecError, PLAN.PlanError, ManifestError, ValueError,
             OSError) as e:
         # The same rule the gate holds, applied at the command line: a condition this code cannot

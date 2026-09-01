@@ -1579,6 +1579,52 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the two required motion clips could NEVER pass and the post-wash gate could "
                       "never open -- a gate that valid evidence cannot open is broken, not safe"))
 
+    # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
+    b = new("washonce", gid="DENIM_9251")
+    b.open_session()
+    plan_w = {"machine": "Miele W1", "location": "flat", "cycle": "cottons 30",
+              "water_temp_c": 30.0, "spin_rpm": 1200.0, "detergent": "Persil", "detergent_ml": 35.0,
+              "filler_load": "3 towels", "start_time": "10:00", "end_time": "11:30",
+              "dryer_method": "line", "dryer_setting": "n/a", "dryer_minutes": 0.0,
+              "conditioning_start": "11:30", "conditioning_end": "13:30",
+              "garment_in_load": "DENIM_9251 + offcut L"}
+    b.store.append("wash_planned", plan_w, operator="selftest")
+    b.store.append("wash_actual", dict(plan_w, water_temp_c=42.0), operator="selftest")
+    b.store.append("wash_actual", dict(plan_w), operator="tidier")     # "correcting" away a deviation
+    st_ = b.store.fold()[0]
+    kept = st_["wash_actual"]["water_temp_c"] == 42.0
+    out.append(Result("the actual wash is written once, like the plan",
+                      kept and len(st_["wash_actual_rewrites"]) == 1,
+                      "actual %s C after a rewrite to %s C; %d rewrite(s) preserved"
+                      % (st_["wash_actual"]["water_temp_c"], plan_w["water_temp_c"],
+                         len(st_["wash_actual_rewrites"])),
+                      "last-write-wins let a second recording erase exactly the deviation that the "
+                      "planned/actual split exists to preserve"))
+
+    # -- 71b. a cut the geometry cannot model must be acknowledged, not passed over ----------------
+    b = new("cutwarn", gid="DENIM_9252")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    m_ = b.store.fold()[0]["measurements"]
+    from . import cutspec as _CUT
+    near = _CUT.compute(target_inseam_cm=2.0,          # right up under the crotch seam
+                        original_inseam_cm=m_["original_inseam_cm"]["mean"],
+                        thigh_cm=m_["thigh_cm"]["mean"],
+                        leg_opening_cm=m_["leg_opening_cm"]["mean"])
+    b.store.append("cut_spec", near, operator="selftest")
+    before_ = "cut.specified" in b.blocked_conditions()
+    b.store.append("human_verification",
+                   {"shot_id": None, "rep": None, "claim": "cut_out_of_model_acknowledged",
+                    "value": True, "verifier_name": "alice", "operator": "alice"},
+                   operator="alice")
+    after_ = "cut.specified" not in b.blocked_conditions()
+    out.append(Result("a cut the geometry cannot model needs someone to say they meant it",
+                      bool(near.get("warning")) and before_ and after_,
+                      "warning=%r; blocked before acknowledgement=%s, after=%s"
+                      % ((near.get("warning") or "")[:40], before_, not after_),
+                      "the tool prints that the straight-perpendicular model stops describing a "
+                      "real inseam this close to the crotch, and nothing read it, so the one cut "
+                      "it says it cannot predict passed as quietly as any other"))
+
     # -- 71. a rig frame with no content check must still ask a person ---------------------------
     b = new("rigcontent", gid="DENIM_9247")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

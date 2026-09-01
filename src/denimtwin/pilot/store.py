@@ -132,6 +132,7 @@ class Store(object):
             "state": None, "state_history": [],
             "cut_spec": None,
             "wash_planned": None, "wash_actual": None, "wash_plan_rewrites": [],
+            "wash_actual_rewrites": [],
             "offcuts": {},
             "notes": [],
             "unknown_kinds": [],
@@ -235,7 +236,16 @@ class Store(object):
                 else:
                     st["wash_plan_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_actual":
-                st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                if not isinstance(p, dict):
+                    problems.append("entry %s: wash_actual payload is not an object" % e.get("seq"))
+                    continue
+                # First write wins, exactly as for the plan. A second recording of what the machine
+                # actually did is a correction to a record of a physical event, and a correction
+                # that overwrites is indistinguishable from the event never having differed.
+                if st["wash_actual"] is None:
+                    st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                else:
+                    st["wash_actual_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "offcut":
                 lbl = self._key(p.get("label"), "offcut label", e.get("seq"), problems)
                 if lbl is None:

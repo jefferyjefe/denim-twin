@@ -108,10 +108,69 @@ the safe reading is the worse one.
 timestamp let a future-dated approval outrank a real retraction appended after it. Log position is
 stamped by the appender; the payload's clock is not.
 
-## Round 3 — the angles run by hand
+## Round 3 — four angles, thirty-one findings
 
 Round 3's agents were blocked on their first attempt by an account session limit, so three of its
-four angles were run directly instead. Two found something.
+four angles were run directly while that cleared; the agent round was then re-run in full. The
+hand-run probes and the agents found overlapping sets, and both are recorded below.
+
+| angle | what it attacked | findings |
+|---|---|---|
+| qa-engine | the checker itself: what each check can and cannot see | 11 |
+| regress-round2 | whether round 2's fixes actually closed round 2's holes | 9 |
+| cli-and-state | the command line as a second way into the same data | 7 |
+| ordering | sequence numbers, repeats, entries out of order | 4 |
+
+The character of round 3 was different from the first two. Rounds 1 and 2 found ways to make the
+gate say READY without the evidence. Round 3 found almost none of those — what it found instead was
+**checks that could not fail**, which is the same defect one level up: a condition that always
+passes is indistinguishable from one that was never asked.
+
+### The ones that mattered most
+
+**Seventeen required rig frames passed on a photograph of anything.** The frame that must show an
+EMPTY backdrop, the lighting test, the proof that the board and the garment share a plane — every
+numeric threshold in the checker passes on any file that decodes, because there is nothing in the
+pixels to judge. The class carried no content check and no human check either. A shot can now
+declare the claims a person must make about it, and those seventeen declare theirs.
+
+**146 shots carried a scale threshold nothing could evaluate.** `max_mm_per_px` and
+`max_scale_range_ratio` are produced by measuring the calibration board's corner spacings, and these
+are ruler-scaled macros with no board in frame — so the numbers sat in the specification looking
+enforced while nothing compared anything to them. The specification's cross-check now refuses a
+threshold no check can produce, which fails the plan at load rather than at audit. Where the intent
+was real it was translated into something answerable: 144 shots now ask the operator to confirm the
+rule's millimetre graduations are individually separated, which is the same requirement asked of the
+one instrument in the frame that can answer it.
+
+**Every one of the 139 whole-garment shots was excused from naming its region.** The condition
+listed only the two macro angles, so the thirty-eight obliques — the frames an operator most easily
+confuses, one quadrant along — were excused by a sentence saying the region "is not one a person is
+asked to confirm at this range". They are asked now. The overhead frames still are not, and the
+excuse text says why rather than pretending otherwise.
+
+**The most expensive comparison in the checker left no trace when it passed.** `duplicate_content`
+appended a record on failure only, so a pair that was decoded, correlated and found distinct looked
+in the record exactly like a pair that was never compared. Both outcomes are recorded now.
+
+**The actual wash could overwrite itself.** The planned/actual split exists so a deviation stays
+visible; last-write-wins meant a second recording erased exactly the deviation it was built to
+preserve. The actual wash is written once, like the plan, and a correction is a deviation entry. The
+prompts also stopped offering the planned value as their default — sixteen presses of return had
+been recording a perfect match to plan without anyone reading a dial.
+
+**`/api/upload` took its garment id from a form field**, which no route pattern ever sees, so the
+shape check every other path went through was skipped on the one path that accepts photographs. The
+id is validated where it becomes a directory now, which is the one place every path has to cross.
+
+**A cut the geometry says it cannot model passed as quietly as any other.** `cutspec` prints a
+warning when the cut lands close enough to the crotch that the straight-perpendicular model stops
+describing a real inseam. Nothing read it. It still does not block — the operator may cut there —
+but they have to record that they meant to.
+
+### The angles run by hand
+
+Two of the three found something.
 
 **`pilot.py add` with a FIFO hung forever.** It passed every existence test and then blocked inside
 the copy, waiting for a writer that never came. A hang is worse than a refusal: the operator cannot

@@ -136,8 +136,38 @@ SHOT_LEVEL_WHY = {
     "relay_independence": "no previous repetition of this shot to be independent of",
     "camera_repositioned": "this frame is not a repeat that follows a camera reposition",
     "garment_side": "this shot does not declare which face of the garment is up",
-    "anatomical_region": "this shot's region is not one a person is asked to confirm at this range",
+    "anatomical_region": "this is an overhead whole-garment frame: its region is the whole "
+                         "garment, and which face is up is asked separately by garment_side",
 }
+
+#: Quality thresholds that can only be produced by a check the shot does not carry. Each entry maps
+#: the key to (the check that would produce it, why it cannot run without a board).
+_BOARD_ONLY_QUALITY = {
+    "max_mm_per_px": ("scale", "mm_per_px comes from the calibration board's known square size; "
+                               "a rule in frame gives an operator a reading, not the code one"),
+    "max_scale_range_ratio": ("camera_tilt", "the scale range ratio is measured across the board's "
+                                             "own corner spacings; with no board there are no "
+                                             "corners to spread"),
+}
+
+
+def quality_is_evaluable(shot):
+    """Yield (quality_key, why_not) for every threshold this shot declares that nothing can check.
+
+    Called by the specification's cross-check, so an unevaluable threshold fails the plan at load
+    rather than sitting in it looking enforced.
+    """
+    q = shot.get("quality") or {}
+    needs_board = q.get("requires_board",
+                        shot.get("scale_reference") in ("charuco_board", "both"))
+    for key, (check_id, why) in _BOARD_ONLY_QUALITY.items():
+        if q.get(key) is not None and not needs_board:
+            yield key, "%s is produced by the %s check, and %s" % (key, check_id, why)
+    if q.get("min_subject_px") is not None and shot_class(shot) != WHOLE_GARMENT:
+        yield "min_subject_px", ("min_subject_px is measured from the garment silhouette by the "
+                                 "subject_span check, which only runs on a whole-garment frame; at "
+                                 "macro range the subject fills the frame by design")
+
 
 def excuse_is_valid(shot, check_id, claim):
     """Would this code itself have excused this check for this shot?
@@ -169,8 +199,16 @@ def excuse_is_valid(shot, check_id, claim):
         return q.get("min_long_edge_px") is None
     if check_id == "garment_side":
         return shot.get("garment_side") not in ("front", "back")
-    if check_id in ("duplicate_content", "relay_independence", "camera_repositioned",
-                    "anatomical_region"):
+    if check_id == "anatomical_region":
+        # Excusable only where this module would itself have declined to ask: no region to name, or
+        # an overhead whole-garment frame whose region is the whole garment. Returning True here
+        # unconditionally meant a record could excuse the region check on the very obliques the
+        # check exists for.
+        return not shot.get("region_id") or (
+            cls != LABEL and shot.get("camera_angle") not in (
+                "macro_perpendicular", "side_profile", "oblique_30", "oblique_45",
+                "handheld_free"))
+    if check_id in ("duplicate_content", "relay_independence", "camera_repositioned"):
         return True          # these depend on what else exists, not on the shot alone
     return False
 
@@ -569,9 +607,17 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     # care label from an empty backdrop -- so the only honest answer is to ask. Without this, a
     # required care-label photograph was satisfied PASS by a frame of the backdrop, with no human
     # asked and nothing in the record saying anything had been assumed.
+    # The oblique whole-garment frames belong here as much as the macros do. Every one of the 139
+    # whole-garment shots carries a region_id and none of them ever reached this check, because the
+    # condition named only the two macro angles -- so the thirty-eight obliques, which are the
+    # frames an operator most easily confuses (FL2 for FL3, one quadrant along), were excused by a
+    # sentence saying the region "is not one a person is asked to confirm at this range". They are
+    # now asked. An OVERHEAD whole-garment frame still is not: its region is the whole garment, and
+    # garment_side, cropping and subject_extent already pin what is in it.
     if shot.get("region_id") and applies("anatomical_region") \
             and (cls == LABEL
-                 or shot.get("camera_angle") in ("macro_perpendicular", "side_profile")):
+                 or shot.get("camera_angle") in ("macro_perpendicular", "side_profile",
+                                                 "oblique_30", "oblique_45", "handheld_free")):
         if assertions.get("region_confirmed") is True:
             checks.append(Check("anatomical_region", PASS,
                                 "operator confirmed this is %s" % shot["region_id"]))
@@ -654,13 +700,18 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                 fix="restore the earlier photograph so the two can be compared"))
             continue
         outcome, detail = Q.duplicate_verdict(other.get("sha256"), other.get("self_sha256"), n)
-        if outcome != PASS:
-            checks.append(Check("duplicate_content", outcome,
-                                "%s (against %s rep %s)" % (detail, other.get("shot_id"),
-                                                            other.get("rep")),
-                                {"ncc": n, "other_shot_id": other.get("shot_id"),
-                                 "other_rep": other.get("rep")},
-                                fix="capture a new frame; this one is already recorded"))
+        # Recorded whichever way it goes. Only the failures were appended, so the most expensive
+        # comparison the checker performs -- the one that actually decoded both frames and
+        # correlated them -- left NOTHING behind when it passed. An auditor reading the record could
+        # not tell a pair that was compared and found distinct from a pair that was never compared,
+        # and "no duplicate_content check present" is exactly what a skipped comparison looks like.
+        checks.append(Check("duplicate_content", outcome,
+                            "%s (against %s rep %s)" % (detail, other.get("shot_id"),
+                                                        other.get("rep")),
+                            {"ncc": n, "other_shot_id": other.get("shot_id"),
+                             "other_rep": other.get("rep"), "compared": "pixels"},
+                            fix=None if outcome == PASS
+                            else "capture a new frame; this one is already recorded"))
         if other.get("is_previous_rep") and shot.get("relay_between_reps") \
                 and applies("relay_independence"):
             interior = Q.registered_interior_ncc(img, oimg, pose, other.get("pose")) \

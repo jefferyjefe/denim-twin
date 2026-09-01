@@ -92,17 +92,22 @@ CUT_MARK_TOLERANCE_MM = 3.0
 
 
 class Block(object):
-    __slots__ = ("condition", "what", "fix", "evidence")
+    __slots__ = ("condition", "what", "fix", "evidence", "unavailable")
 
-    def __init__(self, condition, what, fix, evidence=None):
+    def __init__(self, condition, what, fix, evidence=None, unavailable=False):
         self.condition = condition
         self.what = what
         self.fix = fix
         self.evidence = evidence or {}
+        #: True when the condition could not be EVALUATED, as opposed to evaluating to false. Both
+        #: block, and neither is permission -- but they call for different actions. Missing evidence
+        #: is fixed by capturing it; a condition that could not run is fixed by repairing the
+        #: system, and a caller that cannot tell them apart will keep re-capturing into a bug.
+        self.unavailable = bool(unavailable)
 
     def as_dict(self):
         return {"condition": self.condition, "what": self.what, "fix": self.fix,
-                "evidence": self.evidence}
+                "evidence": self.evidence, "unavailable": self.unavailable}
 
     def __repr__(self):
         return "<Block %s: %s>" % (self.condition, self.what)
@@ -119,8 +124,18 @@ class Verdict(object):
     def ready(self):
         return not self.blocks
 
+    @property
+    def unavailable(self):
+        """The gate is blocked ONLY by conditions that could not be evaluated.
+
+        Never a weaker verdict than not-ready: an unavailable gate is a closed gate. It is reported
+        separately so a caller knows whether to go and capture something or go and fix something.
+        """
+        return bool(self.blocks) and all(b.unavailable for b in self.blocks)
+
     def as_dict(self):
         return {"gate": self.gate_id, "ready": self.ready,
+                "unavailable": self.unavailable,
                 "blocks": [b.as_dict() for b in self.blocks],
                 "satisfied": self.satisfied, "evidence": self.evidence}
 
@@ -138,7 +153,7 @@ def _guard(blocks, satisfied, condition, fn):
                             % (type(e).__name__, e),
                             "fix the error above, then re-run the gate. A condition whose truth is "
                             "unknown is not permission.",
-                            {"exception": type(e).__name__}))
+                            {"exception": type(e).__name__}, unavailable=True))
         return
     if ok:
         satisfied.append({"condition": condition, "what": what, "evidence": ev or {}})
@@ -1017,9 +1032,27 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if gaps:
                 return False, "the cut specification is missing %s" % ", ".join(gaps), \
                        "re-run `pilot.py cutspec`", {"missing": gaps}
-            return True, "cut specified: inseam %.1f cm, predicted outseam %.1f cm" % (
-                float(cs["target_inseam_cm"]), float(cs["predicted_outseam_cm"])), None, \
-                {"cut_spec": {k: cs.get(k) for k in need}}
+            # The cut geometry can carry a warning: the cut lands so close to the crotch that the
+            # straight-perpendicular model stops describing a real inseam. Nothing read it, so the
+            # one cut the tool says it cannot predict passed as silently as any other. It does not
+            # block -- the operator is allowed to cut there -- but they have to say they meant to,
+            # and the record has to show they were told.
+            if cs.get("warning"):
+                ack = [rec for (sid, rep, claim), rec in state["verifications"].items()
+                       if claim == "cut_out_of_model_acknowledged"]
+                ack = max(ack, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
+                    if ack else None
+                if ack is None or ack.get("value") is not True:
+                    return False, ("the cut geometry carries a warning that nobody has "
+                                   "acknowledged: %s" % cs["warning"]), \
+                           ("either move the cut, or record that you read the warning and meant "
+                            "it:\n  tools/pilot.py confirm <ID> --claim "
+                            "cut_out_of_model_acknowledged --operator <you>"), \
+                           {"warning": cs["warning"]}
+            return True, "cut specified: inseam %.1f cm, predicted outseam %.1f cm%s" % (
+                float(cs["target_inseam_cm"]), float(cs["predicted_outseam_cm"]),
+                " (out-of-model warning acknowledged)" if cs.get("warning") else ""), None, \
+                {"cut_spec": {k: cs.get(k) for k in need}, "warning": cs.get("warning")}
 
         def c_second_person():
             # The LATEST record, by time. Selecting by dictionary iteration order meant a retraction
