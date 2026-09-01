@@ -1579,7 +1579,25 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the two required motion clips could NEVER pass and the post-wash gate could "
                       "never open -- a gate that valid evidence cannot open is broken, not safe"))
 
-    # -- 71. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
+    # -- 71. a rig frame with no content check must still ask a person ---------------------------
+    b = new("rigcontent", gid="DENIM_9247")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    rig_shots = [x for x in b.activated()[0]
+                 if x["state"] == "rig" and (x.get("requires_human") or [])]
+    verdicts = {}
+    for sh_ in rig_shots[:3]:
+        src_ = b.synth_for(sh_, 1)
+        o_, _c = b.add(sh_, 1, src_, confirm_all=False)
+        verdicts[sh_["shot_id"]] = o_
+    out.append(Result("a rig frame no automatic check can judge asks a person",
+                      bool(verdicts) and all(v == QA.HUMAN for v in verdicts.values()),
+                      "; ".join("%s -> %s" % (k.split(".", 1)[-1][:26], v)
+                                for k, v in sorted(verdicts.items())),
+                      "an empty backdrop, a lighting test and a coplanarity proof pass every "
+                      "numeric threshold on a photograph of anything; the only thing between the "
+                      "requirement and any file that decodes is a person saying what they see"))
+
+    # -- 72. THE POSITIVE CONTROL: a complete session opens the gate -------------------------------
     mini = _mini_spec(tmp_root)
     b = new("happy", spec=mini, gid="DENIM_9002")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()

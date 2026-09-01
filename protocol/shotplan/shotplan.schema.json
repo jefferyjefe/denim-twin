@@ -400,6 +400,13 @@
               "type": "number"
             }
           }
+        },
+        "requires_human": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "claims a person must confirm for this frame, named by the check id. For frames whose content no automatic check can judge -- an empty backdrop, a lighting test, a coplanarity proof -- this is the only thing standing between the requirement and a photograph of anything."
         }
       }
     }

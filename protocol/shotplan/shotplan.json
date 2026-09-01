@@ -9281,6 +9281,9 @@
    "region_id": "rig_backdrop",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the backdrop is empty -- no garment, no tools, nothing but the surface"
+   ],
    "scale_placement": "none \u2014 the board is deliberately absent so backdrop uniformity is measured without quality.py's board-exclusion dilation masking part of the field",
    "scale_reference": "none",
    "shot_id": "RIG.BACKDROP.EMPTY",
@@ -9311,6 +9314,9 @@
    "region_id": "rig_backdrop",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.BACKDROP.IDENTITY asks for"
+   ],
    "scale_placement": "rule flat on the backdrop, in the same plane, beside the card",
    "scale_reference": "ruler",
    "shot_id": "RIG.BACKDROP.IDENTITY",
@@ -9341,6 +9347,9 @@
    "region_id": "rig_board",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.BOARD.FLAT_OVERHEAD asks for"
+   ],
    "scale_placement": "flat on the backdrop, in the frozen frame corner, entirely outside the rectangle the garment will occupy",
    "scale_reference": "charuco_board",
    "shot_id": "RIG.BOARD.FLAT_OVERHEAD",
@@ -9371,6 +9380,9 @@
    "region_id": "rig_board",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "this frame shows what RIG.BOARD.PRINT_SCALE_LONG asks for"
+   ],
    "scale_placement": "rule laid directly on the printed board face, in the board's own plane, edge through the two extreme interior corners of the 11-square axis",
    "scale_reference": "ruler",
    "shot_id": "RIG.BOARD.PRINT_SCALE_LONG",
@@ -9401,6 +9413,9 @@
    "region_id": "rig_board",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "this frame shows what RIG.BOARD.PRINT_SCALE_SHORT asks for"
+   ],
    "scale_placement": "rule on the board face, in the board's plane, edge through the extreme interior corners of the 8-square axis",
    "scale_reference": "ruler",
    "shot_id": "RIG.BOARD.PRINT_SCALE_SHORT",
@@ -9430,6 +9445,9 @@
    "region_id": "rig_camera",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "this frame shows what RIG.CAMERA.HEIGHT_RECORD asks for"
+   ],
    "scale_placement": "tape vertical, zero on the backdrop surface, read at the rear lens plane",
    "scale_reference": "ruler",
    "shot_id": "RIG.CAMERA.HEIGHT_RECORD",
@@ -9458,6 +9476,9 @@
    "region_id": "rig_camera",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.CAMERA.LEVEL_INDICATOR asks for"
+   ],
    "scale_placement": "none",
    "scale_reference": "none",
    "shot_id": "RIG.CAMERA.LEVEL_INDICATOR",
@@ -9486,6 +9507,9 @@
    "region_id": "rig_camera",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.CAMERA.SETTINGS_SCREEN asks for"
+   ],
    "scale_placement": "none",
    "scale_reference": "none",
    "shot_id": "RIG.CAMERA.SETTINGS_SCREEN",
@@ -9513,6 +9537,10 @@
    "region_id": "rig_lighting",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "the lighting is even across the whole area the garment will occupy",
+    "daylight is excluded or unchanging"
+   ],
    "scale_placement": "frozen corner, unchanged",
    "scale_reference": "charuco_board",
    "shot_id": "RIG.DAYLIGHT.CONTROLLED",
@@ -9542,6 +9570,9 @@
    "region_id": "rig_lighting",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the grey/white reference is in frame and exposure and WB are at the locked values"
+   ],
    "scale_placement": "frozen corner, unchanged from RIG.BOARD.FLAT_OVERHEAD",
    "scale_reference": "charuco_board",
    "shot_id": "RIG.EXPOSURE.GREY_CARD",
@@ -9571,6 +9602,9 @@
    "region_id": "rig_lay_footprint",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.LAY.GAP_TEMPLATE asks for"
+   ],
    "scale_placement": "board in frozen corner; rule flat across the leg gap, in the same plane",
    "scale_reference": "both",
    "shot_id": "RIG.LAY.GAP_TEMPLATE",
@@ -9598,6 +9632,10 @@
    "region_id": "rig_lighting",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "the lighting is even across the whole area the garment will occupy",
+    "the grey/white reference is in frame and exposure and WB are at the locked values"
+   ],
    "scale_placement": "none \u2014 the card is the subject; the board stays in its frozen corner and must not be moved for this test",
    "scale_reference": "none",
    "shot_id": "RIG.LIGHTING.CARD_SWEEP",
@@ -9627,6 +9665,9 @@
    "region_id": "rig_oblique_stations",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows what RIG.OBLIQUE.STATION_MARKS asks for"
+   ],
    "scale_placement": "tape from the backdrop centreline to each station mark, on the floor plane",
    "scale_reference": "ruler",
    "shot_id": "RIG.OBLIQUE.STATION_MARKS",
@@ -9655,6 +9696,9 @@
    "region_id": "rig_plane",
    "relay_between_reps": false,
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the board and the garment surface are the same plane"
+   ],
    "scale_placement": "none \u2014 a grazing frame has no usable in-plane scale; the board here is a subject, not a fiducial",
    "scale_reference": "none",
    "shot_id": "RIG.PLANE.COPLANAR_GRAZING",
@@ -9691,6 +9735,9 @@
    "region_id": "rig_scale_chain",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "this frame shows what RIG.SCALE.TAPE_CERTIFY.OVERHEAD asks for"
+   ],
    "scale_placement": "",
    "scale_reference": "both",
    "shot_id": "RIG.SCALE.TAPE_CERTIFY.OVERHEAD",
@@ -9725,6 +9772,9 @@
    "region_id": "rig_grazing_station",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "the board and the garment surface are the same plane"
+   ],
    "scale_placement": "",
    "scale_reference": "ruler",
    "shot_id": "RIG.STATION.GRAZING_CERTIFY.SIDE",
@@ -9761,6 +9811,9 @@
    "region_id": "rig_macro_station",
    "relay_between_reps": false,
    "reposition_camera_between_reps": true,
+   "requires_human": [
+    "this frame shows what RIG.STATION.MACRO_RESOLUTION.TARGET asks for"
+   ],
    "scale_placement": "",
    "scale_reference": "ruler",
    "shot_id": "RIG.STATION.MACRO_RESOLUTION.TARGET",

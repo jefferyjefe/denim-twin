@@ -106,6 +106,7 @@ SCENARIOS = [
     'an answer changed to delete required frames blocks until it is explained',
     'a macro whose cloth is out of focus is refused even when its rule is sharp',
     'a motion clip can pass',
+    'a rig frame no automatic check can judge asks a person',
     'A COMPLETE SESSION OPENS THE GATE (positive control)',
 ]
 

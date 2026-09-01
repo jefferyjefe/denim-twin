@@ -582,6 +582,24 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                 % shot["region_id"],
                                 fix="confirm the region in the app"))
 
+    # -- what this particular shot says a person must confirm -----------------------------------
+    # Some required frames have no automatic content check at all: an empty backdrop, a lighting
+    # test, a proof that the board and the garment share a plane. Every numeric threshold passes on
+    # a photograph of anything, so without this the requirement is satisfied by any file that
+    # decodes. A shot can name the claims a person has to make about it.
+    for claim in (shot.get("requires_human") or []):
+        cid = "confirmed_%s" % str(claim)
+        if assertions.get(claim) is True or assertions.get(cid) is True:
+            checks.append(Check(cid, PASS, "operator confirmed: %s" % claim,
+                                {"asserted_by": assertions.get("operator")}))
+        elif assertions.get(claim) is False:
+            checks.append(Check(cid, RETAKE, "operator reported this frame does not show: %s"
+                                % claim, fix="re-take it so that it does"))
+        else:
+            checks.append(Check(cid, HUMAN,
+                                "nothing in the pixels can judge this frame's content. Confirm: %s"
+                                % claim, fix="confirm it in the app, or re-take the frame"))
+
     # -- duplicates and relays ----------------------------------------------------------------
     # Comparing every new frame against every accepted one is quadratic, and at a few hundred
     # frames it is minutes of image decoding per capture. The expensive comparison is only ever
