@@ -23,6 +23,7 @@ import sys
 import tempfile
 import time
 import pathlib
+import threading
 import zlib
 from pathlib import Path
 
@@ -1675,6 +1676,49 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "every other defence tests the record against ITSELF -- the roll-up must "
                       "match the checks, the checks must cover the class -- and a complete enough "
                       "forgery satisfies all of them. The photograph cannot be appended to"))
+
+    # -- 70g. deleting the whole log is not the same as never having had one ----------------------
+    b = new("rmlog", gid="DENIM_9256")
+    b.open_session()
+    for i in range(4):
+        b.store.append("note", {"i": i}, operator="selftest")
+    pathlib.Path(str(b.store.manifest.path)).unlink()
+    gone = {x["kind"] for x in b.store.manifest.read()[1]}
+    fresh = new("neverhad", gid="DENIM_9257")
+    fresh_problems = fresh.store.manifest.read()[1]
+    out.append(Result("deleting the whole log is not the same as never having had one",
+                      "entries_missing" in gone and not fresh_problems,
+                      "after rm: %s; a genuinely fresh garment: %s" % (sorted(gone), fresh_problems),
+                      "read() returned before check_head ran when the file was absent, so the one "
+                      "check written to detect entries removed from the end could not fire in the "
+                      "case where all of them were -- with the anchor sitting there saying so"))
+
+    # -- 70h. two honest hands at once are not tampering ------------------------------------------
+    b = new("concurrent", gid="DENIM_9258")
+    b.open_session()
+    saw = []
+    stop_ = []
+
+    def _write():
+        for i in range(120):
+            b.store.append("note", {"i": i}, operator="phone")
+        stop_.append(True)
+
+    def _read():
+        while not stop_:
+            probs = b.store.manifest.read()[1]
+            if probs:
+                saw.append([x["kind"] for x in probs])
+    tw_ = threading.Thread(target=_write)
+    tr_ = threading.Thread(target=_read)
+    tw_.start(); tr_.start(); tw_.join(); tr_.join()
+    out.append(Result("a fold running during an upload does not read as tampering",
+                      not saw,
+                      "%d read(s) reported a problem while an honest writer worked%s"
+                      % (len(saw), (": " + str(saw[0])) if saw else ""),
+                      "append() has been serialised since round 1 and read() took no lock, so one "
+                      "phone uploading while the GATE tab refreshed -- two ordinary things at once "
+                      "on a threading server -- reported a torn line and a head mismatch"))
 
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")

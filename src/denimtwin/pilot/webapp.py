@@ -664,6 +664,17 @@ def build_api(session):
         if not b.get("actual") and st["wash_planned"]:
             return 400, {"error": "this garment already has a wash plan; the planned settings are "
                                   "what a deviation is measured against and are not revised"}
+        # Symmetrically for the ACTUAL. The CLI refuses a second recording by name and this route
+        # accepted any number, returning {"ok": true} each time while fold() discarded all but the
+        # first -- so a phone retrying a timed-out POST was told its settings were saved when they
+        # were not, and a correction that overwrites erases exactly the deviation the planned/actual
+        # split exists to preserve.
+        if b.get("actual") and st["wash_actual"]:
+            return 409, {"error": "the actual wash is already recorded for this garment. It is "
+                                  "written once, like the plan: a correction that overwrites is "
+                                  "indistinguishable from the wash never having deviated.",
+                         "fix": "record the difference as a deviation of kind 'wash', naming the "
+                                "field"}
         store.append(which, rec, operator=b.get("operator"))
         devs = []
         if b.get("actual"):

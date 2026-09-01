@@ -109,6 +109,8 @@ SCENARIOS = [
     'five photographs of one lay are not five independent re-lays',
     'a deleted entry stays visible however much is appended after it',
     'a forged verdict cannot survive the photograph it describes',
+    'deleting the whole log is not the same as never having had one',
+    'a fold running during an upload does not read as tampering',
     'the actual wash is written once, like the plan',
     'a cut the geometry cannot model needs someone to say they meant it',
     'a rig frame no automatic check can judge asks a person',

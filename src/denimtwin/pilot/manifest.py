@@ -192,8 +192,38 @@ class Manifest(object):
         manifest, because an empty manifest is what a fresh garment looks like and the gate treats
         those very differently.
         """
+        # Readers take the SHARED lock the writer takes exclusively. append() has been serialised
+        # against other appends since round 1 -- and read() took no lock at all, so a fold running
+        # while a photograph was being written saw the file mid-append and reported a torn line and
+        # a head mismatch. On a ThreadingHTTPServer that is one phone uploading while the GATE tab
+        # refreshes: the honest operator, doing two ordinary things at once, accused of tampering
+        # with their own log.
+        shared = None
+        if verify:
+            try:
+                import fcntl
+                shared = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
+                fcntl.flock(shared.fileno(), fcntl.LOCK_SH)
+            except (ImportError, OSError, IOError):
+                if shared is not None:
+                    shared.close()
+                shared = None               # no flock available; the read still runs
+        try:
+            return self._read_unlocked(verify)
+        finally:
+            if shared is not None:
+                shared.close()
+
+    def _read_unlocked(self, verify=True):
         entries, problems = [], []
         if not self.path.exists():
+            # An absent log is what a fresh garment looks like -- UNLESS an anchor is sitting beside
+            # it asserting the log once reached N entries. Returning early skipped check_head
+            # entirely, so the one check written to detect "entries have been removed from the end"
+            # could not fire in the case where ALL of them were: `rm manifest.jsonl` reported zero
+            # integrity problems with the sidecar still on disk saying otherwise.
+            if verify and self.head_path.exists():
+                problems.extend(self.check_head(entries))
             return entries, problems
         raw = self.path.read_text(errors="replace").split("\n")
         for i, line in enumerate(raw):
@@ -275,8 +305,18 @@ class Manifest(object):
                 r = json.loads(line)
             except ValueError:
                 return [{"kind": "head_unreadable", "detail": "the head record is not readable"}]
-            if isinstance(r, dict):
-                recs.append(r)
+            if not isinstance(r, dict):
+                continue
+            # A bare int() here. The sidecar is the one file in this design a person is invited to
+            # look at, and therefore to touch: any non-numeric count -- a hand edit, a
+            # partially-written record -- raised out of check_head and took every fold-based command
+            # down with a traceback. An unreadable anchor is a problem to report, not a crash.
+            try:
+                int(r.get("count") or 0)
+            except (TypeError, ValueError):
+                return [{"kind": "head_unreadable",
+                         "detail": "an anchor records a length that is not a number"}]
+            recs.append(r)
         if not recs:
             return [{"kind": "head_unreadable", "detail": "the head record is empty"}]
         want_chain = entries[-1].get("chain") if entries else self.seed

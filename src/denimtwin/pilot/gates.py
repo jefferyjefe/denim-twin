@@ -1224,7 +1224,20 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # one cut the tool says it cannot predict passed as silently as any other. It does not
             # block -- the operator is allowed to cut there -- but they have to say they meant to,
             # and the record has to show they were told.
-            if cs.get("warning"):
+            # RE-DERIVED, not read. The warning is a field supplied by the record this condition
+            # exists to constrain, so an appended cut_spec that simply omits it acknowledged nothing
+            # and was asked for nothing. The rule is one comparison and the gate is already holding
+            # the number.
+            try:
+                from .cutspec import CROTCH_EXCLUSION_CM
+                warn_now = float(cs["target_inseam_cm"]) < CROTCH_EXCLUSION_CM
+            except (TypeError, ValueError, KeyError):
+                warn_now = True                # cannot tell: not permission
+            if warn_now or cs.get("warning"):
+                cs = dict(cs, warning=cs.get("warning") or (
+                    "the cut is %.1f cm below the crotch seam, inside the region where a real "
+                    "inseam curves and this flat-trapezoid model stops describing the garment"
+                    % float(cs.get("target_inseam_cm") or 0.0)))
                 ack = [rec for (sid, rep, claim), rec in state["verifications"].items()
                        if claim == "cut_out_of_model_acknowledged"]
                 ack = max(ack, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
