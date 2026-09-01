@@ -2,7 +2,7 @@
 
 | Agent | Where | Cadence | Writes to | Script it interprets |
 |---|---|---|---|---|
-| Reviewer-on-push | cloud routine | daily 06:00 UTC | branch `agent/reviewer/<date>` + `tests/review_*.py` | pytest |
+| Reviewer-on-push | cloud routine | daily 06:00 UTC | branch `agent/reviewer/<step>` + `tests/review_*.py` | pytest |
 | Data sentinel | cloud routine | daily 05:00 UTC | `reports/sentinel/` on main | `tools/sentinel.py` |
 | Protocol-drift auditor | cloud routine | daily 05:15 UTC | `reports/protocol/` on main | `tools/protocol_audit.py` |
 | Null-baseline enforcer | cloud routine | daily 05:45 UTC | experiment `NOTE.md` (branch) | `tools/null_baselines.py` |

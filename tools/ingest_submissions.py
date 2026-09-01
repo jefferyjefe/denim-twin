@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ingest GitHub issues labelled 'pair-submission' into data/external/pairs.jsonl (source_type='submission').
 Requires `gh` auth. Idempotent: skips issues already ingested (page_url = issue URL)."""
-import json, re, subprocess, sys, datetime as dt
+import json, re, subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; P = ROOT / "data/external/pairs.jsonl"
 IMG = re.compile(r"(https?://[^\s)\"<>]+)")   # any link inside a photo section (GitHub attachment or pasted URL); validated on download
@@ -35,7 +35,7 @@ def main():
                        scale_ref={"none": "none"}.get(scale, "ruler" if "ruler" in scale else "coin" if "coin" in scale else "known_object" if scale else "none"),
                        scale_detail=section(b, "Which coin / object?").strip(),
                        license_or_terms="CC BY 4.0 (contributor consent in issue)" + ("" if "Anonymous" in section(b, "Attribution") else f"; attribution: {it['author']['login']}"),
-                       found_at=dt.date.today().isoformat())
+                       found_at="step")
             f.write(json.dumps(rec) + "\n"); new += 1
     print(f"ingested {new} new submissions")
 

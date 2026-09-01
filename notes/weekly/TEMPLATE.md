@@ -1,4 +1,4 @@
-# Week NN — YYYY-MM-DD
+# Weekly step log
 
 ## Hypothesis
 ## Setup

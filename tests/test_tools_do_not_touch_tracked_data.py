@@ -39,10 +39,9 @@ def test_the_prior_the_repo_ships_is_valid_json_with_its_provenance_fields():
 def test_the_weekly_scribe_preserves_hand_written_notes(tmp_path, monkeypatch):
     """It used to `write_text` the whole file, so running it destroyed every hand-written weekly note it had started.
     The generated block is now delimited and everything outside it survives."""
-    import datetime as dt, re, subprocess, sys
+    import subprocess
     week_dir = os.path.join(ROOT, "notes/weekly")
-    today = dt.date.today()
-    path = os.path.join(week_dir, f"{today.year}-W{today.isocalendar()[1]:02d}.md")
+    path = os.path.join(week_dir, "step-log.md")
     had = os.path.exists(path)
     original = open(path).read() if had else None
     sentinel = "SENTINEL-a-human-wrote-this-line"

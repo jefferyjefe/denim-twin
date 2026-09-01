@@ -10,7 +10,6 @@ Usage:
   harvest_images.py --download N     # also download up to N not-yet-downloaded images into data/external/images/
 """
 import argparse, json, os, re, sys, time, hashlib, urllib.parse, urllib.request, urllib.error
-from datetime import datetime, timezone
 from pathlib import Path
 import sys as _sys, pathlib as _pl
 _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1] / "src"))
@@ -83,7 +82,7 @@ def main():
     a = ap.parse_args()
     recs = load_manifest(); seen_urls = {r["url"] for r in recs.values()}; new = 0
     per_source = {"openverse": 0, "commons": 0}
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = "step"
     for q in QUERIES:
         for fetch, pages in ((openverse, range(1, a.pages + 1)), (commons, range(0, 50 * a.pages, 50))):
             for pg in pages:

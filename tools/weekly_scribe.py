@@ -4,12 +4,11 @@
 The generated part lives between two markers. Anything a person wrote outside them is preserved: this tool used to
 `write_text` the whole file, so running it destroyed every hand-written weekly note it had ever been used to start.
 """
-import subprocess, sys, datetime as dt
+import subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-today = dt.date.today(); week = today.isocalendar()[1]
-out = ROOT / "notes/weekly" / f"{today.year}-W{week:02d}.md"
-log = subprocess.run(["git", "log", "--since=7.days", "--pretty=format:- %ad %s", "--date=short"], cwd=ROOT, capture_output=True, text=True).stdout
+out = ROOT / "notes/weekly" / "step-log.md"
+log = subprocess.run(["git", "log", "--since=7.days", "--pretty=format:- %s"], cwd=ROOT, capture_output=True, text=True).stdout
 exps = "\n".join(f"- {p.parent.name}" for p in sorted(ROOT.glob("experiments/*/NOTE.md")))
 def run(t): r = subprocess.run([sys.executable, str(ROOT / "tools" / t)], capture_output=True, text=True); return r.stdout.strip()[-1500:]
 BEGIN, END = "<!-- weekly-scribe:begin -->", "<!-- weekly-scribe:end -->"
@@ -46,7 +45,7 @@ body = f"""{BEGIN}
 ## Next action
 {END}
 """
-HEADER = f"""# Week {week} — {today}
+HEADER = """# Weekly step log
 
 ## Hypothesis
 ## Setup
