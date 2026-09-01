@@ -737,6 +737,10 @@ def run(*, root, garments, spec_path, board_path, garment=None, port=8765, lan=F
         print("  --lan; the token above is then required on every request and lasts only as long")
         print("  as this process.")
     print("\n  Ctrl-C to stop.\n")
+    # The banner carries the session token, and it is the only place it appears. Redirect stdout to
+    # a file and Python block-buffers it, so `serve > log &` showed an empty log and no way in until
+    # something else happened to fill 8 KB.
+    sys.stdout.flush()
     if open_browser and not lan:
         try:
             webbrowser.open(url)

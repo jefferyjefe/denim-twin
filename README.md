@@ -91,7 +91,7 @@ tilt, relay independence and duplicate content — are measured in
 records a negative result as well: image similarity **cannot** tell five independent re-lays from one
 photograph submitted five times, so the system does not pretend to.
 
-    python tools/pilot.py selftest               # 66 scenarios, on synthetic images, in a temp dir
+    python tools/pilot.py selftest               # 78 scenarios, on synthetic images, in a temp dir
 
     python tools/pilot.py selftest --full        # and drive the real 419-frame plan to READY
 
