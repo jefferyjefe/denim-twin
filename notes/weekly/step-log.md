@@ -100,7 +100,7 @@ waistband" (EXP_0026), and closing the 0.857-vs-0.803 gap, which is the actual r
 - Step 45 STATUS/PLAN_PROGRESS: review 3 and corrected numbers
 - Step 46 Review 3 fixes (14): LOO prior module, px units, state always passed, manual-landmark transform, masked coin detection, bench guards, hem metric columns, consent check, grid/coin acceptance, modification ranges; EXP_0008/0009 corrected; baseline refrozen
 - Step 47 Advisor brief: real status and specific questions
-- Step 48 weekly W35 addendum
+- Step 48 weekly addendum
 - Step 49 EXP_0011 verdict: template_v1 mixed, opt-in only
 - Step 50 Template v1 (boundary Chamfer fit from heuristic landmarks) as optional refinement; EXP_0011 A/B on found pairs
 - Step 51 Contributor loop verified; test record excluded; STATUS
@@ -171,7 +171,7 @@ waistband" (EXP_0026), and closing the 0.857-vs-0.803 gap, which is the actual r
 - Step 116 pairs REPORT.md from daily-loop dry run
 - Step 117 Local pairs-daily launchd job; agents README status; tuning rule in GATES
 - Step 118 fit_fringe.py: scale-free fringe prior with leave-one-out; run_pair --prior makes depth a held-out prediction
-- Step 119 CLIP gate demoted to info; weekly note W35
+- Step 119 CLIP gate demoted to info; weekly note
 - Step 120 report_pairs: skip rejected runs, None-safe; mask-based fringe profile distance
 - Step 121 CLIP whole-garment gate in run_pair; report_pairs.py aggregate with null deltas
 - Step 122 EXP_0004: stop-tuning note
