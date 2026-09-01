@@ -71,7 +71,7 @@ def _dataset(tmp_path, n=2, name="ds"):
     manifest = {
         "dataset": "EditGarment",
         "source_url": "https://example.invalid/editgarment-access-page",
-        "retrieved_at": "2026-07-04",
+        "retrieved_at": "step",
         "generation_method": "an instruction-guided image editing model (per the dataset's paper)",
         "rights": {
             # A gated dataset is governed by a written agreement, not an SPDX licence. The adapter

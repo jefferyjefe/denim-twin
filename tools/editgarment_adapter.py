@@ -91,7 +91,7 @@ RIGHTS_FIELDS = ("license_id", "license_url", "license_statement", "attribution"
 RIGHTS_BOOLS = ("redistributable", "derivatives_allowed", "commercial_use_allowed")
 DATASET_FIELDS = ("source_url", "retrieved_at", "generation_method")
 SAMPLE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
-DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+DATE_RE = re.compile(r"^(step|\d{4}-\d{2}-\d{2})")
 
 #: Trees whose contents are committed. A gated dataset's derivatives never land in one of them.
 TRACKED_TREES = ("data", "reports", "experiments", "docs", "protocol", "models")
@@ -238,7 +238,7 @@ def check_dataset_block(manifest):
     if bits.get("source_url") and not bits["source_url"].startswith(("http://", "https://")):
         errors.append("manifest.source_url must be the http(s) page you obtained access through")
     if bits.get("retrieved_at") and not DATE_RE.match(bits["retrieved_at"]):
-        errors.append("manifest.retrieved_at must start with an ISO date, YYYY-MM-DD")
+        errors.append("manifest.retrieved_at must be 'step' or an ISO date, YYYY-MM-DD")
     return rights, bits, errors
 
 

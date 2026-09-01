@@ -207,9 +207,9 @@
      "minLength": 8
     },
     "retrieved_at": {
-     "description": "ISO-8601 date or date-time at which the facts in this record were observed at the source.",
+     "description": "Project step label, or an ISO-8601 date when the retrieval date itself is cited evidence.",
      "type": "string",
-     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?$"
+     "pattern": "^(step|[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?)$"
     },
     "method": {
      "description": "How it was obtained: the tool that fetched it, or 'manual web review', or the capture protocol.",
@@ -265,8 +265,9 @@
      "minLength": 1
     },
     "consent_date": {
+     "description": "Project step label, or an ISO-8601 date when the consent date itself is cited evidence.",
      "type": "string",
-     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?$"
+     "pattern": "^(step|[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?)$"
     },
     "scope": {
      "type": "string",

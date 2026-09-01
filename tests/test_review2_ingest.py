@@ -45,7 +45,7 @@ Anonymous
 def _run(body):
     d = tempfile.mkdtemp(); os.makedirs(f"{d}/tools"); os.makedirs(f"{d}/bin"); os.makedirs(f"{d}/data/external")
     shutil.copy(os.path.join(ROOT, "tools", "ingest_submissions.py"), f"{d}/tools/")
-    issues = [{"number": 1, "url": "https://github.com/x/y/issues/1", "title": "[pair] t", "body": body, "author": {"login": "u"}, "createdAt": "2026-01-01"}]
+    issues = [{"number": 1, "url": "https://github.com/x/y/issues/1", "title": "[pair] t", "body": body, "author": {"login": "u"}, "createdAt": "step"}]
     gh = f"{d}/bin/gh"; open(gh, "w").write("#!/bin/sh\ncat <<'EOF'\n" + json.dumps(issues) + "\nEOF\n"); os.chmod(gh, 0o755)
     env = {**os.environ, "PATH": f"{d}/bin:" + os.environ["PATH"]}
     subprocess.run([sys.executable, f"{d}/tools/ingest_submissions.py"], env=env, check=True, capture_output=True)

@@ -63,7 +63,7 @@ def controlled_pair():
         "provenance": {
             "source": "denim-twin capture protocol",
             "source_url": None,
-            "retrieved_at": "2026-08-30",
+            "retrieved_at": "step",
             "method": "protocol/PROTOCOL.md capture, before / immediate-after / post-wash",
             "recorded_in": "data/garments/DENIM_9999/record.json",
         },
@@ -91,7 +91,7 @@ def licensed_pair():
     r["provenance"] = {
         "source": "example.invalid",
         "source_url": "https://example.invalid/pair/1",
-        "retrieved_at": "2026-08-30",
+        "retrieved_at": "step",
         "method": "manual web review",
         "recorded_in": "data/external/provenance.jsonl",
     }
@@ -233,7 +233,7 @@ def test_a_creator_contributed_pair_without_recorded_consent_is_refused():
     rec = controlled_pair()
     rec["pair_type"] = "creator_contributed_physical"
     rec["consent"] = {"obtained": False, "contributor": "a person",
-                      "consent_record": "outreach/consent/none.md", "consent_date": "2026-08-30",
+                      "consent_record": "outreach/consent/none.md", "consent_date": "step",
                       "scope": "research_only"}
     eligible, reasons = VP.evaluate_eligibility(rec)
     assert not eligible
@@ -244,8 +244,8 @@ def test_a_creator_contributed_pair_with_consent_is_eligible():
     rec = controlled_pair()
     rec["pair_type"] = "creator_contributed_physical"
     rec["consent"] = {"obtained": True, "contributor": "a person",
-                      "consent_record": "outreach/consent/2026-08-30-a-person.md",
-                      "consent_date": "2026-08-30", "scope": "research_and_publication"}
+                      "consent_record": "outreach/consent/a-person.md",
+                      "consent_date": "step", "scope": "research_and_publication"}
     assert VP.validate_record(rec, SCHEMA) == []
     eligible, reasons = VP.evaluate_eligibility(rec)
     assert eligible, reasons
@@ -255,8 +255,8 @@ def test_withdrawn_consent_removes_eligibility():
     rec = controlled_pair()
     rec["pair_type"] = "creator_contributed_physical"
     rec["consent"] = {"obtained": True, "contributor": "a person",
-                      "consent_record": "outreach/consent/2026-08-30-a-person.md",
-                      "consent_date": "2026-08-30", "scope": "research_only", "withdrawn": True}
+                      "consent_record": "outreach/consent/a-person.md",
+                      "consent_date": "step", "scope": "research_only", "withdrawn": True}
     eligible, reasons = VP.evaluate_eligibility(rec)
     assert not eligible
     assert "consent_withdrawn" in codes(reasons), reasons
@@ -378,7 +378,7 @@ def test_a_bespoke_written_agreement_is_expressible_as_an_spdx_licenseref():
     """Without this a real, negotiated licence would have to be recorded as ALL-RIGHTS-RESERVED or
     UNDETERMINED, and the gate would refuse the one category of sample it is meant to admit."""
     rec = licensed_pair()
-    rec["rights"]["license_id"] = "LicenseRef-denim-twin-contributor-2026"
+    rec["rights"]["license_id"] = "LicenseRef-denim-twin-contributor"
     rec["rights"]["license_statement"] = "bespoke research licence, filed in outreach/"
     assert schema_errors(rec) == []
     eligible, reasons = VP.evaluate_eligibility(rec)
@@ -398,7 +398,7 @@ def test_a_synthetic_record_must_say_what_generated_it():
 
 
 def test_a_malformed_retrieved_at_is_refused():
-    for bad in ("yesterday", "29-08-2026", "2026/08/29", ""):
+    for bad in ("yesterday", "last summer", "not-a-step", ""):
         rec = controlled_pair()
         rec["provenance"]["retrieved_at"] = bad
         assert schema_errors(rec), f"retrieved_at={bad!r} was accepted"

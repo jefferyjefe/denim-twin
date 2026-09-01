@@ -8,7 +8,7 @@ def test_validate_requires_license_field_and_fetch_gates_on_it():
     # lists it; fetch() downloads every image regardless. data/external/pairs.jsonl is currently ALL
     # 'copyright / all rights reserved' pages and run_pairs_batch.py consumes them with no flag.
     import tutorial_pairs as T
-    rec = dict(page_url="https://x/y", source_type="blog", found_at="2026-01-01",
+    rec = dict(page_url="https://x/y", source_type="blog", found_at="step",
                images=[{"url": "https://x/a.jpg", "role": "before"}, {"url": "https://x/b.jpg", "role": "after_cut"}])
     assert T.validate([rec]), "record without license_or_terms passes validation"
     src = ast.parse(open(os.path.join(ROOT, "tools", "tutorial_pairs.py")).read())

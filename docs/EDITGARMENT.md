@@ -94,7 +94,7 @@ field is missing, because a rights field invented by a tool is worth nothing.
 {
   "dataset": "EditGarment",
   "source_url": "https://<the page you obtained access through>",
-  "retrieved_at": "<ISO-8601>",
+  "retrieved_at": "step",
   "generation_method": "<how the edited frames were produced, per the dataset's own paper>",
   "rights": {
     "license_id": "<the identifier or name of the agreement you accepted>",
@@ -122,7 +122,7 @@ complete:
 | Field | Requirement |
 | --- | --- |
 | `source_url`, `license_url` | `http(s)` URLs |
-| `retrieved_at` | starts with an ISO date, `YYYY-MM-DD` |
+| `retrieved_at` | `step`, or an ISO date `YYYY-MM-DD` when the retrieval date is cited evidence |
 | `generation_method` | non-empty; it becomes part of `provenance.method` |
 | `rights.*` | all six fields present; the three permission fields are real booleans |
 | `rights.redistributable` | must be `false` — this adapter is for an access-controlled dataset and will not emit records asserting a right to redistribute it |
