@@ -347,3 +347,41 @@ def test_sanitisation_drops_location_tags_and_absolute_paths(tmp_path):
     assert "Make" in exif and "DateTimeOriginal" in exif
     assert not [k for k in exif if str(k).startswith("GPS")]
     assert sanitise_exif({"GPSLatitude": 1, "Model": "x"}) == {"Model": "x"}
+
+
+def test_an_unevaluable_gate_does_not_share_an_exit_code_with_a_typo():
+    """UNAVAILABLE is 3, because argparse owns 2.
+
+    A gate blocked because a condition could not RUN and a gate that was never run because the
+    command was mistyped call for opposite responses -- fix the system, versus fix the command --
+    and a caller that sees the same number for both will pick one of them at random.
+    """
+    import subprocess
+    src = (ROOT / "tools" / "pilot.py").read_text()
+    assert "OK, FAIL, UNAVAILABLE = 0, 1, 3" in src, \
+        "UNAVAILABLE must not be 2; argparse exits 2 on a usage error"
+    r = subprocess.run([sys.executable, str(ROOT / "tools" / "pilot.py"), "gate",
+                        "DENIM_0001", "not_a_gate"], capture_output=True, text=True)
+    assert r.returncode == 2, "a usage error is argparse's 2, and nothing else may claim it"
+
+
+def test_the_actual_wash_is_written_once(tmp_path):
+    """A correction that overwrites is indistinguishable from the wash never having deviated."""
+    st = Store(tmp_path / "DENIM_0001")
+    plan = {"machine": "Miele", "cycle": "cottons 30", "water_temp_c": 30.0}
+    st.append("wash_planned", plan, operator="t")
+    st.append("wash_actual", dict(plan, water_temp_c=42.0), operator="t")
+    st.append("wash_actual", dict(plan), operator="tidier")
+    state, _ = st.fold()
+    assert state["wash_actual"]["water_temp_c"] == 42.0
+    assert len(state["wash_actual_rewrites"]) == 1
+
+
+def test_a_threshold_no_check_can_evaluate_fails_the_specification():
+    """A number nothing compares anything to reads, to an auditor, as a threshold being enforced."""
+    ruler_macro = {"shot_id": "X.Y.Z", "scale_reference": "ruler", "camera_angle": "macro_perpendicular",
+                   "quality": {"max_mm_per_px": 0.15}}
+    found = dict(QA.quality_is_evaluable(ruler_macro))
+    assert "max_mm_per_px" in found, "a ruler-scaled shot carries no board, so nothing can produce it"
+    boarded = dict(ruler_macro, scale_reference="charuco_board")
+    assert "max_mm_per_px" not in dict(QA.quality_is_evaluable(boarded))

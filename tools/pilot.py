@@ -57,7 +57,10 @@ SPEC_PATH = ROOT / "protocol" / "shotplan" / "shotplan.json"
 BOARD_PATH = ROOT / "protocol" / "charuco_board.json"
 STATES = ["before", "marked", "immediate_after", "post_wash"]
 
-OK, FAIL, UNAVAILABLE = 0, 1, 2
+#: Exit codes. 3, not 2, for UNAVAILABLE: argparse exits 2 on a usage error, and a caller that
+#: cannot tell "the gate could not evaluate a condition" from "you typed the command wrong" will
+#: react to the wrong one.
+OK, FAIL, UNAVAILABLE = 0, 1, 3
 
 
 def load_spec():
