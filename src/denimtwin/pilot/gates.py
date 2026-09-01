@@ -214,6 +214,20 @@ def deviation_covers(deviations, kind, field, planned=None, actual=None):
     return None
 
 
+def _board_pair(_garment_dir=None):
+    """The calibration board, loaded once. The gate re-derives verdicts from photographs and every
+    one of them needs it; loading it per frame would decode the spec hundreds of times."""
+    global _BOARD_CACHE
+    if _BOARD_CACHE is None:
+        from denimtwin.capture.board import load_board
+        _BOARD_CACHE = load_board(Path(__file__).resolve().parents[3]
+                                  / "protocol" / "charuco_board.json")
+    return _BOARD_CACHE
+
+
+_BOARD_CACHE = None
+
+
 def plan_safe_measurements(state):
     """The measurements it is safe to SIZE A PLAN from.
 
@@ -722,14 +736,81 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             return False, "file checking was disabled, so no recorded verdict was re-derived", \
                    "run the gate without --no-file-checks", {}
         try:
-            from denimtwin.capture.board import load_board
-            board, bspec = load_board(Path(__file__).resolve().parents[3]
-                                      / "protocol" / "charuco_board.json")
+            board, bspec = _board_pair(garment_dir)
         except Exception as e:                 # noqa: BLE001
             return False, "the calibration board could not be loaded, so no verdict could be " \
                           "re-derived from the photographs: %s" % e, \
                    "restore protocol/charuco_board.json", {}
         bad, rechecked = [], 0
+        # THE MULTI-FILE CHECKS, re-run from the photographs. MECHANICAL is a list of single-frame
+        # checks, and the two checks that read more than one file -- relay_independence and
+        # duplicate_content -- were in neither it nor the mandatory set. So the one class of
+        # evidence a record cannot fake, what two photographs look like beside each other, was
+        # taken entirely on the record's word: c_relays reads the relay verdict straight out of the
+        # log, and its anti-forgery test (compared_against_sha256 must name the previous capture)
+        # is satisfied by writing that sha in. Every frame of a whole session could come from one
+        # lay.
+        for sh in required_here():
+            for rep in range(1, int(sh.get("min_reps", 1)) + 1):
+                prev_key = None
+                if sh.get("relay_after"):
+                    reps_ = [r for (sid_, r) in state["captures"] if sid_ == sh["relay_after"]]
+                    if rep == 1 and reps_:
+                        prev_key = (sh["relay_after"], max(reps_))
+                elif sh.get("relay_between_reps") and rep > 1:
+                    prev_key = (sh["shot_id"], rep - 1)
+                if prev_key is None:
+                    continue
+                here = state["captures"].get((sh["shot_id"], rep))
+                there = state["captures"].get(prev_key)
+                if not here or not there:
+                    continue
+                pa = garment_dir / (there.get("path") or "")
+                pb = garment_dir / (here.get("path") or "")
+                try:
+                    import cv2
+                    from . import qa_primitives as _Q
+                    board2, bspec2 = _board_pair(garment_dir)
+                    ia, ib = cv2.imread(str(pa)), cv2.imread(str(pb))
+                    if ia is None or ib is None:
+                        bad.append("%s r%d (a frame of its re-lay pair could not be decoded)"
+                                   % (sh["shot_id"], rep))
+                        continue
+                    pose_a = _Q.garment_pose_of(ia, board2, bspec2)
+                    pose_b = _Q.garment_pose_of(ib, board2, bspec2)
+                    ncc = _Q.registered_interior_ncc(ib, ia, pose_b, pose_a)
+                    # The SCALE, recovered from the board in the later frame. Passing None short-
+                    # circuited relay_verdict to UNAVAILABLE before it ever looked at the cloth, so
+                    # this whole re-derivation quietly decided nothing.
+                    mmpp = None
+                    try:
+                        from ..capture.board import detect, mm_per_pixel
+                        cs_, is_ = detect(cv2.cvtColor(ib, cv2.COLOR_BGR2GRAY), board2)
+                        if is_ is not None and len(is_) >= 4:
+                            mmpp = mm_per_pixel(cs_, is_, bspec2)
+                    except Exception:           # noqa: BLE001
+                        mmpp = None
+                    secs_ = None
+                    ta, tb = there.get("exif_ts"), here.get("exif_ts")
+                    if ta and tb:
+                        secs_ = abs(float(tb) - float(ta))
+                    o_, d_, _ev = _Q.relay_verdict(pose_a, pose_b, mmpp, interior_ncc=ncc,
+                                                   seconds_apart=secs_, operator_confirmed=False)
+                except Exception as e:          # noqa: BLE001
+                    bad.append("%s r%d (its re-lay could not be re-derived: %s)"
+                               % (sh["shot_id"], rep, e))
+                    continue
+                rechecked += 1
+                if o_ == QA.RETAKE:
+                    bad.append("%s r%d (%s)" % (sh["shot_id"], rep, d_[:90]))
+                elif o_ == QA.UNAVAILABLE and not _human_resolved(
+                        state, sh["shot_id"], rep, state["qa"].get((sh["shot_id"], rep)) or {},
+                        here):
+                    # Could not be re-derived, and nobody has attested it. Unknown is not permission
+                    # -- but a person who was there can still settle it, which is the same escape
+                    # c_relays offers and keeps this from becoming another operator lockout.
+                    bad.append("%s r%d (its re-lay could not be re-derived from the photographs: %s)"
+                               % (sh["shot_id"], rep, d_[:70]))
         for sh in required_here():
             for rep in range(1, int(sh.get("min_reps", 1)) + 1):
                 key = (sh["shot_id"], rep)
@@ -1148,13 +1229,23 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                                "nothing"), \
                        "the plan is what the actual settings are measured against; it has to " \
                        "exist before them", {"plan_seq": wp.get("seq"), "actual_seq": wa_.get("seq")}
+            # The block used to be unescapable, and its own fix text named a remedy that did not
+            # work: recording the deviation it asked for changed nothing, and there is no other way
+            # out because the log is append-only. An operator who re-ran one command had bricked the
+            # garment. The FIRST plan still stands -- that is the point -- but a deviation naming
+            # the rewrite acknowledges it, exactly as the sentence promised.
             if state["wash_plan_rewrites"]:
-                return False, ("the wash plan was written %d more time(s) after the first; the "
-                               "planned settings are what the deviation is measured against and "
-                               "cannot be revised to match what happened"
-                               % len(state["wash_plan_rewrites"])), \
-                       "the first plan stands. Record the difference as a deviation instead.", \
-                       {"rewrites": [r["seq"] for r in state["wash_plan_rewrites"]][:5]}
+                ack = deviation_covers(state["deviations"], "wash", "wash_plan_rewritten")
+                if ack is None:
+                    return False, ("the wash plan was written %d more time(s) after the first; the "
+                                   "planned settings are what the deviation is measured against and "
+                                   "cannot be revised to match what happened"
+                                   % len(state["wash_plan_rewrites"])), \
+                           ("the first plan stands. Acknowledge the rewrite and it will be kept "
+                            "visible rather than applied:\n"
+                            "  tools/pilot.py deviation <ID> --kind wash "
+                            "--field wash_plan_rewritten --reason '<what happened>'"), \
+                           {"rewrites": [r["seq"] for r in state["wash_plan_rewrites"]][:5]}
             return True, "wash planned: %s, %s" % (wp.get("machine"), wp.get("cycle")), None, {}
 
         _guard(blocks, satisfied, "wash.planned", c_wash_planned)
@@ -1176,6 +1267,21 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if missing:
                 return False, "the actual wash record is missing %s" % ", ".join(missing[:6]), \
                        "re-record it with every field", {"missing": missing}
+            # A second recording of the ACTUAL wash is kept but was never read, so a contradictory
+            # account of what the machine did sat in the log with nothing reporting it. First-write
+            # still wins -- that is what makes a correction visible -- but the gate has to say so.
+            if state.get("wash_actual_rewrites"):
+                ack = deviation_covers(state["deviations"], "wash", "wash_actual_rewritten")
+                if ack is None:
+                    return False, ("what the machine did was recorded %d more time(s) after the "
+                                   "first, and the accounts differ. The first stands; the later "
+                                   "ones are not applied and not ignored"
+                                   % len(state["wash_actual_rewrites"])), \
+                           ("acknowledge it so the disagreement stays in the record:\n"
+                            "  tools/pilot.py deviation <ID> --kind wash "
+                            "--field wash_actual_rewritten --reason '<which account is right, and "
+                            "why the first was wrong>'"), \
+                           {"rewrites": [r["seq"] for r in state["wash_actual_rewrites"]][:5]}
             from .store import diff_planned_actual
             devs = diff_planned_actual(wp, wa)
 

@@ -690,6 +690,17 @@ def cmd_wash(a):
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
     which = "wash_actual" if a.actual else "wash_planned"
+    if not a.actual and state["wash_planned"]:
+        raise SystemExit(
+            "this garment already has a wash plan (%s, %s). The planned settings are what a\n"
+            "deviation is measured against and are not revised -- the HTTP route has always\n"
+            "refused this and the command line did not, which is the second-way-in defect this\n"
+            "repository keeps finding.\n"
+            "  to record what actually happened:  tools/pilot.py wash %s --actual\n"
+            "  to acknowledge a plan written twice by mistake:\n"
+            "    tools/pilot.py deviation %s --kind wash --field wash_plan_rewritten --reason '...'"
+            % (state["wash_planned"].get("machine"), state["wash_planned"].get("cycle"),
+               a.garment, a.garment))
     if a.actual and not state["wash_planned"]:
         raise SystemExit("record the PLANNED wash first; actual settings never replace planned "
                          "ones, and a deviation is the difference between the two")
