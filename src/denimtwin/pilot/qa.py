@@ -169,6 +169,45 @@ def quality_is_evaluable(shot):
                                  "macro range the subject fills the frame by design")
 
 
+def compare_set(state, gdir, shot_id, rep, shot, self_sha=None, self_ts=None,
+                board=None, board_spec=None):
+    """Every recorded frame this one must be compared against.
+
+    THE one implementation. There were three near-copies -- command line, web upload and the
+    scenario bench -- and a comparison that exists on one path and not another is a second way in
+    with a different set of rules, which is exactly what round 3 found at /api/upload.
+
+    Two frames get their pixels decoded rather than just their hashes: the previous REPEAT of this
+    shot id, and the shot this one is declared to be a re-lay of. The second is why this function
+    takes the shot: a repeatability series written as five separate shot ids has no previous repeat
+    anywhere, so without `relay_after` the relay check has nothing to compare against and five
+    photographs of one lay satisfy five required frames.
+    """
+    import cv2
+    from . import qa_primitives as Q
+    out = []
+    predecessor = (shot or {}).get("relay_after")
+    for (sid, r), c in sorted(state["captures"].items()):
+        if (sid, r) == (shot_id, rep):
+            continue
+        p = gdir / (c.get("path") or "")
+        present = p.exists()
+        prev = (sid == shot_id and r == rep - 1)
+        # The last frame of the declared predecessor shot. Its LAST repeat, because that is the lay
+        # the operator most recently made.
+        is_pred = bool(predecessor) and sid == predecessor and \
+            r == max(rr for (ss, rr) in state["captures"] if ss == sid)
+        want_pixels = (prev or is_pred) and present
+        img = cv2.imread(str(p)) if want_pixels else None
+        out.append({"shot_id": sid, "rep": r, "path": str(p) if present else None,
+                    "sha256": c.get("sha256"), "self_sha256": self_sha,
+                    "undecodable": not present, "image": img, "dhash": c.get("dhash"),
+                    "pose": Q.garment_pose_of(img, board, board_spec) if img is not None else None,
+                    "exif_ts": c.get("exif_ts"), "this_exif_ts": self_ts,
+                    "is_previous_rep": prev, "is_relay_predecessor": is_pred})
+    return out
+
+
 def excuse_is_valid(shot, check_id, claim):
     """Would this code itself have excused this check for this shot?
 
@@ -712,8 +751,9 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                              "other_rep": other.get("rep"), "compared": "pixels"},
                             fix=None if outcome == PASS
                             else "capture a new frame; this one is already recorded"))
-        if other.get("is_previous_rep") and shot.get("relay_between_reps") \
-                and applies("relay_independence"):
+        relay_partner = (other.get("is_previous_rep") and shot.get("relay_between_reps")) or \
+            other.get("is_relay_predecessor")
+        if relay_partner and applies("relay_independence"):
             interior = Q.registered_interior_ncc(img, oimg, pose, other.get("pose")) \
                 if oimg is not None else None
             secs = None

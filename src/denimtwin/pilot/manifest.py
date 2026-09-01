@@ -65,6 +65,14 @@ def canonical(obj):
 
 
 def sha256_file(path, chunk=1 << 20):
+    # A FIFO passes every existence test and then blocks forever inside the read, waiting for a
+    # writer that never comes. Ingestion already refused one; the GATE read the same way and did
+    # not, so a manifest entry pointing at a named pipe inside the garment directory hung
+    # `precut` with no verdict and no output -- which on cut day is worse than a refusal, because
+    # the operator cannot tell it from slow work.
+    st_ = os.stat(str(path))
+    if not stat.S_ISREG(st_.st_mode):
+        raise ManifestError("%s is not a regular file; a photograph cannot be read from it" % path)
     h = hashlib.sha256()
     with open(str(path), "rb") as f:
         for b in iter(lambda: f.read(chunk), b""):
@@ -278,6 +286,32 @@ class Manifest(object):
             out.append({"kind": "entries_missing",
                         "detail": "this log reached %d entries and now has %d; entries have been "
                                   "removed from the end" % (high, len(entries))})
+
+        # The high-water mark alone only catches a log that is SHORTER than it has ever been, and
+        # the obvious move is to put something back: delete the entry you dislike, run any ordinary
+        # command, and the count is level again while the contents are not. The chain cannot see it
+        # either -- the replacement's prev_chain is the surviving entry's chain, so the shortened log
+        # is internally perfect.
+        #
+        # What gives it away is that this sidecar records the chain at EVERY count it has ever
+        # reached. Two anchors agreeing on a count and disagreeing on the chain is a rewrite of
+        # history, whatever the log now looks like, and an anchor whose count still exists in the log
+        # must name that entry's chain.
+        by_count = {}
+        for r in recs:
+            k = int(r.get("count") or 0)
+            c = r.get("chain")
+            if k in by_count and by_count[k] != c:
+                out.append({"kind": "history_rewritten",
+                            "detail": "the log reached entry %d twice with two different contents; "
+                                      "an entry was removed and another written in its place" % k})
+            by_count[k] = c
+        for k, c in sorted(by_count.items()):
+            if 0 < k <= len(entries) and entries[k - 1].get("chain") != c:
+                out.append({"kind": "history_rewritten",
+                            "detail": "entry %d does not match the anchor written when the log "
+                                      "first reached that length" % k})
+                break
         if recs[-1].get("count") != len(entries) or recs[-1].get("chain") != want_chain:
             out.append({"kind": "head_mismatch",
                         "detail": "the log does not end where its most recent anchor says it ends"})

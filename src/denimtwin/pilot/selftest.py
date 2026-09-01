@@ -193,7 +193,11 @@ class Bench(object):
                                           shot["shot_id"], rep)
         rel = str(dest.relative_to(self.dir))
         exif = read_exif(dest)
-        ts = exif_timestamp(exif) or (time.time() + rep * 120)
+        # Per CAPTURE, not per repeat index: a series written as separate shot ids is always
+        # rep 1, so every frame in it landed on the same synthetic second and the relay check
+        # correctly refused a re-lay that appeared to take no time at all.
+        self._clock = getattr(self, "_clock", 0) + 1
+        ts = exif_timestamp(exif) or (time.time() + self._clock * 180)
         img = cv2.imread(str(dest))
         sh = self.setup_hash if setup_hash_override == "__default__" else setup_hash_override
         self.store.append("capture",
@@ -206,22 +210,10 @@ class Bench(object):
                           operator="selftest", setup_hash=sh)
         st, _ = self.store.fold()
         board, bspec = self.board
-        compare = []
-        for (sid, r), c in sorted(st["captures"].items()):
-            if (sid, r) == (shot["shot_id"], rep):
-                continue
-            p = self.dir / (c.get("path") or "")
-            present = p.exists()
-            prev = (sid == shot["shot_id"] and r == rep - 1)
-            oimg = cv2.imread(str(p)) if (prev and present) else None
-            compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg,
-                            "path": str(p) if present else None,
-                            "undecodable": not present,
-                            "dhash": c.get("dhash"),
-                            "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
-                            "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
-                            "is_previous_rep": prev})
+        # qa.compare_set: the bench must build its comparison set exactly the way the real
+        # ingest paths do, or the scenarios test something the operator never runs.
+        compare = QA.compare_set(st, self.dir, shot['shot_id'], rep, shot, self_sha=sha,
+                                 self_ts=ts, board=board, board_spec=bspec)
         assertions = {"operator": "selftest"}
         if confirm_all:
             for k in ("ruler_visible", "side_confirmed", "region_confirmed",
@@ -338,6 +330,25 @@ def _mini_spec(tmp):
     (d / "shotplan.json").write_text(json.dumps(doc))
     return SPEC.load(d / "shotplan.json")
 
+
+
+def _lay_index(shot, rep):
+    """The lay this frame is taken from, as the fixture must render it.
+
+    A repeat inside a shot id advances the lay by its repeat number. A series written as SEPARATE
+    shot ids advances it by depth along the relay_after chain -- otherwise the fixture hands five
+    frames of ONE lay to the five frames whose entire purpose is being five different lays, and the
+    positive control passes only for as long as nothing checks.
+    """
+    depth, seen, cur = 0, set(), shot
+    while cur and cur.get("relay_after") and cur["shot_id"] not in seen:
+        seen.add(cur["shot_id"])
+        depth += 1
+        cur = _SHOT_BY_ID.get(cur["relay_after"])
+    return rep + depth
+
+
+_SHOT_BY_ID = {}
 
 def scenarios(full_spec, tmp_root, want_full=False):
     out = []
@@ -653,9 +664,11 @@ def scenarios(full_spec, tmp_root, want_full=False):
         sp = spec or _mini_spec(tmp_root)
         bb = new(name, spec=sp, gid=gid)
         bb.open_session(); bb.freeze_rig(); bb.answer_features(); bb.measure()
-        for sh_ in bb.activated()[0]:
+        acts_all = bb.activated()[0]
+        _SHOT_BY_ID.update({x["shot_id"]: x for x in acts_all})
+        for sh_ in acts_all:
             for r_ in range(1, int(sh_.get("min_reps", 1)) + 1):
-                bb.add(sh_, r_, bb.synth_for(sh_, r_, relay=r_))
+                bb.add(sh_, r_, bb.synth_for(sh_, r_, relay=_lay_index(sh_, r_)))
         bb.resolve_humans(); bb.cut_ready_extras()
         return bb, sp
 
@@ -814,9 +827,10 @@ def scenarios(full_spec, tmp_root, want_full=False):
     # -- 34. the second person must be a second person -------------------------------------------------
     b = new("oneperson", spec=mini_sp, gid="DENIM_9211")
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    _SHOT_BY_ID.update({x["shot_id"]: x for x in b.activated()[0]})
     for sh_ in b.activated()[0]:
         for r_ in range(1, int(sh_.get("min_reps", 1)) + 1):
-            b.add(sh_, r_, b.synth_for(sh_, r_, relay=r_))
+            b.add(sh_, r_, b.synth_for(sh_, r_, relay=_lay_index(sh_, r_)))
     b.resolve_humans()
     from . import cutspec as _CUT
     st_, _ = b.store.fold()
@@ -1579,6 +1593,40 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the two required motion clips could NEVER pass and the post-wash gate could "
                       "never open -- a gate that valid evidence cannot open is broken, not safe"))
 
+    # -- 70d. five photographs of ONE lay are not five independent re-lays ------------------------
+    # The requirement this whole arm exists for. The five front-overhead repeats are written as
+    # separate shot ids with min_reps 1, so the relay check -- which only ever looked at repeats
+    # INSIDE a shot id -- was never asked about them, and the gate condition was vacuously satisfied
+    # for exactly the eight frames it was written about.
+    b = new("onelay", spec=full_spec, gid="DENIM_9253")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    acts_ = {x["shot_id"]: x for x in b.activated()[0]}
+    ser = [x for x in ("BEFORE.WHOLE.F00.R1", "BEFORE.WHOLE.F00.R2", "BEFORE.WHOLE.F00.R3",
+                       "BEFORE.WHOLE.F00.R4", "BEFORE.WHOLE.F00.R5") if x in acts_]
+    verdicts_ = {}
+    if len(ser) >= 2:
+        first_ = b.synth_for(acts_[ser[0]], 1)
+        b.add(acts_[ser[0]], 1, first_, confirm_all=True)
+        for sid_ in ser[1:]:
+            same_ = b.dir / ("one_lay_%s.png" % sid_.rsplit(".", 1)[-1])
+            from .fixtures import reshoot as _rs
+            _rs(first_, same_, sensor_sigma=4.0, shake_px=2.0,
+                seed=zlib.crc32(sid_.encode()) % 9999)
+            b.add(acts_[sid_], 1, same_, confirm_all=True)
+        st_ = b.store.fold()[0]
+        for sid_ in ser[1:]:
+            q_ = st_["qa"].get((sid_, 1)) or {}
+            rel_ = [c for c in (q_.get("checks") or []) if c["check_id"] == "relay_independence"]
+            verdicts_[sid_] = rel_[0]["outcome"] if rel_ else "NOT ASKED"
+    b.resolve_humans()
+    out.append(Result("five photographs of one lay are not five independent re-lays",
+                      len(ser) == 5 and all(v == QA.RETAKE for v in verdicts_.values())
+                      and "captures.relays_independent" in b.blocked_conditions(),
+                      "%d in the series; verdicts %s" % (len(ser), sorted(set(verdicts_.values()))),
+                      "the repeatability arm is the one thing in the pilot that measures the "
+                      "method rather than the garment, and its frames are separate shot ids, so "
+                      "the relay check never saw them and the gate condition was vacuous"))
+
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")
     b.open_session()
@@ -1682,12 +1730,13 @@ def scenarios(full_spec, tmp_root, want_full=False):
         b = new("happyfull", spec=full_spec, gid="DENIM_9003")
         b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
         shots, _m = b.activated()
+        _SHOT_BY_ID.update({x["shot_id"]: x for x in shots})
         req = [s for s in shots if s["state"] in ("rig", "intake", "before", "marked")
                and s["necessity"] != "optional"]
         n = 0
         for s in req:
             for rep in range(1, int(s.get("min_reps", 1)) + 1):
-                b.add(s, rep, b.synth_for(s, rep, relay=rep))
+                b.add(s, rep, b.synth_for(s, rep, relay=_lay_index(s, rep)))
                 n += 1
         b.resolve_humans()
         b.cut_ready_extras()

@@ -407,6 +407,10 @@
             "type": "string"
           },
           "description": "claims a person must confirm for this frame, named by the check id. For frames whose content no automatic check can judge -- an empty backdrop, a lighting test, a coplanarity proof -- this is the only thing standing between the requirement and a photograph of anything."
+        },
+        "relay_after": {
+          "type": "string",
+          "description": "the shot_id this frame must be an independent RE-LAY of. relay_between_reps chains repeats within one shot id; a repeatability series written as separate shot ids (F00.R1..R5) needs this, or the relay check has nothing to compare against and the series is five photographs of one lay."
         }
       }
     }

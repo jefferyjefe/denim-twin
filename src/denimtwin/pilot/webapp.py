@@ -570,26 +570,10 @@ def build_api(session):
                      operator=fields.get("operator"), setup_hash=st["setup_hash"])
         board, bspec = session.board
         quality = QA.merged_quality(spec.doc["quality_defaults"], shot)
-        compare = []
-        for (sid, r), c in sorted(st["captures"].items()):
-            if (sid, r) == (shot_id, rep):
-                continue
-            p = gdir / (c.get("path") or "")
-            # A recorded capture whose file is momentarily absent is still something this frame must
-            # be compared against: its hash and signature are in the log and cost nothing. Skipping
-            # it made the duplicate check silently not run, so a byte-identical re-use went
-            # unnoticed for exactly as long as the earlier file was missing.
-            present = p.exists()
-            prev = (sid == shot_id and r == rep - 1)
-            oimg = cv2.imread(str(p)) if (prev and present) else None
-            compare.append({"shot_id": sid, "rep": r, "sha256": c.get("sha256"),
-                            "self_sha256": sha, "image": oimg,
-                            "path": str(p) if present else None,
-                            "undecodable": not present,
-                            "dhash": c.get("dhash"),
-                            "pose": Q.garment_pose_of(oimg, board, bspec) if oimg is not None else None,
-                            "exif_ts": c.get("exif_ts"), "this_exif_ts": ts,
-                            "is_previous_rep": prev})
+        # One implementation, in qa.compare_set: this path had its own copy, and a comparison that
+        # exists on the command line and not here is the shape of the last round's finding.
+        compare = QA.compare_set(st, gdir, shot_id, rep, shot, self_sha=sha, self_ts=ts,
+                                   board=board, board_spec=bspec)
         assertions = {"operator": fields.get("operator")}
         for k in (fields.get("confirm") or "").split(","):
             if k.strip():

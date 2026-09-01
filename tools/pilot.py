@@ -375,24 +375,13 @@ def _dhash_hex(img):
     return Q.dhash_bits(img).hex()
 
 
-def _compare_set(spec, st_state, gdir, shot_id, rep, shot, _b=None, _bspec=None):
-    """Captures this one must be compared against: every accepted frame, plus the previous repeat."""
-    from denimtwin.pilot import qa_primitives as Q
-    import cv2
-    out = []
-    for (sid, r), c in sorted(st_state["captures"].items()):
-        if (sid, r) == (shot_id, rep):
-            continue
-        p = gdir / (c.get("path") or "")
-        present = p.exists()
-        prev = (sid == shot_id and r == rep - 1)
-        img = cv2.imread(str(p)) if (prev and present) else None
-        out.append({"shot_id": sid, "rep": r, "path": str(p) if present else None,
-                    "sha256": c.get("sha256"), "undecodable": not present,
-                    "image": img, "dhash": c.get("dhash"),
-                    "pose": Q.garment_pose_of(img, _b, _bspec) if img is not None else None,
-                    "exif_ts": c.get("exif_ts"), "is_previous_rep": prev})
-    return out
+# The comparison set lives in qa.compare_set -- ONE implementation shared by the command line, the
+# web upload and the scenario bench. Three near-copies is three chances for a comparison to exist on
+# one path and not another.
+def _compare_set(spec, st_state, gdir, shot_id, rep, shot, _b=None, _bspec=None,
+                 self_sha=None, self_ts=None):
+    return QA.compare_set(st_state, gdir, shot_id, rep, shot, self_sha=self_sha, self_ts=self_ts,
+                          board=_b, board_spec=_bspec)
 
 
 def cmd_add(a):

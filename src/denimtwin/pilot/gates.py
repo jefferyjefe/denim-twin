@@ -350,11 +350,46 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         return True, "rig frozen as %s" % state["setup_hash"][:12], None, \
                {"setup_hash": state["setup_hash"], "changes": len(state["setup_history"])}
 
+    def rigs_that_produced_evidence():
+        """Every rig hash an in-scope capture was taken under, plus the one in effect now."""
+        in_scope = {(sh["shot_id"], rep) for sh in required_here()
+                    for rep in range(1, int(sh.get("min_reps", 1)) + 1)}
+        used = {}
+        for k, c in state["captures"].items():
+            if k in in_scope and c.get("setup_hash"):
+                used.setdefault(c["setup_hash"], []).append("%s r%d" % k)
+        return used
+
     def c_setup_checks():
         # Only readings taken against the CURRENT rig count. Keyed on the check name alone, a
         # re-freeze inherited the previous configuration's calibration wholesale -- so the rig could
         # be moved and every reading about the old one still read as certifying the new.
         cur = state["setup_hash"]
+
+        # And EVERY rig that produced evidence, not only the one in effect at the end. Checking the
+        # current hash alone meant a session could take half its required frames under rig A, freeze
+        # rig B, calibrate B, and hear "all 10 rig calibration checks recorded and passing" -- a
+        # true sentence about a configuration that took none of the photographs. Scale, tilt and
+        # board geometry are properties of the rig that made a frame, so a frame from an
+        # uncalibrated rig has no established scale whatever the current one measures.
+        produced = rigs_that_produced_evidence()
+        uncalibrated = []
+        for h, frames in sorted(produced.items()):
+            if h == cur:
+                continue
+            got = {k for k, v in state["setup_checks"].items() if v.get("setup_hash") == h
+                   and v.get("outcome") == QA.PASS}
+            short = [c for c in REQUIRED_SETUP_CHECKS if c not in got]
+            if short:
+                uncalibrated.append((h, frames, short))
+        if uncalibrated:
+            h, frames, short = uncalibrated[0]
+            return False, ("%d capture(s) were taken under rig %s, which has %d calibration "
+                           "reading(s) missing or not passing"
+                           % (len(frames), h[:12], len(short))), \
+                   ("calibrate that configuration, or re-take those frames under the rig that is "
+                    "calibrated. A photograph from an uncalibrated rig has no established scale."), \
+                   {"rig": h[:12], "frames": frames[:6], "missing": short[:6]}
         # A reading that does not say which rig it was taken against has not established anything
         # about the current one. Admitting None was an escape hatch that re-opened exactly the hole
         # the keying closed.
@@ -621,13 +656,79 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         return True, "all %d required frames captured and passing" % \
                sum(int(s.get("min_reps", 1)) for s in req), None, {}
 
+    #: Checks that read PIXELS and need no human input, so the gate can run them again itself.
+    #: Everything else in a record -- a ruler confirmation, which face is up, a re-lay attestation --
+    #: rests on a person, and re-running it would only re-read what the person said.
+    MECHANICAL = ("readable", "resolution", "blur", "exposure", "clipping", "cropping",
+                  "subject_present", "board_corners", "scale", "camera_tilt", "subject_extent",
+                  "subject_span")
+
+    def c_verdicts_reproduce():
+        """Re-run the pixel checks on the actual files and see whether the record survives.
+
+        Every other defence in this module tests the record against ITSELF: the roll-up must match
+        the checks, the checks must cover what the class supports, the excuses must be ones this
+        code would have written. All of that is satisfied by a sufficiently complete forgery -- one
+        appended qa_result carrying an invented all-PASS check list made a photograph of an empty
+        backdrop into a passing primary whole-garment frame, and the hash chain stayed perfect
+        because nothing had been altered, only added.
+
+        The photograph is the one thing an appended line cannot change. So for the gate -- run once,
+        before something irreversible -- the mechanical checks are simply run again, from the files
+        on disk, and a recorded PASS that does not reproduce is a block.
+        """
+        if not check_files:
+            return False, "file checking was disabled, so no recorded verdict was re-derived", \
+                   "run the gate without --no-file-checks", {}
+        try:
+            from denimtwin.capture.board import load_board
+            board, bspec = load_board(Path(__file__).resolve().parents[3]
+                                      / "protocol" / "charuco_board.json")
+        except Exception as e:                 # noqa: BLE001
+            return False, "the calibration board could not be loaded, so no verdict could be " \
+                          "re-derived from the photographs: %s" % e, \
+                   "restore protocol/charuco_board.json", {}
+        bad, rechecked = [], 0
+        for sh in required_here():
+            for rep in range(1, int(sh.get("min_reps", 1)) + 1):
+                key = (sh["shot_id"], rep)
+                cap = state["captures"].get(key)
+                q = state["qa"].get(key) or {}
+                if not cap or q.get("outcome") not in (QA.PASS, QA.HUMAN):
+                    continue                    # nothing claimed; other conditions cover it
+                path = garment_dir / (cap.get("path") or "")
+                try:
+                    checks, _na = QA.check_capture(
+                        path, sh, QA.merged_quality(spec.doc["quality_defaults"], sh), rep=rep,
+                        board=board, board_spec=bspec,
+                        operator_assertions={c.get("check_id"): True
+                                             for c in (q.get("checks") or [])
+                                             if c.get("outcome") == QA.PASS})
+                except Exception as e:          # noqa: BLE001
+                    bad.append("%s r%d (could not be re-checked: %s)" % (key[0], key[1], e))
+                    continue
+                rechecked += 1
+                for c in checks:
+                    if c.check_id in MECHANICAL and c.outcome == QA.RETAKE:
+                        bad.append("%s r%d (%s: %s)" % (key[0], key[1], c.check_id,
+                                                        (c.detail or "")[:90]))
+                        break
+        if bad:
+            return False, ("%d frame(s) recorded as passing do not pass when the checker is run "
+                           "again on the photograph itself" % len(bad)), \
+                   ("the verdict in the log does not describe the file on disk. Re-take these "
+                    "frames. A record can be appended to; a photograph cannot."), \
+                   {"failing": bad[:10]}
+        return True, "%d recorded verdict(s) re-derived from the photographs themselves" % rechecked, \
+               None, {}
+
     def c_files_present():
         if not check_files:
             return False, ("file integrity was not verified in this view, so whether every recorded "
                            "photograph is still on disk and unchanged is unknown"), \
                    "unknown is not permission: run `pilot.py precut` (or open the GATE tab), which " \
                    "hashes every file", {}
-        missing, changed, unhashed, misfiled = [], [], [], []
+        missing, changed, unhashed, misfiled, forged_sig = [], [], [], [], []
         for (sid, rep), c in sorted(state["captures"].items()):
             rel = c.get("path")
             if not rel:
@@ -668,56 +769,100 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             want = c.get("sha256")
             if want and _hash_changed(p, want, use_cache=not rehash):
                 changed.append("%s r%d -> %s" % (sid, rep, rel))
-        if missing or changed or unhashed or misfiled:
+                continue
+            # The recorded perceptual signature, against the photograph itself. At INGEST the
+            # signature is only a prefilter -- it decides which pairs are worth decoding, and
+            # recomputing every earlier frame's would cost a decode per prior capture on a phone
+            # upload. So one appended capture line changing nothing but the dhash pushed a frame far
+            # outside the near-duplicate band, and the same photograph then satisfied a second
+            # required shot with duplicate_content recording a confident PASS.
+            #
+            # The gate runs once, before something irreversible, and can afford the decode. A
+            # signature that does not describe the file is a forged prefilter, and every duplicate
+            # verdict that rested on it is worthless.
+            rec_sig = c.get("dhash")
+            if rec_sig:
+                try:
+                    import cv2
+                    from . import qa_primitives as _Q
+                    im_ = cv2.imread(str(p))
+                    if im_ is not None:
+                        if _Q.dhash_bits(im_).hex() != str(rec_sig):
+                            forged_sig.append("%s r%d" % (sid, rep))
+                except Exception:              # noqa: BLE001
+                    forged_sig.append("%s r%d (its signature could not be re-derived)" % (sid, rep))
+        if missing or changed or unhashed or misfiled or forged_sig:
             return False, ("%d recorded photograph(s) missing from disk, %d no longer matching "
                            "their recorded hash, %d recorded without a hash at all, %d filed under "
-                           "a name that is not their own shot and hash"
-                           % (len(missing), len(changed), len(unhashed), len(misfiled))), \
+                           "a name that is not their own shot and hash, %d whose recorded "
+                           "perceptual signature does not describe the file"
+                           % (len(missing), len(changed), len(unhashed), len(misfiled),
+                              len(forged_sig))), \
                    "restore them from the phone, or re-capture. A manifest entry whose file is " \
-                   "gone, unhashed, or pointing at another shot's photograph is not evidence.", \
+                   "gone, unhashed, pointing at another shot's photograph, or carrying a signature " \
+                   "that is not the photograph's own is not evidence.", \
                    {"missing": missing[:8], "changed": changed[:8], "unhashed": unhashed[:8],
-                    "misfiled": misfiled[:8]}
+                    "misfiled": misfiled[:8], "signature_mismatch": forged_sig[:8]}
         return True, "all %d recorded photographs present and hash-matched" % len(state["captures"]), \
                None, {}
 
     _guard(blocks, satisfied, "captures.required_complete", c_required_captures)
+    _guard(blocks, satisfied, "captures.verdicts_reproduce", c_verdicts_reproduce)
     _guard(blocks, satisfied, "captures.files_intact", c_files_present)
 
     def c_relays():
         req = required_here()
-        need = [s for s in req if s.get("relay_between_reps") and int(s.get("min_reps", 1)) > 1]
+        # (shot, rep, the frame it must be an independent re-lay OF). Two ways a re-lay is
+        # declared, and only the first was ever checked: repeats INSIDE one shot id, and a series
+        # written as separate shot ids chained by relay_after. The eight frames the repeatability
+        # arm exists for -- five front-overhead, three back -- are the second kind, so the
+        # condition was vacuously satisfied for exactly the shots it was written about.
+        pairs = []
+        for s in req:
+            if s.get("relay_between_reps") and int(s.get("min_reps", 1)) > 1:
+                for rep in range(2, int(s["min_reps"]) + 1):
+                    pairs.append((s, rep, (s["shot_id"], rep - 1)))
+            if s.get("relay_after"):
+                prev_reps = [r for (sid_, r) in state["captures"] if sid_ == s["relay_after"]]
+                pairs.append((s, 1, (s["relay_after"], max(prev_reps) if prev_reps else 1)))
         bad = []
-        for s in need:
-            for rep in range(2, int(s["min_reps"]) + 1):
-                q = state["qa"].get((s["shot_id"], rep)) or {}
-                rc = None
-                for c in (q.get("checks") or []):
-                    if c.get("check_id") == "relay_independence":
-                        rc = c
-                if rc is None:
-                    bad.append("%s r%d (relay independence never assessed)" % (s["shot_id"], rep))
-                elif rc.get("outcome") != QA.PASS:
+        for s, rep, against_key in pairs:
+            q = state["qa"].get((s["shot_id"], rep)) or {}
+            rc = None
+            for c in (q.get("checks") or []):
+                if c.get("check_id") == "relay_independence":
+                    rc = c
+            if rc is None:
+                bad.append("%s r%d (relay independence never assessed)" % (s["shot_id"], rep))
+            elif rc.get("outcome") != QA.PASS:
+                # A person attesting the re-lay settles it, the same way it settles a reposition --
+                # which is what this condition's own fix text tells the operator to do. Without
+                # this the honest answer to "the cloth changed, but I cannot tell from the
+                # timestamps whether you really lifted it" was a permanent block.
+                if not _human_resolved(state, s["shot_id"], rep, q,
+                                       state["captures"].get((s["shot_id"], rep))):
                     bad.append("%s r%d (%s)" % (s["shot_id"], rep, rc.get("outcome")))
-                else:
-                    # The verdict was made against a particular earlier frame. If that frame has
-                    # since been replaced, the verdict describes a photograph that is no longer
-                    # there -- so two frames of the same lay can sit under reps 1 and 2 with a
-                    # passing relay verdict between them.
-                    against = (rc.get("evidence") or {}).get("compared_against_sha256")
-                    prev_cap = state["captures"].get((s["shot_id"], rep - 1)) or {}
-                    if not against:
-                        bad.append("%s r%d (its relay verdict does not name the frame it was "
-                                   "compared against)" % (s["shot_id"], rep))
-                    elif prev_cap.get("sha256") and against != prev_cap["sha256"]:
-                        bad.append("%s r%d (compared against a frame that has since been replaced)"
-                                   % (s["shot_id"], rep))
+            else:
+                # The verdict was made against a particular earlier frame. If that frame has
+                # since been replaced, the verdict describes a photograph that is no longer
+                # there -- so two frames of the same lay can sit under reps 1 and 2 with a
+                # passing relay verdict between them.
+                against = (rc.get("evidence") or {}).get("compared_against_sha256")
+                prev_cap = state["captures"].get(against_key) or {}
+                if not against:
+                    bad.append("%s r%d (its relay verdict does not name the frame it was "
+                               "compared against)" % (s["shot_id"], rep))
+                elif prev_cap.get("sha256") and against != prev_cap["sha256"]:
+                    bad.append("%s r%d (compared against a frame that has since been replaced)"
+                               % (s["shot_id"], rep))
         if bad:
             return False, ("%d repeat capture(s) are not established as independent re-lays"
                            % len(bad)), \
                    "each repeat must follow the garment being lifted clear and laid out again; " \
                    "confirm the re-lay in the app or re-take the repeat", {"failing": bad[:10]}
-        return True, "%d repeat capture(s) established as independent re-lays" % \
-               sum(int(s["min_reps"]) - 1 for s in need), None, {}
+        return True, "%d re-lay(s) established as independent" % len(pairs), None, \
+               {"chained_series": sorted({s["relay_after"] for s, _r, _k in pairs
+                                          if s.get("relay_after")})}
 
     _guard(blocks, satisfied, "captures.relays_independent", c_relays)
 
@@ -1172,6 +1317,11 @@ def _hash_changed(path, want, use_cache=True):
     try:
         st = os.stat(str(path))
     except OSError:
+        return True
+    # Not a regular file is "changed", never "read it and find out": reading a FIFO blocks forever
+    # and the gate never answers at all.
+    import stat as _stat
+    if not _stat.S_ISREG(st.st_mode):
         return True
     key = (str(path), st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
     got = _HASH_CACHE.get(key) if use_cache else None

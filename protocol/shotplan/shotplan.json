@@ -4105,6 +4105,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_back",
+   "relay_after": "BEFORE.WHOLE.B00.R1",
    "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "frozen corner, unchanged",
@@ -4138,6 +4139,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_back",
+   "relay_after": "BEFORE.WHOLE.B00.R2",
    "relay_between_reps": true,
    "reposition_camera_between_reps": true,
    "scale_placement": "frozen corner, re-established after remounting",
@@ -4237,6 +4239,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_front",
+   "relay_after": "BEFORE.WHOLE.F00.R1",
    "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "frozen corner, unchanged",
@@ -4270,6 +4273,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_front",
+   "relay_after": "BEFORE.WHOLE.F00.R2",
    "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "frozen corner, unchanged",
@@ -4303,6 +4307,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_front",
+   "relay_after": "BEFORE.WHOLE.F00.R3",
    "relay_between_reps": true,
    "reposition_camera_between_reps": true,
    "scale_placement": "frozen corner \u2014 after remounting, the board hull must fall in the same frame quadrant as in RIG.BOARD.FLAT_OVERHEAD",
@@ -4336,6 +4341,7 @@
     "subject_px_meaning": "horizontal pixel span of the waistband, left outseam edge to right outseam edge"
    },
    "region_id": "whole_garment_front",
+   "relay_after": "BEFORE.WHOLE.F00.R4",
    "relay_between_reps": true,
    "reposition_camera_between_reps": true,
    "scale_placement": "frozen corner, re-established after remounting",
