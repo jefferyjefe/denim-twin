@@ -9277,6 +9277,7 @@
    "lens": "main",
    "matched_shot_ids": [],
    "min_reps": 1,
+   "must_be_empty": true,
    "necessity": "required",
    "purpose": "quality.py estimates background colour from an 8 px frame-border ring and splits foreground by Lab distance to that median. Every garment verdict in the whole pilot rests on that assumption. This frame is the only evidence that the assumption holds \u2014 that the backdrop is one colour, unclipped and free of a gradient the border ring cannot see. Without it a lighting hotspot or a visible table edge silently biases foreground_fraction, mean_intensity and border_fraction on all 4 states.",
    "quality": {

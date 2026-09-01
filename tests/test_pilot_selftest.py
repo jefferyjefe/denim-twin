@@ -113,6 +113,7 @@ SCENARIOS = [
     'a fold running during an upload does not read as tampering',
     'a read gives up on the lock rather than on itself',
     'a forgery consistent within the garment directory is caught from outside it',
+    'the frame that proves the jeans were not there cannot be the jeans',
     'the actual wash is written once, like the plan',
     'a cut the geometry cannot model needs someone to say they meant it',
     'a rig frame no automatic check can judge asks a person',

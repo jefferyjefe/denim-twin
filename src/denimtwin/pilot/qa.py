@@ -72,11 +72,15 @@ APPLICABLE = {
     MACRO: {"readable", "resolution", "blur", "board_corners", "scale", "camera_tilt",
             "ruler_visible", "anatomical_region", "duplicate_content", "camera_repositioned"},
     RIG: {"readable", "resolution", "blur", "board_corners", "scale", "camera_tilt",
-          "duplicate_content", "camera_repositioned"},
+          "surface_empty", "duplicate_content", "camera_repositioned"},
     LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned",
             "anatomical_region", "ruler_visible"},
     VIDEO: {"readable", "resolution", "video_duration", "duplicate_content"},
 }
+
+#: How much of an "empty" frame may be covered by anything at all. The board is excluded first, so
+#: this is genuinely leftover: a stray tool, a hand, a garment.
+EMPTY_SURFACE_MAX_FRACTION = 0.02
 
 NOT_APPLICABLE_WHY = {
     (MACRO, "exposure"): "the frame is filled by the subject, so the border-sampled background "
@@ -249,6 +253,8 @@ def excuse_is_valid(shot, check_id, claim):
         return q.get("min_long_edge_px") is None
     if check_id == "video_duration":
         return shot.get("video_seconds") is None
+    if check_id == "surface_empty":
+        return not shot.get("must_be_empty")
     if check_id == "garment_side":
         return shot.get("garment_side") not in ("front", "back")
     if check_id == "anatomical_region":
@@ -722,6 +728,42 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                 "cannot be identified automatically. Confirm this is %s."
                                 % shot["region_id"],
                                 fix="confirm the region in the app"))
+
+    # -- a frame required to show NOTHING -------------------------------------------------------
+    # The empty-backdrop frame is the one required frame whose entire content is an ABSENCE, and an
+    # absence is the easiest thing here to measure -- garment_pose already finds the largest
+    # foreground region. Leaving it to "a person confirmed it" meant a photograph of the jeans
+    # satisfied the frame that exists to prove the jeans were not there.
+    if shot.get("must_be_empty") and img is not None:
+        # The board's own footprint is excluded WHETHER OR NOT this shot declares a board, because
+        # the board is lying on the surface either way and is not the thing being asked about.
+        # Reusing `board_rect` was wrong: it is only ever set inside the needs_board branch, so on a
+        # frame scaled by a rule the board itself read as the subject and a genuinely empty backdrop
+        # was refused.
+        try:
+            rect_e = board_rect if board_rect is not None else (
+                Q.board_footprint(img, board, board_spec) if board is not None else None)
+            pose_e = Q.garment_pose(img, rect_e)
+        except Exception:                      # noqa: BLE001
+            pose_e = {}
+        frac = (pose_e or {}).get("area_fraction")
+        if frac is None:
+            # NOTHING was found. On a frame whose requirement is an absence, that is the requirement
+            # met, not a check that could not run.
+            checks.append(Check("surface_empty", PASS,
+                                "no object at all found on this surface once the calibration board "
+                                "is excluded", {"subject_fraction": None}))
+        elif frac > EMPTY_SURFACE_MAX_FRACTION:
+            checks.append(Check("surface_empty", RETAKE,
+                                "something is lying on this surface: it covers %.1f%% of the frame, "
+                                "and this shot must show an empty surface (limit %.1f%%)"
+                                % (100 * frac, 100 * EMPTY_SURFACE_MAX_FRACTION),
+                                {"subject_fraction": frac},
+                                fix="clear the surface completely and re-take it"))
+        else:
+            checks.append(Check("surface_empty", PASS,
+                                "nothing on this surface larger than %.1f%% of the frame"
+                                % (100 * frac), {"subject_fraction": frac}))
 
     # -- what this particular shot says a person must confirm -----------------------------------
     # Some required frames have no automatic content check at all: an empty backdrop, a lighting

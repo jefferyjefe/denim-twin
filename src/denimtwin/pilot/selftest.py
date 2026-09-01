@@ -1782,6 +1782,33 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "directory can make the log and its sidecar agree perfectly. The witness "
                       "beside the garments is the copy they did not know to edit"))
 
+    # -- 70k. the frame that proves the jeans were not there cannot be the jeans ------------------
+    b = new("emptybd", spec=full_spec, gid="DENIM_9261")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    empt = [x for x in b.activated()[0] if x.get("must_be_empty")]
+    verd = {}
+    if empt:
+        sh_e = empt[0]
+        q_e = QA.merged_quality(b.spec.doc["quality_defaults"], sh_e)
+        bd_, bs_ = b.board
+        for lbl, subj in (("empty", "blank_backdrop"), ("the jeans", "jeans_front")):
+            fp = b.dir / ("empty_%s.png" % subj)
+            synth_capture(str(fp), subject=subj, mm_per_px=0.5, size=(2400, 1800), seed=4,
+                          board=True)
+            ck, _n = QA.check_capture(fp, sh_e, q_e, rep=1, board=bd_, board_spec=bs_,
+                                      operator_assertions={("confirmed_" + c): True
+                                                           for c in (sh_e.get("requires_human")
+                                                                     or [])})
+            se_ = [c for c in ck if c.check_id == "surface_empty"]
+            verd[lbl] = se_[0].outcome if se_ else "NOT ASKED"
+    out.append(Result("the frame that proves the jeans were not there cannot be the jeans",
+                      verd.get("empty") == QA.PASS and verd.get("the jeans") == QA.RETAKE,
+                      "empty surface -> %s; a photograph of the jeans -> %s"
+                      % (verd.get("empty"), verd.get("the jeans")),
+                      "this is the one required frame whose entire content is an ABSENCE, and an "
+                      "absence is the easiest thing here to measure -- leaving it to an operator "
+                      "assertion meant a photograph of the garment satisfied it"))
+
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")
     b.open_session()

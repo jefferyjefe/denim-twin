@@ -382,28 +382,36 @@ class Manifest(object):
             return [{"kind": "head_missing",
                      "detail": "the log has %d entries but no head record; it cannot be shown to be "
                                "complete" % len(entries)}]
-        recs = []
+        recs, damaged = [], 0
         for line in self.head_path.read_text(errors="replace").split("\n"):
             if not line.strip():
                 continue
+            # One damaged line is SKIPPED, not fatal. Returning immediately meant a single
+            # partially-written or hand-edited anchor line permanently blocked a complete, honest,
+            # READY session -- and there is no way to fix it, because the file is append-only by
+            # design. The remaining anchors still constrain the log; damage is reported alongside
+            # them rather than instead of them.
             try:
                 r = json.loads(line)
             except ValueError:
-                return [{"kind": "head_unreadable", "detail": "the head record is not readable"}]
-            if not isinstance(r, dict):
+                damaged += 1
                 continue
-            # A bare int() here. The sidecar is the one file in this design a person is invited to
-            # look at, and therefore to touch: any non-numeric count -- a hand edit, a
-            # partially-written record -- raised out of check_head and took every fold-based command
-            # down with a traceback. An unreadable anchor is a problem to report, not a crash.
+            if not isinstance(r, dict):
+                damaged += 1
+                continue
+            # A bare int() here took every fold-based command down with a traceback on any
+            # non-numeric count. OverflowError too: JSON 1e400 parses to a float infinity, which
+            # int() refuses with OverflowError rather than ValueError.
             try:
                 int(r.get("count") or 0)
-            except (TypeError, ValueError):
-                return [{"kind": "head_unreadable",
-                         "detail": "an anchor records a length that is not a number"}]
+            except (TypeError, ValueError, OverflowError):
+                damaged += 1
+                continue
             recs.append(r)
         if not recs:
-            return [{"kind": "head_unreadable", "detail": "the head record is empty"}]
+            return [{"kind": "head_unreadable",
+                     "detail": "the head record has no usable anchor in it (%d damaged line(s))"
+                               % damaged}]
         want_chain = entries[-1].get("chain") if entries else self.seed
         out = []
         high = max(int(r.get("count") or 0) for r in recs)

@@ -51,7 +51,7 @@ MAX_UPLOAD_BYTES = 200 * 1024 * 1024      # a 48 MP HEIC burst is nowhere near t
 MAX_BODY_BYTES = 2 * 1024 * 1024          # non-upload JSON bodies
 
 
-def _operator_missing(body):
+def _operator_missing(body, is_multipart=False):
     """Every write must name the person making it. Returns an error sentence, or None.
 
     The system's whole answer to "a determined operator can still confirm something untrue" is that
@@ -63,9 +63,18 @@ def _operator_missing(body):
     Enforced HERE rather than in each handler because that is what the last two rounds keep finding:
     a rule applied on one path and not another is a second way in.
     """
+    # A body that is not an object is refused here rather than waved through. Returning None let a
+    # JSON list reach a handler that immediately calls .get() on it, which is a traceback and a
+    # dropped connection -- the thing this whole surface is supposed to have stopped doing.
     if not isinstance(body, dict):
-        return None
-    fields = body.get("fields") if isinstance(body.get("fields"), dict) else body
+        return "the body of a write must be a JSON object"
+    # `fields` is the MULTIPART shape, and only the multipart path produces it. Falling back to it
+    # for a JSON body meant a decoy {"fields": {"operator": "x"}} satisfied this guard while the
+    # handler read b["operator"] and found nothing -- so every JSON write could be unsigned again,
+    # by a caller who simply put the name in the wrong place.
+    fields = body.get("fields") if is_multipart else body
+    if not isinstance(fields, dict):
+        return "the body of a write must be a JSON object"
     who = fields.get("operator")
     if isinstance(who, str) and who.strip():
         return None
@@ -100,7 +109,7 @@ class Api(object):
             mo = rx.match(path)
             if mo:
                 if method.upper() == "POST":
-                    bad = _operator_missing(body)
+                    bad = _operator_missing(body, is_multipart=path == "/api/upload")
                     if bad:
                         return 400, {"error": bad}
                 return fn(mo, query, body)

@@ -411,6 +411,10 @@
         "relay_after": {
           "type": "string",
           "description": "the shot_id this frame must be an independent RE-LAY of. relay_between_reps chains repeats within one shot id; a repeatability series written as separate shot ids (F00.R1..R5) needs this, or the relay check has nothing to compare against and the series is five photographs of one lay."
+        },
+        "must_be_empty": {
+          "type": "boolean",
+          "description": "this frame must show an EMPTY surface. 'A person confirmed it' is the weakest possible evidence for the one frame whose whole content is an absence, and an absence is the easiest thing in this system to measure."
         }
       }
     }
