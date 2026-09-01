@@ -362,6 +362,14 @@ def relay_verdict(pose_a, pose_b, mm_per_px, interior_ncc=None, seconds_apart=No
                     "the re-lay was confirmed by the operator" % (d_mm, interior_ncc)), ev
 
 
+#: The band the crease field occupies, in pixels of the 256-square normalised interior crop. Below
+#: the low sigma is sensor grain, which a re-shot destroys and which therefore made an unmoved
+#: garment look re-laid. Above the high sigma is the illumination gradient, which is a property of
+#: the lighting rather than of the lay.
+CREASE_LOW_SIGMA_PX = 2.5
+CREASE_HIGH_SIGMA_PX = 32.0
+
+
 def registered_interior_ncc(img_a, img_b, pose_a, pose_b, n=256):
     """Correlate the garment interiors AFTER aligning them by centroid and principal axis.
 
@@ -392,9 +400,17 @@ def registered_interior_ncc(img_a, img_b, pose_a, pose_b, n=256):
         if crop.size == 0 or min(crop.shape) < 8:
             return None
         c = cv2.resize(crop, (n, n)).astype(np.float64)
-        # high-pass: creases are the mid-frequency content; removing the slow shading gradient stops
-        # a global exposure difference from masking a genuine crease change
-        c = c - cv2.GaussianBlur(c, (0, 0), n / 16.0)
+        # BAND-PASS at the scale creases live. The first version high-passed, which was backwards:
+        # a crease is a broad soft shading structure, so the high-pass DELETED the signal and kept
+        # pixel grain. Measured (EXP_0043): a realistic re-shot of an unmoved garment -- same cloth,
+        # same creases, ordinary sensor noise and a pixel of camera shake -- then correlated 0.75-
+        # 0.93 and read as a genuine re-lay, which is a false pass on the one check that stops five
+        # photographs of one lay standing in for five repeats.
+        #
+        # The low cut removes sensor grain; the high cut removes the global illumination gradient,
+        # so a frame that is merely brighter does not read as a different lay.
+        c = cv2.GaussianBlur(c, (0, 0), CREASE_LOW_SIGMA_PX) \
+            - cv2.GaussianBlur(c, (0, 0), CREASE_HIGH_SIGMA_PX)
         c -= c.mean()
         out.append(c)
     a, b = out

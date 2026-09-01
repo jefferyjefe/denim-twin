@@ -1,4 +1,4 @@
-# EXP_0043 — Two of the pilot's three new capture checks measure what they claim; the third cannot, and says so
+# EXP_0043 — What the pilot's three new capture checks can decide, and one control that was wrong
 
 The Pilot Capture Navigator gates a physical, irreversible act: it decides whether enough evidence
 exists to cut a garment. Three of the checks standing behind that decision have no implementation in
@@ -39,39 +39,53 @@ An `approx_tilt_deg` is also computed, from a homography with an **assumed** foc
 reported for a human to read and nothing turns on it, because the assumption is unverifiable from
 the frame.
 
-## B. Image similarity cannot tell five re-lays from one photograph five times — the crease field can
+## B. What separates five re-lays from one lay photographed five times
 
-This is the check that stops five copies of one image satisfying five independent repeats, and the
-obvious implementation does not work. Measured:
+> **Corrected 2026-08-31.** The first version of this section reported that image similarity
+> *cannot* separate the two cases, and built the check on a high-pass of the registered garment
+> interior. Both were artefacts of a wrong model of the control. It modelled "the same lay
+> photographed again" as a FRESH RENDER with a new texture seed — which changes the cloth's own
+> micro-texture, the one thing that does not change when nobody touches the garment. The numbers
+> below come from the honest control: the same frame, new sensor noise, a pixel or two of camera
+> shake.
 
-| | whole-image NCC | registered interior NCC |
-|---|---|---|
-| the same lay, photographed again | 0.99715 | 0.985279 |
-| genuinely independent re-lays | 0.996925 | ≤ **0.865029** |
-| separates the two? | **no** | **yes, by 0.12025** |
+This is the check that stops five copies of one lay satisfying five independent repeats.
 
-Whole-image correlation put every case between 0.996636 and 1.0000 — the same lay re-shot scored
-**higher** than some genuine re-lays. The silhouette and the backdrop dominate that number, and they
-are exactly what does *not* change.
+| | whole-image NCC | registered interior, high-passed | registered interior, crease band |
+|---|---|---|---|
+| the same lay, photographed again | ~0.938125 | 0.75 – 0.93 | **0.988482** and above |
+| genuinely independent re-lays | ≤ 0.997583 | 0.04 – 0.06 | ≤ **0.826518** |
+| separates the two? | by -0.0595 | **no** | **yes, by 0.161964** |
 
-What does change is the cloth. Lift a garment and lay it out again and it falls into a different set
-of creases. Aligning the two captures on centroid and principal axis and correlating the garment
-**interiors** separates the cases with a margin of **0.12025** and no overlap.
+**The high-pass was backwards, and it was a false pass.** A crease is a broad, soft shading
+structure. High-passing the interior deleted exactly that and kept pixel grain — so an ordinary
+re-shot of an unmoved garment, whose grain is entirely different, correlated 0.75–0.93 and read as a
+genuine re-lay. The check now band-passes at the scale creases occupy (Gaussian sigma
+2.5 to 32.0 px on a 256-square normalised interior): the low cut removes sensor grain, the high
+cut removes the illumination gradient, so a frame that is merely brighter does not read as a
+different lay.
 
-Garment displacement corroborates it: not moving the garment reproduced its centroid to within
-**0.0372 mm**, while independent re-lays never landed closer than **0.3669 mm** to each other.
+**Whole-image similarity does separate them, and is still the wrong instrument.** With the honest
+control it puts the same lay at ~0.938125 and re-lays at ≤0.997583 — a gap of -0.0595, sitting
+directly on the near-duplicate threshold, where a re-encode or a brightness shift also lives. The
+crease band's gap is 0.161964, an order of magnitude wider, and it is measuring the thing that
+physically changed rather than a summary of the whole frame.
 
-**The limitation this rests on.** The crease field in the fixture is a model. On real photographs the
-same-lay figure will fall (sensor noise, lighting drift, camera shake) and the re-lay figure may rise
-(a lay reproduced carefully). Both band edges must be re-derived from the first real session. The
-unresolved band returns HUMAN_VERIFICATION_REQUIRED, so a mis-set threshold costs a confirmation,
-never a false pass — and the check never returns PASS on geometry alone, because a garment that was
-dragged rather than lifted looks the same.
+**Displacement is now corroboration only.** With camera shake in the control, a garment that was not
+moved shows a centroid shift up to **0.7003 mm** while independent re-lays never landed closer than
+**0.8465 mm** to each other — bands that nearly touch. It is kept because a sub-millimetre
+reproduction is still evidence the garment did not move, but it no longer carries the decision.
+
+**The limitation this rests on.** The crease field in the fixture is a model, and so is the sensor
+noise. On real photographs both figures will move. The unresolved band returns
+HUMAN_VERIFICATION_REQUIRED, so a mis-set threshold costs a confirmation and never a false pass —
+and the check never returns PASS on geometry alone, because a garment dragged rather than lifted
+looks the same. Re-derive both edges from the first real session.
 
 ## C. Duplicates
 
 Exact content hash catches the copied file. Near-duplicate correlation catches the re-encoded or
-brightened copy: those measured at or above **0.999593**, against at most 0.996925 for genuine
+brightened copy: those measured at or above **0.999642**, against at most 0.997583 for genuine
 re-lays. Between the two bands nothing is decided automatically.
 
 ## What this licenses

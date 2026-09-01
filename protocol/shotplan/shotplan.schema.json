@@ -226,6 +226,14 @@
         "extra": {
           "type": "string",
           "description": "free-text note from the shot's author: derivations, caveats, and which existing repo function this shot's check must call"
+        },
+        "span_axis": {
+          "enum": [
+            "horizontal",
+            "vertical",
+            "path"
+          ],
+          "description": "which silhouette dimension min_subject_px is measured along. Absent, or 'path' for a distance along the cloth, means the check bounds the requirement rather than asserting it -- no path inside a subject exceeds its bounding box."
         }
       }
     },

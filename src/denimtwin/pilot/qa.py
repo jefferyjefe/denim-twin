@@ -139,6 +139,42 @@ SHOT_LEVEL_WHY = {
     "anatomical_region": "this shot's region is not one a person is asked to confirm at this range",
 }
 
+def excuse_is_valid(shot, check_id, claim):
+    """Would this code itself have excused this check for this shot?
+
+    The mandatory-check rule subtracts the record's own `not_applicable` list, which is free text
+    supplied by the same record it is meant to constrain -- so a fabricated record could excuse
+    every check it did not want to carry. An excuse now has to be one this module would have
+    written: either the CLASS genuinely cannot support the check, or the SHOT genuinely does not
+    ask for what the check needs.
+    """
+    cls = shot_class(shot)
+    if claim == cls:
+        return (cls, check_id) in NOT_APPLICABLE_WHY
+    if claim != "this shot":
+        return False
+    if check_id not in APPLICABLE.get(cls, ()):
+        return False
+    q = shot.get("quality") or {}
+    needs_board = q.get("requires_board", shot.get("scale_reference") in ("charuco_board", "both"))
+    if check_id in ("board_corners", "scale", "camera_tilt"):
+        return not needs_board
+    if check_id == "ruler_visible":
+        return not (shot.get("scale_reference") in ("ruler", "both") or q.get("requires_ruler"))
+    if check_id == "subject_extent":
+        return q.get("min_subject_fraction") is None and q.get("max_subject_fraction") is None
+    if check_id == "subject_span":
+        return q.get("min_subject_px") is None
+    if check_id == "resolution":
+        return q.get("min_long_edge_px") is None
+    if check_id == "garment_side":
+        return shot.get("garment_side") not in ("front", "back")
+    if check_id in ("duplicate_content", "relay_independence", "camera_repositioned",
+                    "anatomical_region"):
+        return True          # these depend on what else exists, not on the shot alone
+    return False
+
+
 #: Checks that only exist when there is something to compare against or a repeat to justify them,
 #: so their absence from a record is not evidence that the checker was skipped. Everything else in
 #: APPLICABLE must appear in a frame's record, or be excused by its own not_applicable note.
@@ -262,6 +298,14 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                       {"path": path.name}, fix="re-transfer or re-take this capture")], \
             not_applicable(["readable"])
     h, w = img.shape[:2]
+    if min(h, w) < 8:
+        # A 4000x1 image decodes fine and then asserts inside OpenCV's resample, which raises out
+        # of the checker after the capture is already in the log -- the same shape of hole the
+        # unreadable-file path had. A frame this degenerate is not a photograph of anything.
+        return [Check("readable", RETAKE,
+                      "the image is %dx%d; a frame that thin shows nothing" % (w, h),
+                      {"width": w, "height": h},
+                      fix="re-transfer or re-take this capture")], not_applicable(["readable"])
     checks.append(Check("readable", PASS, "%dx%d" % (w, h), {"width": w, "height": h}))
 
     # -- resolution ---------------------------------------------------------------------------
@@ -398,16 +442,16 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                 "no subject outline, so %s could not be measured" % meaning))
         else:
             bw, bh = float(pose["bbox"][2]), float(pose["bbox"][3])
-            low = meaning.lower()
-            # The requirement names a specific quantity, and only some of them are a silhouette's
-            # bounding box. A "traced seam length" or a "hem edge end to end" is a path along the
-            # cloth, and reporting the bounding box as though it were that path is measuring the
-            # wrong thing confidently -- the defect this whole engine is arranged against.
-            if any(k in low for k in ("height", "length", "vertical", "down the leg", "seam")):
-                span, computable = bh, ("height" in low or "vertical" in low)
-            elif any(k in low for k in ("width", "span", "across", "waistband", "end to end",
-                                        "opening", "diameter")):
+            # WHICH dimension is a property of the shot, not of the sentence describing it. Picking
+            # it by substring-matching English prose made "outseam" and "inseam" match the keyword
+            # "seam" and select the bbox HEIGHT for a measurement across the leg. A shot may declare
+            # the axis; where it does not, no dimension is computable and the check bounds rather
+            # than asserts.
+            axis = (quality.get("span_axis") or "").lower()
+            if axis == "horizontal":
                 span, computable = bw, True
+            elif axis == "vertical":
+                span, computable = bh, True
             else:
                 span, computable = max(bw, bh), False
             if computable:

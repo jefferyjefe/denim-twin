@@ -138,7 +138,17 @@ class Store(object):
             "n_entries": len(entries),
         }
         for e in entries:
-            k, p = e.get("kind"), e.get("payload") or {}
+            k, p = e.get("kind"), e.get("payload")
+            if p is None:
+                p = {}
+            if not isinstance(p, dict):
+                # The payload is the whole content of an entry. A list or a string there is not
+                # something this replay can interpret, and interpreting it wrongly is worse than
+                # saying so.
+                problems.append({"kind": "uninterpretable_payload", "seq": e.get("seq"),
+                                 "detail": "entry %s carries a %s payload, not an object"
+                                           % (e.get("seq"), type(p).__name__)})
+                continue
             if k == "session_opened":
                 st["spec_version"] = p.get("spec_version")
                 st["spec_hash"] = p.get("spec_hash")
@@ -189,6 +199,13 @@ class Store(object):
                 claim = self._key(p.get("claim"), "claim", e.get("seq"), problems)
                 if claim is None:
                     continue
+                # shot_id is part of this projection's key and was the one key not routed through
+                # the scalar check.
+                vshot = p.get("shot_id")
+                if vshot is not None:
+                    vshot = self._key(vshot, "shot id", e.get("seq"), problems)
+                    if vshot is None:
+                        continue
                 rep = self._rep(p.get("rep"), e.get("seq"), problems) if p.get("rep") else None
                 if p.get("rep") and rep is None:
                     continue
@@ -196,7 +213,7 @@ class Store(object):
                 # verification that explicitly named its author projected as operator None -- and
                 # the second-person check, which refuses a verifier equal to the operator, compared
                 # a name against None and let it through.
-                st["verifications"][(p.get("shot_id"), rep, claim)] = dict(
+                st["verifications"][(vshot, rep, claim)] = dict(
                     p, ts=e.get("ts"), seq=e.get("seq"),
                     operator=p.get("operator") or e.get("operator"))
             elif k == "reuse_declaration":

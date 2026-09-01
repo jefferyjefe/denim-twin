@@ -90,6 +90,31 @@ def _jeans_polygon(w, h, side="front", legs_touching=False):
     return np.array([outer], np.int32), crotch_y
 
 
+def reshoot(src, dest, *, sensor_sigma=3.0, shake_px=1.5, seed=0):
+    """What photographing the SAME LAY again actually produces.
+
+    Not a new render: the cloth is in the same place with the same creases, and only the sensor
+    noise and a pixel or two of camera shake differ. Modelling it as a fresh render with a new
+    texture seed was wrong in the direction that flattered the relay check -- it changed the cloth's
+    own micro-texture, which is exactly the thing that does NOT change when nobody touches the
+    garment.
+    """
+    img = cv2.imread(str(src))
+    if img is None:
+        raise IOError("cannot read %s" % src)
+    rng = np.random.default_rng(int(seed))
+    out = img.astype(np.float32) + rng.normal(0.0, float(sensor_sigma), img.shape)
+    if shake_px:
+        dx, dy = rng.normal(0, shake_px), rng.normal(0, shake_px)
+        M = np.float32([[1, 0, dx], [0, 1, dy]])
+        out = cv2.warpAffine(out, M, (img.shape[1], img.shape[0]),
+                             borderMode=cv2.BORDER_REPLICATE)
+    out = np.clip(out, 0, 255).astype(np.uint8)
+    if not cv2.imwrite(str(dest), out):
+        raise IOError("could not write %s" % dest)
+    return {"path": str(dest), "sensor_sigma": float(sensor_sigma), "shake_px": float(shake_px)}
+
+
 def synth_capture(path, *, mm_per_px=0.5, size=(1600, 1200), subject="jeans_front",
                   board=True, board_corner="tr", blur_sigma=0.0, exposure=1.0,
                   seed=0, crop_subject=False, legs_touching=False, ruler=False,

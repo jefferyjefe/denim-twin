@@ -340,8 +340,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         # re-freeze inherited the previous configuration's calibration wholesale -- so the rig could
         # be moved and every reading about the old one still read as certifying the new.
         cur = state["setup_hash"]
+        # A reading that does not say which rig it was taken against has not established anything
+        # about the current one. Admitting None was an escape hatch that re-opened exactly the hole
+        # the keying closed.
         have = {k: v for k, v in state["setup_checks"].items()
-                if v.get("setup_hash") in (None, cur)} if cur else {}
+                if v.get("setup_hash") == cur} if cur else {}
         missing = [c for c in REQUIRED_SETUP_CHECKS if c not in have]
         # An explicit PASS, or nothing. `not in (None, QA.PASS)` treated a reading with NO outcome
         # at all as satisfied, so a calibration record posted with the check's name and no verdict
@@ -362,7 +365,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
 
     def c_board_square():
         m = state["setup_checks"].get("board_square_measured") or {}
-        if state["setup_hash"] and m.get("setup_hash") not in (None, state["setup_hash"]):
+        if state["setup_hash"] and m.get("setup_hash") != state["setup_hash"]:
             return False, ("the board-square measurement was taken against rig %s, not the one in "
                            "effect (%s)" % (str(m.get("setup_hash"))[:8],
                                             str(state["setup_hash"])[:8])), \
@@ -561,7 +564,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                 # MANDATORY set comes from the code -- what this class of frame is checkable for --
                 # and anything absent has to be justified by the record's own not_applicable notes.
                 present = {c.get("check_id") for c in (q.get("checks") or [])}
-                excused = {x.get("check_id") for x in (q.get("not_applicable") or [])}
+                # An excuse is honoured only when the code would itself have written it. The list
+                # is free text from the same record the rule is meant to constrain.
+                excused = {x.get("check_id") for x in (q.get("not_applicable") or [])
+                           if QA.excuse_is_valid(s, x.get("check_id"),
+                                                 x.get("not_applicable_to"))}
                 mandatory = set(QA.APPLICABLE.get(QA.shot_class(s), ())) - QA.OPTIONAL_CHECKS
                 absent = sorted(mandatory - present - excused)
                 if absent:
@@ -778,13 +785,19 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         # exists, the borrowed frame must be the same bytes, and the borrowing shot must carry its
         # own verdict over those bytes. Otherwise a bare declaration naming any pair of shot ids
         # removed them from duplicate detection whatever they actually held.
-        declared = set()
+        # An exemption covers a PAIR of keys, not a key. Removing keys before grouping meant a
+        # declaration naming a capture as its own source satisfied every backing test trivially and
+        # deleted that key from the bucket -- leaving the genuine other user of the same bytes as a
+        # singleton, and the condition reporting the positive claim.
+        covered = set()
         for r in state["reuse"]:
             try:
                 tgt = (r.get("shot_id"), int(r.get("rep", 1)))
                 srck = (r.get("source_shot_id"), int(r.get("source_rep", 1)))
             except (TypeError, ValueError):
                 continue
+            if tgt == srck:
+                continue                       # a frame is not its own source
             src_cap = state["captures"].get(srck)
             tgt_cap = state["captures"].get(tgt)
             tgt_qa = state["qa"].get(tgt)
@@ -797,15 +810,22 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if not tgt_qa or tgt_qa.get("capture_sha256") != src_cap["sha256"] \
                     or tgt_qa.get("outcome") != QA.PASS:
                 continue
-            declared.add(tgt)
-            declared.add(srck)
+            covered.add(frozenset((tgt, srck)))
         by_sha = {}
         for key, c in sorted(state["captures"].items()):
             sha = c.get("sha256")
-            if not sha or key in declared:
+            if not sha:
                 continue
             by_sha.setdefault(sha, []).append(key)
-        dupes = {sha: ks for sha, ks in by_sha.items() if len(ks) > 1}
+        dupes = {}
+        for sha, ks in by_sha.items():
+            if len(ks) < 2:
+                continue
+            # Every pair sharing these bytes must be covered by a declaration of its own.
+            uncovered = [(a, b) for i, a in enumerate(ks) for b in ks[i + 1:]
+                         if frozenset((a, b)) not in covered]
+            if uncovered:
+                dupes[sha] = ks
         if dupes:
             eg = []
             for sha, ks in sorted(dupes.items())[:4]:
@@ -853,6 +873,18 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # Distinctness over the ASSIGNED records only. Built over every record, one bare extra
             # entry with no condition put a None into the set and made two identical conditions
             # look like two.
+            standard = [v for v in assigned
+                        if OFF.classify(v["assigned_wash_condition"]) == "standard"]
+            if len(standard) != 1:
+                # Distinct is not enough. PROTOCOL.md 7 is specific: ONE offcut follows the standard
+                # protocol in the same load as the garment. Two distinct non-standard conditions
+                # are two samples and no control.
+                return False, ("%d of the two offcuts follow the standard protocol; exactly one "
+                               "must" % len(standard)), \
+                       "one offcut goes in with the garment under the standard protocol and the " \
+                       "other into a separate load; `pilot.py offcut plan --assign auto` writes " \
+                       "that pair", {"conditions": sorted(v["assigned_wash_condition"]
+                                                          for v in assigned)}
             conds = {v["assigned_wash_condition"] for v in assigned}
             if len(conds) < 2:
                 return False, ("both offcuts are assigned the same condition (%s), so the pair "

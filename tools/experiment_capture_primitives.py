@@ -38,7 +38,7 @@ import cv2                                        # noqa: E402
 import numpy as np                                # noqa: E402
 from denimtwin.capture.board import load_board, detect, mm_per_pixel   # noqa: E402
 from denimtwin.pilot import qa_primitives as Q    # noqa: E402
-from denimtwin.pilot.fixtures import synth_capture  # noqa: E402
+from denimtwin.pilot.fixtures import synth_capture, reshoot  # noqa: E402
 
 
 def part_a(board, spec, tmp, scales, seeds, warps, size):
@@ -108,9 +108,14 @@ def part_bc(board, spec, tmp, n_relays, size, mmpx):
     p = os.path.join(tmp, "bright.png")
     cv2.imwrite(p, np.clip(img(base).astype(int) * 1.04, 0, 255).astype(np.uint8))
     cases["same_frame_brightened_4pct"] = p
-    for k in range(2):
+    # What photographing the SAME LAY again actually produces: the same render, new sensor noise,
+    # a pixel or two of shake. Modelling it as a fresh render with a new texture seed changed the
+    # cloth's own micro-texture -- the one thing that does NOT change when nobody touches the
+    # garment -- and flattered the check by exactly that amount.
+    for k, sig in enumerate((1.0, 3.0, 5.0)):
         p = os.path.join(tmp, "samelay%d.png" % k)
-        synth_capture(p, seed=9 + 2 * k, relay=0, **kw); cases["same_lay_reshot_%d" % k] = p
+        reshoot(base, p, sensor_sigma=sig, shake_px=1.5, seed=100 + k)
+        cases["same_lay_reshot_%d" % k] = p
     relays = []
     for i in range(1, n_relays + 1):
         p = os.path.join(tmp, "relay%d.png" % i)
@@ -154,6 +159,7 @@ def part_bc(board, spec, tmp, n_relays, size, mmpx):
     samelay = [r for r in rows if r["case"].startswith("same_lay_reshot")]
 
     return rows, {
+        "crease_band_sigma_px": [Q.CREASE_LOW_SIGMA_PX, Q.CREASE_HIGH_SIGMA_PX],
         "interior_ncc_genuine_relay_max": round(max([r["interior_ncc"] for r in gen] + pair_int), 6),
         "interior_ncc_same_lay_min": round(min(r["interior_ncc"] for r in samelay), 6),
         "interior_ncc_separates_relay_from_same_lay": bool(

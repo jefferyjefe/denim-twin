@@ -524,7 +524,13 @@ def scenarios(full_spec, tmp_root, want_full=False):
     b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
     src1 = b.synth_for(sh, 1, relay=0, seed=7)
     b.add(sh, 1, src1)
-    src2 = b.synth_for(sh, 2, relay=0, seed=99)      # same lay, different sensor noise
+    # What a re-shot of an UNMOVED garment actually is: the same frame, new sensor noise, a pixel
+    # of camera shake. A fresh render with a new texture seed changes the cloth's own micro-texture,
+    # which is the one thing that does not change when nobody touches it -- and modelling it that
+    # way flattered the check by exactly that amount.
+    from .fixtures import reshoot as _reshoot
+    src2 = b.tmp / "same_lay_reshot.png"
+    _reshoot(src1, src2, sensor_sigma=3.0, shake_px=1.5, seed=5)
     o2, c2 = b.add(sh, 2, src2)
     rc = [c for c in c2 if c.check_id == "relay_independence"]
     out.append(Result("the same lay photographed twice is not a relay",
