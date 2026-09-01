@@ -156,3 +156,12 @@ svg#frameguide .board { fill: rgba(230,237,243,.10); stroke: var(--dim); stroke-
 svg#frameguide .rule { fill: rgba(230,237,243,.22); stroke: var(--dim); stroke-width: 1; }
 svg#frameguide text { fill: var(--faint); font-size: 10px; font-family: inherit; }
 svg#frameguide .margin { fill: none; stroke: var(--warn); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* Who is operating. Small, always visible, and never empty: every write this app makes is recorded
+   against this name, and an unsigned attestation is not an attestation. */
+.who {
+  background: var(--card); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 9px; font: inherit; font-size: 13px; margin-left: 8px;
+  max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.who.unset { border-color: var(--retake); color: var(--retake); }

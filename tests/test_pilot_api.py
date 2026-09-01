@@ -173,3 +173,19 @@ def test_state_changing_routes_need_the_token(api):
         except urllib.error.HTTPError as e:
             code = e.code
         assert code == 401, "%s was reachable without the session token" % path
+
+
+def test_a_write_without_a_name_on_it_is_refused(api):
+    """The record is only worth what the attribution is worth.
+
+    The shipped UI sent operator='' and the server took it, so a session driven from the phone --
+    the front door the operator actually uses -- recorded the rig freeze, every calibration reading,
+    every measurement, every photograph and every assertion against nobody.
+    """
+    path = "/api/features/DENIM_0003"
+    code, raw = _json(api, path, {"answers": {}})
+    assert code == 400 and b"operator" in raw, raw
+    code, raw = _json(api, path, {"answers": {}, "operator": "   "})
+    assert code == 400, "whitespace is not a name"
+    code, raw = _json(api, path, {"answers": {}, "operator": "jeffery"})
+    assert code == 200, raw

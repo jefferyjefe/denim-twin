@@ -75,7 +75,7 @@ APPLICABLE = {
           "duplicate_content", "camera_repositioned"},
     LABEL: {"readable", "resolution", "blur", "duplicate_content", "camera_repositioned",
             "anatomical_region", "ruler_visible"},
-    VIDEO: {"readable", "resolution", "duplicate_content"},
+    VIDEO: {"readable", "resolution", "video_duration", "duplicate_content"},
 }
 
 NOT_APPLICABLE_WHY = {
@@ -148,21 +148,32 @@ _BOARD_ONLY_QUALITY = {
     "max_scale_range_ratio": ("camera_tilt", "the scale range ratio is measured across the board's "
                                              "own corner spacings; with no board there are no "
                                              "corners to spread"),
+    "min_board_corners": ("board_corners", "the corner count is produced only when a board is in "
+                                           "frame; with no board it is passed into the checker and "
+                                           "never read"),
 }
 
 
-def quality_is_evaluable(shot):
+def quality_is_evaluable(shot, defaults=None):
     """Yield (quality_key, why_not) for every threshold this shot declares that nothing can check.
 
     Called by the specification's cross-check, so an unevaluable threshold fails the plan at load
     rather than sitting in it looking enforced.
+
+    `defaults` matters. This read the shot's OWN quality block while every consumer reads
+    merged_quality(defaults, shot), so stripping a threshold from 151 shots' own blocks left them
+    still INHERITING it from quality_defaults -- the round-3 fix passed its own check and changed
+    nothing for the shots that never wrote the key down themselves.
     """
-    q = shot.get("quality") or {}
+    q = merged_quality(defaults or {}, shot) if defaults is not None else (shot.get("quality") or {})
     needs_board = q.get("requires_board",
                         shot.get("scale_reference") in ("charuco_board", "both"))
     for key, (check_id, why) in _BOARD_ONLY_QUALITY.items():
         if q.get(key) is not None and not needs_board:
             yield key, "%s is produced by the %s check, and %s" % (key, check_id, why)
+    if q.get("min_board_corners") == 0:
+        yield "min_board_corners", ("a corner threshold of 0 is satisfied by every frame, board or "
+                                    "no board; it is a requirement written down and switched off")
     if q.get("min_subject_px") is not None and shot_class(shot) != WHOLE_GARMENT:
         yield "min_subject_px", ("min_subject_px is measured from the garment silhouette by the "
                                  "subject_span check, which only runs on a whole-garment frame; at "
@@ -236,6 +247,8 @@ def excuse_is_valid(shot, check_id, claim):
         return q.get("min_subject_px") is None
     if check_id == "resolution":
         return q.get("min_long_edge_px") is None
+    if check_id == "video_duration":
+        return shot.get("video_seconds") is None
     if check_id == "garment_side":
         return shot.get("garment_side") not in ("front", "back")
     if check_id == "anatomical_region":
@@ -308,8 +321,22 @@ def roll_up(checks):
 
 
 def merged_quality(spec_defaults, shot):
+    """This shot's effective thresholds.
+
+    A default that only a calibration board can produce is not inherited by a shot that carries no
+    board. Injecting it anyway put a corner count and a tilt limit on 151 ruler-scaled macros that
+    nothing could ever compare anything to -- and because the SHOT's block was empty, stripping the
+    keys from those shots (round 3) changed nothing at all. A requirement a frame cannot be judged
+    against is not a requirement of that frame.
+    """
     q = dict(spec_defaults or {})
-    q.update(shot.get("quality") or {})
+    shot_q = (shot or {}).get("quality") or {}
+    needs_board = shot_q.get("requires_board",
+                             (shot or {}).get("scale_reference") in ("charuco_board", "both"))
+    if not needs_board:
+        for k in _BOARD_ONLY_QUALITY:
+            q.pop(k, None)
+    q.update(shot_q)
     return q
 
 
@@ -389,13 +416,31 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                                     "" if secs is None else ", %.1f s" % secs),
                             {"frames": n_frames, "fps": fps, "width": vw, "height": vh,
                              "seconds": secs}))
+        # RESOLUTION, meaning resolution. This branch used the id for a DURATION test, so a clip's
+        # declared min_long_edge_px was compared to nothing at all -- and the duration test only ran
+        # when the shot declared video_seconds, which no real shot did. The mandatory set for a
+        # required motion clip was therefore {readable} alone, and a 16x16 two-frame file passed.
+        need_px = quality.get("min_long_edge_px")
+        if need_px:
+            long_edge = max(vw, vh)
+            checks.append(Check("resolution", PASS if long_edge >= int(need_px) else RETAKE,
+                                "%dx%d; the shot needs a long edge of at least %d px"
+                                % (vw, vh, int(need_px)),
+                                {"width": vw, "height": vh, "required": int(need_px)},
+                                fix="re-record the clip at a higher capture resolution"))
         want = shot.get("video_seconds")
-        if want and secs is not None:
-            lo_, hi_ = 0.5 * float(want), 2.5 * float(want)
-            checks.append(Check("resolution", PASS if lo_ <= secs <= hi_ else RETAKE,
-                                "%.1f s (the shot asks for about %.0f s)" % (secs, float(want)),
-                                {"seconds": secs, "wanted": want},
-                                fix="re-record the clip at about the stated length"))
+        if want:
+            if secs is None:
+                checks.append(Check("video_duration", UNAVAILABLE,
+                                    "the clip's frame rate could not be read, so its length is "
+                                    "unknown", {"frames": n_frames},
+                                    fix="re-transfer the clip in a container this build can read"))
+            else:
+                lo_, hi_ = 0.5 * float(want), 2.5 * float(want)
+                checks.append(Check("video_duration", PASS if lo_ <= secs <= hi_ else RETAKE,
+                                    "%.1f s (the shot asks for about %.0f s)" % (secs, float(want)),
+                                    {"seconds": secs, "wanted": want},
+                                    fix="re-record the clip at about the stated length"))
         return checks, not_applicable(c.check_id for c in checks)
 
     img = image if image is not None else cv2.imread(str(path))
@@ -472,8 +517,14 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                                                         "frame to measure"}[name]))
         # On any frame that carries a rule, the blur verdict is re-taken on the CLOTH. The rule is
         # the sharpest thing in a macro and dominated the score, so an out-of-focus fabric passed.
-        if applies("blur") and (shot.get("scale_reference") in ("ruler", "both")
-                                or quality.get("requires_ruler")):
+        # ...but NOT on a label frame. cloth_blur keeps the steel rule out by discarding every
+        # bright, unsaturated pixel, and a care label is white -- so it discarded exactly the
+        # subject and reported the sharpness of the DENIM AROUND the label. On a LABEL frame blur is
+        # the only check that looks at pixels at all (readable is a decode; the rest are operator
+        # assertions), so a completely out-of-focus label passed with "cloth sharpness 1983".
+        if applies("blur") and cls != LABEL \
+                and (shot.get("scale_reference") in ("ruler", "both")
+                     or quality.get("requires_ruler")):
             cb = Q.cloth_blur(img)
             floor = quality.get("min_blur", 80.0)
             for c in checks:
@@ -538,7 +589,12 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
             srr = None
         limit = quality.get("max_scale_range_ratio")
         outcome, detail = Q.tilt_verdict(srr)
-        if limit is not None and srr is not None and srr > limit and outcome == PASS:
+        # `and outcome == PASS` made this unreachable for every shot whose limit is the global
+        # bound or looser: tilt_verdict only returns PASS below SRR_PASS, and quality_defaults sets
+        # max_scale_range_ratio to exactly SRR_PASS. So 107 board-carrying shots declared a number
+        # the checker READ and that could not alter a single verdict. A shot's own limit now bites
+        # whenever the frame exceeds it, and the global verdict stands otherwise.
+        if limit is not None and srr is not None and srr > limit:
             outcome, detail = RETAKE, ("scale varies %.1f%% across the board, above this shot's "
                                        "limit of %.1f%%" % (100 * (srr - 1), 100 * (limit - 1)))
         checks.append(Check("camera_tilt", outcome, detail,

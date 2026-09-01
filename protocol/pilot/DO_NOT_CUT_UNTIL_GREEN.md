@@ -19,11 +19,12 @@ this is safe' is not permission.
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
 | `captures.required_complete` | every required frame captured, checked, and passing |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
+| `captures.verdicts_reproduce` | every frame recorded as passing still passes when the checker is run again on the photograph itself |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
 | `cut.second_person_verified` | a second person -- not the operator -- measured both marks within 3 mm, and did not refuse |
 | `cut.specified` | the cut is defined and its outseam offset computed |
 | `features.answered` | no unanswered question whose silence would drop a photograph |
-| `log.intact` | the capture log's hash chain verifies, and it ends where its anchor says |
+| `log.intact` | the capture log's hash chain verifies, it ends where its anchor says, and no entry has been replaced since the anchor first recorded it |
 | `measurements.complete` | every measurement present, with its independent readings, in tolerance and inside a plausible range |
 | `plan.fully_expanded` | every templated series was sized; none silently expanded to zero |
 | `plan.generated` | a shot plan could be generated at all from the answers given |

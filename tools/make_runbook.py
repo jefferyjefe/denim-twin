@@ -425,7 +425,10 @@ def doc_recovery(spec, shots, ordered):
 #: with no sentence here is a build failure rather than a silent omission.
 CONDITION_LINES = {
     "spec.bound": "the session was opened under the shot plan that is on disk now",
-    "log.intact": "the capture log's hash chain verifies, and it ends where its anchor says",
+    "log.intact": "the capture log's hash chain verifies, it ends where its anchor says, and no "
+                  "entry has been replaced since the anchor first recorded it",
+    "captures.verdicts_reproduce": "every frame recorded as passing still passes when the checker "
+                                   "is run again on the photograph itself",
     "features.answered": "no unanswered question whose silence would drop a photograph",
     "plan.generated": "a shot plan could be generated at all from the answers given",
     "plan.fully_expanded": "every templated series was sized; none silently expanded to zero",

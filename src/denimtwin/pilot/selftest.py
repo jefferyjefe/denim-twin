@@ -22,6 +22,7 @@ import shutil
 import sys
 import tempfile
 import time
+import pathlib
 import zlib
 from pathlib import Path
 
@@ -1626,6 +1627,54 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "the repeatability arm is the one thing in the pilot that measures the "
                       "method rather than the garment, and its frames are separate shot ids, so "
                       "the relay check never saw them and the gate condition was vacuous"))
+
+    # -- 70e. a rewritten log stays rewritten, however many commands follow ------------------------
+    b = new("rewrite", gid="DENIM_9254")
+    b.open_session()
+    for i in range(6):
+        b.store.append("note", {"i": i}, operator="selftest")
+    mpath = pathlib.Path(str(b.store.manifest.path))
+    keep = [ln for ln in mpath.read_text().splitlines() if ln.strip()][:-1]
+    mpath.write_text("\n".join(keep) + "\n")
+    caught_at_once = {x["kind"] for x in b.store.manifest.read()[1]}
+    still_caught = []
+    for i in range(4):                                     # ordinary work, exactly as on cut day
+        b.store.append("note", {"pad": i}, operator="selftest")
+        still_caught.append("history_rewritten" in {x["kind"] for x in b.store.manifest.read()[1]})
+    out.append(Result("a deleted entry stays visible however much is appended after it",
+                      "entries_missing" in caught_at_once and all(still_caught),
+                      "caught immediately as %s; after 1-4 further appends: %s"
+                      % (sorted(caught_at_once), still_caught),
+                      "the high-water mark is a length comparison and the appender repairs it, so "
+                      "the anchor detected a truncation only until the operator took one more "
+                      "photograph -- and never detected delete-one-add-one at all"))
+
+    # -- 70f. a forged all-PASS verdict cannot survive the photograph itself ----------------------
+    b = new("forgery", spec=_mini_spec(tmp_root), gid="DENIM_9255")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    fshot = b.activated()[0][0]
+    blank = b.dir / "nothing.png"
+    synth_capture(str(blank), subject="blank_backdrop", mm_per_px=0.4, size=(2400, 1800), seed=7,
+             board=False)
+    fdest, fsha, _ = ingest_photo(blank, b.dir / "images" / fshot["state"], fshot["shot_id"], 1)
+    b.store.append("capture", {"shot_id": fshot["shot_id"], "rep": 1,
+                               "path": str(fdest.relative_to(b.dir)), "sha256": fsha,
+                               "state": fshot["state"], "region_id": fshot.get("region_id")},
+                   operator="mallory", setup_hash=b.setup_hash)
+    mand_ = sorted(set(QA.APPLICABLE[QA.shot_class(fshot)]) - QA.OPTIONAL_CHECKS)
+    b.store.append("qa_result", {"shot_id": fshot["shot_id"], "rep": 1, "outcome": QA.PASS,
+                                 "shot_class": QA.shot_class(fshot), "capture_sha256": fsha,
+                                 "checks": [{"check_id": c, "outcome": QA.PASS, "detail": "fine"}
+                                            for c in mand_], "not_applicable": []},
+                   operator="mallory")
+    b.cut_ready_extras()
+    fconds = b.blocked_conditions()
+    out.append(Result("a forged verdict cannot survive the photograph it describes",
+                      "captures.verdicts_reproduce" in fconds,
+                      "blocked by %s" % sorted(fconds),
+                      "every other defence tests the record against ITSELF -- the roll-up must "
+                      "match the checks, the checks must cover the class -- and a complete enough "
+                      "forgery satisfies all of them. The photograph cannot be appended to"))
 
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")

@@ -526,6 +526,14 @@ def cmd_deviation(a):
         raise SystemExit("deviation kind must be one of: %s" % ", ".join(DEVIATION_KINDS))
     if not a.reason or len(a.reason.strip()) < 12:
         raise SystemExit("a deviation needs a reason someone can read later, not a word")
+    # And it must name WHAT departed. A deviation carrying only a kind excuses everything of that
+    # kind forever, and can be written before the departure exists.
+    if not (a.field or "").strip():
+        raise SystemExit("a deviation must name the field that departed (--field). A deviation "
+                         "with only a kind on it excuses every departure of that kind, including "
+                         "ones that have not happened yet.\n"
+                         "  rig:                --field <the rig hash the frames were taken under>\n"
+                         "  offcut_alternation: --field <the L/R sequence across garments, e.g. LLR>")
     st = Store(garment_dir(a.garment))
     rec = {"kind": a.kind, "field": a.field, "planned": a.planned, "actual": a.actual,
            "reason": a.reason.strip()}

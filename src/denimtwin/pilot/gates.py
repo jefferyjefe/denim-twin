@@ -188,6 +188,58 @@ def gate_states(spec, gate_id):
                  if st["order"] <= cutoff)
 
 
+def deviation_covers(deviations, kind, field, planned=None, actual=None):
+    """Is this departure actually EXPLAINED by a recorded deviation?
+
+    Matching on `kind` alone means an empty deviation -- no field, no values, recordable before the
+    departure exists and even before the session starts -- excuses everything of that kind forever.
+    Round 3 closed exactly this on the wash gate and left the rig and offcut consumers behind.
+
+    A deviation has to name what departed. When the caller can say what the two values were, it has
+    to name those too.
+    """
+    for d in deviations or []:
+        if d.get("kind") != kind:
+            continue
+        got = d.get("field")
+        if not (isinstance(got, str) and got.strip()):
+            continue                                   # names nothing; explains nothing
+        if field is not None and got != field:
+            continue
+        if planned is not None and d.get("planned") != planned:
+            continue
+        if actual is not None and d.get("actual") != actual:
+            continue
+        return d
+    return None
+
+
+def plan_safe_measurements(state):
+    """The measurements it is safe to SIZE A PLAN from.
+
+    A leg opening of 10^7 is refused by c_measurements -- but c_measurements runs after the plan
+    does, and expanding a hem series from that number builds millions of frames first, so the gate
+    never reaches the condition that would have refused it.
+
+    This is a module-level function because the WEB APP needs it too and did not have it: a single
+    stuck digit on a phone keypad -- 4000 instead of 40.0 -- pinned a server thread at 100% CPU with
+    no response and no timeout, on /api/state, which is the only screen the phone renders. The gate
+    refused the same value in a tenth of a second. One screen, used by everything that sizes a plan.
+    """
+    from .store import mean_of
+    out = {}
+    for name, m in (state.get("measurements") or {}).items():
+        lo_hi = MEASUREMENT_RANGE.get(name)
+        try:
+            val = mean_of(m)
+        except Exception:                       # noqa: BLE001
+            val = None
+        if lo_hi and (val is None or not (lo_hi[0] <= val <= lo_hi[1])):
+            continue                            # reported by c_measurements; the plan never sees it
+        out[name] = m
+    return out
+
+
 def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash=False):
     """Evaluate one gate. Returns a Verdict. Never raises for a data problem -- that is a block."""
     if gate_id not in GATE_LAST_STATE:
@@ -211,22 +263,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     states = gate_states(spec, gate_id)
 
     # --- the plan itself ------------------------------------------------------------------
-    # Screen the measurements the plan is SIZED from before handing them to it. A leg opening of
-    # 10^7 is refused by c_measurements, but c_measurements runs after the plan does, and expanding
-    # a hem series from it builds millions of frames first -- the gate never reaches the condition
-    # that would have refused the number.
-    safe_measurements = {}
-    for name, m in (state["measurements"] or {}).items():
-        lo_hi = MEASUREMENT_RANGE.get(name)
-        val = None
-        try:
-            from .store import mean_of
-            val = mean_of(m)
-        except Exception:                       # noqa: BLE001
-            val = None
-        if lo_hi and (val is None or not (lo_hi[0] <= val <= lo_hi[1])):
-            continue                            # c_measurements reports it; the plan never sees it
-        safe_measurements[name] = m
+    safe_measurements = plan_safe_measurements(state)
 
     activated = None
     try:
@@ -512,8 +549,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         if len(used) <= 1:
             return True, "one rig configuration across %d captures" % len(state["captures"]), \
                    None, {}
-        recorded = {d.get("field") for d in state["deviations"] if d.get("kind") == "rig"}
-        if not recorded:
+        # It must name WHICH rig change, and that hash must be one the session actually used. A
+        # deviation of kind "rig" and nothing else excused any number of configurations.
+        recorded = {h for h in used
+                    if deviation_covers(state["deviations"], "rig", h)
+                    or deviation_covers(state["deviations"], "rig", h[:12])}
+        if len(used) - len(recorded) > 1:
             return False, ("the captures in these states were taken under %d different rig "
                            "configurations and no rig deviation was recorded"
                            % len(used)), \
@@ -1071,7 +1112,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                        ("record those conditions in the protocol's vocabulary (%s)"
                         % ", ".join(OFF.CONDITIONS)), {"unclassified": alt["unclassified"][:3]}
             if not alt["alternating"]:
-                excused = any(d.get("kind") == "offcut_alternation" for d in state["deviations"])
+                excused = deviation_covers(state["deviations"], "offcut_alternation",
+                                           "".join(alt["sequence"]))
                 if not excused:
                     return False, ("the left/right alternation is broken across garments (%s): leg "
                                    "and wash condition are confounded"

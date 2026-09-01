@@ -29,7 +29,50 @@ function mins(sec) {
 }
 function showErr(msg) { var e = $('err'); e.hidden = !msg; e.textContent = msg || ''; }
 
+/* ------------------------------------------------------------ who is operating
+ * Every write the server accepts must name the person making it. This app used to read
+ * localStorage.pilot_operator and send whatever it found -- and NOTHING EVER SET IT, so a whole
+ * session driven from the phone was recorded against the empty string: the rig freeze, the ten
+ * calibration readings, the eight measurements, every photograph, every confirmation that the
+ * ruler was in frame or the garment was re-laid. The system's answer to "an operator can confirm
+ * something untrue" is that the claim is attributable, and on the front door actually used it was
+ * not. The server now refuses an unsigned write; this asks. */
+function operator() {
+  var v = (localStorage.getItem('pilot_operator') || '').trim();
+  return v;
+}
+function askOperator(force) {
+  var cur = operator();
+  if (cur && !force) return cur;
+  var v = window.prompt('Who is operating? Every photograph and every confirmation is recorded '
+                        + 'against this name.', cur || '');
+  if (v !== null && v.trim()) {
+    localStorage.setItem('pilot_operator', v.trim());
+  }
+  paintOperator();
+  return operator();
+}
+function paintOperator() {
+  var b = $('whobtn');
+  if (!b) return;
+  var v = operator();
+  b.textContent = v || 'who?';
+  b.classList.toggle('unset', !v);
+}
+
 function api(path, opts) {
+  // Every POST body carries the operator, so no route can be reached without one by forgetting to
+  // add it at the call site -- which is how it went missing in the first place.
+  opts = opts || {};
+  if ((opts.method || 'GET').toUpperCase() === 'POST' && typeof opts.body === 'string') {
+    try {
+      var o = JSON.parse(opts.body);
+      if (o && typeof o === 'object' && !o.operator) {
+        o.operator = askOperator(false);
+        opts.body = JSON.stringify(o);
+      }
+    } catch (e) { /* not JSON: the multipart path adds its own */ }
+  }
   return fetch(path, opts).then(function (r) {
     return r.json().then(function (j) {
       if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
@@ -446,7 +489,7 @@ $('file').addEventListener('change', function (ev) {
   fd.append('shot_id', S.next.shot_id);
   fd.append('rep', String(S.next.rep));
   fd.append('confirm', Object.keys(CONFIRM).filter(function (k) { return CONFIRM[k]; }).join(','));
-  fd.append('operator', localStorage.getItem('pilot_operator') || '');
+  fd.append('operator', askOperator(false));
   fetch('/api/upload', { method: 'POST', body: fd })
     .then(function (r) { return r.json(); })
     .then(function (j) {
@@ -489,6 +532,8 @@ $('garment').addEventListener('change', function (e) {
 });
 
 /* ------------------------------------------------------------------ boot */
+paintOperator();
+$('whobtn').addEventListener('click', function () { askOperator(true); });
 api('/api/map').then(function (j) { MAP = j; render(); }).catch(function (e) { showErr(e.message); });
 api('/api/garments').then(function (j) {
   var sel = $('garment');

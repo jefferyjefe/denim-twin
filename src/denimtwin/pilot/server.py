@@ -51,6 +51,28 @@ MAX_UPLOAD_BYTES = 200 * 1024 * 1024      # a 48 MP HEIC burst is nowhere near t
 MAX_BODY_BYTES = 2 * 1024 * 1024          # non-upload JSON bodies
 
 
+def _operator_missing(body):
+    """Every write must name the person making it. Returns an error sentence, or None.
+
+    The system's whole answer to "a determined operator can still confirm something untrue" is that
+    the claim is attributable. On the front door the operator actually uses it was not: the shipped
+    UI sent operator='' and the server took it, so the rig freeze, every calibration reading, every
+    measurement, every photograph and every operator assertion in a session driven from the phone
+    was recorded against nobody. An unsigned attestation is not an attestation.
+
+    Enforced HERE rather than in each handler because that is what the last two rounds keep finding:
+    a rule applied on one path and not another is a second way in.
+    """
+    if not isinstance(body, dict):
+        return None
+    fields = body.get("fields") if isinstance(body.get("fields"), dict) else body
+    who = fields.get("operator")
+    if isinstance(who, str) and who.strip():
+        return None
+    return ("every recorded action must name the person taking it: send a non-empty `operator`. "
+            "The record is only worth what the attribution is worth.")
+
+
 class Api(object):
     """What the server exposes. Kept separate from HTTP so the CLI drives the same code paths.
 
@@ -77,6 +99,10 @@ class Api(object):
                 continue
             mo = rx.match(path)
             if mo:
+                if method.upper() == "POST":
+                    bad = _operator_missing(body)
+                    if bad:
+                        return 400, {"error": bad}
                 return fn(mo, query, body)
         return 404, {"error": "no such endpoint", "path": path}
 
@@ -210,7 +236,19 @@ class _Handler(BaseHTTPRequestHandler):
         if not self._authorised(q):
             return self._send(401, {"error": "this session needs its token"})
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip()
-        length = int(self.headers.get("Content-Length") or 0)
+        # Three defects lived in the bare int() this replaces. A non-numeric header raised out of
+        # the handler -- a traceback on the console and a dropped connection where the rest of this
+        # system's rule is "a refusal with a sentence, not a stack trace". A NEGATIVE header
+        # compared below every size limit, so MAX_UPLOAD_BYTES and MAX_BODY_BYTES were thresholds
+        # nothing could exceed. And rfile.read(-1) reads to EOF, which is not the length the client
+        # declared.
+        raw_len = (self.headers.get("Content-Length") or "0").strip()
+        try:
+            length = int(raw_len)
+        except (TypeError, ValueError):
+            return self._send(400, {"error": "Content-Length is not a number"})
+        if length < 0:
+            return self._send(400, {"error": "Content-Length cannot be negative"})
         if u.path == "/api/upload":
             if length > MAX_UPLOAD_BYTES:
                 return self._send(413, {"error": "upload larger than %d bytes" % MAX_UPLOAD_BYTES})
@@ -230,7 +268,13 @@ class _Handler(BaseHTTPRequestHandler):
             # Python's json accepts NaN and Infinity by default. NaN compares false against every
             # bound, so a NaN measurement slipped past a tolerance check and switched it off; and
             # canonical() refuses to serialise one, so it would break the log on write instead.
+            #
+            # RecursionError is caught too: json's C parser recurses per nesting level, so a body of
+            # ten thousand open brackets killed the request thread outright -- no response, no log
+            # line, and on a threaded server one worker gone for every such request.
             body = json.loads(raw.decode("utf-8") or "{}", parse_constant=_no_constants)
+        except RecursionError:
+            return self._send(400, {"error": "body is nested too deeply to parse"})
         except (ValueError, UnicodeDecodeError) as e:
             return self._send(400, {"error": "body is not acceptable JSON: %s" % e})
         if ctype not in ("application/json", ""):

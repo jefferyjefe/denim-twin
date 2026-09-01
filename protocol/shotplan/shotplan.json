@@ -382,7 +382,6 @@
    "quality": {
     "extra": "GATE_B. INSTANCE SCHEME: .I01, .I02 ... zero-padded two digits, allocated at intake in the order the annotator enumerated existing_damage_annotations, and the same index written into the shot manifest so shot and annotation stay 1:1. Requires the proposed distressing_count integer -- conditional_on is a boolean expression and cannot say how many frames to demand.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -418,7 +417,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed embroidery_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -454,7 +452,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed logo_count integer. Legible brand text is also a provenance artefact -- it belongs in the garment's own record, not in any committed derived JSON, since committed artefacts carry numbers and manifests only.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -488,7 +485,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed paint_count integer. DENIM_0001 has one painted seagull per back leg, i.e. paint_count = 2, and its record already carries the care guidance that put the whole garment on the hand-wash branch.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -524,7 +520,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed patch_count integer. Distinct from WAIST.BRAND_PATCH, which is the waistband maker's patch and has its own dedicated shot.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -557,7 +552,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed previous_alteration_count integer. If the alteration is a previous re-hem, original_inseam_cm in the record is NOT the garment's factory inseam and every position derived from it (knee at inseam/2, shin at 3/4 inseam) shifts -- the navigator must refuse to compute those positions silently and raise HUMAN_VERIFICATION_REQUIRED instead.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -625,7 +619,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed repair_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -659,7 +652,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed stain_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -693,7 +685,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed tear_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -726,7 +717,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed unusual_seam_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -798,7 +788,6 @@
    "quality": {
     "extra": "MACRO-QA as above. At 0.10 mm/px a typical 3-4 mm stitch pitch is 30-40 px, so stitch type and stitch count are resolvable at the fray-depth ceiling and no finer requirement is needed. The findings this shot supports (fold count, chainstitch vs lockstitch, overlock present, allowance depth in mm) are semantic and no code in this repo can extract them: clipgate's four prompts do not separate them and would in any case be an UNAVAILABLE_CHECK without open_clip weights and network access. They are therefore HUMAN_VERIFICATION_REQUIRED rows recorded with a written 'saw' sentence, and the navigator must not present an unfilled construction row as a pass.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -834,7 +823,6 @@
    "quality": {
     "extra": "MACRO-QA as above. The two reps here are the two states (cuffed, uncuffed), not repeatability reps; the generator must label them explicitly in the ledger rather than treating them as interchangeable. CONTRIBUTING_PAIRS.md is explicit that a cuffed or hemmed edge cannot fray however it is washed, so a cuff changes what the original hem is a control FOR.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -870,7 +858,6 @@
    "quality": {
     "extra": "GRAZING-QA: the measurand is a displacement normal to the surface, which an overhead camera projects only as a magnification change of order h/D - a 3 mm lift at D = 600 mm is 0.5%, well below the +/-1-2 px endpoint localisation the repo publishes - and the lifted edge occludes the intact-weave reference beneath it, and an overhead mm_per_px derived from a board lying in the surface plane is the wrong scale for anything out of that plane. So profile is the only geometry that measures it. Axis elevation <= 5 deg (UNRELIABLE_TILT_DEG = 5.0, cited from canon/upright.py, not modified). With the axis perpendicular to a straight flat-laid edge run, the edge line is parallel to the image plane, so every point in the frame shares one depth and one scale - that is why a single grazing frame can serve a 100 mm run rather than one position. Never resample, rotate or upright a profile frame. check_image is not applicable at all here: there is no contrasting-backdrop garment blob, so its foreground, exposure and border tests all measure the card or the rule.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -943,7 +930,6 @@
    "quality": {
     "extra": "MACRO-QA: do not run check_image() unmodified - its foreground is an Otsu split on Lab distance to the border median, so on a frame-filling macro it locks onto the ruler (measured fg=0.100, mean=227, border_fraction=0.329) and returns two confident failures about the wrong object. Take blur_score only, whole-frame, long side resampled to 1500 px exactly as quality.py L58 does, against blur_min=80.0; suppress mean_intensity, border_fraction and foreground_fraction for this shot class. mm_per_px is a person's reading of the certified loop tape, logged with a free-text 'saw' sentence in the data/external/mask_verdicts.json style; no reading means HUMAN_VERIFICATION_REQUIRED, never PASS. scale_from_coin is out of range at this scale (its ceiling rmax = 0.05*min(H,W) = 151 px on a 3024 px short side, while a 24.26 mm quarter would be 243 px at the ceiling and ~978 px at a realistic 0.0248 mm/px) and scale_from_grid detects background periodicity, not rulers. A HEIC container is UNAVAILABLE_CHECK ('shoot Most Compatible / export JPEG'), never RETAKE_REQUIRED. Decode with cv2.imread only, which applies EXIF orientation; PIL's .size does not, and mixing them makes every px check disagree on portrait frames. min_board_corners is 0 by geometric necessity, not by relaxation: PROTOCOL section 1's 'board_corners >= 12 for every shot' cannot be met inside a 100 mm frame, because 12 interior corners of this 25.0 mm board need 100 x 125 mm of printed board.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -980,7 +966,6 @@
    "quality": {
     "extra": "MACRO-QA as above (blur only, whole-frame at 1500 px long side vs blur_min=80.0; human tape reading for mm_per_px with a 'saw' sentence or HUMAN_VERIFICATION_REQUIRED; HEIC is UNAVAILABLE_CHECK; cv2.imread only; min_board_corners = 0 by board geometry). If the outseam is a selvedge rather than a stitched seam the shot is unchanged but the ledger must record which, because a selvedge outseam does not fray at the junction the way a stitched one does.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1016,7 +1001,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Identifying an alteration is a human judgement recorded with a written 'saw' sentence in the mask_verdicts.json style; a bare boolean is not enough, because the downstream question is what KIND of alteration and where on the loop.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1057,7 +1041,6 @@
    "quality": {
     "extra": "MACRO-QA (blur only, whole-frame at 1500 px long side vs blur_min=80.0; suppress mean_intensity/border_fraction/foreground_fraction; human tape reading for mm_per_px with a 'saw' sentence or HUMAN_VERIFICATION_REQUIRED; HEIC is UNAVAILABLE_CHECK; cv2.imread only; min_board_corners = 0 because 12 corners of the 25.0 mm board need 100 x 125 mm of board, larger than this frame). COVERAGE RULE: instance Pc supports positions Pc-2 .. Pc+2 modulo N_positions, and only those; the supported set must be written explicitly into the pilot ledger as supports_positions, never inferred. A position counts as covered only when (i) the frame PASSes max_mm_per_px and min_long_edge_px, (ii) that position's tape graduation is legible and lies at least 10 mm inside every frame edge, and (iii) the mapping is written down with the human 'saw' sentence for the tape reading. Any position not satisfying all three is UNAVAILABLE_CHECK, and a loop with any uncovered position reports the whole loop map as UNAVAILABLE_CHECK rather than reporting a partial map as a pass.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1093,7 +1076,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Whether the garment has a selvedge outseam is a semantic judgement no code here can make (clipgate cannot, and would be UNAVAILABLE_CHECK without weights and network), so has_selvedge is a human-set feature key and this shot's absence when the key is true is a refusal, not a skip.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1134,7 +1116,6 @@
    "quality": {
     "extra": "GRAZING-QA. Spacing rule: one profile frame per macro centre is admissible only while the local edge tangent stays within 18 deg of the image plane across the covered run, because a height read off a surface tilted phi from the image plane reads h*cos(phi) and cos(18.2 deg) = 0.95, the 5% error the repo already treats as the harm threshold (EXP_0021, 'five degrees moves every shape ratio by more than 5%'). On a flat-laid leg the hem run is nearly straight so this is easily met; where the edge curves through the seam junctions, the covered arc half-width is 0.0505 * C (17.2 mm at C = 340 mm, 25.3 mm at C = 500 mm), so at C < 400 mm a curving run supports only the centre position and the generator must fall back to one profile frame per 2 cm position. Never resample or rotate a profile frame.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1169,7 +1150,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Instance suffix scheme, defined once and used by every counted-feature shot in this catalogue: a single segment .Inn appended after the view segment, zero-padded to two digits, 1-based, stable for the life of the garment. An instance index is never reused or renumbered; if an occurrence is later found to be two occurrences, the second gets the next free index. The instance table is a pilot-ledger artefact, not a record.json field: data/schemas/garment.schema.json is additionalProperties:false and has no place for it.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1242,7 +1222,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Both legs are shot because a re-hemmed or altered garment often has one leg finished differently from the other, and has_previous_alteration is a garment-level key that does not say which leg.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1278,7 +1257,6 @@
    "quality": {
     "extra": "MACRO-QA as above. The two reps here are the two states (cuffed, uncuffed), not repeatability reps; the generator must label them explicitly in the ledger rather than treating them as interchangeable. CONTRIBUTING_PAIRS.md is explicit that a cuffed or hemmed edge cannot fray however it is washed, so a cuff changes what the original hem is a control FOR.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1314,7 +1292,6 @@
    "quality": {
     "extra": "GRAZING-QA as for the left leg. Shoot both legs in the same session without re-laying the garment between them, so the two baselines share one lay.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1387,7 +1364,6 @@
    "quality": {
     "extra": "MACRO-QA as for the left leg: blur only, whole-frame, resampled to 1500 px long side, blur_min=80.0; mm_per_px is a human tape reading with a 'saw' sentence or the shot is HUMAN_VERIFICATION_REQUIRED; HEIC is UNAVAILABLE_CHECK; cv2.imread only; board cannot fit so min_board_corners = 0.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1424,7 +1400,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Record whether this leg's outseam is a seam or a fold; the two legs can differ on a garment with an asymmetric construction, and has_asymmetry alone does not say which feature is asymmetric.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1460,7 +1435,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Identifying an alteration is a human judgement recorded with a written 'saw' sentence in the mask_verdicts.json style; a bare boolean is not enough, because the downstream question is what KIND of alteration and where on the loop.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1501,7 +1475,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE as the left leg: instance Pc supports Pc-2 .. Pc+2 modulo N_positions, the supported set is written explicitly, and any position failing scale, resolution, legibility or explicit mapping is UNAVAILABLE_CHECK. Per-leg indices are independent.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1537,7 +1510,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Whether the garment has a selvedge outseam is a semantic judgement no code here can make (clipgate cannot, and would be UNAVAILABLE_CHECK without weights and network), so has_selvedge is a human-set feature key and this shot's absence when the key is true is a refusal, not a skip.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1578,7 +1550,6 @@
    "quality": {
     "extra": "GRAZING-QA and the same 18 deg tangent rule as the left leg. Both legs must be shot in one uninterrupted session after conditioning, because curl relaxes with handling and a second session is a different measurand.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1613,7 +1584,6 @@
    "quality": {
     "extra": "MACRO-QA as above. Instance suffix scheme, defined once and used by every counted-feature shot in this catalogue: a single segment .Inn appended after the view segment, zero-padded to two digits, 1-based, stable for the life of the garment. An instance index is never reused or renumbered; if an occurrence is later found to be two occurrences, the second gets the next free index. The instance table is a pilot-ledger artefact, not a record.json field: data/schemas/garment.schema.json is additionalProperties:false and has no place for it.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -1647,7 +1617,6 @@
    "quality": {
     "extra": "GATE_B. Distinct from CLOSURE_BUTTON, which frames button AND buttonhole at 200 mm for the span measurement; this frame exists only to read the stamp and the seating ring at macro scale.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -1680,7 +1649,6 @@
    "quality": {
     "extra": "GATE_B. Instance-suffixed like the ANOM family; requires a proposed decorative_hardware_count integer because conditional_on is a boolean expression and cannot itself say how many frames to demand.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -1713,7 +1681,6 @@
    "quality": {
     "extra": "GATE_B. has_watch_pocket_rivets is deliberately distinct from has_rivets: many garments carry pocket-opening rivets and bar-tack the coin pocket instead.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -1746,7 +1713,6 @@
    "quality": {
     "extra": "GATE_B. No min_subject_px is set because no nominal rivet diameter is recorded anywhere in this repo; the framing rule (>=1/3 of the short side) stands in for it until intake measures one with the caliper. Do NOT use a coin here: scale_from_coin.py's documented refusal exists because rivets look like coins to its Hough stage.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -1779,7 +1745,6 @@
    "quality": {
     "extra": "GATE_B. Emitted as a separate shot rather than folded into a single 'rivets' frame because rivets on opposite sides of the garment cannot both be at macro scale in one image.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -1812,7 +1777,6 @@
    "quality": {
     "extra": "GATE_B. Zip metal is specular; if the stamp is blown out under the rig's two 45-degree diffuse sources, re-shoot with one source blocked and record that as a protocol_deviation rather than accepting an unreadable stamp.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -2689,7 +2653,6 @@
    "quality": {
     "extra": "GATE_B. Do NOT put a coin in this frame as a scale reference: tools/scale_from_coin.py refuses unmasked frames precisely because jeans rivets and buttons read as coins, and this frame contains both.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -2790,7 +2753,6 @@
    "quality": {
     "extra": "GATE_B. 0.10 mm/px is the 4-px-per-0.4-mm-yarn level; at a 120 mm field on a 4032 px long edge the realised scale is ~0.030 mm/px, so a thread ply of ~0.15 mm still spans 5 px.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -2825,7 +2787,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -2889,7 +2850,6 @@
    "quality": {
     "extra": "GATE_B. This is the one deliberately oblique shot in Part B; max_tilt_deg here is deviation from the NOMINAL 30 degrees, not from perpendicular. mm/px is not meaningful across an oblique field -- board.mm_per_pixel's own docstring says it is valid only for near-overhead shots -- so this frame's scale is a HUMAN read of the rule at the hem line only, and it must never populate any stored scale field.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3118,7 +3078,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3153,7 +3112,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3318,7 +3276,6 @@
    "quality": {
     "extra": "GATE_B. Weave-grade ceiling, same derivation as the TEX family (see GATE_TEX). SEQUENCING: opening the outseam disturbs the flat lay, so this shot must come AFTER every lay-dependent geometry frame in this state, and the garment must be re-laid and re-smoothed before any further overhead shot.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3352,7 +3309,6 @@
    "quality": {
     "extra": "GATE_B. Re-lay and re-smooth the garment after opening this seam, and record the re-lay as an attested step -- five mtimes are not five re-lays.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3386,7 +3342,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. On DENIM_0001 the painted seagull covers much of the back leg; if no 100 mm print-free patch exists, this shot must be recorded as UNAVAILABLE_CHECK with the reason 'no print-free 100 mm patch on the back leg', NOT silently omitted.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3420,7 +3375,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. This patch travels with the offcut, so it is the weave baseline for whichever SS7 wash condition that leg receives.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3454,7 +3408,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. If the knee fade reaches this position on DENIM_0001, move the patch to the nearest fade-free 100 mm square on the same leg and record the offset in millimetres -- do not shoot a fade edge and call it weave.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3490,7 +3443,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. This patch is on the RETAINED thigh, so it is the only weave sample that stays with the jorts through the wash.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3524,7 +3476,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. is_stretch matters here: DENIM_0001 has elastane_percentage 0, but on a stretch garment the fabric must be left undisturbed for the SS4 conditioning period before this frame, because elastane recovers slowly and a just-handled patch reads as a different weave.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -3626,7 +3577,6 @@
    "quality": {
     "extra": "GATE_B. The patch sits proud of the denim, so its own plane is not the fabric plane; the ruler must stay on the denim or the mm/px claim is wrong by the patch thickness over parallax.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3659,7 +3609,6 @@
    "quality": {
     "extra": "GATE_B. Button-centre to buttonhole-centre is a rigid inter-landmark span unaffected by lay, so it is the cleanest single shrinkage scalar in the whole catalogue.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3694,7 +3643,6 @@
    "quality": {
     "extra": "GATE_B. This shot IS the 'seam intersections' coverage for the back crotch.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3729,7 +3677,6 @@
    "quality": {
     "extra": "GATE_B. This shot IS the 'seam intersections' coverage for the front crotch; no additional intersection shot is emitted there.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3927,7 +3874,6 @@
    "quality": {
     "extra": "GATE_B. Covers the waistband/outseam seam intersection, so the 'seam intersections' region needs no separate shot here.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -3962,7 +3908,6 @@
    "quality": {
     "extra": "GATE_B. Shot separately from the left corner and never merged: has_asymmetry is a real garment feature and a merged frame would halve the resolution on both.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -4552,7 +4497,6 @@
    "quality": {
     "extra": "MACRO-QA (blur only, whole-frame at 1500 px long side vs blur_min=80.0; human tape reading for mm_per_px with a 'saw' sentence or HUMAN_VERIFICATION_REQUIRED; HEIC is UNAVAILABLE_CHECK; cv2.imread only; min_board_corners = 0 by board geometry). Same COVERAGE RULE as the post-wash series: Pc supports Pc-2 .. Pc+2 modulo N_positions, written explicitly, all three conditions required, otherwise UNAVAILABLE_CHECK. This series must be shot BEFORE the wash and cannot be recovered afterwards. hem_roughness sets valid_for_fray=False on any resampled mask (EXP_0024: 8 degrees of rotation made 12 of 12 finished-hem controls read as frayed), so these frames must reach measurement at native resolution, unrotated and unwarped, and the ledger must record that no canonicalisation ran.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -4653,7 +4597,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE and native-resolution requirement as the left leg. PROTOCOL section 3.4 cuts the legs SEPARATELY, so the two cut edges are two independent strokes and neither leg's unwashed baseline can stand in for the other's.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6385,7 +6328,6 @@
    "quality": {
     "extra": "MACRO-QA, the same COVERAGE RULE and the same native-resolution rule. Minimal by design; another agent owns the offcut programme, including the section 7 L/R condition assignment, which cannot be fully decided before the garment's own wash is known to have followed or deviated from section 4.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6426,7 +6368,6 @@
    "quality": {
     "extra": "MACRO-QA, the same COVERAGE RULE and the same native-resolution rule. Minimal by design; another agent owns the offcut programme, including the section 7 L/R condition assignment, which cannot be fully decided before the garment's own wash is known to have followed or deviated from section 4.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6551,7 +6492,6 @@
    "quality": {
     "extra": "MACRO-QA, the same COVERAGE RULE, and the native-resolution rule: no rotation, no warp, no resampling before hem_roughness, because EXP_0024 found that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - and this frame IS a finished-hem control, so a resampled version of it would manufacture the exact false positive the control exists to detect. Minimal by design; another agent owns the offcut programme.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6592,7 +6532,6 @@
    "quality": {
     "extra": "MACRO-QA, the same COVERAGE RULE, and the native-resolution rule: no rotation, no warp, no resampling before hem_roughness, because EXP_0024 found that 8 degrees of rotation makes 12 of 12 finished-hem controls read as frayed - and this frame IS a finished-hem control, so a resampled version of it would manufacture the exact false positive the control exists to detect. Minimal by design; another agent owns the offcut programme.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6717,7 +6656,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE. Minimal by design; another agent owns the offcut programme. Note that the offcut's loop coordinate must be defined from the same inseam-seam origin as the garment's so the two mirror edges can be compared position by position.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6758,7 +6696,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE. Minimal by design; another agent owns the offcut programme. Note that the offcut's loop coordinate must be defined from the same inseam-seam origin as the garment's so the two mirror edges can be compared position by position.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6883,7 +6820,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE as the garment loop map. MINIMAL BY DESIGN: another agent owns the offcut programme; this row exists only to fix the geometry so the offcut's original hem is photographed with the same station, framing, overlap and position indexing as the garment's, and to record that the offcut series must be shot before washing because section 7 says so and it cannot be recovered afterwards.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -6924,7 +6860,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE as the garment loop map. MINIMAL BY DESIGN: another agent owns the offcut programme; this row exists only to fix the geometry so the offcut's original hem is photographed with the same station, framing, overlap and position indexing as the garment's, and to record that the offcut series must be shot before washing because section 7 says so and it cannot be recovered afterwards.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7045,7 +6980,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed embroidery_count integer.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -7081,7 +7015,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed logo_count integer. Legible brand text is also a provenance artefact -- it belongs in the garment's own record, not in any committed derived JSON, since committed artefacts carry numbers and manifests only.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -7117,7 +7050,6 @@
    "quality": {
     "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed patch_count integer. Distinct from WAIST.BRAND_PATCH, which is the waistband maker's patch and has its own dedicated shot.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -7338,7 +7270,6 @@
    "quality": {
     "extra": "GRAZING-QA. The instance suffix scheme is the one defined on BEFORE.HEM.LEFT.WEAR.Inn.MACRO: a single .Inn segment, zero-padded, 1-based, stable for the life of the garment, never reused, with each index carrying a written 'saw' sentence in the ledger's instance table. A conspicuous curl is a human judgement; the regular SIDE_CURL series measures the loop, this series records the outliers so a maximum is not lost between two centre positions.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7375,7 +7306,6 @@
    "quality": {
     "extra": "MACRO-QA (blur only whole-frame at 1500 px long side vs blur_min=80.0; human tape reading with a 'saw' sentence or HUMAN_VERIFICATION_REQUIRED; HEIC is UNAVAILABLE_CHECK; cv2.imread only; min_board_corners = 0 by board geometry). Native resolution only, no rotation and no warp: hem_roughness sets valid_for_fray=False on any resampled mask (EXP_0024). min_reps 2 with the camera removed and remounted between them, garment untouched, is the CONTRIBUTING_PAIRS.md duplicate-recapture requirement and yields this programme's only within-position repeatability estimate for fray depth at no extra handling cost; relay_between_reps is false because re-laying would move the fringe and reset the curl.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7416,7 +7346,6 @@
    "quality": {
     "extra": "MACRO-QA: no unmodified check_image (its Otsu-on-border-median foreground locks onto the ruler on a frame-filling macro - measured fg=0.100, mean=227, border=0.329 - and returns two confident failures about the wrong object); take blur_score only, whole-frame, long side resampled to 1500 px as quality.py L58 does, against blur_min=80.0, and suppress mean_intensity, border_fraction and foreground_fraction. mm_per_px is a person's reading of two certified tape graduations, logged with a free-text 'saw' sentence in the data/external/mask_verdicts.json style; without it the frame is HUMAN_VERIFICATION_REQUIRED, never PASS. scale_from_coin cannot supply it (rmax = 0.05*min(H,W) = 151 px vs a 24.26 mm quarter at 243 px at the ceiling and ~978 px at a realistic 0.0248 mm/px) and scale_from_grid is a background-periodicity detector, not a ruler finder. HEIC is UNAVAILABLE_CHECK ('shoot Most Compatible / export JPEG'), not RETAKE_REQUIRED. cv2.imread only (it applies EXIF orientation, PIL does not). min_board_corners = 0 by geometric necessity: 12 interior corners of the 25.0 mm board need 100 x 125 mm of board, larger than this frame, so PROTOCOL section 1's 'every shot' reject rule is unsatisfiable at this scale. RESOLUTION CEILING: 10 px/mm, so the 0.5 mm fray-depth least count spans 5 px and the repo's published +/-1-2 px endpoint localisation contributes ~2.8 px = 0.28 mm, 56% of the least count; at 0.20 mm/px the same error is 0.57 mm, larger than the least count, so 0.10 mm/px is the ceiling. NATIVE RESOLUTION ONLY: hem_roughness sets valid_for_fray=False on any resampled mask (EXP_0024: 8 degrees of rotation made 12 of 12 finished-hem controls read as frayed), so this frame must reach measurement unrotated, unwarped and unresampled, and the ledger must record that no canonicalisation ran. Do not present measure_fringe_depth output as fray evidence - its own module docstring says it is not validated and it returned drop shadow at 4-16 px and mottled backdrop at 12-20 px with ok=True; use hem_roughness for the number and fringe_measure.overlay only as the picture a person judges. COVERAGE RULE: instance Pc supports positions Pc-2 .. Pc+2 modulo N_positions and only those; the supported set is written into the ledger as supports_positions and is never inferred. A position is covered only when (i) the frame PASSes max_mm_per_px and min_long_edge_px, (ii) that position's tape graduation is legible and at least 10 mm inside every frame edge, and (iii) the mapping is written down with the human 'saw' sentence. Any position failing any of the three is UNAVAILABLE_CHECK; a loop with any uncovered position reports the whole map as UNAVAILABLE_CHECK, never as a partial pass.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7453,7 +7382,6 @@
    "quality": {
     "extra": "MACRO-QA and the same COVERAGE RULE as the loop map. This frame is the proof that the front-pass and back-pass position indices are one continuous sequence. Without it, the two passes are two separate maps of unknown relative offset, and the loop is not a loop. If the crossing cannot be imaged with both runs visible, the two passes must be reported as two open arcs with the join UNAVAILABLE_CHECK, not silently concatenated.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7494,7 +7422,6 @@
    "quality": {
     "extra": "GRAZING-QA. WHY OVERHEAD FAILS, three reasons: (1) the measurand is a displacement normal to the surface and an overhead camera renders it only as a magnification change of order h/D - a 3 mm lift at D = 600 mm is 0.5%, and locally at the edge far less than that, comfortably below the +/-1-2 px endpoint localisation the repo publishes; (2) a curled edge occludes the intact weave beneath it, so the surface datum the measurand is defined against is not even visible from above; (3) an overhead mm_per_px derived from a board lying in the surface plane is the wrong scale for anything lifted out of that plane, so an overhead curl number would be scaled by a factor it has no way to know. SPACING: one profile frame per macro centre, i.e. every 4th position (80 mm of arc), is admissible only while the local edge tangent stays within 18 deg of the image plane across the covered run, because a height on a surface tilted phi reads h*cos(phi) and cos(18.2 deg) = 0.95, the 5% figure EXP_0021 treats as the harm threshold. The covered arc half-width is 0.0505*C - 17.2 mm at C = 340 mm, 20.2 mm at 400 mm, 25.3 mm at 500 mm - so on a curving run at C < 400 mm one frame supports only its centre position and the generator must fall back to one profile frame per 2 cm position; on the straight flat-laid runs the tangent is effectively constant and the full 100 mm frame is valid. Axis elevation <= 5 deg (UNRELIABLE_TILT_DEG = 5.0, cited from canon/upright.py, not modified). check_image is not applicable: there is no contrasting-backdrop garment blob and its foreground, exposure and border tests would all measure the card or the rule. Never resample or rotate a curl frame.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7535,7 +7462,6 @@
    "quality": {
     "extra": "GRAZING-QA, plus the reason this series is optional and is NEVER merged into the section 5 curl column: section 5 defines edge curl as measured with the garment 'laid front-up after section 4 conditioning', so a height measured after turning the garment over is a different measurand under a different lay. Recording it as if it were the section 5 number would be exactly the absent-evidence-rendering-as-a-pass failure the repo exists to prevent. Emit these values in a separate, clearly named column, mark the back-panel positions' section 5 curl as UNAVAILABLE_CHECK, and log the turn in protocol_deviations. Turning the garment also relaxes curl, so these numbers are a lower bound at best.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7607,7 +7533,6 @@
    "quality": {
     "extra": "GRAZING-QA. The instance suffix scheme is the one defined on BEFORE.HEM.RIGHT.WEAR.Inn.MACRO: a single .Inn segment, zero-padded, 1-based, stable for the life of the garment, never reused, with each index carrying a written 'saw' sentence in the ledger's instance table. A conspicuous curl is a human judgement; the regular SIDE_CURL series measures the loop, this series records the outliers so a maximum is not lost between two centre positions.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7644,7 +7569,6 @@
    "quality": {
     "extra": "MACRO-QA and the same duplicate-recapture rule as the left leg. The two legs' origins are independent datums; do not derive one from the other.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7685,7 +7609,6 @@
    "quality": {
     "extra": "MACRO-QA, the 0.10 mm/px ceiling derivation, the native-resolution rule and the COVERAGE RULE all exactly as for the left leg. The two legs are cut in separate strokes (PROTOCOL section 3.4) and, under section 7, their offcuts go to different wash conditions, so the right leg's map is independent evidence and not a replicate of the left's.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7722,7 +7645,6 @@
    "quality": {
     "extra": "MACRO-QA and the same closure rule as the left leg: without this frame the right leg's two passes are two open arcs and the join is UNAVAILABLE_CHECK.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7763,7 +7685,6 @@
    "quality": {
     "extra": "GRAZING-QA, the same three reasons overhead fails, the same 18 deg tangent rule and 0.0505*C arc half-width, and the same 5 deg axis-elevation ceiling as the left leg. Reaching the right leg must not require lifting or turning the garment; if the grazing station cannot see the right leg's edge without moving the garment, move the CAMERA, and if that is impossible record the move as a protocol deviation and mark the affected positions HUMAN_VERIFICATION_REQUIRED.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7804,7 +7725,6 @@
    "quality": {
     "extra": "GRAZING-QA and the same non-merge rule: these values never enter the section 5 curl column, the back-panel positions' section 5 curl stays UNAVAILABLE_CHECK, and the turn is logged in protocol_deviations.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -7845,7 +7765,8 @@
    "scale_placement": "",
    "scale_reference": "charuco_board",
    "shot_id": "POSTWASH.MOTION.LEFT",
-   "state": "post_wash"
+   "state": "post_wash",
+   "video_seconds": 7.5
   },
   {
    "camera_angle": "video",
@@ -7871,7 +7792,8 @@
    "scale_placement": "",
    "scale_reference": "charuco_board",
    "shot_id": "POSTWASH.MOTION.RIGHT",
-   "state": "post_wash"
+   "state": "post_wash",
+   "video_seconds": 7.5
   },
   {
    "camera_angle": "oblique_30",
@@ -8438,7 +8360,6 @@
    "quality": {
     "extra": "GATE_B. Do NOT put a coin in this frame as a scale reference: tools/scale_from_coin.py refuses unmasked frames precisely because jeans rivets and buttons read as coins, and this frame contains both.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8539,7 +8460,6 @@
    "quality": {
     "extra": "GATE_B. 0.10 mm/px is the 4-px-per-0.4-mm-yarn level; at a 120 mm field on a 4032 px long edge the realised scale is ~0.030 mm/px, so a thread ply of ~0.15 mm still spans 5 px.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8574,7 +8494,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8609,7 +8528,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8644,7 +8562,6 @@
    "quality": {
     "extra": "GATE_B.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8679,7 +8596,6 @@
    "quality": {
     "extra": "GATE_B. GATE_TEX. This patch is on the RETAINED thigh, so it is the only weave sample that stays with the jorts through the wash.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -8781,7 +8697,6 @@
    "quality": {
     "extra": "GATE_B. The patch sits proud of the denim, so its own plane is not the fabric plane; the ruler must stay on the denim or the mm/px claim is wrong by the patch thickness over parallax.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8816,7 +8731,6 @@
    "quality": {
     "extra": "GATE_B. This shot IS the 'seam intersections' coverage for the back crotch.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8851,7 +8765,6 @@
    "quality": {
     "extra": "GATE_B. This shot IS the 'seam intersections' coverage for the front crotch; no additional intersection shot is emitted there.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -8987,7 +8900,6 @@
    "quality": {
     "extra": "GATE_B. Covers the waistband/outseam seam intersection, so the 'seam intersections' region needs no separate shot here.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -9022,7 +8934,6 @@
    "quality": {
     "extra": "GATE_B. Shot separately from the left corner and never merged: has_asymmetry is a real garment feature and a merged frame would halve the resolution on both.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 3000,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true
@@ -9844,7 +9755,6 @@
    "quality": {
     "extra": "Certifies the vertical mm/px and the horizontality of the axis for every edge-curl frame. The elevation of the axis above the surface plane must be <= 5 deg (UNRELIABLE_TILT_DEG = 5.0, pinned by tests/test_tuning_rule_thresholds.py under the docs/GATES.md tuning rule; cited, not changed). At 5 deg the cos foreshortening of a vertical height is 0.4% (0.02 mm on a 5 mm curl, negligible), but an elevated axis turns the surface from a line into a band, making the 'height above the surface' datum ambiguous by D*tan(eps) across the frame depth - that ambiguity, not the cosine, is what the 5 deg ceiling is protecting. The surface line visible across the card is the machine-checkable evidence: if the card's near and far edges are separated by more than the 0.5 mm least count in the image, the axis is not in the plane and the station is RETAKE_REQUIRED.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,
@@ -9881,7 +9791,6 @@
    "quality": {
     "extra": "This frame proves the macro station meets the resolution ceiling BEFORE any garment photograph is taken, so a resolution failure costs one test shot rather than a whole irreversible post-wash session. Ceiling derivation: fray depth must be readable to 0.5 mm; at 10 px/mm the 0.5 mm least count spans 5 px, and the repo's only published pixel-localisation figure (tools/scale_from_coin.py's note that the Hough radius is +/-1-2 px) gives two independent endpoint errors of +/-2 px combining to ~2.8 px = 0.28 mm, 56% of the least count, i.e. inside it. At 0.20 mm/px the same error is 0.57 mm, larger than the least count. Hence max_mm_per_px = 0.10 and min_long_edge_px = 1200 (a ~120 mm frame at 0.10 mm/px). Lens note: a 26 mm-equivalent main lens at a 250 mm working distance frames ~344 mm and cannot deliver the 100 mm framing; use the tele or a true macro mode, and reject any phone 'macro' mode that silently switches to the ultrawide sensor at reduced resolution - the min_long_edge_px floor catches exactly that. A station that cannot reach 0.10 mm/px is UNAVAILABLE_CHECK for fray depth, not a licence to shoot anyway.",
     "min_blur": 80,
-    "min_board_corners": 0,
     "min_long_edge_px": 1200,
     "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
     "requires_ruler": true,

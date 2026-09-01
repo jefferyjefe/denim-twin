@@ -174,7 +174,7 @@ class Spec(object):
         # get to claim a number that only a board can produce.
         from .qa import quality_is_evaluable
         for s in self.shots:
-            for key, why in quality_is_evaluable(s):
+            for key, why in quality_is_evaluable(s, self.doc.get("quality_defaults") or {}):
                 errs.append("%s declares quality.%s, and nothing can evaluate it: %s"
                             % (s.get("shot_id"), key, why))
         for s in self.shots:

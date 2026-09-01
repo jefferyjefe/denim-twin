@@ -103,7 +103,11 @@ class Session(object):
         store = self.store(gid)
         st, problems = store.fold()
         try:
-            shots, meta = PLAN.activate(spec, st["features"], st["measurements"], st.get("cut_spec"))
+            # Screened exactly as the gate screens them. Handing the raw value to activate() meant
+            # a leg opening of 4000 cm -- one stuck digit on a phone keypad -- expanded a hem series
+            # of millions of frames and pinned the thread with no response and no timeout.
+            shots, meta = PLAN.activate(spec, st["features"],
+                                        GATES.plan_safe_measurements(st), st.get("cut_spec"))
         except PLAN.PlanError as e:
             shots, meta = [], {"error": str(e), "features": st["features"],
                                "assumed_present": [], "unevaluatable_conditions": []}
@@ -285,6 +289,11 @@ def _num(v, name, *, allow_none=False):
         if allow_none:
             return None
         raise BadInput("%s is required" % name)
+    # bool is an int subclass, so float(True) is 1.0 and a JSON body of [true, true, true] arrived
+    # as three perfectly agreeing readings of 1.0. A measurement is a number somebody read off an
+    # instrument; true is not one.
+    if isinstance(v, bool):
+        raise BadInput("%s must be a number, not a true/false value" % name)
     try:
         f = float(v)
     except (TypeError, ValueError):
@@ -410,6 +419,15 @@ def build_api(session):
             return 200, session.snapshot(m.group(1), state_filter=(q.get("state") or [None])[0])
         except KeyError:
             return 404, {"error": "no such garment"}
+        except Exception as e:                  # noqa: BLE001
+            # The command line wraps every command in exactly this rule and prints a sentence; this
+            # handler caught KeyError alone, so anything else became a traceback on the console and
+            # a DROPPED CONNECTION. /api/state is the single projection the phone renders -- next
+            # action, coverage, gate, all of it -- so the app went blank with nothing to read.
+            return 500, {"error": "this garment's state could not be assembled: %s: %s"
+                                  % (type(e).__name__, e),
+                         "fix": "run `tools/pilot.py status %s` on the Mac, which reports the same "
+                                "condition as a sentence" % m.group(1)}
 
     @api.route("POST", "/api/features/(DENIM_[0-9]{4})")
     def _features(m, _q, b):
@@ -427,9 +445,15 @@ def build_api(session):
         need = GATES.REQUIRED_MEASUREMENTS.get(name)
         if need is None:
             return 400, {"error": "%s is not a required measurement" % name}
+        raw = b.get("readings")
+        # A LIST, explicitly. A JSON string iterates as its characters, so "111" arrived as three
+        # independent readings of 1.0 mm -- inside the plausible range, inside the tolerance, and
+        # reported by the gate as "independent readings in tolerance" for evidence that was never
+        # collected. The count exists precisely so the spread between separate readings can be seen.
+        if not isinstance(raw, list):
+            return 400, {"error": "readings must be a list of numbers, one per independent reading"}
         try:
-            readings = [_num(x, "%s reading" % name)
-                        for x in (b.get("readings") or []) if x not in (None, "")]
+            readings = [_num(x, "%s reading" % name) for x in raw if x not in (None, "")]
         except BadInput as e:
             return 400, {"error": str(e)}
         tol = GATES.MEASUREMENT_TOLERANCE.get(name, GATES.MEASUREMENT_TOLERANCE["_default_cm"])
@@ -482,11 +506,13 @@ def build_api(session):
         except BadInput as e:
             return 400, {"error": str(e)}
         h = setup_hash(cfg)
-        st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
-                                   "reason": b.get("reason") or "frozen from the app"},
-                  operator=b.get("operator"))
-        # A calibration reading posted with a name and no verdict used to count as a passing one.
-        # The name has to be one the gate knows, and the verdict has to be stated.
+        # VALIDATE EVERYTHING, THEN WRITE. The freeze used to be appended first, so a malformed
+        # calibration reading returned 400 -- the API saying nothing happened -- with the rig
+        # already silently re-frozen under the configuration the caller supplied and the server then
+        # refused. Because a reading only counts against the freeze in effect, that orphaned every
+        # calibration reading in the session at once and turned a READY garment into NOT READY.
+        # A rejected request must leave the log exactly as it found it.
+        checks_ok = []
         for c in (b.get("checks") or []):
             if not isinstance(c, dict):
                 return 400, {"error": "each check must be an object"}
@@ -503,6 +529,11 @@ def build_api(session):
                              measured_mm=_num(c.get("measured_mm"), "measured_mm"))
                 except BadInput as e:
                     return 400, {"error": str(e)}
+            checks_ok.append(c)
+        st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
+                                   "reason": b.get("reason") or "frozen from the app"},
+                  operator=b.get("operator"))
+        for c in checks_ok:
             st.append("setup_check", c, operator=b.get("operator"), setup_hash=h)
         return 200, {"ok": True, "setup_hash": h}
 
@@ -527,7 +558,8 @@ def build_api(session):
         st, _ = store.fold()
         spec = session.spec
         try:
-            shots, _m = PLAN.activate(spec, st["features"], st["measurements"], st.get("cut_spec"))
+            shots, _m = PLAN.activate(spec, st["features"],
+                                      GATES.plan_safe_measurements(st), st.get("cut_spec"))
         except PLAN.PlanError as e:
             return 400, {"error": str(e)}
         shot = {s["shot_id"]: s for s in shots}.get(shot_id)
