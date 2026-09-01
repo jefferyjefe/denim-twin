@@ -32,6 +32,7 @@ from . import hem as HEM
 from . import plan as PLAN
 from . import qa as QA
 from . import spec as SPEC
+from . import manifest as MF
 from .fixtures import synth_capture
 from .manifest import ManifestError, ingest_photo, sha256_file
 from .store import Store, setup_hash
@@ -1719,6 +1720,34 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "append() has been serialised since round 1 and read() took no lock, so one "
                       "phone uploading while the GATE tab refreshed -- two ordinary things at once "
                       "on a threading server -- reported a torn line and a head mismatch"))
+
+    # -- 70i. a read must never wait forever for a lock -------------------------------------------
+    b = new("nohang", gid="DENIM_9259")
+    b.open_session()
+    b.store.append("note", {"i": 0}, operator="selftest")
+    held = None
+    elapsed = None
+    try:
+        import fcntl as _fc
+        held = open(str(pathlib.Path(str(b.store.manifest.path)).parent
+                        / (pathlib.Path(str(b.store.manifest.path)).name + ".lock")), "a+")
+        _fc.flock(held.fileno(), _fc.LOCK_EX)
+        t0_ = time.time()
+        n_ = len(b.store.manifest.read()[0])
+        elapsed = time.time() - t0_
+        _fc.flock(held.fileno(), _fc.LOCK_UN)
+    except ImportError:
+        n_, elapsed = 1, 0.0
+    finally:
+        if held is not None:
+            held.close()
+    out.append(Result("a read gives up on the lock rather than on itself",
+                      n_ >= 1 and elapsed is not None and elapsed < MF.READ_LOCK_WAIT_S + 3.0,
+                      "read returned %d entries in %.2fs with the exclusive lock held (bound %.1fs)"
+                      % (n_, elapsed if elapsed is not None else -1, MF.READ_LOCK_WAIT_S),
+                      "flock is per open file description, so on Linux a blocking shared lock taken "
+                      "while this process holds the exclusive one waits on itself forever. A hang "
+                      "is worse than a refusal: the operator cannot tell it from slow work"))
 
     # -- 71a. a second recording of the actual wash cannot replace the first ----------------------
     b = new("washonce", gid="DENIM_9251")

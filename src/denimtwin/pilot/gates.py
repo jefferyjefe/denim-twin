@@ -739,12 +739,14 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     continue                    # nothing claimed; other conditions cover it
                 path = garment_dir / (cap.get("path") or "")
                 try:
+                    # NO assertions are passed in. Feeding the record's own PASS list back into the
+                    # re-check would be the very pattern this condition exists to break -- the
+                    # record vouching for itself. None of the twelve mechanical checks reads an
+                    # assertion anyway, so there is nothing to gain and a standing invitation to a
+                    # later mistake.
                     checks, _na = QA.check_capture(
                         path, sh, QA.merged_quality(spec.doc["quality_defaults"], sh), rep=rep,
-                        board=board, board_spec=bspec,
-                        operator_assertions={c.get("check_id"): True
-                                             for c in (q.get("checks") or [])
-                                             if c.get("outcome") == QA.PASS})
+                        board=board, board_spec=bspec)
                 except Exception as e:          # noqa: BLE001
                     bad.append("%s r%d (could not be re-checked: %s)" % (key[0], key[1], e))
                     continue

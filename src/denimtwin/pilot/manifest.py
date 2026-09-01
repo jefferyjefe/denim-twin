@@ -51,6 +51,11 @@ EXIF_KEEP = (
 )
 #: Dropped even if they somehow appear in EXIF_KEEP. Belt and braces: a location leak is not
 #: recoverable once committed.
+#: How long a verifying read waits for the writer to finish before reading anyway. Long enough to
+#: cover an append (a few milliseconds), short enough that nobody watches a blank screen.
+READ_LOCK_WAIT_S = 2.0
+READ_LOCK_POLL_S = 0.002
+
 EXIF_FORBIDDEN_PREFIXES = ("GPS", "Geo", "Location")
 
 
@@ -198,12 +203,30 @@ class Manifest(object):
         # a head mismatch. On a ThreadingHTTPServer that is one phone uploading while the GATE tab
         # refreshes: the honest operator, doing two ordinary things at once, accused of tampering
         # with their own log.
+        # NON-BLOCKING, with a bounded wait. A blocking LOCK_SH here is a latent hang: flock is
+        # associated with the open file description, so on Linux a read taken while this process
+        # already holds the exclusive lock blocks against itself forever. (macOS happens not to;
+        # relying on that is relying on luck, and CI is Linux.) Both of the last two rounds recorded
+        # the same judgement -- a hang is worse than a refusal, because the operator cannot tell it
+        # from slow work -- so the read gives up on the lock rather than on itself. Falling through
+        # without it is exactly the behaviour before the lock existed: an honest read that may catch
+        # a torn tail mid-append and reports it, which the caller already handles.
         shared = None
         if verify:
             try:
                 import fcntl
                 shared = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
-                fcntl.flock(shared.fileno(), fcntl.LOCK_SH)
+                deadline = time.time() + READ_LOCK_WAIT_S
+                while True:
+                    try:
+                        fcntl.flock(shared.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+                        break
+                    except (OSError, IOError):
+                        if time.time() >= deadline:
+                            shared.close()
+                            shared = None
+                            break
+                        time.sleep(READ_LOCK_POLL_S)
             except (ImportError, OSError, IOError):
                 if shared is not None:
                     shared.close()
