@@ -40,3 +40,27 @@ experiments/**/*.jpeg
 # comparison's numbers enter the repository, for the reason above.
 experiments/pairs_lmprov_control/
 experiments/pairs_lmprov_refit/
+
+# The pilot capture log in its LOCAL form. It carries full EXIF -- which on a phone includes GPS --
+# and it is the working copy the session appends to. Only the sanitised projection may enter the
+# repository: `tools/pilot.py finalize` writes manifest.sanitised.json with location tags dropped and
+# every path made repo-relative, and refuses to write at all if an absolute path survives.
+# The witness: one line per append, {seed, chain, count} only -- no photograph, no path, no EXIF.
+# Untracked by default so an ordinary capture session does not churn the repository. COMMITTING it
+# would make git history a third independent witness, which is strictly stronger; that is a
+# deliberate choice to make, not a default to impose.
+data/garments/.pilot_witness.jsonl
+
+data/garments/**/pilot/manifest.jsonl
+# The witness: one line per append, {seed, chain, count} only -- no photograph, no path, no EXIF.
+# Untracked by default so an ordinary capture session does not churn the repository. COMMITTING it
+# would make git history a third independent witness, which is strictly stronger; that is a
+# deliberate choice to make, not a default to impose.
+data/garments/.pilot_witness.jsonl
+
+data/garments/**/pilot/manifest.jsonl.torn
+data/garments/**/pilot/.incoming/
+
+# Isolated worktrees created for adversarial agents. Their findings live in the selftest scenarios
+# and docs/PILOT_ADVERSARIAL_ROUNDS.md; the trees themselves are scratch.
+.claude/

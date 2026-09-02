@@ -1,0 +1,64 @@
+[
+ {
+  "claim": "the noise floor of scale_range_ratio on level boards (median)",
+  "note_regex": "measured a median of \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "tilt.level_srr_median",
+  "tol": 1e-06
+ },
+ {
+  "claim": "the noise floor of scale_range_ratio on level boards (max)",
+  "note_regex": "a maximum of \\*\\*([0-9.]+)\\*\\* from corner-detection noise",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "tilt.level_srr_max",
+  "tol": 1e-06
+ },
+ {
+  "claim": "how many synthetic captures the tilt grid covers",
+  "note_regex": "Across (\\d+) captures",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "tilt.n"
+ },
+ {
+  "claim": "the worst scale error among captures the tilt check passed",
+  "note_regex": "called PASS was \\*\\*([0-9.]+)\\*\\* of the true scale",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "tilt.worst_scale_error_among_PASS",
+  "tol": 1e-06
+ },
+ {
+  "claim": "the highest registered-interior correlation reached by a genuine re-lay",
+  "note_regex": "genuinely independent re-lays \\|.{0,60}\\*\\*([0-9.]+)\\*\\* \\|",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "relay_and_duplicates.interior_ncc_genuine_relay_max",
+  "tol": 1e-06
+ },
+ {
+  "claim": "the margin by which interior correlation separates a re-lay from the same lay",
+  "note_regex": "\\*\\*yes, by ([0-9.]+)\\*\\*",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "relay_and_duplicates.interior_ncc_margin",
+  "tol": 1e-06
+ },
+ {
+  "claim": "how closely a garment that was not moved reproduced its centroid",
+  "note_regex": "centroid shift up to \\*\\*([0-9.]+) mm\\*\\*",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "relay_and_duplicates.not_moved_centroid_shift_mm_max",
+  "tol": 1e-06
+ },
+ {
+  "claim": "how close independent re-lays ever landed to each other",
+  "note_regex": "never landed closer than\\n\\*\\*([0-9.]+) mm\\*\\*",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "relay_and_duplicates.relay_pair_centroid_shift_mm_min",
+  "tol": 1e-06
+ },
+ {
+  "claim": "the level at which a re-encoded copy of the same frame still correlates",
+  "note_regex": "those measured at or above \\*\\*([0-9.]+)\\*\\*",
+  "source": "reports/pilot_qa_primitives.json",
+  "path": "relay_and_duplicates.near_duplicate_ncc_min_observed",
+  "tol": 1e-06
+ }
+]

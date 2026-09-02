@@ -82,6 +82,20 @@ CHECKS = [Check(*c) for c in [
      "a capture protocol drifted from its spec"),
     ("bench", [PY_, "tools/bench.py"], ("full",), ("pair_masks", "pair_cmp_metrics"), False, [],
      "a pair metric moved; two regressions against 443d1d4658 are documented and expected"),
+    # The pilot's cut gate is the only check in this file that guards an IRREVERSIBLE PHYSICAL ACT.
+    # It runs in the hermetic profile because it needs no photograph: the self test synthesises its
+    # own captures around a real ChArUco board, so a clean clone can still prove that the gate
+    # refuses incomplete evidence and opens on complete evidence.
+    ("pilot", [PY_, "tools/pilot.py", "selftest"], ("ci", "full"), (), True, [],
+     "the capture navigator's cut gate can be made to say READY without the evidence, or refuses "
+     "to say it with the evidence -- either way a garment is at risk"),
+    ("runbook", [PY_, "tools/make_runbook.py", "--check"], ("ci", "full"), (), True, [],
+     "the printed pilot documents no longer match the shot plan: run tools/make_runbook.py --write. "
+     "A runbook that has drifted sends the operator to collect a different set of evidence from the "
+     "one the gate requires, and they find out with a garment on the table"),
+    ("shotplan", [PY_, "tools/check_shotplan.py"], ("ci", "full"), (), True, [],
+     "the shot-plan specification does not load, or a shot points at a region, feature or matched "
+     "shot that does not exist -- each of which silently deletes a required photograph"),
 ]]
 
 # The two closing statements, as data rather than as a run of print() calls. They are the most

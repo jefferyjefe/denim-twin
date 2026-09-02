@@ -1,0 +1,1026 @@
+#!/usr/bin/env python3
+"""Pilot Capture Navigator -- guided, verified evidence collection for one physical garment.
+
+    tools/pilot.py setup                      freeze the rig, record the calibration readings
+    tools/pilot.py new                        create the next DENIM_NNNN and open a session
+    tools/pilot.py intake     GARMENT         answer the feature questionnaire
+    tools/pilot.py measure    GARMENT         record the physical measurements
+    tools/pilot.py plan       GARMENT         the ordered capture list and the time it will take
+    tools/pilot.py next       GARMENT         the single best next action
+    tools/pilot.py add        GARMENT SHOT F  ingest a photograph and check it
+    tools/pilot.py confirm    GARMENT SHOT C  record a human verification
+    tools/pilot.py reuse      GARMENT SRC TGT one frame also satisfying a second shot
+    tools/pilot.py deviation  GARMENT --kind K a deliberate departure from the frozen protocol
+    tools/pilot.py cutspec    GARMENT --inseam N
+    tools/pilot.py packet     GARMENT         the printable cut packet
+    tools/pilot.py precut     GARMENT         THE GATE: may this garment be cut?
+    tools/pilot.py wash       GARMENT         record planned and actual wash settings
+    tools/pilot.py offcut     GARMENT         track the offcut samples
+    tools/pilot.py hem        GARMENT         hem-loop coverage, gaps and the next macro
+    tools/pilot.py status     GARMENT         coverage by state and region
+    tools/pilot.py serve      [GARMENT]       the phone-friendly local app
+    tools/pilot.py finalize   GARMENT         the post-wash gate and the sanitised manifest
+
+The CLI is the whole workflow. The web app is a front end onto these same functions, which is what
+makes "the CLI is the source of truth" a testable statement rather than a slogan: tests drive the
+CLI, and the server's handlers call the same module functions.
+
+Exit codes follow tools/verify.py: 0 the thing asked for holds, 1 it does not, 2 it could not be
+determined because evidence is missing. `precut` uses all three, and a gate that cannot be evaluated
+exits 2 -- never 0.
+"""
+import argparse
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from denimtwin.pilot import cutspec as CUT          # noqa: E402
+from denimtwin.pilot import gates as GATES          # noqa: E402
+from denimtwin.pilot import hem as HEM              # noqa: E402
+from denimtwin.pilot import plan as PLAN            # noqa: E402
+from denimtwin.pilot import qa as QA                # noqa: E402
+from denimtwin.pilot import spec as SPEC            # noqa: E402
+from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual, mean_of  # noqa: E402
+from denimtwin.pilot.manifest import (ingest_photo, read_exif, exif_timestamp, sha256_file,  # noqa: E402
+                                      ManifestError)
+
+# The garment tree, overridable so a rehearsal cannot touch real evidence. data/garments holds the
+# only copies of two real garments' records, and "run the whole thing once to see how it feels" is
+# exactly the request that should not be able to write there.
+GARMENTS = Path(os.environ.get("PILOT_GARMENTS") or (ROOT / "data" / "garments"))
+SPEC_PATH = ROOT / "protocol" / "shotplan" / "shotplan.json"
+BOARD_PATH = ROOT / "protocol" / "charuco_board.json"
+STATES = ["before", "marked", "immediate_after", "post_wash"]
+
+#: Exit codes. 3, not 2, for UNAVAILABLE: argparse exits 2 on a usage error, and a caller that
+#: cannot tell "the gate could not evaluate a condition" from "you typed the command wrong" will
+#: react to the wrong one.
+OK, FAIL, UNAVAILABLE = 0, 1, 3
+
+
+def load_spec():
+    if not SPEC_PATH.exists():
+        raise SystemExit("no shot-plan specification at %s\n"
+                         "This is the document the gate enumerates from; without it nothing can be "
+                         "required and therefore nothing can be verified." % SPEC_PATH)
+    return SPEC.load(SPEC_PATH)
+
+
+def garment_dir(gid):
+    # The same shape the API's route regex enforces. A value the CLI accepts and the API refuses is
+    # a second way in with a different set of rules, and the API's comments record what such values
+    # did to a garment the last time.
+    import re as _re
+    if not _re.fullmatch(r"DENIM_[0-9]{4}", str(gid or "")):
+        raise SystemExit("%r is not a garment id; they look like DENIM_0003" % gid)
+    d = GARMENTS / gid
+    if not d.exists():
+        raise SystemExit("no such garment: %s (looked in %s)" % (gid, d))
+    return d
+
+
+def _rep_arg(v):
+    n = int(v)
+    if not (1 <= n <= 99):
+        raise argparse.ArgumentTypeError("a repeat index is between 1 and 99")
+    return n
+
+
+def _claim_arg(v):
+    v = str(v).strip()
+    if not v or not len(v) <= 64:
+        raise argparse.ArgumentTypeError("a claim must say what it verifies, briefly")
+    return v
+
+
+def board():
+    try:
+        from denimtwin.capture.board import load_board
+        return load_board(BOARD_PATH)
+    except Exception as e:
+        print("warning: calibration board unavailable (%s); board-dependent checks will report "
+              "UNAVAILABLE_CHECK rather than passing" % e, file=sys.stderr)
+        return None, None
+
+
+def _fmt_time(seconds):
+    m = int(round(seconds / 60.0))
+    return "%dh %02dm" % (m // 60, m % 60) if m >= 60 else "%d min" % m
+
+
+def _prompt(text, default=None, cast=str):
+    """Ask, and cast. The DEFAULT goes through the cast too.
+
+    Returning the default uncast meant a bool feature whose default is the string "y" was logged as
+    a string, and the condition language reads a non-empty string as true while `instance_count`
+    and the intake validator read it as something else -- so accepting the default on a second pass
+    through the questionnaire could change what the plan required.
+    """
+    suffix = " [%s]" % default if default is not None else ""
+    while True:
+        raw = input("%s%s: " % (text, suffix)).strip()
+        if not raw:
+            if default is None:
+                continue
+            raw = default
+        try:
+            return cast(raw)
+        except (ValueError, TypeError) as e:
+            print("  not valid (%s)" % e)
+            if raw == default:
+                # The default itself does not survive its own cast, so stop offering it rather than
+                # looping on it forever.
+                default = None
+
+
+def _bool(s):
+    s = str(s).strip().lower()
+    if s in ("y", "yes", "true", "1"):
+        return True
+    if s in ("n", "no", "false", "0"):
+        return False
+    raise ValueError("answer y or n")
+
+
+# --------------------------------------------------------------------------------------------
+# commands
+# --------------------------------------------------------------------------------------------
+
+def cmd_new(a):
+    import re as _re
+    import subprocess
+    if os.environ.get("PILOT_GARMENTS"):
+        # new_garment.py writes into the repository by construction (it resolves its own ROOT), so
+        # a rehearsal makes its own directory rather than borrowing that one.
+        GARMENTS.mkdir(parents=True, exist_ok=True)
+        ids = [int(m.group(1)) for p_ in GARMENTS.iterdir()
+               if (m := _re.fullmatch(r"DENIM_(\d{4})", p_.name))]
+        gid = "DENIM_%04d" % ((max(ids) + 1) if ids else 9001)
+        for sub in ("images/rig", "images/intake", "images/before", "images/marked",
+                    "images/immediate_after", "images/post_wash", "masks", "landmarks",
+                    "measurements", "meshes", "renders"):
+            (GARMENTS / gid / sub).mkdir(parents=True, exist_ok=True)
+        (GARMENTS / gid / "record.json").write_text(
+            json.dumps({"garment_id": gid, "protocol_version": "0.1"}, indent=2) + "\n")
+    else:
+        out = subprocess.run([sys.executable, str(ROOT / "tools" / "new_garment.py")],
+                             capture_output=True, text=True)
+        if out.returncode != 0:
+            raise SystemExit(out.stderr or "new_garment.py failed")
+        gid = out.stdout.strip()
+    spec = load_spec()
+    st = Store(GARMENTS / gid)
+    st.append("session_opened", {"spec_version": spec.version, "spec_hash": spec.content_hash,
+                                 "protocol_version": spec.doc["protocol_version"]})
+    st.append("state_transition", {"to": "rig"})
+    print(gid)
+    print("session opened under shot plan %s (%s)" % (spec.version, spec.content_hash[:12]))
+    print("photographs will be stored under %s -- gitignored, never uploaded"
+          % (GARMENTS / gid / "images"))
+    print("next: tools/pilot.py setup %s" % gid)
+    return OK
+
+
+def cmd_setup(a):
+    spec = load_spec()
+    gid = a.garment
+    st = Store(garment_dir(gid))
+    cfg = {}
+    print("Freezing the rig. Every capture records this configuration's hash, so a change here is")
+    print("visible later rather than silently mixing two setups.\n")
+    # NO DEFAULTS, on purpose, and it is the same reason the board measurement below has none.
+    # These eight fields are facts about physical hardware, and the hash of them is what every
+    # photograph in the session is attributed to. Pre-filling them ("iPhone", 80.0 cm, "dark green
+    # matte", "studio") meant an operator holding Enter froze a rig nobody had looked at, and
+    # GATES.validate_setup's emptiness check could never fire because a default is never empty.
+    # The rig that gets frozen here has to be the rig that is actually on the table.
+    cfg["camera_model"] = _prompt("camera / phone model (no default; say what it is)")
+    cfg["mount_height_cm"] = _prompt("camera height above the surface, cm (measure it)", None, float)
+    cfg["lens"] = _prompt("lens for whole-garment frames (main/ultrawide/tele)")
+    cfg["backdrop"] = _prompt("backdrop, as it physically is (matte, dark, contrasting)")
+    cfg["lighting"] = _prompt("lighting (model / setting)")
+    cfg["leg_gap_cm"] = _prompt("frozen gap between the legs, cm (measure it)", None, float)
+    cfg["exposure_locked"] = _prompt("exposure and white balance locked? (y/n)", None, _bool)
+    cfg["room"] = _prompt("room / location name")
+    try:
+        cfg = GATES.validate_setup(cfg)
+    except ValueError as e:
+        print("\nrefusing to freeze the rig: %s" % e)
+        return FAIL
+    h = setup_hash(cfg)
+    st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
+                               "reason": a.reason or "initial freeze"})
+    print("\nrig frozen: %s\n" % h[:16])
+
+    print("Calibration readings. Each must be recorded before any garment capture counts.\n")
+    checks = {}
+    n = _prompt("how many board squares did you span with the rule? (count them)", None, int)
+    # No default. Pre-filling n * 25.0 mm offered the answer that passes, so pressing Enter
+    # recorded a calibration nobody performed -- and this measurement is the only thing standing
+    # between a board printed at 90% and every scale in the study.
+    mm = _prompt("total measured length of those %d squares, mm (measure it; no default)" % n,
+                 None, float)
+    checks["board_square_measured"] = {"check": "board_square_measured", "squares_spanned": n,
+                                       "measured_mm": mm, "outcome": QA.PASS}
+    per = mm / float(n)
+    off = abs(per - GATES.BOARD_SQUARE_MM)
+    print("  -> %.2f mm per square (%.2f mm from the declared %.1f mm)%s"
+          % (per, off, GATES.BOARD_SQUARE_MM,
+             "" if off <= GATES.BOARD_SQUARE_TOLERANCE_MM else "  <-- OUT OF TOLERANCE"))
+    for key, question in (
+            ("empty_backdrop", "empty-backdrop photograph taken and stored"),
+            ("board_verification", "ChArUco board photographed and detected"),
+            ("lighting_test", "lighting test frame taken, no hotspots or shadows on the garment area"),
+            ("exposure_white_balance", "grey/white reference frame taken with exposure and WB locked"),
+            ("camera_height", "camera height measured and recorded"),
+            ("lens_selection", "lens chosen and locked for the session"),
+            ("backdrop_identified", "backdrop identified and will not change during the session"),
+            ("daylight_controlled", "daylight excluded or constant (blinds down / no window)"),
+            ("board_garment_coplanar", "board sits on the SAME surface plane as the garment")):
+        # No default here either. Every one of these nine is a statement that the operator looked
+        # at the rig and saw something; "y" pre-filled turned all nine into one keystroke, so a
+        # calibration in which the board was never checked for coplanarity and the daylight was
+        # never excluded recorded itself as fully passed.
+        ans = _prompt("  %s? (y/n)" % question, None, _bool)
+        checks[key] = {"check": key, "outcome": QA.PASS if ans else QA.RETAKE,
+                       "confirmed_by": a.operator}
+    for c in checks.values():
+        st.append("setup_check", c, operator=a.operator, setup_hash=h)
+    bad = [k for k, v in checks.items() if v["outcome"] != QA.PASS]
+    print("\n%d/%d calibration readings pass%s"
+          % (len(checks) - len(bad), len(checks), "" if not bad else "; outstanding: " + ", ".join(bad)))
+    return OK if not bad and off <= GATES.BOARD_SQUARE_TOLERANCE_MM else FAIL
+
+
+#: Every plan the CLI builds is sized through GATES.plan_safe_measurements, exactly as the gate and
+#: the web app size theirs. A measurement is free text until a gate refuses it, and the plan runs
+#: BEFORE the gate: a leg opening typed as 4000 instead of 40.0 expanded the hem series to 6589
+#: frames and took 3.26 seconds to do it, quadratically, on every `status`, `plan`, `next`, `add`,
+#: `reuse`, `confirm` and `intake`. The web app had this screen from the day a phone keypad
+#: produced that digit; the CLI did not, and its seven call sites passed the raw reading.
+
+
+def cmd_intake(a):
+    spec = load_spec()
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    answers = dict(state["features"])
+    print("Garment features. These decide which photographs the plan will require.\n"
+          "An unanswered question that would REMOVE a photograph blocks the cut gate; one that\n"
+          "would add a photograph does not, because the safe reading of 'I don't know' is 'it might\n"
+          "be there, so photograph it'.\n")
+    for f in spec.features:
+        k = f["key"]
+        cur = answers.get(k)
+        if f["type"] == "bool":
+            v = _prompt("%s (y/n)" % f["prompt"], "y" if cur else ("n" if cur is False else
+                                                                   ("y" if f["unanswered_means"] == "present" else "n")), _bool)
+        elif f["type"] == "count":
+            # Bounded the way the HTTP API bounds it. A bare int() accepted -3, which read as zero
+            # instances and silently deleted the photographs that count was there to require, and
+            # accepted 10**9, which expands to one shot record per instance.
+            def _count(x, _k=f["key"]):
+                n = int(x)
+                if not (0 <= n <= PLAN.MAX_INSTANCES):
+                    raise ValueError("a count must be between 0 and %d" % PLAN.MAX_INSTANCES)
+                return n
+            v = _prompt("%s (number)" % f["prompt"], cur if cur is not None else 0, _count)
+        elif f["type"] == "number":
+            v = _prompt(f["prompt"], cur if cur is not None else f.get("default"), float)
+        elif f["type"] == "enum":
+            v = _prompt("%s %s" % (f["prompt"], f.get("options")), cur or f.get("default"))
+        else:
+            v = _prompt(f["prompt"], cur or f.get("default", ""))
+        answers[k] = v
+    st.append("feature_answers", {"answers": answers}, operator=a.operator)
+    shots, meta = PLAN.activate(spec, answers, GATES.plan_safe_measurements(state))
+    ordered = PLAN.order(spec, shots)
+    print("\n%d shots activated, %d frames including repeats, estimated %s"
+          % (len(shots), len(ordered), _fmt_time(PLAN.estimate_seconds(spec, ordered))))
+    return OK
+
+
+def cmd_measure(a):
+    st = Store(garment_dir(a.garment))
+    print("Physical measurements. Each reading is taken INDEPENDENTLY -- lay the tape again,\n"
+          "do not copy the first number. Readings that disagree beyond tolerance block the cut.\n")
+    for name, n in sorted(GATES.REQUIRED_MEASUREMENTS.items()):
+        tol = GATES.MEASUREMENT_TOLERANCE.get(name, GATES.MEASUREMENT_TOLERANCE["_default_cm"])
+        readings = []
+        for i in range(n):
+            readings.append(_prompt("  %s reading %d of %d" % (name, i + 1, n), cast=float))
+        spread = max(readings) - min(readings)
+        mean = sum(readings) / len(readings)
+        flag = "" if spread <= tol else "  <-- readings differ by %.2f, tolerance %.2f" % (spread, tol)
+        print("    mean %.2f%s" % (mean, flag))
+        st.append("measurement", {"name": name, "readings": readings, "mean": mean,
+                                  "spread": spread, "tolerance": tol,
+                                  "in_tolerance": spread <= tol}, operator=a.operator)
+    return OK
+
+
+def cmd_plan(a):
+    spec = load_spec()
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    shots, meta = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
+                                state.get("cut_spec"))
+    ordered = PLAN.order(spec, shots, state=a.state)
+    done = st.done_keys()
+    print("%s -- %d frames, %s remaining\n"
+          % (a.garment, len(ordered), _fmt_time(PLAN.estimate_seconds(
+              spec, [e for e in ordered if (e["shot_id"], e["rep"]) not in done]))))
+    cur = None
+    for e in ordered:
+        grp = (e["state"], PLAN.ORIENTATION.get(e["garment_side"], "either"),
+               e["relay_generation"], e.get("camera_height_group"), e.get("lens"))
+        if grp != cur:
+            cur = grp
+            print("\n-- %s | %s | lay %d | %s | %s lens" % grp)
+        mark = "x" if (e["shot_id"], e["rep"]) in done else " "
+        print("  [%s] %-46s r%d/%d  %-9s %3ds  %s"
+              % (mark, e["shot_id"], e["rep"], e["rep_of"], e["necessity"],
+                 e.get("est_seconds", 0), e.get("region_id", "")))
+    return OK
+
+
+def cmd_next(a):
+    spec = load_spec()
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
+                                state.get("cut_spec"))
+    ordered = PLAN.order(spec, shots, state=a.state)
+    done = st.done_keys()
+    e = PLAN.next_action(ordered, done)
+    if e is None:
+        print("nothing left in this order. Run `precut` to see whether the gate opens.")
+        return OK
+    remaining = [x for x in ordered if (x["shot_id"], x["rep"]) not in done]
+    print("NEXT: %s   (repeat %d of %d)" % (e["shot_id"], e["rep"], e["rep_of"]))
+    print("  state          %s" % e["state"])
+    print("  region         %s" % e.get("region_id"))
+    print("  side up        %s" % e["garment_side"])
+    print("  camera         %s, %s lens, height group %s"
+          % (e["camera_angle"], e.get("lens"), e.get("camera_height_group")))
+    if e.get("camera_position"):
+        print("  stand          %s" % e["camera_position"])
+    print("  framing        %s" % e["framing"])
+    print("  scale          %s%s" % (e["scale_reference"],
+                                     " -- " + e["scale_placement"] if e.get("scale_placement") else ""))
+    if e.get("needs_relay_before"):
+        print("  ** LIFT the garment clear, shake it out and lay it again before this frame. **")
+    if e.get("needs_camera_reposition_before"):
+        print("  ** Take the phone off the mount and remount it before this frame. **")
+    if e.get("needs_second_person"):
+        print("  ** needs a second person **")
+    print("  why            %s" % e["purpose"])
+    print("\n  %d frames left, about %s" % (len(remaining), _fmt_time(
+        PLAN.estimate_seconds(spec, remaining))))
+    print("  add it with: tools/pilot.py add %s %s <file> --rep %d"
+          % (a.garment, e["shot_id"], e["rep"]))
+    return OK
+
+
+def _dhash_hex(img):
+    """The 32-byte perceptual signature stored with every capture, or None if it could not decode.
+
+    It exists so the duplicate check can decide which of the already-accepted frames are worth
+    decoding: comparing every new frame against every prior one is quadratic, and at a few hundred
+    frames that is minutes of image decoding per capture.
+    """
+    if img is None:
+        return None
+    from denimtwin.pilot import qa_primitives as Q
+    return Q.dhash_bits(img).hex()
+
+
+# The comparison set lives in qa.compare_set -- ONE implementation shared by the command line, the
+# web upload and the scenario bench. Three near-copies is three chances for a comparison to exist on
+# one path and not another.
+def _compare_set(spec, st_state, gdir, shot_id, rep, shot, _b=None, _bspec=None,
+                 self_sha=None, self_ts=None):
+    return QA.compare_set(st_state, gdir, shot_id, rep, shot, self_sha=self_sha, self_ts=self_ts,
+                          board=_b, board_spec=_bspec)
+
+
+def cmd_add(a):
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    state, problems = st.fold()
+    shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
+                                state.get("cut_spec"))
+    by_id = {s["shot_id"]: s for s in shots}
+    shot = by_id.get(a.shot)
+    if shot is None:
+        raise SystemExit("%s is not an activated shot for this garment. `plan` lists what is."
+                         % a.shot)
+    dest_dir = gdir / "images" / shot["state"]
+    dest, sha, already = ingest_photo(a.file, dest_dir, a.shot, a.rep)
+    rel = str(dest.relative_to(gdir))
+    exif = read_exif(dest)
+    ts = exif_timestamp(exif)
+    import cv2
+    img = cv2.imread(str(dest))
+    h, w = (img.shape[:2] if img is not None else (None, None))
+    st.append("capture", {"shot_id": a.shot, "rep": a.rep, "path": rel, "sha256": sha,
+                          "exif": exif, "exif_ts": ts, "width": w, "height": h,
+                          "dhash": _dhash_hex(img),
+                          "state": shot["state"], "region_id": shot.get("region_id"),
+                          "already_present": already},
+              operator=a.operator, setup_hash=state["setup_hash"])
+    b, bspec = board()
+    quality = QA.merged_quality(spec.doc["quality_defaults"], shot)
+    cmp_ = _compare_set(spec, state, gdir, a.shot, a.rep, shot, b, bspec)
+    for c in cmp_:
+        c["self_sha256"] = sha
+        c["this_exif_ts"] = ts
+    assertions = {"operator": a.operator}
+    for k in (a.confirm or []):
+        assertions[k] = True
+    checks, na = QA.check_capture(dest, shot, quality, rep=a.rep, board=b,
+                                  board_spec=bspec, image=img, compare_to=cmp_,
+                                  operator_assertions=assertions)
+    outcome = QA.roll_up(checks)
+    st.append("qa_result", {"shot_id": a.shot, "rep": a.rep, "outcome": outcome,
+                            "shot_class": QA.shot_class(shot), "capture_sha256": sha,
+                            "checks": [c.as_dict() for c in checks],
+                            "not_applicable": na}, operator=a.operator)
+    print("%s r%d -> %s  [%s]" % (a.shot, a.rep, outcome, QA.shot_class(shot)))
+    print("  stored %s%s" % (rel, "  (already present, unchanged)" if already else ""))
+    for c in checks:
+        if c.outcome != QA.PASS:
+            print("  %-22s %-28s %s" % (c.check_id, c.outcome, c.detail))
+            if c.fix:
+                print("  %-22s   fix: %s" % ("", c.fix))
+    return OK if outcome == QA.PASS else FAIL
+
+
+def cmd_reuse(a):
+    """Declare that one accepted photograph also satisfies a second shot.
+
+    The specification allows it, and the gate has always required the declaration to record that the
+    borrowing shot's OWN checks were re-run on the borrowed frame -- but nothing could create one,
+    so the permission was unreachable and the condition guarded a surface that did not exist. This
+    is that surface, and it does the re-running rather than taking the operator's word: the target
+    shot's requirements are applied to the source image, and a reuse that does not pass them is
+    refused rather than recorded.
+    """
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    state, _ = st.fold()
+    shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
+                                state.get("cut_spec"))
+    by_id = {x["shot_id"]: x for x in shots}
+    target = by_id.get(a.target)
+    if target is None:
+        raise SystemExit("%s is not an activated shot for this garment" % a.target)
+    src = state["captures"].get((a.source, a.source_rep))
+    if src is None:
+        raise SystemExit("no capture recorded for %s rep %d" % (a.source, a.source_rep))
+    path = gdir / src["path"]
+    if not path.exists():
+        raise SystemExit("the source photograph is not on disk: %s" % src["path"])
+    import cv2
+    img = cv2.imread(str(path))
+    b, bspec = board()
+    assertions = {"operator": a.operator}
+    for k in (a.confirm or []):
+        assertions[k] = True
+    cmp_ = _compare_set(spec, state, gdir, a.target, a.rep, target, b, bspec)
+    for c in cmp_:
+        c["self_sha256"] = src.get("sha256")
+    checks, na = QA.check_capture(path, target,
+                                  QA.merged_quality(spec.doc["quality_defaults"], target),
+                                  rep=a.rep, board=b, board_spec=bspec, image=img,
+                                  compare_to=[c for c in cmp_
+                                              if c.get("sha256") != src.get("sha256")],
+                                  operator_assertions=assertions)
+    outcome = QA.roll_up(checks)
+    print("%s reused for %s r%d -> %s" % (a.source, a.target, a.rep, outcome))
+    for c in checks:
+        if c.outcome != QA.PASS:
+            print("  %-22s %-28s %s" % (c.check_id, c.outcome, c.detail[:90]))
+    if outcome != QA.PASS:
+        print("\nrefused: a frame may satisfy a second shot only when every requirement of that "
+              "shot passes on it.")
+        return FAIL
+    # File the borrowed bytes under the TARGET's own content-addressed name. Keeping the source's
+    # path left every reuse looking misfiled to captures.files_intact -- so the command exited 0
+    # saying "recorded" and left the garment permanently unable to pass the gate.
+    dest, _sha, _already = ingest_photo(path, gdir / "images" / target["state"], a.target, a.rep)
+    st.append("capture", dict(src, shot_id=a.target, rep=a.rep, state=target["state"],
+                              path=str(dest.relative_to(gdir)),
+                              region_id=target.get("region_id"), reused_from=a.source),
+              operator=a.operator, setup_hash=src.get("setup_hash"))
+    st.append("qa_result", {"shot_id": a.target, "rep": a.rep, "outcome": outcome,
+                            "shot_class": QA.shot_class(target),
+                            "capture_sha256": src.get("sha256"),
+                            "checks": [c.as_dict() for c in checks], "not_applicable": na},
+              operator=a.operator)
+    st.append("reuse_declaration",
+              {"shot_id": a.target, "rep": a.rep, "source_shot_id": a.source,
+               "source_rep": a.source_rep, "sha256": src.get("sha256"),
+               "state": target["state"],
+               # Every check the borrowing shot is checkable for, so the gate's completeness rule
+               # is satisfied by what was actually re-run rather than by a shorter list.
+               "checks_rerun": sorted(set(c.check_id for c in checks)
+                                      | {x["check_id"] for x in na}),
+               "outcome": outcome, "reason": a.reason},
+              operator=a.operator)
+    print("\nrecorded. The manifest names the source, the shot it now also satisfies, and every "
+          "check that was re-run on it.")
+    return OK
+
+
+def cmd_deviation(a):
+    """Record a departure from the frozen protocol, deliberately and with a reason.
+
+    Two gate conditions -- the one-rig check and the offcut alternation -- name a deviation as the
+    way past them, and until now nothing could write one. A remedy a message promises and the tool
+    cannot perform is worse than no remedy: it reads as an option and is a dead end, and the only
+    route past the condition was to edit the log.
+    """
+    from denimtwin.pilot.store import DEVIATION_KINDS
+    if a.kind not in DEVIATION_KINDS:
+        raise SystemExit("deviation kind must be one of: %s" % ", ".join(DEVIATION_KINDS))
+    if not a.reason or len(a.reason.strip()) < 12:
+        raise SystemExit("a deviation needs a reason someone can read later, not a word")
+    # And it must name WHAT departed. A deviation carrying only a kind excuses everything of that
+    # kind forever, and can be written before the departure exists.
+    if not (a.field or "").strip():
+        raise SystemExit("a deviation must name the field that departed (--field). A deviation "
+                         "with only a kind on it excuses every departure of that kind, including "
+                         "ones that have not happened yet.\n"
+                         "  rig:                --field <the rig hash the frames were taken under>\n"
+                         "  offcut_alternation: --field <the L/R sequence across garments, e.g. LLR>")
+    st = Store(garment_dir(a.garment))
+    rec = {"kind": a.kind, "field": a.field, "planned": a.planned, "actual": a.actual,
+           "reason": a.reason.strip()}
+    st.append("deviation", rec, operator=a.operator)
+    print("recorded a %s deviation on %s: %s -> %s" % (a.kind, a.field, a.planned, a.actual))
+    print("  %s" % a.reason.strip())
+    return OK
+
+
+def cmd_confirm(a):
+    st = Store(garment_dir(a.garment))
+    if not a.operator:
+        raise SystemExit("--operator is required: a human verification without a name is not one")
+    if a.shot:
+        spec = load_spec()
+        state0, _ = st.fold()
+        activated, _m = PLAN.activate(spec, state0["features"], GATES.plan_safe_measurements(state0),
+                                      state0.get("cut_spec"))
+        if a.shot not in {x["shot_id"] for x in activated}:
+            raise SystemExit("%s is not an activated shot for this garment, so there is nothing "
+                             "about it to verify" % a.shot)
+    cap_sha = None
+    if a.shot:
+        state, _ = st.fold()
+        cap = state["captures"].get((a.shot, int(a.rep or 1)))
+        cap_sha = (cap or {}).get("sha256")
+    st.append("human_verification",
+              {"shot_id": a.shot, "rep": a.rep, "claim": a.claim, "value": not a.deny,
+               "note": a.note, "verifier_name": a.verifier or a.operator,
+               "operator": a.operator, "capture_sha256": cap_sha,
+               "measured_inseam_cm": a.measured_inseam, "measured_outseam_cm": a.measured_outseam},
+              operator=a.operator)
+    print("recorded: %s = %s by %s" % (a.claim, not a.deny, a.operator))
+    return OK
+
+
+def cmd_cutspec(a):
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    m = state["measurements"]
+
+    def need(k):
+        v = mean_of(m.get(k))
+        if v is None:
+            raise SystemExit("%s has not been measured; run `measure` first" % k)
+        return v
+    s = CUT.compute(target_inseam_cm=a.inseam, original_inseam_cm=need("original_inseam_cm"),
+                    thigh_cm=need("thigh_cm"), leg_opening_cm=need("leg_opening_cm"))
+    st.append("cut_spec", s, operator=a.operator)
+    for line in CUT.packet_lines(a.garment, s):
+        print(line)
+    return OK
+
+
+def cmd_packet(a):
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    if not state["cut_spec"]:
+        raise SystemExit("no cut has been specified; run `cutspec --inseam N` first")
+    lines = CUT.packet_lines(a.garment, state["cut_spec"])
+    text = "\n".join(lines) + "\n"
+    if a.out:
+        Path(a.out).write_text(text)
+        print("wrote %s" % a.out)
+    else:
+        print(text)
+    return OK
+
+
+def _print_verdict(v):
+    width = 66
+    print("=" * width)
+    head = "READY" if v.ready else "NOT READY"
+    print("  %s -- %s" % (v.gate_id.replace("_", " ").upper(), head))
+    print("=" * width)
+    if v.ready:
+        print("\n  %d conditions satisfied:\n" % len(v.satisfied))
+        for s in v.satisfied:
+            print("    OK   %-34s %s" % (s["condition"], s["what"]))
+    else:
+        print("\n  %d condition(s) block this, %d satisfied.\n"
+              % (len(v.blocks), len(v.satisfied)))
+        for b in v.blocks:
+            print("    BLOCK  %s" % b.condition)
+            print("           %s" % b.what)
+            if b.fix:
+                print("           -> %s" % b.fix)
+            print("")
+    return v
+
+
+def cmd_precut(a):
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    v = GATES.evaluate("ready_to_cut", spec, Store(gdir), garment_dir=gdir,
+                       check_files=not a.no_file_check, rehash=True)
+    _print_verdict(v)
+    if a.json:
+        Path(a.json).write_text(json.dumps(v.as_dict(), indent=1) + "\n")
+    if v.ready:
+        print("\n  Every required photograph, measurement, calibration reading, hash, cut")
+        print("  specification and human verification is present and valid. You may cut.\n")
+        return OK
+    unavail = any("could not be evaluated" in b.what for b in v.blocks)
+    return UNAVAILABLE if unavail else FAIL
+
+
+def cmd_gate(a):
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    v = GATES.evaluate(a.gate, spec, Store(gdir), garment_dir=gdir, rehash=True)
+    _print_verdict(v)
+    if v.ready:
+        return OK
+    # A gate blocked only by conditions that could not RUN exits 2, not 1. Both are closed; the
+    # difference is whether the operator should go and photograph something or go and fix the
+    # system, and a script that cannot tell them apart will loop capturing into a bug.
+    return UNAVAILABLE if v.unavailable else FAIL
+
+
+def cmd_hem(a):
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    lo = mean_of(state["measurements"].get("leg_opening_cm"))
+    if lo is None:
+        raise SystemExit("leg_opening_cm has not been measured; the hem loop's length is unknown, "
+                         "so its coverage cannot be computed. That is UNAVAILABLE, not complete.")
+    done = st.done_keys()
+    for leg in ("left", "right"):
+        g = HEM.HemGeometry.from_leg_opening(leg, lo)
+        captured = []
+        for (sid, rep) in done:
+            if ".HEM." in sid and leg.upper() in sid and ".MACRO." in sid:
+                tail = sid.rsplit(".", 1)[-1]
+                if tail.startswith("P") and tail[1:].isdigit():
+                    captured.append(int(tail[1:]))
+        cov = g.coverage(captured)
+        print("%s leg: circumference %.0f mm, %d positions every %.0f mm, %d macros needed"
+              % (leg, g.circumference_mm, cov["n_positions"], g.position_spacing_mm,
+                 len(g.macros())))
+        print("  covered %d/%d (%.0f%%)%s"
+              % (cov["n_covered"], cov["n_positions"], 100 * cov["fraction"],
+                 "" if cov["complete"] else "   GAPS at positions " +
+                 ", ".join(str(i) for i in cov["gap_positions"][:12])))
+        nxt = g.next_macro(captured)
+        if nxt:
+            print("  next macro: %s covering arc %.0f-%.0f mm (positions %s)"
+                  % (nxt["shot_suffix"], nxt["usable_start_mm"], nxt["usable_end_mm"],
+                     ", ".join(str(i) for i in nxt["supports_positions"])))
+    return OK
+
+
+def cmd_wash(a):
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    which = "wash_actual" if a.actual else "wash_planned"
+    if not a.actual and state["wash_planned"]:
+        raise SystemExit(
+            "this garment already has a wash plan (%s, %s). The planned settings are what a\n"
+            "deviation is measured against and are not revised -- the HTTP route has always\n"
+            "refused this and the command line did not, which is the second-way-in defect this\n"
+            "repository keeps finding.\n"
+            "  to record what actually happened:  tools/pilot.py wash %s --actual\n"
+            "  to acknowledge a plan written twice by mistake:\n"
+            "    tools/pilot.py deviation %s --kind wash --field wash_plan_rewritten --reason '...'"
+            % (state["wash_planned"].get("machine"), state["wash_planned"].get("cycle"),
+               a.garment, a.garment))
+    if a.actual and not state["wash_planned"]:
+        raise SystemExit("record the PLANNED wash first; actual settings never replace planned "
+                         "ones, and a deviation is the difference between the two")
+    rec = {}
+    fields = [("machine", str, "washing machine make/model"), ("location", str, "location"),
+              ("cycle", str, "cycle name"), ("water_temp_c", float, "water temperature, C"),
+              ("spin_rpm", float, "spin, rpm"), ("detergent", str, "detergent brand"),
+              ("detergent_ml", float, "detergent, ml"), ("filler_load", str, "filler load"),
+              ("start_time", str, "start time (HH:MM)"), ("end_time", str, "end time (HH:MM)"),
+              ("dryer_method", str, "dryer method (line/tumble/flat)"),
+              ("dryer_setting", str, "dryer setting"), ("dryer_minutes", float, "dryer minutes"),
+              ("conditioning_start", str, "conditioning start (HH:MM)"),
+              ("conditioning_end", str, "conditioning end (HH:MM)"),
+              ("garment_in_load", str, "which samples were in this load")]
+    base = state["wash_planned"] or {}
+    if a.actual:
+        if state["wash_actual"]:
+            raise SystemExit("the actual wash is already recorded for %s. It is written once, like "
+                             "the plan: a correction that overwrites is indistinguishable from the "
+                             "wash never having deviated. Record the difference with\n"
+                             "  tools/pilot.py deviation %s --kind wash --field <field> ..."
+                             % (a.garment, a.garment))
+        print("Read each setting off the machine. There are no defaults here: the planned value is\n"
+              "shown so you can see what was intended, and you type what the machine actually did.")
+    for key, cast, label in fields:
+        hint = ("  %s [planned: %s]" % (label, base.get(key))) if a.actual else ("  %s" % label)
+        rec[key] = _prompt(hint, None, cast)
+    st.append(which, rec, operator=a.operator)
+    if a.actual:
+        d = diff_planned_actual(state["wash_planned"], rec)
+        if d:
+            print("\n%d deviation(s) from the plan -- recorded, not overwritten:" % len(d))
+            for x in d:
+                print("  %-20s planned %-16s actual %s" % (x["field"], x["planned"], x["actual"]))
+            for x in d:
+                st.append("deviation", {"kind": "wash", "field": x["field"],
+                                        "planned": x["planned"], "actual": x["actual"]},
+                          operator=a.operator)
+        else:
+            print("\nno deviation from the planned wash")
+    return OK
+
+
+def cmd_offcut(a):
+    from denimtwin.pilot import offcut as OFF
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    if a.assign == "auto" or a.leg == "plan":
+        wash_ok = bool(state["features"].get("is_machine_washable", True))
+        plan_ = OFF.next_assignment(GARMENTS, a.garment, garment_machine_washable=wash_ok)
+        print("Offcut wash assignment for %s" % a.garment)
+        print("  %s  ->  %s" % (plan_["with_garment"]["label"], plan_["with_garment"]["condition"]))
+        print("  %s  ->  %s" % (plan_["other"]["label"], plan_["other"]["condition"]))
+        print("  %s" % plan_["reason"])
+        print("  %s" % plan_["note"])
+        alt = OFF.check_alternation(GARMENTS)
+        print("  alternation so far: %s%s"
+              % ("".join(alt["sequence"]) or "(none)",
+                 "" if alt["alternating"] else "   <-- BROKEN: " + alt["breaks"][0]["why_it_matters"]))
+        if a.assign == "auto":
+            for side in ("with_garment", "other"):
+                st.append("offcut", {"label": plan_[side]["label"],
+                                     "originating_leg": plan_[side]["leg"].lower(),
+                                     "assigned_wash_condition": plan_[side]["condition"],
+                                     "assignment_reason": plan_["reason"]},
+                          operator=a.operator)
+            print("\n  recorded.")
+        return OK
+    label = "%s_OFFCUT_%s" % (a.garment, a.leg.upper()[0])
+    rec = {"label": label, "originating_leg": a.leg.lower()}
+    if a.assign:
+        rec["assigned_wash_condition"] = a.assign
+    if a.actual_wash:
+        rec["actual_wash_condition"] = a.actual_wash
+    for k, v in (("length_cm", a.length), ("width_cm", a.width), ("mass_g", a.mass)):
+        if v is not None:
+            rec[("after_" if a.after_wash else "before_") + k] = v
+    st.append("offcut", rec, operator=a.operator)
+    print("recorded %s: %s" % (label, json.dumps({k: v for k, v in rec.items() if k != "label"})))
+    return OK
+
+
+def cmd_status(a):
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    state, problems = st.fold()
+    shots, meta = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
+                                state.get("cut_spec"))
+    ordered = PLAN.order(spec, shots)
+    done = st.done_keys()
+    print("%s   state=%s   spec=%s   rig=%s"
+          % (a.garment, state["state"], (state["spec_hash"] or "-")[:12],
+             (state["setup_hash"] or "-")[:12]))
+    print("photographs: %s" % (gdir / "images"))
+    if problems:
+        print("\n!! the capture log reports %d integrity problem(s)" % len(problems))
+        for p in problems[:4]:
+            print("   %s: %s" % (p["kind"], p["detail"]))
+    print("")
+    by_state = {}
+    for e in ordered:
+        s = by_state.setdefault(e["state"], {"n": 0, "done": 0, "req": 0, "req_done": 0})
+        s["n"] += 1
+        d = (e["shot_id"], e["rep"]) in done
+        s["done"] += d
+        if e["necessity"] != "optional":
+            s["req"] += 1
+            s["req_done"] += d
+    print("  %-18s %-16s %-16s %s" % ("state", "required", "all frames", "remaining"))
+    for stn in [x["state"] for x in sorted(spec.states, key=lambda x: x["order"])]:
+        s = by_state.get(stn)
+        if not s:
+            continue
+        rem = [e for e in ordered if e["state"] == stn and (e["shot_id"], e["rep"]) not in done]
+        print("  %-18s %4d/%-11d %4d/%-11d %s"
+              % (stn, s["req_done"], s["req"], s["done"], s["n"],
+                 _fmt_time(PLAN.estimate_seconds(spec, rem)) if rem else "done"))
+    outcomes = {}
+    for q in state["qa"].values():
+        outcomes[q.get("outcome")] = outcomes.get(q.get("outcome"), 0) + 1
+    if outcomes:
+        print("\n  quality: " + "  ".join("%s=%d" % (k, v) for k, v in sorted(outcomes.items())))
+    print("  measurements: %d/%d   deviations: %d   human verifications: %d"
+          % (len(state["measurements"]), len(GATES.REQUIRED_MEASUREMENTS),
+             len(state["deviations"]), len(state["verifications"])))
+    v = GATES.evaluate("ready_to_cut", spec, st, garment_dir=gdir, check_files=False)
+    print("\n  cut gate: %s%s" % ("READY" if v.ready else "NOT READY",
+                                  "" if v.ready else "  (%d blocks; run `precut` for the list)"
+                                  % len(v.blocks)))
+    e = PLAN.next_action(ordered, done)
+    if e:
+        print("  next: %s r%d -- %s" % (e["shot_id"], e["rep"], e["framing"][:70]))
+    return OK
+
+
+def cmd_serve(a):
+    from denimtwin.pilot import webapp
+    return webapp.run(root=ROOT, garments=GARMENTS, spec_path=SPEC_PATH, board_path=BOARD_PATH,
+                      garment=a.garment, port=a.port, lan=a.lan, open_browser=not a.no_open)
+
+
+def cmd_finalize(a):
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    v = GATES.evaluate("ready_to_finalize", spec, st, garment_dir=gdir, rehash=True)
+    _print_verdict(v)
+    if not v.ready:
+        print("\nthe committable manifest is not written until the gate opens: a sanitised copy of "
+              "a session that did not pass is a record that looks finished and is not.")
+        return FAIL
+    out = gdir / "pilot" / "manifest.sanitised.json"
+    try:
+        sanitised, problems = st.manifest.sanitised(ROOT)
+    except Exception as e:
+        print("\nrefusing to write the committable manifest: %s" % e)
+        return FAIL
+    if problems:
+        # `problems` was bound and thrown away. It carries chain breaks and torn lines -- exactly
+        # what must not be sanitised into something that reads as a clean record.
+        print("\nrefusing to write the committable manifest: the log reports %d integrity "
+              "problem(s):" % len(problems))
+        for pr in problems[:5]:
+            print("   %s: %s" % (pr["kind"], pr["detail"]))
+        return FAIL
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(sanitised, indent=1, sort_keys=True) + "\n")
+    print("\nwrote %s (%d entries, absolute paths and location EXIF removed)"
+          % (out.relative_to(ROOT), len(sanitised)))
+    return OK
+
+
+def cmd_selftest(a):
+    """Run the whole workflow against synthetic images in a temporary tree."""
+    from denimtwin.pilot import selftest
+    return selftest.run(verbose=a.verbose, want_full=a.full)
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="pilot.py", description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--operator", default=os.environ.get("PILOT_OPERATOR") or os.environ.get("USER"))
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    def add(name, fn, garment=True, **kw):
+        s = sub.add_parser(name, help=(fn.__doc__ or "").strip().split("\n")[0], **kw)
+        if garment:
+            s.add_argument("garment")
+        s.set_defaults(fn=fn)
+        return s
+
+    sub.add_parser("new", help="create the next garment and open a session").set_defaults(fn=cmd_new)
+    s = add("setup", cmd_setup)
+    s.add_argument("--reason", default=None)
+    add("intake", cmd_intake)
+    add("measure", cmd_measure)
+    s = add("plan", cmd_plan)
+    s.add_argument("--state", default=None)
+    s = add("next", cmd_next)
+    s.add_argument("--state", default=None)
+    s = add("add", cmd_add)
+    s.add_argument("shot")
+    s.add_argument("file")
+    s.add_argument("--rep", type=_rep_arg, default=1)
+    s.add_argument("--confirm", action="append",
+                   help="record an operator assertion, e.g. --confirm ruler_visible")
+    s = add("deviation", cmd_deviation)
+    s.add_argument("--kind", required=True,
+                   help="rig, wash, intake, offcut_alternation or protocol")
+    s.add_argument("--field", required=True, help="what departed")
+    s.add_argument("--planned", default=None)
+    s.add_argument("--actual", default=None)
+    s.add_argument("--reason", required=True, help="why, in a sentence someone can read later")
+    s = add("reuse", cmd_reuse)
+    s.add_argument("source", help="the shot id whose photograph is being borrowed")
+    s.add_argument("target", help="the shot id it should also satisfy")
+    s.add_argument("--source-rep", type=_rep_arg, default=1, dest="source_rep")
+    s.add_argument("--rep", type=_rep_arg, default=1)
+    s.add_argument("--reason", default=None)
+    s.add_argument("--confirm", action="append")
+    s = add("confirm", cmd_confirm)
+    s.add_argument("claim", type=_claim_arg)
+    s.add_argument("--shot", default=None)
+    s.add_argument("--rep", type=_rep_arg, default=None)
+    s.add_argument("--deny", action="store_true")
+    s.add_argument("--note", default=None)
+    s.add_argument("--verifier", default=None)
+    s.add_argument("--measured-inseam", type=float, default=None, dest="measured_inseam")
+    s.add_argument("--measured-outseam", type=float, default=None, dest="measured_outseam")
+    s = add("cutspec", cmd_cutspec)
+    s.add_argument("--inseam", type=float, required=True)
+    s = add("packet", cmd_packet)
+    s.add_argument("--out", default=None)
+    s = add("precut", cmd_precut)
+    s.add_argument("--json", default=None)
+    s.add_argument("--no-file-check", action="store_true", dest="no_file_check")
+    s = add("gate", cmd_gate)
+    s.add_argument("gate", choices=sorted(GATES.GATE_LAST_STATE))
+    add("hem", cmd_hem)
+    s = add("wash", cmd_wash)
+    s.add_argument("--actual", action="store_true")
+    s = add("offcut", cmd_offcut)
+    s.add_argument("leg", choices=["left", "right", "plan"],
+                   help="'plan' prints the assignment the alternation rule computes")
+    s.add_argument("--assign", default=None,
+                   help="a condition name, or 'auto' to record the computed alternating assignment")
+    s.add_argument("--actual-wash", default=None, dest="actual_wash")
+    s.add_argument("--length", type=float, default=None)
+    s.add_argument("--width", type=float, default=None)
+    s.add_argument("--mass", type=float, default=None)
+    s.add_argument("--after-wash", action="store_true", dest="after_wash")
+    add("status", cmd_status)
+    add("finalize", cmd_finalize)
+    s = sub.add_parser("serve", help="run the phone-friendly local app")
+    s.add_argument("garment", nargs="?", default=None)
+    s.add_argument("--port", type=int, default=8765)
+    s.add_argument("--lan", action="store_true",
+                   help="also accept connections from the local network (token required)")
+    s.add_argument("--no-open", action="store_true")
+    s.set_defaults(fn=cmd_serve)
+    s = sub.add_parser("selftest", help="run the whole workflow on synthetic images")
+    s.add_argument("--verbose", action="store_true")
+    s.add_argument("--full", action="store_true",
+                   help="also drive the FULL specification to READY (slow: hundreds of frames)")
+    s.set_defaults(fn=cmd_selftest)
+
+    a = p.parse_args(argv)
+    try:
+        return a.fn(a) or OK
+    except SystemExit:
+        raise
+    except EOFError:
+        # stdin ran out mid-questionnaire -- a pipe, a closed terminal, a script that fed fewer
+        # answers than there were questions. Nothing was written that had not already been
+        # appended, but the operator has to be told the session is incomplete rather than shown a
+        # traceback that looks like a crash.
+        print("\nrefused: input ended before the questions did. Nothing further was recorded; "
+              "re-run the command and answer the rest.", file=sys.stderr)
+        return FAIL
+    except KeyboardInterrupt:
+        print("\ninterrupted. Everything answered so far is already in the log; re-run to "
+              "continue.", file=sys.stderr)
+        return FAIL
+    except (CUT.CutSpecError, SPEC.SpecError, PLAN.PlanError, ManifestError, ValueError,
+            OSError) as e:
+        # The same rule the gate holds, applied at the command line: a condition this code cannot
+        # satisfy is a refusal with a sentence, not a traceback. A stack trace tells the operator
+        # that something broke; it does not tell them what to do, and on cut day that difference
+        # matters more than the line number.
+        print("refused: %s" % e, file=sys.stderr)
+        return FAIL
+
+
+if __name__ == "__main__":
+    sys.exit(main())

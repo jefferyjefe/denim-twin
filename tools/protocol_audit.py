@@ -1,12 +1,37 @@
 #!/usr/bin/env python3
 """Protocol-drift audit (deterministic part). Prints findings; exit 1 if any 'HARD' finding."""
-import json, re, sys
+import json, os, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from denimtwin.pilot import protocol_fields as PROTOFIELDS
 proto = (ROOT / "protocol/PROTOCOL.md").read_text()
-fills = re.findall(r"`\[FILL[^\]]*\]`", proto)
+# The regex this used to use required a backtick either side of the bracket, so it missed every
+# field written `[FILL] cm` / `[FILL] ml` / `[FILL] hours` / `[FILL] min` / `[FILL] mm` -- six of
+# them -- and counted two sentences of prose that merely mention the convention. It reported 15
+# where there are 19. That matters for the HARD rule below, which fires on `if fills`: filling
+# only the visible ones emptied the list while the mount height, the water temperature, the
+# detergent volume, the dryer setting, the conditioning period and the thread-count window were
+# all still open, and the one guard standing between the pilot and an undecided protocol stopped
+# firing exactly there. See src/denimtwin/pilot/protocol_fields.py.
+classified = PROTOFIELDS.classify(proto)
+fills = [f["raw"] for f in classified]
+unknown = [f for f in classified if f["coverage"] is None]
+if unknown:
+    hard.append("PROTOCOL.md has %d [FILL] field(s) protocol_fields.COVERAGE does not classify "
+                "(line(s) %s); the audit cannot say whether they block."
+                % (len(unknown), ", ".join(str(f["line"]) for f in unknown)))
 hard, soft = [], []
-if fills: soft.append(f"{len(fills)} unfilled [FILL] fields in PROTOCOL.md: " + ", ".join(sorted(set(fills))[:8]))
+if fills:
+    counts = PROTOFIELDS.summary(proto)
+    soft.append(f"{len(fills)} unfilled [FILL] fields in PROTOCOL.md "
+                f"(answered per garment: {counts['session']} by the session freeze, "
+                f"{counts['wash']} by the wash record, {counts['cut']} by the cut record; "
+                f"{counts['open']} answered by nothing and standing open)")
+    for f in classified:
+        if f["coverage"] == "open":
+            soft.append(f"PROTOCOL.md:{f['line']} {f['raw']} is not answered by any per-garment "
+                        f"record: {f['context'][:70]}")
 for rp in sorted(ROOT.glob("data/garments/DENIM_*/record.json")):
     r = json.loads(rp.read_text()); g = r["garment_id"]
     for k in ("waist_cm", "front_rise_cm", "original_inseam_cm", "leg_opening_cm", "thigh_cm", "mass_grams", "fabric_thickness_mm"):

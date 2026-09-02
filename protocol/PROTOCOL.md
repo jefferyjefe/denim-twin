@@ -15,6 +15,16 @@ garment is cut. Once frozen, any deviation is recorded in `protocol_deviations`.
 5. Annotate existing damage: location, type, size.
 
 ## 1. Capture rig
+
+> The `[FILL]` fields in this section are the standing defaults, and they are still open. What a
+> given garment was actually captured under is frozen per session by `tools/pilot.py setup`, which
+> records the camera, mount height, lens, backdrop, lighting, leg gap, exposure lock and room, hashes
+> them, and attaches that hash to every photograph. The cut gate refuses a capture that cannot be
+> attributed to the freeze in effect when it was taken, and refuses a session whose captures span two
+> freezes without a recorded deviation. Filling the fields below fixes the defaults ACROSS garments;
+> the per-session freeze is what makes any individual garment's evidence attributable, and
+> `tools/protocol_audit.py` still treats unfilled fields here as a reason not to record physical
+> steps against them.
 - Background: `[FILL]` (matte, non-reflective, solid color contrasting denim).
 - Calibration board: printed ChArUco `[FILL: square size mm]`, placed in every frame.
 - Lighting: two diffuse sources at ~45°, `[FILL: model/setting]`.
