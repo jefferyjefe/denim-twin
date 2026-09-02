@@ -33,6 +33,11 @@ from .manifest import Manifest, canonical, sha256_text
 #: promised was unreachable, so the only way past those conditions was a hand-edited log.
 DEVIATION_KINDS = ("rig", "wash", "intake", "offcut_alternation", "protocol")
 
+#: The lifecycle state a measurement belongs to when nothing has happened to the garment yet, and
+#: the one `state["measurements"]` exposes. The other buckets are reached through
+#: `measurements_by_state`, so a consumer that wants the post-wash waist has to say so.
+PRE_MODIFICATION_STATE = "before"
+
 KINDS = (
     "session_opened",        # garment id, spec version and hash
     "setup_frozen",          # the rig configuration and its hash
@@ -46,6 +51,8 @@ KINDS = (
     "deviation",             # any departure from the frozen protocol
     "state_transition",      # before -> marked -> immediate_after -> post_wash
     "cut_spec",              # the digital cut definition and its prediction
+    "cut_performed",         # the physical cut: what it ACHIEVED, per PROTOCOL 3.1
+    "annotation",            # ONE physical instance of a counted feature, with a stable id
     "wash_planned", "wash_actual",
     "offcut",                # one offcut sample's identity and measurements
     "note",
@@ -128,7 +135,38 @@ class Store(object):
             "setup": None, "setup_hash": None, "setup_history": [],
             "setup_checks": {},
             "features": {}, "features_answered_at": None, "feature_changes": [],
+            #: annotation_id -> the one physical thing it names. A count says a garment has three
+            #: tears; it does not say which tear a photograph shows, and six months later that is
+            #: the only question anyone asks of it. Each instanced frame is expanded FROM one of
+            #: these and carries its id, so every photograph names the object it is of.
+            "annotations": {},
+            "annotation_revisions": [],
+            #: The pre-modification measurements, which is what every gate, the plan sizing and
+            #: the hem geometry mean by "the measurements". A VIEW onto measurements_by_state
+            #: below; kept under this name because nine call sites read it and all nine want the
+            #: before-cut values.
             "measurements": {},
+            #: lifecycle state -> {name: measurement}. Measurements belong to a state: the waist
+            #: before the cut and the waist after the wash are two different facts about two
+            #: different physical objects, and shrinkage is the difference between them. Keyed flat
+            #: on name alone, the post-wash reading OVERWROTE the pre-cut one, the finalize gate
+            #: then re-read the survivor and passed, and the quantity the wash exists to measure
+            #: could no longer be computed from anything the software reads.
+            "measurements_by_state": {},
+            #: Every write that replaced an earlier one within the SAME state. Re-measuring before
+            #: the cut is legitimate; doing it invisibly is not.
+            "measurement_revisions": [],
+            #: Measurements whose declared state contradicts where the log says the garment was.
+            #: A reading filed into a state EARLIER than the log has reached: a write back into
+            #: the pre-cut baseline after the garment was cut. The gate refuses these outright.
+            "measurement_backdated": [],
+            #: A reading filed into a LATER state than the log has reached, which is the ordinary
+            #: order of work: you measure the washed garment and type the wash record afterwards.
+            "measurement_ahead_of_record": [],
+            #: Where the garment had got to when each entry was written, replayed from the physical
+            #: facts in the log itself rather than from a marker somebody has to remember to set.
+            "lifecycle_state": "before",
+            "cut_performed": None, "cut_performed_rewrites": [],
             "captures": {},          # (shot_id, rep) -> capture record
             "qa": {},                # (shot_id, rep) -> the qa record for the CURRENT capture
             "qa_all": {},            # (shot_id, rep) -> every qa record, in order
@@ -144,6 +182,7 @@ class Store(object):
             "unknown_kinds": [],
             "n_entries": len(entries),
         }
+        lifecycle = "before"
         for e in entries:
             k, p = e.get("kind"), e.get("payload")
             if p is None:
@@ -163,14 +202,15 @@ class Store(object):
                 st["setup"] = p.get("setup")
                 st["setup_hash"] = p.get("setup_hash")
                 st["setup_history"].append({"setup_hash": p.get("setup_hash"), "ts": e.get("ts"),
-                                            "seq": e.get("seq"), "reason": p.get("reason")})
+                                            "seq": e.get("seq"), "reason": p.get("reason"),
+                                            "operator": _who(p, e)})
             elif k == "setup_check":
                 key = self._key(p.get("check"), "check name", e.get("seq"), problems)
                 if key is not None:
                     # The rig it was taken against travels with it, so a re-freeze cannot inherit
                     # the previous configuration's calibration.
                     st["setup_checks"][key] = dict(p, setup_hash=e.get("setup_hash"),
-                                                   seq=e.get("seq"))
+                                                   seq=e.get("seq"), operator=_who(p, e))
             elif k == "feature_answers":
                 # The newest answer wins, and the earlier one stays visible. Merging silently meant
                 # a later answer could delete the frames an earlier one required, with nothing to
@@ -183,10 +223,71 @@ class Store(object):
                             {"key": fk, "was": prev[fk], "now": fv, "seq": e.get("seq")})
                 st["features"].update(answers)
                 st["features_answered_at"] = e.get("ts")
+            elif k == "annotation":
+                aid = self._key(p.get("annotation_id"), "annotation id", e.get("seq"), problems)
+                if aid is not None:
+                    first_seq = e.get("seq")
+                    if aid in st["annotations"]:
+                        st["annotation_revisions"].append(
+                            {"annotation_id": aid, "seq": e.get("seq"),
+                             "was": st["annotations"][aid].get("note"), "now": p.get("note")})
+                        # The CREATION entry keeps the slot. Instance order is the log's order, and
+                        # stamping a revision with its own seq moved the annotation to the end of
+                        # that order -- so correcting a typo on the first tear rotated every slot
+                        # after it and re-labelled photographs already taken and accepted, which is
+                        # exactly the harm the ordering was changed to make impossible.
+                        first_seq = st["annotations"][aid].get("first_seq",
+                                                               st["annotations"][aid].get("seq"))
+                    # When it was FOUND. A tear the wash opened is a real observation, but it
+                    # cannot be photographed before the cut, and instancing every anomaly shot on
+                    # one global count made recording it demand exactly that: an intake and a
+                    # before frame of a tear that did not exist then, on a garment that is now cut
+                    # and washed. The log is append-only, so the session became unfinalizable by
+                    # any route, and the operator's only workable move was not to record the tear.
+                    # Pre-cut, an annotation describes the garment AS RECEIVED, so it belongs to
+                    # intake -- the earliest state that photographs it. Mapping it to the fold's
+                    # own "before" marker instead excluded it from every intake frame, because
+                    # intake sorts before "before".
+                    found_in = p.get("discovered_in") or ("intake" if lifecycle == "before"
+                                                          else lifecycle)
+                    st["annotations"][aid] = dict(p, seq=first_seq, first_seq=first_seq,
+                                                  revised_at=(e.get("seq")
+                                                              if first_seq != e.get("seq") else None),
+                                                  discovered_in=found_in,
+                                                  operator=p.get("operator") or e.get("operator"))
             elif k == "measurement":
                 key = self._key(p.get("name"), "measurement name", e.get("seq"), problems)
                 if key is not None:
-                    st["measurements"][key] = p
+                    # An explicit state wins; otherwise the entry belongs to wherever the garment
+                    # actually was when it was written, which the replay knows because the physical
+                    # facts that move it -- the cut, the wash -- are entries in this same log, in
+                    # sequence. Nothing has to be remembered by an operator for this to be right.
+                    ms = p.get("state") or lifecycle
+                    # Direction matters, and only one direction is dangerous. Declaring a LATER
+                    # state than the log has reached is the ordinary order of work -- you measure
+                    # the washed garment and type the wash record afterwards -- and treating it as
+                    # a conflict bricked the sequence the runbook itself prescribes. Declaring an
+                    # EARLIER state is the corrupting one: it writes into the pre-cut baseline
+                    # after the garment has been cut, which is the overwrite all of this exists to
+                    # prevent, and it is recorded separately so the gate can refuse it outright.
+                    if p.get("state") and p["state"] != lifecycle:
+                        _ORDER = {"rig": 0, "intake": 1, "before": 2, "marked": 3,
+                                  "immediate_after": 4, "offcut_before": 5, "post_wash": 6,
+                                  "offcut_after": 7}
+                        if _ORDER.get(p["state"], 9) < _ORDER.get(lifecycle, 0):
+                            st["measurement_backdated"].append(
+                                {"seq": e.get("seq"), "name": key, "claimed": p["state"],
+                                 "log_says": lifecycle})
+                        else:
+                            st["measurement_ahead_of_record"].append(
+                                {"seq": e.get("seq"), "name": key, "claimed": p["state"],
+                                 "log_says": lifecycle})
+                    bucket = st["measurements_by_state"].setdefault(ms, {})
+                    if key in bucket:
+                        st["measurement_revisions"].append(
+                            {"state": ms, "name": key, "seq": e.get("seq"),
+                             "was": bucket[key].get("mean"), "now": p.get("mean")})
+                    bucket[key] = dict(p, state=ms, seq=e.get("seq"), operator=_who(p, e))
             elif k == "capture":
                 sid = self._key(p.get("shot_id"), "shot id", e.get("seq"), problems)
                 rep = self._rep(p.get("rep", 1), e.get("seq"), problems)
@@ -201,7 +302,7 @@ class Store(object):
                 if sid is None or rep is None:
                     continue
                 st["qa_all"].setdefault((sid, rep), []).append(
-                    dict(p, ts=e.get("ts"), seq=e.get("seq")))
+                    dict(p, ts=e.get("ts"), seq=e.get("seq"), operator=_who(p, e)))
             elif k == "human_verification":
                 claim = self._key(p.get("claim"), "claim", e.get("seq"), problems)
                 if claim is None:
@@ -224,21 +325,39 @@ class Store(object):
                     p, ts=e.get("ts"), seq=e.get("seq"),
                     operator=p.get("operator") or e.get("operator"))
             elif k == "reuse_declaration":
-                st["reuse"].append(dict(p, ts=e.get("ts")))
+                st["reuse"].append(dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                        operator=_who(p, e)))
             elif k == "deviation":
-                st["deviations"].append(dict(p, ts=e.get("ts")))
+                st["deviations"].append(dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                             operator=_who(p, e)))
             elif k == "state_transition":
                 st["state"] = p.get("to")
-                st["state_history"].append({"to": p.get("to"), "ts": e.get("ts")})
+                st["state_history"].append({"to": p.get("to"), "ts": e.get("ts"),
+                                            "seq": e.get("seq"), "operator": _who(p, e)})
             elif k == "cut_spec":
-                st["cut_spec"] = dict(p, ts=e.get("ts"))
+                # seq travels with it: a verification of "the marks" has to be shown to have
+                # happened after the line it verifies was computed, and without the seq nothing
+                # could be compared against anything.
+                st["cut_spec"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                      operator=_who(p, e))
+            elif k == "cut_performed":
+                # First write wins, like the wash. A second account of an irreversible physical act
+                # is a correction, and a correction that overwrites is indistinguishable from the
+                # act never having differed.
+                if st["cut_performed"] is None:
+                    st["cut_performed"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                               operator=p.get("operator") or e.get("operator"))
+                    lifecycle = "immediate_after"
+                else:
+                    st["cut_performed_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_planned":
                 # FIRST write wins. Last-write-wins let a second plan be appended after the wash to
                 # match whatever happened, and the deviation -- which is the difference between the
                 # two -- then computed to nothing. The invariant this log exists to hold is that
                 # planned and actual cannot collapse.
                 if st["wash_planned"] is None:
-                    st["wash_planned"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                    st["wash_planned"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                              operator=_who(p, e))
                 else:
                     st["wash_plan_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_actual":
@@ -249,7 +368,9 @@ class Store(object):
                 # actually did is a correction to a record of a physical event, and a correction
                 # that overwrites is indistinguishable from the event never having differed.
                 if st["wash_actual"] is None:
-                    st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"))
+                    st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                             operator=_who(p, e))
+                    lifecycle = "post_wash"
                 else:
                     st["wash_actual_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "offcut":
@@ -264,9 +385,12 @@ class Store(object):
                     if fk != "label":
                         cur.setdefault("_seq", {})[fk] = e.get("seq")
                 cur.update(p)
+                cur["operator"] = _who(p, e)
+                cur["seq"] = e.get("seq")
                 st["offcuts"][lbl] = cur
             elif k == "note":
-                st["notes"].append(dict(p, ts=e.get("ts")))
+                st["notes"].append(dict(p, ts=e.get("ts"), seq=e.get("seq"),
+                                        operator=_who(p, e)))
             else:
                 st["unknown_kinds"].append({"kind": k, "seq": e.get("seq")})
         # A verdict belongs to the photograph it judged. Folding qa_result last-write-wins let one
@@ -290,6 +414,12 @@ class Store(object):
             if bound:
                 from .qa import SEVERITY as _SEV
                 st["qa"][key] = max(bound, key=lambda r: _SEV.get(r.get("outcome"), 3))
+        # Where the garment ended up, and the pre-modification view the rest of the system reads.
+        # `measurements` is deliberately ONLY the before-cut bucket: a gate that wants to know
+        # whether this garment may be cut must not be able to satisfy itself with a number taken
+        # out of the tumble dryer.
+        st["lifecycle_state"] = lifecycle
+        st["measurements"] = st["measurements_by_state"].get(PRE_MODIFICATION_STATE, {})
         return st, problems
 
     # -- convenience --------------------------------------------------------------------------
@@ -317,6 +447,17 @@ class Store(object):
                 continue
             out.add((r.get("shot_id"), int(r.get("rep", 1))))
         return out
+
+
+def _who(payload, entry):
+    """Who supplied this record. The payload's own attribution wins over the envelope's.
+
+    Eleven of the sixteen projections dropped it entirely, so "who took this measurement, who
+    recorded this deviation, who assigned this offcut" was unanswerable from the folded state --
+    the answer was in the log and no gate, no command and no export could reach it. A record whose
+    author is not recoverable is not a provenance record.
+    """
+    return (payload or {}).get("operator") or (entry or {}).get("operator")
 
 
 def mean_of(measurement):

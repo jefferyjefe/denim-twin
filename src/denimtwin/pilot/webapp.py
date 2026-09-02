@@ -107,7 +107,8 @@ class Session(object):
             # a leg opening of 4000 cm -- one stuck digit on a phone keypad -- expanded a hem series
             # of millions of frames and pinned the thread with no response and no timeout.
             shots, meta = PLAN.activate(spec, st["features"],
-                                        GATES.plan_safe_measurements(st), st.get("cut_spec"))
+                                        GATES.plan_safe_measurements(st), st.get("cut_spec"),
+                                        annotations=st.get("annotations"))
         except PLAN.PlanError as e:
             shots, meta = [], {"error": str(e), "features": st["features"],
                                "assumed_present": [], "unevaluatable_conditions": []}
@@ -430,7 +431,7 @@ def build_api(session):
     @api.route("POST", "/api/measure/(DENIM_[0-9]{4})")
     def _measure(m, _q, b):
         name = b.get("name")
-        need = GATES.REQUIRED_MEASUREMENTS.get(name)
+        need = GATES.REQUIRED_MEASUREMENTS.get(name) or GATES.POST_WASH_MEASUREMENTS.get(name)
         if need is None:
             return 400, {"error": "%s is not a required measurement" % name}
         raw = b.get("readings")
@@ -450,11 +451,19 @@ def build_api(session):
                                   % (name, need, len(readings))}
         spread = max(readings) - min(readings)
         st = session.store(m.group(1))
+        # The state this reading belongs to. This route did not send one at all, so every
+        # measurement taken on the phone landed in the pre-cut bucket -- including the post-wash
+        # re-measurement, which then overwrote the baseline it exists to be compared with. The CLI
+        # takes the state from where the log says the garment has got to, and so does this: the
+        # phone is not a second set of rules.
+        folded, _ = st.fold()
+        ms = b.get("state") or folded["lifecycle_state"]
         st.append("measurement", {"name": name, "readings": readings,
                                   "mean": sum(readings) / len(readings), "spread": spread,
-                                  "tolerance": tol, "in_tolerance": spread <= tol},
+                                  "tolerance": tol, "state": ms,
+                                  "in_tolerance": spread <= tol},
                   operator=b.get("operator"))
-        return 200, {"ok": True, "spread": spread, "in_tolerance": spread <= tol}
+        return 200, {"ok": True, "spread": spread, "in_tolerance": spread <= tol, "state": ms}
 
     @api.route("POST", "/api/confirm/(DENIM_[0-9]{4})")
     def _confirm(m, _q, b):
@@ -547,7 +556,8 @@ def build_api(session):
         spec = session.spec
         try:
             shots, _m = PLAN.activate(spec, st["features"],
-                                      GATES.plan_safe_measurements(st), st.get("cut_spec"))
+                                      GATES.plan_safe_measurements(st), st.get("cut_spec"),
+                                      annotations=st.get("annotations"))
         except PLAN.PlanError as e:
             return 400, {"error": str(e)}
         shot = {s["shot_id"]: s for s in shots}.get(shot_id)
@@ -586,6 +596,16 @@ def build_api(session):
                                  "exif": exif, "exif_ts": ts, "width": w_, "height": h_,
                                  "dhash": Q.dhash_bits(img).hex() if img is not None else None,
                                  "state": shot["state"], "region_id": shot.get("region_id"),
+                                 # The same five identity fields the CLI records. The phone is how
+                                 # the frames are actually taken in the room, and this path was
+                                 # dropping exactly the fields the annotation mechanism exists to
+                                 # record -- so every photograph taken through the navigator's own
+                                 # UI had no recorded subject at all.
+                                 "instance_index": shot.get("instance_index"),
+                                 "instance_total": shot.get("instance_total"),
+                                 "annotation_id": shot.get("annotation_id"),
+                                 "annotation_type": shot.get("annotation_type"),
+                                 "annotation_location": shot.get("annotation_location"),
                                  "already_present": already},
                      operator=fields.get("operator"), setup_hash=st["setup_hash"])
         board, bspec = session.board

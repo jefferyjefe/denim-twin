@@ -130,7 +130,9 @@ class Bench(object):
 
     def activated(self):
         st, _ = self.store.fold()
-        return PLAN.activate(self.spec, st["features"], st["measurements"], st.get("cut_spec"))
+        return PLAN.activate(self.spec, st["features"],
+                             GATES.plan_safe_measurements(st), st.get("cut_spec"),
+                             annotations=st.get("annotations"))
 
     def synth_for(self, shot, rep, *, relay=None, seed=None, **kw):
         """A synthetic frame that actually satisfies the shot it stands in for.
@@ -277,6 +279,54 @@ class Bench(object):
                               {"shot_id": None, "rep": None, "claim": claim, "value": True,
                                "verifier_name": "selftest", "operator": "selftest"},
                               operator="selftest")
+
+    def after_cut_extras(self, *, skip=()):
+        """Everything that happens between the shears and the finished record.
+
+        Order matters and is the point: the recorded cut moves the garment to immediate_after and
+        the recorded wash moves it to post_wash, so the post-wash readings land in their own bucket
+        rather than on top of the pre-cut ones.
+        """
+        from . import offcut as OFF
+        st, _ = self.store.fold()
+        cs = st.get("cut_spec") or {}
+        tgt = cs.get("target_inseam_cm") or 15.0
+        outs = cs.get("predicted_outseam_cm") or tgt
+        if "cut_performed" not in skip:
+            self.store.append("cut_performed",
+                              {"achieved_inseam_cm": {"L": tgt + 0.1, "R": tgt},
+                               "achieved_outseam_cm": {"L": outs + 0.1, "R": outs},
+                               "tool": "Fiskars 9in dressmaking shears",
+                               "legs_cut_separately": True, "operator": "selftest"},
+                              operator="selftest")
+        if "offcuts" not in skip:
+            for lbl, leg, cond in ((self.gid + "_OFFCUT_L", "L", OFF.WITH_GARMENT),
+                                   (self.gid + "_OFFCUT_R", "R", OFF.SEPARATE_LOAD)):
+                self.store.append("offcut", {"label": lbl, "originating_leg": leg,
+                                             "assigned_wash_condition": cond},
+                                  operator="selftest")
+        plan = {"machine": "Miele W1", "location": "flat", "cycle": "cottons 30",
+                "water_temp_c": 30.0, "spin_rpm": 1200.0, "detergent": "Persil",
+                "detergent_ml": 35.0, "filler_load": "3 towels", "start_time": "10:00",
+                "end_time": "11:30", "dryer_method": "line", "dryer_setting": "n/a",
+                "dryer_minutes": 0.0, "conditioning_start": "11:30",
+                "conditioning_end": "13:30", "garment_in_load": self.gid + " + offcut L"}
+        if "wash_planned" not in skip:
+            self.store.append("wash_planned", plan, operator="selftest")
+        if "wash_actual" not in skip:
+            self.store.append("wash_actual", dict(plan), operator="selftest")
+        if "post_wash_measurements" not in skip:
+            pre = st["measurements"]
+            for name, n in sorted(GATES.POST_WASH_MEASUREMENTS.items()):
+                base = (pre.get(name) or {}).get("mean") or 40.0
+                base *= 0.985                       # a plausible one-wash shrink
+                readings = [base + i * 0.1 for i in range(n)]
+                self.store.append("measurement",
+                                  {"name": name, "readings": readings,
+                                   "mean": sum(readings) / len(readings),
+                                   "spread": max(readings) - min(readings),
+                                   "state": "post_wash"},
+                                  operator="selftest")
 
     def gate(self, gate_id="ready_to_cut", **kw):
         return GATES.evaluate(gate_id, self.spec, self.store, garment_dir=self.dir, **kw)
@@ -1887,6 +1937,433 @@ def scenarios(full_spec, tmp_root, want_full=False):
     b.resolve_humans()
     b.cut_ready_extras()
     v = b.gate()
+    # -- 71a1. an edited shot plan does not strand an open session forever -----------------------
+    b, _sp = complete_mini("rebind", gid="DENIM_9262")
+    assert b.gate().ready
+    b.store.append("session_opened", {"spec_version": b.spec.version,
+                                      "spec_hash": "0" * 64,
+                                      "protocol_version": b.spec.doc["protocol_version"]})
+    stranded = "spec.bound" in b.blocked_conditions()
+    b.store.append("deviation", {"kind": "protocol", "field": "spec_rebound",
+                                 "actual": b.spec.content_hash,
+                                 "reason": "a post-wash frame was added to the plan; every frame "
+                                           "already taken is still required by the new one"},
+                   operator="selftest")
+    freed = "spec.bound" not in b.blocked_conditions()
+    out.append(Result("an edited shot plan can be acknowledged instead of stranding the session",
+                      stranded and freed,
+                      "blocked after the plan changed=%s; released once the change was recorded=%s"
+                      % (stranded, freed),
+                      "any edit to the plan -- including one that ADDS a required photograph, the "
+                      "edit you most want to be able to make -- blocked every open session here "
+                      "forever, and the remedy the message named was not something any command "
+                      "could do. Nothing is weakened: every other condition still re-derives "
+                      "against the plan on disk, so a frame the new plan added is still missing"))
+
+    # -- 71a2. a corrected measurement invalidates the cut line computed from the old one --------
+    b, _sp = complete_mini("stalecut", gid="DENIM_9259")
+    before_ok = b.gate().ready
+    b.store.append("measurement", {"name": "thigh_cm", "readings": [68.0, 68.1], "mean": 68.05,
+                                   "spread": 0.1, "tolerance": 0.5, "in_tolerance": True},
+                   operator="selftest")
+    conds_ = {x.condition for x in b.gate().blocks}
+    out.append(Result("a corrected measurement invalidates the cut line derived from it",
+                      before_ok and "cut.specified" in conds_,
+                      "ready before the correction=%s; after it blocks on: %s"
+                      % (before_ok, ", ".join(sorted(conds_)) or "nothing"),
+                      "cutspec.compute records the three measurements the line was derived from and "
+                      "nothing ever compared them again. Measure, specify, mark, have it verified, "
+                      "then re-lay the tape and correct a reading the way the tool asks -- and the "
+                      "measurements said one thing, the line was computed from another, and the "
+                      "gate was clean. The second-person check agrees with a stale line, because it "
+                      "compares the tape against that same line"))
+
+    # -- 71a3. an approval given before the cut line existed does not authorise it ----------------
+    b = new("prematureconf", spec=_mini_spec(tmp_root), gid="DENIM_9260")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    for claim in ("legs_cut_separately", "offcuts_retained_labelled"):
+        b.store.append("human_verification",
+                       {"shot_id": None, "rep": None, "claim": claim, "value": True,
+                        "verifier_name": "selftest", "operator": "selftest"}, operator="selftest")
+    # writes the cut_spec AFTER the confirmations, and does not re-write them
+    b.cut_ready_extras(skip=("verification", "legs_cut_separately", "offcuts_retained_labelled"))
+    conds_ = {x.condition for x in b.gate().blocks}
+    out.append(Result("a cut-day confirmation made before the cut line existed does not carry",
+                      "cut.confirmations" in conds_,
+                      "blocks: %s" % ", ".join(sorted(conds_)),
+                      "the per-frame HUMAN claims are bound to the photograph's sha256 and to a "
+                      "later entry, for a reason the code states: otherwise every claim can be "
+                      "confirmed in a loop before any evidence exists. The three claims that "
+                      "actually authorise the shears had no such binding at all"))
+
+    # -- 71a3b. an approval of the marks does not survive the line it approved being recomputed ---
+    b, _sp = complete_mini("staleapproval", gid="DENIM_9270")
+    assert b.gate().ready
+    from . import cutspec as _CS
+    m_ = b.store.fold()[0]["measurements"]
+    again = _CS.compute(target_inseam_cm=15.0,
+                        original_inseam_cm=m_["original_inseam_cm"]["mean"],
+                        thigh_cm=m_["thigh_cm"]["mean"],
+                        leg_opening_cm=m_["leg_opening_cm"]["mean"])
+    b.store.append("cut_spec", again, operator="selftest")     # re-derived AFTER the approval
+    conds_ = {x.condition for x in b.gate().blocks}
+    out.append(Result("re-computing the cut line invalidates the approval given to the old one",
+                      "cut.second_person_verified" in conds_,
+                      "blocks: %s" % (", ".join(sorted(conds_)) or "nothing"),
+                      "the second person's approval is of a LINE, and nothing compared when it was "
+                      "given against when the line was computed. Re-running cutspec after a "
+                      "corrected measurement therefore inherited the approval given to the line it "
+                      "replaced -- and the marks that approval checked are on the garment in a "
+                      "different place"))
+
+    # -- 71a4. the cut gate stops answering once the cut has happened ----------------------------
+    b, _sp = complete_mini("alreadycut", gid="DENIM_9261")
+    assert b.gate().ready
+    b.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                     "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                     "tool": "shears", "legs_cut_separately": True},
+                   operator="selftest")
+    conds_ = {x.condition for x in b.gate().blocks}
+    out.append(Result("the cut gate refuses a garment that has already been cut",
+                      "cut.not_already_performed" in conds_,
+                      "blocks: %s" % ", ".join(sorted(conds_)),
+                      "the gate answers a question about the future, and nothing read the log's own "
+                      "order against the irreversible step -- although the same file refuses a wash "
+                      "plan written after the wash. A session that cut first and photographed "
+                      "afterwards produced a green record no reader could tell from a compliant one"))
+
+    # -- 71b2. a counted feature that is not described blocks, and the frames name the object ----
+    b = new("annot", gid="DENIM_9257")
+    b.open_session(); b.freeze_rig()
+    b.answer_features(overrides={"n_tears": 3})
+    b.measure()
+    blocked_without = "annotations.identify_instances" in b.blocked_conditions()
+    for i, loc in enumerate(("left leg front, 12 cm above the hem",
+                             "right knee", "left back pocket corner"), 1):
+        b.store.append("annotation",
+                       {"annotation_id": "TEAR.%02d" % i, "feature": "n_tears", "type": "tear",
+                        "location": loc, "note": "a tear"}, operator="selftest")
+    blocked_with = "annotations.identify_instances" in b.blocked_conditions()
+    st_ = b.store.fold()[0]
+    shots_ = PLAN.activate(b.spec, st_["features"], st_["measurements"],
+                           annotations=st_["annotations"])[0]
+    named = {s["shot_id"]: s.get("annotation_id") for s in shots_ if s.get("instance_index")}
+    tear_named = {k: v for k, v in named.items() if "TEAR" in k.upper()}
+    out.append(Result("three tears require three photographs, each naming which tear",
+                      blocked_without and not blocked_with and len(set(tear_named.values())) == 3
+                      and all(tear_named.values()),
+                      "blocked before the descriptions=%s, after=%s; %d tear frames -> %s"
+                      % (blocked_without, blocked_with, len(tear_named),
+                         sorted(v for v in tear_named.values() if v)),
+                      "a count required three photographs and said nothing about which tear each "
+                      "one showed. Two frames of the same tear satisfied it, and after the cut "
+                      "nobody could tell which was which -- the ordinal was a function of the "
+                      "current feature answers, not a recorded fact"))
+
+    # -- 71b2b. a tear found later does not re-label the photographs already taken ---------------
+    b = new("lateann", gid="DENIM_9263")
+    b.open_session(); b.answer_features(overrides={"n_tears": 3}); b.measure()
+    for i, loc in enumerate(("left leg front", "right knee", "left back pocket corner"), 1):
+        b.store.append("annotation", {"annotation_id": "TEAR.%02d" % i, "feature": "n_tears",
+                                      "type": "tear", "location": loc, "note": "x"},
+                       operator="selftest")
+
+    def tear_map():
+        s_ = b.store.fold()[0]
+        sh_ = PLAN.activate(b.spec, s_["features"], s_["measurements"],
+                            annotations=s_["annotations"])[0]
+        return {x["shot_id"]: x["annotation_id"] for x in sh_
+                if x.get("annotation_id") and "TEAR" in x["shot_id"].upper()}
+
+    before_map = tear_map()
+    # the 1 a.m. discovery, named for what it is: the one before the others
+    b.store.append("feature_answers", {"answers": dict(b.store.fold()[0]["features"], n_tears=4)},
+                   operator="selftest")
+    b.store.append("annotation", {"annotation_id": "TEAR.00", "feature": "n_tears", "type": "tear",
+                                  "location": "right leg back, 3 cm below the yoke", "note": "missed"},
+                   operator="selftest")
+    after_map = tear_map()
+    moved = sorted(k for k in before_map if before_map[k] != after_map.get(k))
+    late_slots = sorted(k for k, v in after_map.items() if v == "TEAR.00")
+    out.append(Result("a feature found later does not re-label the photographs already taken",
+                      not moved and bool(late_slots)
+                      and all(k.endswith(".I04") for k in late_slots),
+                      "%d frame(s) changed meaning; TEAR.00 took %s"
+                      % (len(moved), ", ".join(k.rsplit(".", 1)[-1] for k in late_slots)),
+                      "instance identity was a SORT POSITION over the ids, so any later annotation "
+                      "sorting ahead of an existing one shifted every slot after it and "
+                      "retroactively re-labelled accepted photographs. Naming a missed tear TEAR.00 "
+                      "did it, and so did ids without leading zeros once there were ten"))
+
+    # -- 71a6. a re-measurement inside one state is visible, and a mis-filed state is not fatal ---
+    b, _sp = complete_mini("revised", gid="DENIM_9268")
+    assert b.gate().ready
+    m0 = b.store.fold()[0]["measurements"]["thigh_cm"]["mean"]
+    b.store.append("measurement", {"name": "thigh_cm", "readings": [m0 + 8.0, m0 + 8.1],
+                                   "mean": m0 + 8.05, "spread": 0.1, "tolerance": 0.5,
+                                   "in_tolerance": True}, operator="selftest")
+    silent = "measurements.revisions_explained" in b.blocked_conditions()
+    # An untargeted excuse must not clear it; the deviation has to name the measurement.
+    b.store.append("deviation", {"kind": "protocol", "field": "measurement_revised",
+                                 "reason": "blanket"}, operator="selftest")
+    untargeted = "measurements.revisions_explained" in b.blocked_conditions()
+    b.store.append("deviation", {"kind": "protocol", "field": "measurement_revised:thigh_cm",
+                                 "reason": "the first thigh reading was taken above the crotch "
+                                           "offset; re-measured at 2.5 cm as the protocol says"},
+                   operator="selftest")
+    explained = "measurements.revisions_explained" not in b.blocked_conditions()
+
+    # Measuring the washed garment before typing the wash record is the ORDINARY order of work and
+    # must not block; writing back into the pre-cut baseline after the cut must be refused outright.
+    b2 = new("aheadofrecord", gid="DENIM_9269")
+    b2.open_session()
+    b2.store.append("measurement", {"name": "waist_cm", "readings": [97.0, 97.2], "mean": 97.1,
+                                    "state": "post_wash"}, operator="selftest")
+    _st2, probs2 = b2.store.fold()
+    ahead_ok = not probs2 and "measurements.revisions_explained" not in b2.blocked_conditions()
+    b3 = new("backdated", gid="DENIM_9271")
+    b3.open_session()
+    b3.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                      "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                      "tool": "shears", "legs_cut_separately": True},
+                    operator="selftest")
+    b3.store.append("wash_actual", {"machine": "m", "cycle": "c"}, operator="selftest")
+    b3.store.append("measurement", {"name": "waist_cm", "readings": [97.0, 97.2], "mean": 97.1,
+                                    "state": "before"}, operator="selftest")
+    b3.store.append("deviation", {"kind": "protocol", "field": "measurement_revised:waist_cm",
+                                  "reason": "trying to excuse it"}, operator="selftest")
+    backdated_refused = "measurements.revisions_explained" in b3.blocked_conditions()
+    out.append(Result("a replaced measurement needs a named reason; the baseline cannot be "
+                      "written after the cut",
+                      silent and untargeted and explained and ahead_ok and backdated_refused,
+                      "silent re-measure blocks=%s; a blanket excuse does not clear it=%s; a named "
+                      "one does=%s; measuring ahead of the wash record is ordinary=%s; writing "
+                      "into the pre-cut baseline after the cut is refused even with a deviation=%s"
+                      % (silent, untargeted, explained, ahead_ok, backdated_refused),
+                      "fold projected the revision and no condition read it. The first attempt at "
+                      "this then over-corrected twice: it treated measuring the washed garment "
+                      "before typing the wash record -- the order the runbook itself prescribes -- "
+                      "as a fatal conflict, and it let one untargeted deviation excuse every "
+                      "revision in the session, including ones written after it"))
+
+    # -- 71a5. a photograph cannot be filed in a state the log's own order contradicts -----------
+    b = new("stateorder", gid="DENIM_9266")
+    b.open_session(); b.answer_features(); b.measure()
+    b.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                     "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                     "tool": "shears", "legs_cut_separately": True},
+                   operator="selftest")
+    b.store.append("capture", {"shot_id": "BEFORE.WHOLE.F00.R1", "rep": 1, "sha256": "a" * 64,
+                               "path": "images/before/x.png", "state": "before"},
+                   operator="selftest")
+    late = all("captures.state_order" in b.blocked_conditions(g, check_files=False)
+               for g in ("ready_to_wash", "ready_to_finalize"))
+    b2 = new("stateorder2", gid="DENIM_9267")
+    b2.open_session(); b2.answer_features(); b2.measure()
+    b2.store.append("capture", {"shot_id": "POSTWASH.WHOLE.F00.R1", "rep": 1, "sha256": "b" * 64,
+                                "path": "images/post_wash/y.png", "state": "post_wash"},
+                    operator="selftest")
+    early = "captures.state_order" in b2.blocked_conditions("ready_to_finalize", check_files=False)
+    out.append(Result("a photograph of the uncut garment cannot arrive after the cut",
+                      late and early,
+                      "a before frame filed after the cut blocks both later gates=%s; a post-wash "
+                      "frame filed before any wash blocks finalize=%s" % (late, early),
+                      "the cut gate learned to read the log's order and the two gates AFTER it did "
+                      "not, so a photograph of the intact garment filed after the shears, and a "
+                      "photograph of the washed garment filed before the wash, both produced a "
+                      "fully green chained record"))
+
+    # -- 71b2d. damage the wash caused can be recorded without demanding a photograph of it
+    #           from before the wash ---------------------------------------------------------
+    b = new("washtear", gid="DENIM_9265")
+    b.open_session(); b.answer_features(overrides={"n_tears": 1}); b.measure()
+    b.store.append("annotation", {"annotation_id": "TEAR.01", "feature": "n_tears", "type": "tear",
+                                  "location": "left knee", "note": "present at intake"},
+                   operator="selftest")
+    b.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                     "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                     "tool": "shears", "legs_cut_separately": True},
+                   operator="selftest")
+    b.store.append("wash_actual", {"machine": "m", "cycle": "c"}, operator="selftest")
+    b.store.append("feature_answers",
+                   {"answers": dict(b.store.fold()[0]["features"], n_tears=2)}, operator="selftest")
+    b.store.append("annotation", {"annotation_id": "TEAR.02", "feature": "n_tears", "type": "tear",
+                                  "location": "right shin", "note": "opened in the wash"},
+                   operator="selftest")
+    s_ = b.store.fold()[0]
+    sh_ = PLAN.activate(b.spec, s_["features"], s_["measurements"],
+                        annotations=s_["annotations"])[0]
+    ids_ = sorted(x["shot_id"] for x in sh_
+                  if x.get("annotation_id") == "TEAR.02" and "TEAR" in x["shot_id"].upper())
+    impossible = [x for x in ids_ if x.startswith(("BEFORE", "INTAKE"))]
+    out.append(Result("damage the wash caused does not require a photograph from before the wash",
+                      bool(ids_) and not impossible,
+                      "the tear the wash opened is required in: %s"
+                      % ", ".join(i.split(".")[0] for i in ids_),
+                      "every anomaly shot was instanced on one global count, so recording a tear "
+                      "the wash opened demanded an intake and a before frame of a tear that did "
+                      "not exist then, on a garment now cut and washed. The log is append-only, so "
+                      "the session became unfinalizable by any route and the operator's only "
+                      "workable move was not to record the tear"))
+
+    # -- 71b2c. a photograph and the plan must agree about which thing it shows -------------------
+    b = new("wrongann", gid="DENIM_9264")
+    b.open_session(); b.answer_features(overrides={"n_tears": 2}); b.measure()
+    for i, loc in enumerate(("left leg front", "right knee"), 1):
+        b.store.append("annotation", {"annotation_id": "TEAR.%02d" % i, "feature": "n_tears",
+                                      "type": "tear", "location": loc, "note": "x"},
+                       operator="selftest")
+    s_ = b.store.fold()[0]
+    sh_ = PLAN.activate(b.spec, s_["features"], s_["measurements"],
+                        annotations=s_["annotations"])[0]
+    slot2 = [x for x in sh_ if x.get("annotation_id") == "TEAR.02"
+             and x["shot_id"].startswith("BEFORE.ANOM.TEAR")]
+    ok_ = False
+    if slot2:
+        # a photograph of the FIRST tear, filed into the second tear's slot
+        b.store.append("capture", {"shot_id": slot2[0]["shot_id"], "rep": 1, "sha256": "d" * 64,
+                                   "path": "images/before/x.png", "state": "before",
+                                   "annotation_id": "TEAR.01",
+                                   "annotation_location": "left leg front"},
+                       operator="selftest")
+        ok_ = "captures.instance_identity" in b.blocked_conditions()
+    out.append(Result("a photograph filed against the wrong instance is refused",
+                      ok_,
+                      "blocked on captures.instance_identity: %s" % ok_,
+                      "every instanced capture recorded the annotation it was taken of and no "
+                      "condition read it back, so the log could hold `capture I02 is of TEAR.01` "
+                      "beside `plan I02 = TEAR.02` and nothing compared the two"))
+
+    # -- 71b3. the instance placeholder is substituted, not appended -----------------------------
+    b = new("innsub", gid="DENIM_9258")
+    b.open_session(); b.answer_features(overrides={"n_distressing": 2}); b.measure()
+    st_ = b.store.fold()[0]
+    shots_ = PLAN.activate(b.spec, st_["features"], st_["measurements"])[0]
+    leftover = sorted(s["shot_id"] for s in shots_ if ".INN" in s["shot_id"])
+    out.append(Result("no planned frame keeps the instance placeholder in its id",
+                      not leftover,
+                      "%d frame id(s) still contain .INN%s"
+                      % (len(leftover), (": " + ", ".join(leftover[:3])) if leftover else ""),
+                      "INN is the instance placeholder, exactly as PNN is the hem-position one, "
+                      "and expansion APPENDED the suffix instead of substituting it -- so ten "
+                      "planned frames carried the placeholder and its own replacement in one id"))
+
+    # -- 71c. a post-wash reading may not overwrite the pre-cut one ------------------------------
+    b = new("meastate", gid="DENIM_9253")
+    b.open_session()
+    b.store.append("measurement", {"name": "waist_cm", "readings": [97.0, 97.2], "mean": 97.1},
+                   operator="selftest")
+    b.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                     "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                     "tool": "shears", "legs_cut_separately": True},
+                   operator="selftest")
+    b.store.append("wash_actual", {"machine": "m", "cycle": "c"}, operator="selftest")
+    b.store.append("measurement", {"name": "waist_cm", "readings": [95.4, 95.6], "mean": 95.5},
+                   operator="selftest")
+    stm = b.store.fold()[0]
+    pre_ = (stm["measurements"].get("waist_cm") or {}).get("mean")
+    post_ = ((stm["measurements_by_state"].get("post_wash") or {}).get("waist_cm") or {}).get("mean")
+    out.append(Result("a post-wash reading does not overwrite the pre-cut one",
+                      pre_ == 97.1 and post_ == 95.5 and stm["lifecycle_state"] == "post_wash",
+                      "before=%s post_wash=%s lifecycle=%s" % (pre_, post_, stm["lifecycle_state"]),
+                      "measurements were keyed on name alone, so re-measuring the washed garment "
+                      "replaced the value it was supposed to be compared WITH -- and the finalize "
+                      "gate, which re-reads the same key, then passed on the survivor. Shrinkage is "
+                      "the difference between the two, so it stopped being computable at the moment "
+                      "it was recorded"))
+
+    # -- 71c2. re-measuring after the wash does not re-plan the photographs already taken --------
+    b = new("resize", gid="DENIM_9256")
+    b.open_session(); b.answer_features(); b.measure()
+    st0 = b.store.fold()[0]
+    n_before = len(PLAN.activate(b.spec, st0["features"], st0["measurements"])[0])
+    b.store.append("cut_performed", {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                     "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                     "tool": "shears", "legs_cut_separately": True},
+                   operator="selftest")
+    b.store.append("wash_actual", {"machine": "m", "cycle": "c"}, operator="selftest")
+    b.store.append("measurement", {"name": "leg_opening_cm", "readings": [30.0, 30.1],
+                                   "mean": 30.05}, operator="selftest")
+    st1 = b.store.fold()[0]
+    n_after = len(PLAN.activate(b.spec, st1["features"], st1["measurements"])[0])
+    out.append(Result("a post-wash reading does not re-plan the photographs already taken",
+                      n_before == n_after,
+                      "%d frames planned before the re-measure, %d after" % (n_before, n_after),
+                      "the hem series is SIZED from leg_opening_cm. Read from a flat name, the "
+                      "post-wash value re-sized a BEFORE-state series whose frames were already "
+                      "captured and whose garment no longer exists in that state -- so a session "
+                      "that had printed READY acquired missing frames nobody could ever take, and "
+                      "could not be finalized by any route"))
+
+    # -- 71d. the wash gate refuses a cut nobody recorded ----------------------------------------
+    b = new("nocutrec", spec=_mini_spec(tmp_root), gid="DENIM_9254")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    for s_ in b.activated()[0]:
+        for rep_ in range(1, int(s_.get("min_reps", 1)) + 1):
+            b.add(s_, rep_, b.synth_for(s_, rep_, relay=rep_, seed=7000 + rep_))
+    b.resolve_humans(); b.cut_ready_extras()
+    b.after_cut_extras(skip=("cut_performed",))
+    out.append(Result("the wash gate refuses a cut whose result nobody wrote down",
+                      "cut.performed_recorded" in {x.condition for x in b.gate("ready_to_wash").blocks},
+                      "blocks: %s" % ", ".join(sorted(x.condition for x in b.gate("ready_to_wash").blocks)),
+                      "PROTOCOL 3.1 says to record both lengths after cutting and nothing asked "
+                      "for them. That number is the ground truth the prediction is scored against, "
+                      "it can only be taken between the shears and the water, and after the wash "
+                      "the garment has shrunk -- the length you measure is no longer the length "
+                      "you cut"))
+
+    # -- 71e. the finalize gate refuses a garment nobody re-measured -----------------------------
+    b = new("nopostm", spec=_mini_spec(tmp_root), gid="DENIM_9255")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    for s_ in b.activated()[0]:
+        for rep_ in range(1, int(s_.get("min_reps", 1)) + 1):
+            b.add(s_, rep_, b.synth_for(s_, rep_, relay=rep_, seed=8000 + rep_))
+    b.resolve_humans(); b.cut_ready_extras()
+    b.after_cut_extras(skip=("post_wash_measurements",))
+    out.append(Result("the finalize gate refuses a garment nobody re-measured after washing",
+                      "measurements.post_wash" in {x.condition
+                                                   for x in b.gate("ready_to_finalize").blocks},
+                      "blocks: %s" % ", ".join(sorted(x.condition
+                                                      for x in b.gate("ready_to_finalize").blocks)),
+                      "measurements.complete runs for every gate and reads the PRE-cut bucket, so "
+                      "finalize looked like it checked this and did not. A session could be closed "
+                      "and exported having never measured the washed garment at all"))
+
+    # -- 72b/72c. THE OTHER TWO GATES ALSO HAVE TO OPEN --------------------------------------------
+    # ready_to_wash and ready_to_finalize authorise the two remaining irreversible steps, and every
+    # scenario that touched them asserted only that they BLOCK. Nothing had ever demonstrated that a
+    # complete, correct session can open either one, which is the same defect the cut gate's
+    # positive control exists to rule out: a gate that cannot be opened by valid evidence is not
+    # safe, it is broken, and it is discovered on wash day.
+    bw = new("happywash", spec=mini, gid="DENIM_9004")
+    bw.open_session(); bw.freeze_rig(); bw.answer_features(); bw.measure()
+    shots_w, _mw = bw.activated()
+    n_w = 0
+    for s in shots_w:
+        for rep in range(1, int(s.get("min_reps", 1)) + 1):
+            bw.add(s, rep, bw.synth_for(s, rep, relay=rep, seed=4000 + n_w))
+            n_w += 1
+    bw.resolve_humans(); bw.cut_ready_extras(); bw.after_cut_extras()
+    vw = bw.gate("ready_to_wash")
+    out.append(Result("A COMPLETE SESSION OPENS THE WASH GATE (positive control)",
+                      vw.ready,
+                      "%d satisfied, %d blocking%s"
+                      % (len(vw.satisfied), len(vw.blocks),
+                         (": " + "; ".join("%s -- %s" % (x.condition, x.what[:80])
+                                           for x in vw.blocks)) if vw.blocks else ""),
+                      "every other scenario asserts this gate REFUSES; none had ever shown it can "
+                      "be satisfied, so a requirement no evidence can meet would look like safety"))
+
+    vf = bw.gate("ready_to_finalize")
+    out.append(Result("A COMPLETE SESSION OPENS THE FINALIZE GATE (positive control)",
+                      vf.ready,
+                      "%d satisfied, %d blocking%s"
+                      % (len(vf.satisfied), len(vf.blocks),
+                         (": " + "; ".join("%s -- %s" % (x.condition, x.what[:80])
+                                           for x in vf.blocks)) if vf.blocks else ""),
+                      "the same argument, for the gate that closes the experiment and writes the "
+                      "committable record"))
+
     out.append(Result("A COMPLETE SESSION OPENS THE GATE (positive control)",
                       v.ready,
                       "%d frames captured; %d satisfied, %d blocking%s"

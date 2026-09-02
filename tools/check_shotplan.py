@@ -61,4 +61,32 @@ print("  by state: " + ", ".join("%s=%d" % kv for kv in
                                  sorted(by_state.items(),
                                         key=lambda kv: [st["order"] for st in s.states
                                                         if st["state"] == kv[0]][0])))
+
+# The authoring gap this document is most likely to have, and the one that cannot be repaired
+# afterwards: a region photographed before the wash whose wash response is never photographed. The
+# wash is a one-way door, so the frame that is missing here is a frame nobody can ever take.
+#
+# This is reported, not enforced. Some of these regions leave on the offcut at a shorts-length cut
+# and their later evidence really is in the offcut states; others -- the thigh, the knee, the
+# selvedge runs, the anomaly zones -- plainly stay on the garment and go through the machine.
+# Which is which depends on the target inseam, so it is a judgement about the protocol rather than
+# a fact about the document, and it belongs to the owner. What is NOT acceptable is the previous
+# behaviour: the check suppressed every one of them and reported nothing at all.
+unmatched = s.unmatched_changing_regions()
+undeclared = s.undeclared_changing_regions()
+open_ = s.open_postwash_regions()
+if unmatched:
+    print("\n  %d region(s) have no frame in any later state; %d are recorded as leaving with the "
+          "offcut," % (len(unmatched), len(unmatched) - len(open_)))
+    print("  and %d are recorded as an OPEN question nobody has decided:" % len(open_))
+    for rid in open_:
+        print("     %s" % rid)
+if undeclared:
+    print("\n  %d region(s) have neither a post-wash frame nor a recorded decision about why "
+          "not:" % len(undeclared))
+    for rid in undeclared:
+        print("     %s" % rid)
+    print("  Add each to postwash_coverage_decisions with a reason. The wash is a one-way door: a "
+          "frame\n  that is missing here is one nobody can ever take.")
+    raise SystemExit(1)
 raise SystemExit(0)

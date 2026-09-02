@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -282,3 +283,190 @@ def test_an_absurd_leg_opening_does_not_expand_the_plan():
     assert frames(4000.0) <= sane, \
         "a leg opening of 4000 cm must not size a larger plan than a real one"
     assert frames(10.0 ** 7) <= sane
+
+
+# -- 6. the capture interface stays available for the length of a session -------------------------
+
+def _live_server(tmp_path):
+    import threading
+    from denimtwin.pilot import server as SRV, webapp as WA
+    (tmp_path / "garments").mkdir(exist_ok=True)
+    sess = WA.Session(tmp_path, tmp_path / "garments",
+                      ROOT / "protocol" / "shotplan" / "shotplan.json",
+                      ROOT / "protocol" / "charuco_board.json")
+    httpd, _url = SRV.serve(WA.build_api(sess), data_root=tmp_path / "garments", port=0)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd, httpd.server_address[0], httpd.server_address[1]
+
+
+def test_a_stalled_connection_cannot_hold_a_worker_for_the_session(tmp_path):
+    """HTTP/1.1 keep-alive with no timeout meant every tab that ever connected held a thread.
+
+    A phone on flaky wifi opens a new connection each time it reconnects, so over a multi-hour
+    capture session the workers are consumed by connections nobody is using.
+    """
+    import socket
+    from denimtwin.pilot import server as SRV
+    # The production value, not just "some value": the behavioural half below runs at 1 s to keep
+    # the test quick, so on its own it would pass with a shipped timeout of None or of an hour.
+    assert isinstance(SRV._Handler.timeout, (int, float)), \
+        "a handler with no timeout never lets a stalled peer go, and HTTP/1.1 keep-alive means "\
+        "every tab that ever connected holds a worker for the rest of the session"
+    assert 0 < SRV._Handler.timeout <= 120, \
+        "the shipped timeout is %r; a capture session is hours long and an abandoned connection " \
+        "must not outlive a coffee break" % (SRV._Handler.timeout,)
+    httpd, host, port = _live_server(tmp_path)
+    old = SRV._Handler.timeout
+    SRV._Handler.timeout = 1
+    try:
+        s = socket.create_connection((host, port), timeout=10)
+        s.sendall(b"GET / HTTP/1.1\r\n")            # no blank line: the request never completes
+        try:
+            dropped = s.recv(100) == b""
+        except (socket.timeout, ConnectionResetError):
+            dropped = True
+        assert dropped, "a request that never completes was held open indefinitely"
+        s.close()
+    finally:
+        SRV._Handler.timeout = old
+        httpd.shutdown()
+
+
+def test_excess_connections_are_refused_rather_than_taking_the_app_down(tmp_path):
+    import socket
+    from denimtwin.pilot import server as SRV
+    httpd, host, port = _live_server(tmp_path)
+    held = []
+    try:
+        for _ in range(SRV.PilotServer.max_connections + 4):
+            held.append(socket.create_connection((host, port), timeout=5))
+        time.sleep(1.0)
+        probe = socket.create_connection((host, port), timeout=5)
+        probe.sendall(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
+        assert b"503" in probe.recv(200), "past the ceiling the server must refuse, visibly"
+        probe.close()
+        assert httpd.refused_connections > 0
+        for s in held:
+            s.close()
+        held = []
+        time.sleep(1.0)
+        # and the slots come back: a refusal must not be permanent
+        ok = socket.create_connection((host, port), timeout=5)
+        ok.sendall(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
+        line = ok.recv(200).split(b"\r\n")[0]
+        assert b"503" not in line, "slots were not released when the connections closed"
+        ok.close()
+    finally:
+        for s in held:
+            s.close()
+        httpd.shutdown()
+
+
+def test_the_server_still_binds_loopback_unless_lan_is_asked_for():
+    """Hardening must not have changed the local-first posture."""
+    src = (ROOT / "src" / "denimtwin" / "pilot" / "server.py").read_text()
+    assert 'bind = "0.0.0.0" if lan else host' in src
+    assert 'host="127.0.0.1"' in src
+    assert "httpd.require_token = True" in src
+
+
+# -- 7. the specification's before/after symmetry ------------------------------------------------
+
+def _spec():
+    from denimtwin.pilot import spec as SPEC
+    return SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
+
+
+def test_the_wash_sensitive_anomalies_have_a_frame_on_both_sides_of_the_wash():
+    """Five classes were photographed before the wash and never after it.
+
+    A stain lightens or sets, a tear propagates, a repair puckers (the specification's own note on
+    INTAKE.FEATURE.REPAIRS says cotton and polyester repair thread shrink differently), paint
+    cracks, distressing opens. Only EMBROIDERY, LOGO, PATCH and PRINT_FADE had post-wash twins, so
+    for the five that matter most the before frame was taken and the comparison could never be
+    made. The wash is a one-way door.
+    """
+    s = _spec()
+    ids = {x["shot_id"] for x in s.shots}
+    for cls in ("STAIN", "TEAR", "REPAIR", "DISTRESS", "PAINT"):
+        before, after = "BEFORE.ANOM.%s.R1" % cls, "POSTWASH.ANOM.%s.R1" % cls
+        assert before in ids
+        assert after in ids, "%s is photographed before the wash and never after it" % cls
+        b = [x for x in s.shots if x["shot_id"] == before][0]
+        a = [x for x in s.shots if x["shot_id"] == after][0]
+        assert after in (b.get("matched_shot_ids") or []), "%s does not point at its twin" % before
+        assert before in (a.get("matched_shot_ids") or [])
+        assert a["state"] == "post_wash" and b["state"] == "before"
+
+
+def test_the_post_wash_relay_series_is_chained_like_the_pre_cut_one():
+    """Eight photographs of ONE lay satisfied all eight post-wash frames.
+
+    The before arm carries relay_between_reps and a relay_after chain, so each frame must follow a
+    real re-lay of the garment; the post-wash arm carried neither, so the gate demanded zero relay
+    pairs and the independence check was never even emitted. The two spreads are what separate
+    shrinkage from laying variance, and only one of them was being measured.
+    """
+    s = _spec()
+    byid = {x["shot_id"]: x for x in s.shots}
+    for tmpl, n in (("POSTWASH.WHOLE.F00.R%d", 5), ("POSTWASH.WHOLE.B00.R%d", 3)):
+        for i in range(1, n + 1):
+            sh = byid[tmpl % i]
+            assert sh["relay_between_reps"] is True, "%s does not require a re-lay" % sh["shot_id"]
+            if i > 1:
+                assert sh.get("relay_after") == tmpl % (i - 1), \
+                    "%s does not follow %s" % (sh["shot_id"], tmpl % (i - 1))
+            else:
+                assert not sh.get("relay_after")
+
+
+def test_a_repeat_that_is_a_different_physical_subject_says_which_one():
+    """min_reps meant "take two" and nothing recorded that repeat 2 was the OTHER LEG.
+
+    region_id is copied from the shot, so the right leg's hem was filed under hem_left_front, and
+    two photographs of the same leg satisfied both repeats. The right leg's original hem is pre-cut,
+    one-chance evidence. The software cannot tell the legs apart from pixels, so it has to ask, and
+    the answer is bound to each photograph by the same machinery as every other per-frame claim.
+    """
+    s = _spec()
+    with_subjects = [x for x in s.shots if x.get("rep_semantics")]
+    assert with_subjects, "no shot declares what its repeats are of"
+    for sh in with_subjects:
+        assert len(sh["rep_semantics"]) == int(sh["min_reps"]), \
+            "%s declares %d subjects for %s repeats" % (sh["shot_id"],
+                                                        len(sh["rep_semantics"]), sh["min_reps"])
+        claims = " ".join(sh.get("requires_human") or [])
+        assert "the subject this repeat is for" in claims, \
+            "%s has distinct subjects per repeat and asks nobody which one a frame shows" % sh["shot_id"]
+
+
+def test_a_planned_instance_frame_carries_the_annotation_it_is_of(tmp_path):
+    from denimtwin.pilot import plan as PLAN
+    from denimtwin.pilot.store import Store
+    s = _spec()
+    d = tmp_path / "DENIM_9001"
+    (d / "pilot").mkdir(parents=True)
+    st = Store(d)
+    feats = {}
+    for _ in range(80):
+        try:
+            PLAN.activate(s, feats, {})
+            break
+        except PLAN.PlanError as e:
+            for n in str(e).split(":", 1)[1].split(","):
+                if n.strip():
+                    feats[n.strip()] = 0
+    feats["n_tears"] = 2
+    st.append("feature_answers", {"answers": feats})
+    for i, loc in enumerate(("left leg front", "right knee"), 1):
+        st.append("annotation", {"annotation_id": "TEAR.%02d" % i, "feature": "n_tears",
+                                 "type": "tear", "location": loc, "note": "x"})
+    state, _ = st.fold()
+    shots, _m = PLAN.activate(s, state["features"], state["measurements"],
+                              annotations=state["annotations"])
+    tear = [x for x in shots if x.get("annotation_id") and "TEAR" in x["shot_id"].upper()]
+    assert tear, "no tear frame was planned"
+    assert {x["annotation_id"] for x in tear} == {"TEAR.01", "TEAR.02"}
+    for x in tear:
+        assert x["annotation_location"], "a frame names an annotation with no location"
+        assert ".INN" not in x["shot_id"]

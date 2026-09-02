@@ -13,19 +13,24 @@ this is safe' is not permission.
 
 | condition | what must be true |
 |---|---|
+| `annotations.identify_instances` | every counted feature is described one instance at a time, with a stable id and a location, so each photograph names the physical thing it is of |
 | `captures.files_intact` | every recorded photograph on disk, hash unchanged, filed under its own name inside the garment directory |
+| `captures.instance_identity` | every photograph of a repeated feature agrees with the plan about which one of them it shows |
 | `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared reuse |
 | `captures.relays_independent` | each repeat followed a real re-lay |
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
 | `captures.required_complete` | every required frame captured, checked, and passing |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
+| `captures.state_order` | no photograph is filed in a state the log's own order contradicts: nothing of the uncut garment after the cut, nothing of the washed one before the wash |
 | `captures.verdicts_reproduce` | every frame recorded as passing still passes when the checker is run again on the photograph itself |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
+| `cut.not_already_performed` | this garment has not already been cut; a gate that authorises an irreversible act may not be asked after it |
 | `cut.second_person_verified` | a second person -- not the operator -- measured both marks within 3 mm, and did not refuse |
-| `cut.specified` | the cut is defined and its outseam offset computed |
+| `cut.specified` | the cut is defined and its outseam offset computed, from the measurements that are on record now |
 | `features.answered` | no unanswered question whose silence would drop a photograph |
 | `log.intact` | the capture log's hash chain verifies, it ends where its anchor says, and no entry has been replaced since the anchor first recorded it |
 | `measurements.complete` | every measurement present, with its independent readings, in tolerance and inside a plausible range |
+| `measurements.revisions_explained` | any measurement replaced by a later reading in the same state carries a recorded reason, and none declares a lifecycle state the log contradicts |
 | `plan.fully_expanded` | every templated series was sized; none silently expanded to zero |
 | `plan.generated` | a shot plan could be generated at all from the answers given |
 | `rig.board_square_measured` | the printed squares measure 25.0 mm within 0.5, over a run of at least four whole squares |
@@ -39,6 +44,7 @@ this is safe' is not permission.
 
 | condition | what must be true |
 |---|---|
+| `cut.performed_recorded` | the cut's achieved inseam and outseam are recorded for both legs, with the tool, before the garment goes near water |
 | `offcuts.assigned` | exactly two offcuts, one per leg, two defined conditions, the left/right alternation intact across garments |
 | `wash.planned` | a complete wash plan, written once and not revised |
 
@@ -46,6 +52,7 @@ this is safe' is not permission.
 
 | condition | what must be true |
 |---|---|
+| `measurements.post_wash` | the washed garment was measured again, so shrinkage is the difference between two recorded numbers rather than one |
 | `wash.actual` | what actually happened, with every departure from the plan recorded |
 On the most demanding garment the plan can describe, that is **221 required frames** before
 the cut.

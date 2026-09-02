@@ -231,10 +231,23 @@ def test_every_region_that_survives_the_cut_and_changes_with_washing_has_a_later
     on the offcut, because the garment no longer has them.
     """
     s = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")
-    missing = s.unmatched_changing_regions()
-    assert not missing, (
-        "%d region(s) change with washing, survive the cut, are photographed before it and have no "
-        "frame in any later state: %s" % (len(missing), missing[:10]))
+    # This assertion used to be `not s.unmatched_changing_regions()`, and it passed for two years
+    # because the function could not return anything: it skipped every region carrying
+    # can_change_by_cut, which is every region in question. With that fixed, 39 regions really do
+    # have no post-wash frame -- and whether each NEEDS one is a judgement about the protocol,
+    # which depends on where the cut lands and belongs to the owner.
+    #
+    # What is a fact about the document, and is therefore what this enforces: every one of them has
+    # been LOOKED AT. A region with neither a later frame nor a recorded decision is an omission
+    # nobody has considered, and the wash is a one-way door.
+    undeclared = s.undeclared_changing_regions()
+    assert not undeclared, (
+        "%d region(s) change with washing, are photographed before it, have no frame in any later "
+        "state, and carry no entry in postwash_coverage_decisions: %s"
+        % (len(undeclared), undeclared[:10]))
+    assert s.unmatched_changing_regions(), (
+        "unmatched_changing_regions() returns nothing at all. It did that for two years because a "
+        "flag suppressed every candidate; a detector that cannot report is not a passing check.")
 
 
 # -- the offcut alternation ------------------------------------------------------------------------

@@ -311,7 +311,7 @@ Worth recording, because they are the parts that held:
 
 A finding is not closed by a fix. It is closed by a fix **and** a scenario that fails without it.
 `tools/verify.py` runs the whole suite, so a regression is a red build rather than a discovery on
-cut day. The scenario suite went 25 -> 49 -> 64 -> 78 -> 82 -> 85 across the rounds, and every number in
+cut day. The scenario suite went 25 -> 49 -> 64 -> 78 -> 82 -> 85 -> 101 across the rounds, and every number in
 that sequence is an attack somebody actually ran. `tests/test_pilot_selftest.py` binds the list to the
 scenarios and the count to the README, because a number in prose that nothing checks drifts -- the
 README said 78 while the suite ran 85, and gave two different breakdowns of it in consecutive
@@ -384,3 +384,93 @@ and `intake`.
 than the operator, is the source of a physical fact. It says nothing about the categories rounds 1
 to 5 covered, and the standing rule stated above applies to it unchanged: each finding
 is closed by a fix AND a scenario that fails without it.
+
+
+## Round 7 — what a garment loses between the shears and the water
+
+Round 6 asked whether the software ever writes down a fact nobody established. This round asked the
+question the whole navigator exists for:
+
+> If I put a real pair of jeans through this workflow tomorrow, cut them, wash them, and later
+> discover an important piece of evidence was never captured, could the software have prevented it?
+
+Five analysis passes and five adversarial dry runs, all executing against the code rather than
+reading it. The findings divide into three kinds, and only the first was a surprise.
+
+### Evidence the software destroyed after it had been collected
+
+`store.fold` keyed measurements on the NAME alone, last write wins. Everything else in that function
+is careful about this — the wash keeps `wash_plan_rewrites`, the rig keeps `setup_history`, feature
+answers keep `feature_changes` — and measurements had neither a revision record nor a gate.
+
+So the ordinary post-wash re-measurement, which the protocol requires, overwrote the pre-cut value
+it was supposed to be compared *with*. Shrinkage is the difference between the two, and it stopped
+being computable at the moment it was recorded. `measurements.complete` runs for every gate and
+re-read the survivor, so `ready_to_finalize` then reported the evidence complete. Worse, the hem
+macro series is SIZED from `leg_opening_cm`: a post-wash reading re-sized a BEFORE-state series
+whose frames were already taken, on a garment that no longer existed in that state, so a session
+that had printed READY acquired missing frames nobody could ever take.
+
+Measurements now belong to a lifecycle state, and the lifecycle advances from the physical facts
+already in the log — a recorded cut, a recorded wash — rather than from a marker somebody has to
+remember to set. `state["measurements"]` is the pre-modification bucket, which is what all nine of
+its readers meant.
+
+### Evidence the specification never asked for
+
+- **The cut itself.** PROTOCOL 3.1 says to record both lengths after cutting. Nothing did. That
+  number is the ground truth the prediction is scored against, it can only be taken between the
+  shears and the water, and afterwards the garment has shrunk: the length you measure is no longer
+  the length you cut. Now `cut.performed_recorded`, required before the wash.
+- **The washed garment.** No condition required it to be measured again. Now
+  `measurements.post_wash`, with the same plausibility and tolerance arithmetic the pre-cut set
+  gets — without it a post-wash tape read in inches finalised the experiment and published a 60%
+  shrinkage.
+- **Five wash-sensitive anomaly classes.** STAIN, TEAR, REPAIR, DISTRESS and PAINT had a before
+  frame and no post-wash twin anywhere in the 290-shot catalogue; only EMBROIDERY, LOGO, PATCH and
+  PRINT_FADE had one. A stain lightens or sets, a tear propagates, a repair puckers — the
+  specification's own note on INTAKE.FEATURE.REPAIRS says cotton and polyester repair thread shrink
+  differently — paint cracks, distressing opens. The comparison the before frame was taken for
+  could never be made.
+- **The detector for exactly that.** `unmatched_changing_regions()` skipped every region carrying
+  `can_change_by_cut`, justified as "its later evidence is on the offcut". That is true of the hem
+  and false of the thigh, the knee, the selvedge runs and the anomaly zones, and it was true of
+  every candidate, so the function returned `[]` for this specification under every input. It now
+  reports, and every region it names carries a recorded decision — `offcut` where the geometry says
+  so, `open` where nobody has decided. **Nineteen are open.** They are listed by
+  `tools/check_shotplan.py` and they are an owner decision, not a solved problem.
+- **The other leg.** Six shots use `min_reps` to mean a different physical subject — repeat 2 is the
+  other leg, or the unrolled cuff. Nothing bound a repeat to its subject, and `region_id` is copied
+  from the shot, so the right leg's hem was filed under `hem_left_front` and two photographs of the
+  same leg satisfied both. The software cannot tell legs apart from pixels, so it now asks, and the
+  answer is bound to each photograph by the same machinery as every other per-frame claim.
+- **The post-wash re-lay series.** The before arm chains `relay_after` so each frame follows a real
+  re-lay; the post-wash arm carried neither flag, so eight photographs of one lay satisfied all
+  eight frames and the independence check was never emitted. The two spreads are what separate
+  shrinkage from laying variance, and only one of them was being measured.
+
+### Evidence a correct operator could not supply
+
+The mirror image, and the easier failure to miss. `ready_to_wash` and `ready_to_finalize` had **no
+positive control at all** — every scenario touching them asserted only that they refuse, so nobody
+had ever shown a complete, correct session can open either. Both now have one. Separately, any edit
+to the shot plan stranded every open session on `spec.bound` forever, and the remedy its message
+named was not something any command could do.
+
+### And the mistakes this round introduced
+
+Three of the fixes above were themselves wrong, and the dry runs found them:
+
+- Instance identity was ordered by annotation id, so frame identity lived in a SORT POSITION. Naming
+  a missed tear `TEAR.00`, or typing ids without leading zeros until there were ten, retroactively
+  re-labelled photographs taken hours earlier. It is ordered by the log's own append-only sequence
+  now, so a new annotation can only take a new slot.
+- A measurement filed under a mistyped `--state` was recorded as a log INTEGRITY problem, which
+  `log.intact` refuses on permanently. One wrong flag bricked the garment forever, because an
+  append-only log cannot un-append.
+- `pilot.py reuse` copied the source frame's annotation wholesale, so a photograph of one tear was
+  filed as evidence for another and positively asserted it was of the first.
+
+**What this round is evidence of.** The same narrow thing as the others: these are the attacks that
+have been tried. It is not a claim that the evidence set is now complete — nineteen regions have no
+post-wash frame and no decision, and that is written down rather than fixed.

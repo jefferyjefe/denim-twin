@@ -288,6 +288,28 @@ class Spec(object):
         """Same-state links: two frames that must be framed alike, but are not a before/after pair."""
         return self._links()[1]
 
+    def postwash_coverage_decisions(self):
+        """region_id -> the recorded decision about its missing post-wash frame."""
+        return {d["region_id"]: d
+                for d in (self.doc.get("postwash_coverage_decisions") or [])}
+
+    def undeclared_changing_regions(self):
+        """Regions with no later-state frame AND no recorded decision about why not.
+
+        This is the check that can be enforced. Whether a given region NEEDS a post-wash frame is a
+        judgement about the protocol; whether somebody has made that judgement is a fact about the
+        document, and a region that has been neither photographed nor decided about is an omission
+        nobody has looked at.
+        """
+        decided = self.postwash_coverage_decisions()
+        return [r for r in self.unmatched_changing_regions() if r not in decided]
+
+    def open_postwash_regions(self):
+        """Regions whose missing post-wash frame is recorded as an undecided question."""
+        d = self.postwash_coverage_decisions()
+        return sorted(r for r in self.unmatched_changing_regions()
+                      if d.get(r, {}).get("status") == "open")
+
     def unmatched_changing_regions(self):
         """Regions that change with washing and have no frame in any later state.
 
@@ -306,12 +328,25 @@ class Spec(object):
                     seen_later.add(rid)
                 elif o == before_order:
                     seen_before.add(rid)
+        # `can_change_by_cut` used to suppress a region here, justified as "removed by the cut:
+        # its later evidence is on the offcut". That is true of the hem regions and false of
+        # everything else: the flag means the cut MIGHT remove this (a tear near the hem), and the
+        # offcut states cover exactly the eight regions named offcut_*. Every region photographed
+        # before, changing with washing, and without a later frame carried the flag, so all of them
+        # were skipped and this function returned [] for this specification under every input --
+        # the detector for "a region whose wash response was never photographed" could not report
+        # anything, including the five anomaly zones that were genuinely missing.
+        offcut_covered = {r["region_id"] for r in self.regions
+                          if str(r["region_id"]).startswith("offcut_")}
         out = []
         for r in self.regions:
-            if not r["can_change_by_wash"] or r["can_change_by_cut"]:
-                continue          # removed by the cut: its later evidence is on the offcut
-            if r["region_id"] in seen_before and r["region_id"] not in seen_later:
-                out.append(r["region_id"])
+            if not r["can_change_by_wash"]:
+                continue
+            rid = r["region_id"]
+            if rid in offcut_covered:
+                continue
+            if rid in seen_before and rid not in seen_later:
+                out.append(rid)
         return sorted(out)
 
 

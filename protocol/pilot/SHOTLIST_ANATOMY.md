@@ -154,17 +154,17 @@ treated as PRESENT, so the frame is planned rather than dropped.
 | region | side | frames | changes with cut / wash |
 |---|---|---|---|
 | `asymmetry_zone` *(conditional)* | front | 1 | yes / yes |
-| `distressing_zone` *(conditional)* | front | 3 | yes / yes |
+| `distressing_zone` *(conditional)* | front | 4 | yes / yes |
 | `embroidery_zone` *(conditional)* | back | 2 | no / yes |
 | `hem_curl_zone` *(conditional)* | front | 1 | yes / yes |
 | `logo_zone` *(conditional)* | back | 2 | no / yes |
-| `paint_zone_back` *(conditional)* | back | 1 | yes / yes |
+| `paint_zone_back` *(conditional)* | back | 2 | yes / yes |
 | `patch_zone` *(conditional)* | back | 2 | no / yes |
 | `previous_alteration_zone` *(conditional)* | front | 3 | yes / yes |
 | `printed_fade_whiskers_front` *(conditional)* | front | 2 | no / yes |
-| `repair_zone` *(conditional)* | front | 1 | yes / yes |
-| `stain_zone` *(conditional)* | front | 1 | yes / yes |
-| `tear_zone` *(conditional)* | front | 1 | yes / yes |
+| `repair_zone` *(conditional)* | front | 2 | yes / yes |
+| `stain_zone` *(conditional)* | front | 2 | yes / yes |
+| `tear_zone` *(conditional)* | front | 2 | yes / yes |
 | `unusual_seam_zone` *(conditional)* | front | 1 | yes / yes |
 
 ## waist upper

@@ -318,6 +318,203 @@
    "rep"
   ]
  },
+ "postwash_coverage_decisions": [
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_curl_zone",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_left_back",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_left_cuff",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_left_edge_profile",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_left_fold_construction",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_left_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_right_back",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_right_cuff",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_right_edge_profile",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_right_fold_construction",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "hem_right_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "inseam_left_lower_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "inseam_right_lower_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "outseam_left_lower_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "outseam_right_lower_front",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "shin_back_left",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "shin_back_right",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "shin_front_left",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "shin_front_right",
+   "status": "offcut"
+  },
+  {
+   "reason": "below the cut line at a shorts-length cut: this region leaves the garment with the offcut, and its post-wash evidence is in the offcut_before / offcut_after states.",
+   "region_id": "texture_lower_leg_front_left",
+   "status": "offcut"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "asymmetry_zone",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "inseam_left_upper_front",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "inseam_right_upper_front",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "knee_back_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "knee_back_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "knee_front_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "knee_front_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "outseam_left_upper_front",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "outseam_right_upper_front",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "previous_alteration_zone",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "selvedge_outseam_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "selvedge_outseam_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "texture_mid_leg_front_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "texture_mid_leg_front_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "thigh_back_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "thigh_back_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "thigh_front_left",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "thigh_front_right",
+   "status": "open"
+  },
+  {
+   "reason": "stays on the garment through the wash and has no post-wash frame. Nobody has decided whether the post-wash whole-garment overheads are sufficient for it or whether a dedicated frame is required. Recorded as undecided rather than assumed sufficient.",
+   "region_id": "unusual_seam_zone",
+   "status": "open"
+  }
+ ],
  "protocol_version": "0.2-pilot",
  "quality_defaults": {
   "max_border_fraction": 0.03,
@@ -375,7 +572,9 @@
    "garment_side": "n/a",
    "instance_of": "n_distressing",
    "lens": "main",
-   "matched_shot_ids": [],
+   "matched_shot_ids": [
+    "POSTWASH.ANOM.DISTRESS.R1"
+   ],
    "min_reps": 1,
    "necessity": "conditional",
    "purpose": "Pre-existing distressing is loose or broken weave that will fray in the wash independently of anything the shears do, so an unrecorded instance becomes a false positive in the post-wash fray measurement. One frame per instance is the only way each is separately attributable.",
@@ -478,7 +677,9 @@
    "garment_side": "n/a",
    "instance_of": "n_paint",
    "lens": "main",
-   "matched_shot_ids": [],
+   "matched_shot_ids": [
+    "POSTWASH.ANOM.PAINT.R1"
+   ],
    "min_reps": 1,
    "necessity": "conditional",
    "purpose": "SEQUENCING CRITICAL: a painted print is what determines whether the garment can be machine-washed at all, and DENIM_0001 already took that branch. This frame must precede any wash decision, and it is the before-state of the component most likely to change visibly in the wash. Once washed, an uncracked before-state cannot be reconstructed.",
@@ -612,7 +813,9 @@
    "garment_side": "n/a",
    "instance_of": "n_repairs",
    "lens": "main",
-   "matched_shot_ids": [],
+   "matched_shot_ids": [
+    "POSTWASH.ANOM.REPAIR.R1"
+   ],
    "min_reps": 1,
    "necessity": "conditional",
    "purpose": "Repair thread is usually a different fibre from the garment and shrinks at its own rate, so a repair is a local stiffness anomaly that biases any nearby shrinkage or fray measurement. Recording it lets that region be excluded rather than silently averaged in.",
@@ -645,7 +848,9 @@
    "garment_side": "n/a",
    "instance_of": "n_stains",
    "lens": "main",
-   "matched_shot_ids": [],
+   "matched_shot_ids": [
+    "POSTWASH.ANOM.STAIN.R1"
+   ],
    "min_reps": 1,
    "necessity": "conditional",
    "purpose": "A stain is the one anomaly expected to shrink or vanish in the wash, so it is a positive control on whether the wash did anything at all, and its before-state extent is the measurand. An unrecorded stain that partially lifts reads afterwards as a new shade gradient.",
@@ -678,7 +883,9 @@
    "garment_side": "n/a",
    "instance_of": "n_tears",
    "lens": "main",
-   "matched_shot_ids": [],
+   "matched_shot_ids": [
+    "POSTWASH.ANOM.TEAR.R1"
+   ],
    "min_reps": 1,
    "necessity": "conditional",
    "purpose": "A tear grows in a wash and its terminations migrate, so its before-state length and end-points are the only way to say afterwards whether it grew. Unrecorded, a grown tear is indistinguishable from wash-induced damage the protocol would have to explain.",
@@ -830,9 +1037,14 @@
    },
    "region_id": "hem_left_cuff",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "cuffed, as received",
+    "uncuffed and flat"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)",
+    "this frame shows cuffed, as received / uncuffed and flat -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "",
    "scale_reference": "ruler",
@@ -1264,9 +1476,14 @@
    },
    "region_id": "hem_right_cuff",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "cuffed, as received",
+    "uncuffed and flat"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)",
+    "this frame shows cuffed, as received / uncuffed and flat -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "",
    "scale_reference": "ruler",
@@ -2827,7 +3044,14 @@
    },
    "region_id": "hem_left_cuff",
    "relay_between_reps": true,
+   "rep_semantics": [
+    "cuffed, as received",
+    "uncuffed and flat"
+   ],
    "reposition_camera_between_reps": false,
+   "requires_human": [
+    "this frame shows cuffed, as received / uncuffed and flat -- the subject this repeat is for, and not the subject of another repeat of the same shot"
+   ],
    "scale_placement": "Board coplanar, top-left frame corner, >=125x100 mm strip in frame below the cuff, identical placement in both reps.",
    "scale_reference": "charuco_board",
    "shot_id": "BEFORE.SEAM.CUFF_STATE.R1",
@@ -5157,9 +5381,14 @@
    },
    "region_id": "hem_left_front",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "rolled as received",
+    "unrolled and flat"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)",
+    "this frame shows rolled as received / unrolled and flat -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "rule along the hem edge, in the fabric plane",
    "scale_reference": "ruler",
@@ -5283,9 +5512,14 @@
    },
    "region_id": "hem_left_front",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "the garment-LEFT hem",
+    "the garment-RIGHT hem"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)",
+    "this frame shows the garment-LEFT hem / the garment-RIGHT hem -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "rule flat in the fabric plane, parallel to and within 20 mm of the hem edge",
    "scale_reference": "ruler",
@@ -5345,9 +5579,14 @@
    },
    "region_id": "hem_left_front",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "the garment-LEFT hem",
+    "the garment-RIGHT hem"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)",
+    "this frame shows the garment-LEFT hem / the garment-RIGHT hem -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "rule standing VERTICAL on the backdrop, perpendicular to the surface, immediately behind the hem edge",
    "scale_reference": "ruler",
@@ -5598,9 +5837,14 @@
    },
    "region_id": "outseam_left_upper_front",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "the garment-LEFT outseam",
+    "the garment-RIGHT outseam"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)",
+    "this frame shows the garment-LEFT outseam / the garment-RIGHT outseam -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "rule along the opened seam, in the opened fabric's plane",
    "scale_reference": "ruler",
@@ -5755,9 +5999,14 @@
    },
    "region_id": "care_label",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "the interior waistband position",
+    "the left side-seam position"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
-    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)"
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.500 mm/px or finer)",
+    "this frame shows the interior waistband position / the left side-seam position -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "rule flat against the seam, in the fabric's plane",
    "scale_reference": "ruler",
@@ -6964,6 +7213,41 @@
    "camera_angle": "macro_perpendicular",
    "camera_height_group": "mount_macro_fov200",
    "camera_position": "",
+   "conditional_on": "n_distressing > 0",
+   "est_seconds": 75,
+   "frame_guide": "",
+   "framing": "200 mm field centred on distressing instance NN as enumerated in the record's existing_damage_annotations; the whole feature plus >=40 mm of undamaged denim on every side, and the nearest seam or hardware landmark inside the frame so the feature is relocatable. If the feature is longer than 160 mm, shoot overlapping frames R1..Rn with >=30% overlap. Garment face is bound at instantiation from the annotation's location field.",
+   "garment_side": "n/a",
+   "instance_of": "n_distressing",
+   "lens": "main",
+   "matched_shot_ids": [
+    "BEFORE.ANOM.DISTRESS.R1"
+   ],
+   "min_reps": 1,
+   "necessity": "conditional",
+   "purpose": "Pre-existing distressing is loose or broken weave that will fray in the wash independently of anything the shears do, so an unrecorded instance becomes a false positive in the post-wash fray measurement. One frame per instance is the only way each is separately attributable.",
+   "quality": {
+    "extra": "GATE_B. INSTANCE SCHEME: .I01, .I02 ... zero-padded two digits, allocated at intake in the order the annotator enumerated existing_damage_annotations, and the same index written into the shot manifest so shot and annotation stay 1:1. Requires the proposed distressing_count integer -- conditional_on is a boolean expression and cannot say how many frames to demand.  POST-WASH TWIN OF BEFORE.ANOM.DISTRESS.R1. Distressed areas open further as the loosened yarns are agitated.",
+    "min_blur": 80,
+    "min_long_edge_px": 3000,
+    "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
+    "requires_ruler": true
+   },
+   "region_id": "distressing_zone",
+   "relay_between_reps": false,
+   "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+   ],
+   "scale_placement": "Steel rule on the denim beside the feature, coplanar, graduated edge facing it, within 20 mm, never crossing the damaged area.",
+   "scale_reference": "ruler",
+   "shot_id": "POSTWASH.ANOM.DISTRESS.R1",
+   "state": "post_wash"
+  },
+  {
+   "camera_angle": "macro_perpendicular",
+   "camera_height_group": "mount_macro_fov200",
+   "camera_position": "",
    "conditional_on": "n_embroidery > 0",
    "est_seconds": 75,
    "frame_guide": "",
@@ -7034,6 +7318,41 @@
    "camera_angle": "macro_perpendicular",
    "camera_height_group": "mount_macro_fov200",
    "camera_position": "",
+   "conditional_on": "n_paint > 0",
+   "est_seconds": 75,
+   "frame_guide": "",
+   "framing": "200 mm field centred on paint instance NN: the whole painted area if it fits, otherwise the most detailed 200 mm of it plus overlapping frames R1..Rn at >=30% overlap; every edge of the paint film, any existing cracking or flaking, >=40 mm of unpainted denim, and the nearest seam landmark.",
+   "garment_side": "n/a",
+   "instance_of": "n_paint",
+   "lens": "main",
+   "matched_shot_ids": [
+    "BEFORE.ANOM.PAINT.R1"
+   ],
+   "min_reps": 1,
+   "necessity": "conditional",
+   "purpose": "SEQUENCING CRITICAL: a painted print is what determines whether the garment can be machine-washed at all, and DENIM_0001 already took that branch. This frame must precede any wash decision, and it is the before-state of the component most likely to change visibly in the wash. Once washed, an uncracked before-state cannot be reconstructed.",
+   "quality": {
+    "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed paint_count integer. DENIM_0001 has one painted seagull per back leg, i.e. paint_count = 2, and its record already carries the care guidance that put the whole garment on the hand-wash branch.  POST-WASH TWIN OF BEFORE.ANOM.PAINT.R1. Painted denim cracks and flakes along fold lines in the wash; DENIM_0001 carries a painted seagull on each back leg.",
+    "min_blur": 80,
+    "min_long_edge_px": 3000,
+    "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
+    "requires_ruler": true
+   },
+   "region_id": "paint_zone_back",
+   "relay_between_reps": false,
+   "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+   ],
+   "scale_placement": "Steel rule on UNPAINTED denim beside the feature, coplanar with the fabric (the paint film sits proud), graduated edge facing it, within 20 mm.",
+   "scale_reference": "ruler",
+   "shot_id": "POSTWASH.ANOM.PAINT.R1",
+   "state": "post_wash"
+  },
+  {
+   "camera_angle": "macro_perpendicular",
+   "camera_height_group": "mount_macro_fov200",
+   "camera_position": "",
    "conditional_on": "n_patches > 0",
    "est_seconds": 75,
    "frame_guide": "",
@@ -7097,6 +7416,111 @@
    "scale_placement": "Board coplanar with the backdrop, top-left frame corner, >=125x100 mm strip in frame, on the backdrop and never on the fade.",
    "scale_reference": "charuco_board",
    "shot_id": "POSTWASH.ANOM.PRINT_FADE.R1",
+   "state": "post_wash"
+  },
+  {
+   "camera_angle": "macro_perpendicular",
+   "camera_height_group": "mount_macro_fov200",
+   "camera_position": "",
+   "conditional_on": "n_repairs > 0",
+   "est_seconds": 75,
+   "frame_guide": "",
+   "framing": "200 mm field centred on repair instance NN: the whole repair, every repair stitch row, the boundary between repair thread and original fabric, >=40 mm of intact denim on each side, and the nearest seam landmark.",
+   "garment_side": "n/a",
+   "instance_of": "n_repairs",
+   "lens": "main",
+   "matched_shot_ids": [
+    "BEFORE.ANOM.REPAIR.R1"
+   ],
+   "min_reps": 1,
+   "necessity": "conditional",
+   "purpose": "Repair thread is usually a different fibre from the garment and shrinks at its own rate, so a repair is a local stiffness anomaly that biases any nearby shrinkage or fray measurement. Recording it lets that region be excluded rather than silently averaged in.",
+   "quality": {
+    "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed repair_count integer.  POST-WASH TWIN OF BEFORE.ANOM.REPAIR.R1. INTAKE.FEATURE.REPAIRS records that cotton and polyester repair thread shrink differently and one puckers the repair after washing while the other does not. That difference is invisible without an after frame.",
+    "min_blur": 80,
+    "min_long_edge_px": 3000,
+    "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
+    "requires_ruler": true
+   },
+   "region_id": "repair_zone",
+   "relay_between_reps": false,
+   "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+   ],
+   "scale_placement": "Steel rule on the denim beside the repair, coplanar, graduated edge facing it, within 20 mm.",
+   "scale_reference": "ruler",
+   "shot_id": "POSTWASH.ANOM.REPAIR.R1",
+   "state": "post_wash"
+  },
+  {
+   "camera_angle": "macro_perpendicular",
+   "camera_height_group": "mount_macro_fov200",
+   "camera_position": "",
+   "conditional_on": "n_stains > 0",
+   "est_seconds": 75,
+   "frame_guide": "",
+   "framing": "200 mm field centred on stain instance NN: the whole stain including its diffuse boundary, >=40 mm of clean denim beyond the outermost visible edge, and the nearest seam landmark. Rig's standard two diffuse sources only -- no raking light, which invents stain edges.",
+   "garment_side": "n/a",
+   "instance_of": "n_stains",
+   "lens": "main",
+   "matched_shot_ids": [
+    "BEFORE.ANOM.STAIN.R1"
+   ],
+   "min_reps": 1,
+   "necessity": "conditional",
+   "purpose": "A stain is the one anomaly expected to shrink or vanish in the wash, so it is a positive control on whether the wash did anything at all, and its before-state extent is the measurand. An unrecorded stain that partially lifts reads afterwards as a new shade gradient.",
+   "quality": {
+    "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed stain_count integer.  POST-WASH TWIN OF BEFORE.ANOM.STAIN.R1. A stain either lightens or sets in the wash, and which one it did is only knowable from a frame of the same stain afterwards at the same scale.",
+    "min_blur": 80,
+    "min_long_edge_px": 3000,
+    "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
+    "requires_ruler": true
+   },
+   "region_id": "stain_zone",
+   "relay_between_reps": false,
+   "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+   ],
+   "scale_placement": "Steel rule on clean denim beside the stain, coplanar, graduated edge facing it, within 20 mm, never overlapping the stain.",
+   "scale_reference": "ruler",
+   "shot_id": "POSTWASH.ANOM.STAIN.R1",
+   "state": "post_wash"
+  },
+  {
+   "camera_angle": "macro_perpendicular",
+   "camera_height_group": "mount_macro_fov200",
+   "camera_position": "",
+   "conditional_on": "n_tears > 0",
+   "est_seconds": 75,
+   "frame_guide": "",
+   "framing": "200 mm field centred on tear instance NN: the full extent of the tear including both terminations, >=40 mm of intact denim beyond each, any exposed weft floats, and the nearest seam landmark. Do not open, close or flatten the tear -- shoot it as it lies.",
+   "garment_side": "n/a",
+   "instance_of": "n_tears",
+   "lens": "main",
+   "matched_shot_ids": [
+    "BEFORE.ANOM.TEAR.R1"
+   ],
+   "min_reps": 1,
+   "necessity": "conditional",
+   "purpose": "A tear grows in a wash and its terminations migrate, so its before-state length and end-points are the only way to say afterwards whether it grew. Unrecorded, a grown tear is indistinguishable from wash-induced damage the protocol would have to explain.",
+   "quality": {
+    "extra": "GATE_B. Instance scheme as in ANOM.DISTRESS; requires the proposed tear_count integer.  POST-WASH TWIN OF BEFORE.ANOM.TEAR.R1. A tear propagates and sheds warp threads in agitation; its post-wash extent is the measurement, and the whole-garment overhead at ~0.6 mm/px cannot resolve it.",
+    "min_blur": 80,
+    "min_long_edge_px": 3000,
+    "notes": "Author asked for tilt <= 5 deg; carried as a scale_range_ratio limit because degrees need an assumed focal length (EXP_0043).",
+    "requires_ruler": true
+   },
+   "region_id": "tear_zone",
+   "relay_between_reps": false,
+   "reposition_camera_between_reps": false,
+   "requires_human": [
+    "the rule's millimetre graduations are individually separated in this frame (this shot was specified at 0.100 mm/px or finer)"
+   ],
+   "scale_placement": "Steel rule on the denim beside the tear, coplanar, graduated edge facing it, within 20 mm, never bridging the opening.",
+   "scale_reference": "ruler",
+   "shot_id": "POSTWASH.ANOM.TEAR.R1",
    "state": "post_wash"
   },
   {
@@ -9041,7 +9465,7 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_back",
-   "relay_between_reps": false,
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9072,7 +9496,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_back",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.B00.R1",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9103,7 +9528,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_back",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.B00.R2",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9134,7 +9560,7 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_front",
-   "relay_between_reps": false,
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9165,7 +9591,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_front",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.F00.R1",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9196,7 +9623,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_front",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.F00.R2",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": false,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9227,7 +9655,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_front",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.F00.R3",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": true,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9258,7 +9687,8 @@
     "subject_px_meaning": "the waistband, measured across its top edge, must span at least this many px"
    },
    "region_id": "whole_garment_front",
-   "relay_between_reps": false,
+   "relay_after": "POSTWASH.WHOLE.F00.R4",
+   "relay_between_reps": true,
    "reposition_camera_between_reps": true,
    "scale_placement": "",
    "scale_reference": "both",
@@ -9630,10 +10060,18 @@
    },
    "region_id": "rig_lighting",
    "relay_between_reps": false,
+   "rep_semantics": [
+    "card position 1",
+    "card position 2",
+    "card position 3",
+    "card position 4",
+    "card position 5"
+   ],
    "reposition_camera_between_reps": true,
    "requires_human": [
     "the lighting is even across the whole area the garment will occupy",
-    "the grey/white reference is in frame and exposure and WB are at the locked values"
+    "the grey/white reference is in frame and exposure and WB are at the locked values",
+    "this frame shows card position 1 / card position 2 / card position 3 / card position 4 / card position 5 -- the subject this repeat is for, and not the subject of another repeat of the same shot"
    ],
    "scale_placement": "none \u2014 the card is the subject; the board stays in its frozen corner and must not be moved for this test",
    "scale_reference": "none",

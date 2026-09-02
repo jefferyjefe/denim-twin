@@ -9,7 +9,7 @@ describes.
 - [ ] All measurements taken again, twice each (see the measurement sheet)
 - [ ] Garment mass re-weighed
 
-## Frames (136)
+## Frames (141)
 
 - [ ] `POSTWASH.MOTION.LEFT` (1/1)
 - [ ] `POSTWASH.MOTION.RIGHT` (1/1)
@@ -57,7 +57,7 @@ describes.
 - [ ] `POSTWASH.WAIST.BELT_LOOPS_FRONT.R1` (1/1)
 - [ ] `POSTWASH.WAIST.RISE_FRONT.R1` (1/1)
 - [ ] `POSTWASH.WAIST.WAISTBAND_FRONT.R1` (2/2)
-- [ ] `POSTWASH.HEM.LEFT.CURL_INSTANCE.INN.MACRO.I01` (1/1)
+- [ ] `POSTWASH.HEM.LEFT.CURL_INSTANCE.I01.MACRO` (1/1)
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P01` (1/1)
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P02` (1/1)
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL.P03` (1/1)
@@ -70,7 +70,7 @@ describes.
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P04` (1/1)
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P05` (1/1)
 - [ ] `POSTWASH.HEM.LEFT.SIDE_CURL_BACK.P06` (1/1)
-- [ ] `POSTWASH.HEM.RIGHT.CURL_INSTANCE.INN.MACRO.I01` (1/1)
+- [ ] `POSTWASH.HEM.RIGHT.CURL_INSTANCE.I01.MACRO` (1/1)
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P01` (1/1)
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P02` (1/1)
 - [ ] `POSTWASH.HEM.RIGHT.SIDE_CURL.P03` (1/1)
@@ -89,9 +89,14 @@ describes.
 - [ ] `POSTWASH.CURL.RIGHT.PROFILE` (1/1)
 - [ ] `POSTWASH.WAIST.WAISTBAND_CORNER_L.R1` (1/1)
 - [ ] `POSTWASH.WAIST.WAISTBAND_CORNER_R.R1` (1/1)
+- [ ] `POSTWASH.ANOM.DISTRESS.R1.I01` (1/1)
+- [ ] `POSTWASH.ANOM.TEAR.R1.I01` (1/1)
+- [ ] `POSTWASH.ANOM.REPAIR.R1.I01` (1/1)
+- [ ] `POSTWASH.ANOM.PAINT.R1.I01` (1/1)
 - [ ] `POSTWASH.ANOM.EMBROIDERY.R1.I01` (1/1)
 - [ ] `POSTWASH.ANOM.LOGO.R1.I01` (1/1)
 - [ ] `POSTWASH.ANOM.PATCH.R1.I01` (1/1)
+- [ ] `POSTWASH.ANOM.STAIN.R1.I01` (1/1)
 - [ ] `POSTWASH.ANOM.PRINT_FADE.R1.I01` (1/1)
 - [ ] `POSTWASH.OBLIQUE.BL1` (1/1)
 - [ ] `POSTWASH.OBLIQUE.BL2` (1/1)
@@ -157,3 +162,35 @@ fray profile, not a rounding detail.
 - a 17 cm leg opening is a 170 mm loop: 8 positions every 20 mm, 3 macro frames
 - a 20 cm leg opening is a 200 mm loop: 10 positions every 20 mm, 3 macro frames
 - a 25 cm leg opening is a 250 mm loop: 12 positions every 20 mm, 4 macro frames
+
+## Regions with no post-wash frame, and no decision (19)
+
+These are photographed before the wash, change with washing, stay on the garment through it,
+and have no frame in any later state. Nobody has decided whether the post-wash whole-garment
+overheads are enough for them or whether each needs its own frame. They are listed here
+because the wash is a one-way door: whatever is not photographed on wash day cannot be
+photographed afterwards, and this is the last page anyone reads before the machine door
+closes.
+
+This is an OWNER DECISION, not a defect the software can settle. Decide per region and record
+it in postwash_coverage_decisions in protocol/shotplan/shotplan.json.
+
+- [ ] `asymmetry_zone` -- decided, or accepted as uncovered
+- [ ] `inseam_left_upper_front` -- decided, or accepted as uncovered
+- [ ] `inseam_right_upper_front` -- decided, or accepted as uncovered
+- [ ] `knee_back_left` -- decided, or accepted as uncovered
+- [ ] `knee_back_right` -- decided, or accepted as uncovered
+- [ ] `knee_front_left` -- decided, or accepted as uncovered
+- [ ] `knee_front_right` -- decided, or accepted as uncovered
+- [ ] `outseam_left_upper_front` -- decided, or accepted as uncovered
+- [ ] `outseam_right_upper_front` -- decided, or accepted as uncovered
+- [ ] `previous_alteration_zone` -- decided, or accepted as uncovered
+- [ ] `selvedge_outseam_left` -- decided, or accepted as uncovered
+- [ ] `selvedge_outseam_right` -- decided, or accepted as uncovered
+- [ ] `texture_mid_leg_front_left` -- decided, or accepted as uncovered
+- [ ] `texture_mid_leg_front_right` -- decided, or accepted as uncovered
+- [ ] `thigh_back_left` -- decided, or accepted as uncovered
+- [ ] `thigh_back_right` -- decided, or accepted as uncovered
+- [ ] `thigh_front_left` -- decided, or accepted as uncovered
+- [ ] `thigh_front_right` -- decided, or accepted as uncovered
+- [ ] `unusual_seam_zone` -- decided, or accepted as uncovered

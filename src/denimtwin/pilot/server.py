@@ -121,6 +121,14 @@ class _Handler(BaseHTTPRequestHandler):
     sys_version = ""
     protocol_version = "HTTP/1.1"
 
+    #: Drop a connection that goes quiet. socketserver applies this to the connection socket, and
+    #: BaseHTTPRequestHandler turns the resulting timeout into a closed connection rather than a
+    #: stuck thread. HTTP/1.1 means keep-alive is on, so without it every tab that ever connected
+    #: held a worker for the rest of the session -- and a phone on flaky wifi opens a new one each
+    #: time it reconnects. Long enough for a 200 MB upload over a slow link to keep making
+    #: progress between reads; short enough that an abandoned connection is gone in half a minute.
+    timeout = 30
+
     # -- plumbing ---------------------------------------------------------------------------
 
     def log_message(self, fmt, *args):
@@ -330,8 +338,51 @@ def _parse_multipart(rfile, headers, length):
 
 
 class PilotServer(ThreadingHTTPServer):
+    """ThreadingHTTPServer with a ceiling on how many connections may be open at once.
+
+    This is a local instrument, not a public server, and the failure that matters is not a breach:
+    it is the capture interface becoming unavailable in the middle of a session that cannot be
+    paused, because something on the network -- a scanner, a captive-portal probe, a phone
+    reconnecting in a loop -- opened more connections than there are threads. The ceiling is high
+    enough that the operator and their phone never approach it, and refusing past it is better than
+    queueing: a refusal is visible, and an instrument that has stopped answering is not.
+    """
     daemon_threads = True
     allow_reuse_address = True
+
+    #: Concurrent connections. One operator, one phone, one laptop tab: single digits in practice.
+    max_connections = 32
+
+    def __init__(self, *args, **kw):
+        ThreadingHTTPServer.__init__(self, *args, **kw)
+        self._slots = threading.BoundedSemaphore(self.max_connections)
+        self.refused_connections = 0
+
+    def process_request(self, request, client_address):
+        if not self._slots.acquire(False):
+            self.refused_connections += 1
+            try:
+                body = b'{"error":"too many open connections; the capture app is busy"}\n'
+                request.sendall(b"HTTP/1.1 503 Service Unavailable\r\n"
+                                b"Content-Type: application/json\r\n"
+                                b"Content-Length: " + str(len(body)).encode() +
+                                b"\r\nConnection: close\r\n\r\n" + body)
+            except OSError:
+                pass
+            # close_request, NOT shutdown_request: nothing was acquired for this connection, and
+            # releasing a BoundedSemaphore that was never acquired raises.
+            self.close_request(request)
+            return
+        ThreadingHTTPServer.process_request(self, request, client_address)
+
+    def shutdown_request(self, request):
+        try:
+            ThreadingHTTPServer.shutdown_request(self, request)
+        finally:
+            try:
+                self._slots.release()
+            except ValueError:
+                pass
 
 
 def lan_ip():

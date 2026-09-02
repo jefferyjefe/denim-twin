@@ -325,6 +325,21 @@ def doc_post_wash(spec, shots, ordered):
         lines.append("- a %d cm leg opening is a %.0f mm loop: %d positions every %.0f mm, "
                      "%d macro frames" % (cm, g.circumference_mm, len(g.positions()),
                                           g.position_spacing_mm, len(g.macros())))
+    open_ = spec.open_postwash_regions()
+    if open_:
+        lines += ["", "## Regions with no post-wash frame, and no decision (%d)" % len(open_), "",
+                  wrap("These are photographed before the wash, change with washing, stay on the "
+                       "garment through it, and have no frame in any later state. Nobody has "
+                       "decided whether the post-wash whole-garment overheads are enough for them "
+                       "or whether each needs its own frame. They are listed here because the wash "
+                       "is a one-way door: whatever is not photographed on wash day cannot be "
+                       "photographed afterwards, and this is the last page anyone reads before "
+                       "the machine door closes."), "",
+                  wrap("This is an OWNER DECISION, not a defect the software can settle. Decide "
+                       "per region and record it in postwash_coverage_decisions in "
+                       "protocol/shotplan/shotplan.json."), ""]
+        for rid in open_:
+            lines.append("- [ ] `%s` -- decided, or accepted as uncovered" % rid)
     return "\n".join(lines) + "\n"
 
 
@@ -447,7 +462,25 @@ CONDITION_LINES = {
     "captures.repositions_recorded": "each repeat that needed a camera reposition records one",
     "captures.reuse_legitimate": "any reused image passed the borrowing shot's own checks",
     "captures.no_undeclared_reuse": "no photograph satisfies two shots without a declared reuse",
-    "cut.specified": "the cut is defined and its outseam offset computed",
+    "annotations.identify_instances": "every counted feature is described one instance at a time, "
+                                      "with a stable id and a location, so each photograph names "
+                                      "the physical thing it is of",
+    "captures.instance_identity": "every photograph of a repeated feature agrees with the plan "
+                                  "about which one of them it shows",
+    "measurements.revisions_explained": "any measurement replaced by a later reading in the same "
+                                        "state carries a recorded reason, and none declares a "
+                                        "lifecycle state the log contradicts",
+    "captures.state_order": "no photograph is filed in a state the log's own order contradicts: "
+                             "nothing of the uncut garment after the cut, nothing of the washed "
+                             "one before the wash",
+    "cut.not_already_performed": "this garment has not already been cut; a gate that authorises an "
+                                 "irreversible act may not be asked after it",
+    "cut.performed_recorded": "the cut's achieved inseam and outseam are recorded for both legs, "
+                              "with the tool, before the garment goes near water",
+    "measurements.post_wash": "the washed garment was measured again, so shrinkage is the "
+                              "difference between two recorded numbers rather than one",
+    "cut.specified": "the cut is defined and its outseam offset computed, from the measurements "
+                     "that are on record now",
     "cut.second_person_verified": "a second person -- not the operator -- measured both marks "
                                   "within 3 mm, and did not refuse",
     "cut.confirmations": "legs cut separately, offcuts retained and labelled",

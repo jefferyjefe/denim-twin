@@ -58,13 +58,35 @@ Put a coin in the frame if you want any answer in centimetres.
 
     python tools/pilot.py new                    # create the garment, open a session
     python tools/pilot.py setup DENIM_0003       # freeze the rig, record the calibration readings
+    python tools/pilot.py intake DENIM_0003      # the feature questionnaire
+    python tools/pilot.py annotate DENIM_0003 --id TEAR.01 --feature n_tears --type tear \
+        --location 'left leg front, 12 cm above the hem' --note 'what it looks like'
+    python tools/pilot.py measure DENIM_0003     # the pre-cut dimensions
     python tools/pilot.py serve DENIM_0003 --lan # the phone app; the URL it prints carries the token
     python tools/pilot.py status DENIM_0003      # coverage, quality, next action
     python tools/pilot.py precut DENIM_0003      # THE GATE: may this garment be cut?
+    python tools/pilot.py cut-performed DENIM_0003 --inseam-l .. --inseam-r .. \
+        --outseam-l .. --outseam-r .. --tool 'shears' --legs-separately y
+    python tools/pilot.py measure DENIM_0003 --state post_wash   # the washed garment
     python tools/pilot.py finalize DENIM_0003    # the post-wash gate and the committable manifest
 
-`tools/pilot.py --help` lists the rest: `intake`, `measure`, `plan`, `next`, `add`, `confirm`,
-`reuse`, `cutspec`, `packet`, `hem`, `wash`, `offcut`, `gate`, `selftest`. Set `PILOT_GARMENTS` to a
+Two things about that sequence are load-bearing. **A count is not an identity**: `n_tears = 3`
+requires three photographs and says nothing about which tear each one shows, so every counted
+feature is described one instance at a time with a stable id, each frame is expanded from one of
+those descriptions and carries its id, and the cut gate refuses a garment whose features are
+counted but not identified. **A measurement belongs to a state**: the waist before the cut and the
+waist after the wash are two facts about two different physical objects, and the shrinkage is the
+difference between them, so `measure --state post_wash` writes a second set rather than replacing
+the first.
+
+    python tools/pilot.py provenance DENIM_0003 measurement leg_opening_cm
+
+answers, for any measurement, annotation, capture or the cut spec: what physical thing it refers
+to, when in the lifecycle it was collected, who supplied it, what later data depends on it, whether
+it was changed after it was first recorded, and what each gate currently says about it.
+
+`tools/pilot.py --help` lists the rest: `plan`, `next`, `add`, `confirm`, `reuse`, `cutspec`,
+`packet`, `hem`, `wash`, `offcut`, `deviation`, `gate`, `selftest`. Set `PILOT_GARMENTS` to a
 scratch directory to rehearse the whole thing without being able to write where the real garment
 records live.
 
@@ -91,9 +113,9 @@ tilt, relay independence and duplicate content — are measured in
 records a negative result as well: image similarity **cannot** tell five independent re-lays from one
 photograph submitted five times, so the system does not pretend to.
 
-    python tools/pilot.py selftest               # 85 scenarios, on synthetic images, in a temp dir
+    python tools/pilot.py selftest               # 103 scenarios, on synthetic images, in a temp dir
 
-    python tools/pilot.py selftest --full        # and drive the real 419-frame plan to READY
+    python tools/pilot.py selftest --full        # and drive the real 424-frame plan to READY
 
 Most of them try to obtain a pass that is not deserved; a few check the opposite, that good evidence
 is not refused, because a checker that says no to everything is not a safe one. The last drives a

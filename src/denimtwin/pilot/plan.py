@@ -164,7 +164,49 @@ def expand_hem_series(shot, measurements, cut_spec=None):
     return out
 
 
-def activate(spec, answers, measurements=None, cut_spec=None):
+def _state_order(spec):
+    try:
+        return {st["state"]: st["order"] for st in spec.states}
+    except Exception:
+        return {}
+
+
+#: The instance placeholder inside a shot id, mirroring PNN for hem positions.
+INSTANCE_PLACEHOLDER = "INN"
+
+
+def _instance_id(shot_id, i):
+    """Substitute the instance placeholder, or append the suffix when there is none."""
+    suffix = "I%02d" % i
+    if "." + INSTANCE_PLACEHOLDER in shot_id:
+        return shot_id.replace("." + INSTANCE_PLACEHOLDER, "." + suffix, 1)
+    return "%s.%s" % (shot_id, suffix)
+
+
+def annotations_for(annotations, feature_key, upto_state=None, state_order=None):
+    """The recorded physical instances of one counted feature, in the order they were recorded.
+
+    Ordered by the log entry that created each one, NOT by the id. Sorting by id put frame identity
+    in a sort POSITION: any later annotation whose id sorted ahead of an existing one shifted every
+    slot after it, and the shift retroactively re-labelled photographs that had been taken, checked
+    and accepted hours earlier. Two entirely ordinary things did it -- finding a missed tear at 1 a.m.
+    and naming it TEAR.00 for what it is, or typing ids without leading zeros so that TEAR.10 sorts
+    between TEAR.1 and TEAR.2.
+
+    The log is append-only, so `seq` only ever increases: a new annotation can only ever take a new
+    slot at the end, and no photograph already taken can change what it is of.
+    """
+    rows = [a for a in (annotations or {}).values() if a.get("feature") == feature_key]
+    if upto_state is not None and state_order:
+        limit = state_order.get(upto_state)
+        if limit is not None:
+            rows = [a for a in rows
+                    if state_order.get(a.get("discovered_in") or "before", 0) <= limit]
+    return sorted(rows, key=lambda a: (a.get("seq") if a.get("seq") is not None else 1 << 30,
+                                       str(a.get("annotation_id"))))
+
+
+def activate(spec, answers, measurements=None, cut_spec=None, annotations=None):
     """The shots this garment actually requires. Returns (shots, meta).
 
     A conditional shot whose condition cannot be evaluated is INCLUDED, and the reason is recorded.
@@ -192,7 +234,27 @@ def activate(spec, answers, measurements=None, cut_spec=None):
             continue
         inst = s.get("instance_of")
         if inst:
-            n = instance_count(features, inst)
+            # The physical objects, if the operator has recorded them. A count says there are three
+            # tears; the annotations say WHICH three, and a frame expanded from one of them carries
+            # its id, so the photograph names the thing it is of instead of an ordinal that means
+            # nothing once the garment is in pieces.
+            # A frame in the `before` state can only be of something that was there before. An
+            # annotation discovered after the wash still gets its post-wash frames.
+            anns = annotations_for(annotations, inst, upto_state=s.get("state"),
+                                   state_order=_state_order(spec))
+            # The count is the fallback for a garment whose features have not been described at
+            # all. Once ANY instance of this feature is described, the descriptions are
+            # authoritative -- including when the state filter leaves none, which is exactly the
+            # case of a tear the wash opened: the count says one, and there was none before the
+            # wash. Falling back to the count there demanded a pre-cut photograph of a tear that
+            # did not exist, on a garment now cut and washed.
+            described_at_all = annotations_for(annotations, inst)
+            if described_at_all:
+                n = len(anns)
+            else:
+                n = instance_count(features, inst)
+            if described_at_all and not anns:
+                continue                     # nothing of this feature existed in this state yet
             if n == 0:
                 # Inclusion and cardinality come from two independent inputs and were never
                 # reconciled. A shot whose condition is an OR over several counts but whose
@@ -210,10 +272,23 @@ def activate(spec, answers, measurements=None, cut_spec=None):
                 continue
             for i in range(1, n + 1):
                 c = dict(s)
-                c["shot_id"] = "%s.I%02d" % (s["shot_id"], i)
+                # INN is the instance placeholder, exactly as PNN is the hem-position placeholder,
+                # and it was never substituted: activate() APPENDED the suffix, so ten planned
+                # frames carried ids like BEFORE.HEM.LEFT.WEAR.INN.MACRO.I01 -- the placeholder and
+                # its own replacement, in one id.
+                c["shot_id"] = _instance_id(s["shot_id"], i)
                 c["instance_index"] = i
                 c["instance_total"] = n
-                c["matched_shot_ids"] = ["%s.I%02d" % (m, i) for m in (s.get("matched_shot_ids") or [])]
+                if anns:
+                    a = anns[i - 1]
+                    c["annotation_id"] = a.get("annotation_id")
+                    c["annotation_type"] = a.get("type")
+                    c["annotation_location"] = a.get("location")
+                    c["framing"] = "%s\n  [instance %d of %d: %s -- %s]" % (
+                        s["framing"], i, n, a.get("annotation_id"),
+                        (a.get("location") or "location not recorded"))
+                c["matched_shot_ids"] = [_instance_id(m, i)
+                                         for m in (s.get("matched_shot_ids") or [])]
                 out.append(c)
         else:
             out.append(dict(s))

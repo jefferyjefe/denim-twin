@@ -113,6 +113,15 @@ def _fmt_time(seconds):
     return "%dh %02dm" % (m // 60, m % 60) if m >= 60 else "%d min" % m
 
 
+class _Unknown(object):
+    """The operator declining to answer, which is NOT the same as answering zero."""
+    def __repr__(self):
+        return "<unanswered>"
+
+
+_UNKNOWN = _Unknown()
+
+
 def _prompt(text, default=None, cast=str):
     """Ask, and cast. The DEFAULT goes through the cast too.
 
@@ -285,11 +294,32 @@ def cmd_intake(a):
             # instances and silently deleted the photographs that count was there to require, and
             # accepted 10**9, which expands to one shot record per instance.
             def _count(x, _k=f["key"]):
+                if str(x).strip() in ("?", "unknown", "u"):
+                    return _UNKNOWN
                 n = int(x)
                 if not (0 <= n <= PLAN.MAX_INSTANCES):
                     raise ValueError("a count must be between 0 and %d" % PLAN.MAX_INSTANCES)
                 return n
-            v = _prompt("%s (number)" % f["prompt"], cur if cur is not None else 0, _count)
+            # NO DEFAULT. `unanswered_means` for every count feature in the specification is
+            # "present", and plan.resolve_features turns silence into "at least one, until you tell
+            # me otherwise" precisely so that a forgotten question cannot delete a photograph. The
+            # prompt pre-filled 0, which converted that silence into an ANSWER of none -- so holding
+            # Enter through intake recorded a garment with no tears, no stains, no repairs and no
+            # distressing, dropped every frame that would have photographed them, and blocked
+            # nothing, because zero is a perfectly good answer. The evidence is missing before the
+            # garment is cut and the operator finds out afterwards, if ever.
+            v = _prompt("%s (number, or ? if you have not counted yet)" % f["prompt"],
+                        cur if cur is not None else None, _count)
+            if v is _UNKNOWN:
+                # Left unanswered on purpose: the plan assumes the feature is present and requires
+                # its photographs, which is the safe reading. Writing None rather than dropping the
+                # key: feature_answers MERGES into the folded state, so removing it from this dict
+                # left the previous answer standing while the prompt said it had been unanswered.
+                # resolve_features treats an explicit None exactly as absent.
+                answers[k] = None
+                print("    left unanswered: the plan will assume it is there and ask for the "
+                      "photographs")
+                continue
         elif f["type"] == "number":
             v = _prompt(f["prompt"], cur if cur is not None else f.get("default"), float)
         elif f["type"] == "enum":
@@ -298,18 +328,126 @@ def cmd_intake(a):
             v = _prompt(f["prompt"], cur or f.get("default", ""))
         answers[k] = v
     st.append("feature_answers", {"answers": answers}, operator=a.operator)
-    shots, meta = PLAN.activate(spec, answers, GATES.plan_safe_measurements(state))
+    shots, meta = PLAN.activate(spec, answers, GATES.plan_safe_measurements(state),
+                                annotations=state.get("annotations"))
     ordered = PLAN.order(spec, shots)
     print("\n%d shots activated, %d frames including repeats, estimated %s"
           % (len(shots), len(ordered), _fmt_time(PLAN.estimate_seconds(spec, ordered))))
     return OK
 
 
+def cmd_annotate(a):
+    """Record ONE physical feature instance -- this tear, that stain -- with a stable id.
+
+    A count says the garment has three tears. It does not say which tear a photograph shows, and
+    six months later that is the only question anyone asks of it. Each instanced frame is expanded
+    from one of these and carries its id, so a photograph names the object it is of instead of an
+    ordinal that means nothing once the garment is in pieces.
+    """
+    spec = load_spec()
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    counts = [f["key"] for f in spec.features if f["type"] == "count"]
+    if a.feature not in counts:
+        raise SystemExit("%r is not a counted feature. The counted features are:\n  %s"
+                         % (a.feature, "\n  ".join(counts)))
+    if a.id in state["annotations"]:
+        print("note: %s already exists; this entry supersedes it and the earlier one stays in the "
+              "log." % a.id)
+    st.append("annotation", {"annotation_id": a.id, "feature": a.feature, "type": a.type,
+                             "location": a.location, "note": a.note, "size_mm": a.size_mm,
+                             "operator": a.operator},
+              operator=a.operator)
+    state, _ = st.fold()
+    have = len(PLAN.annotations_for(state["annotations"], a.feature))
+    want = state["features"].get(a.feature)
+    print("recorded %s (%s) at %s" % (a.id, a.feature, a.location))
+    print("  %d of %s %s instance(s) now described"
+          % (have, want if want is not None else "?", a.feature))
+    if want is not None and have != want:
+        print("  the count and the descriptions disagree; the cut gate blocks until they match")
+    return OK
+
+
+def cmd_provenance(a):
+    """Six questions about one piece of evidence: what, when, who, what depends on it, was it
+    changed, and does the system consider it sufficient."""
+    from denimtwin.pilot import provenance as PROV
+    spec = load_spec()
+    gdir = garment_dir(a.garment)
+    st = Store(gdir)
+    state, _ = st.fold()
+    key = a.key
+    if a.kind == "capture":
+        sid, _, rep = a.key.partition(":")
+        try:
+            key = (sid, int(rep or 1))
+        except ValueError:
+            raise SystemExit("a capture is named SHOT_ID:REP, e.g. BEFORE.WHOLE.F00.R1:1")
+    d = PROV.describe(state, a.kind, key)
+    if not d.get("found"):
+        raise SystemExit("no %s named %r in this garment's log" % (a.kind, a.key))
+    print("%s %s" % (a.kind, a.key))
+    print("  1. what physical thing   %s" % d["physical_subject"])
+    print("  2. when in the lifecycle %s  (log entry %s)"
+          % (d["lifecycle_state"], d["recorded_at_entry"]))
+    print("  3. who supplied it       %s" % d["supplied_by"])
+    print("  4. what depends on it    %s"
+          % ("nothing recorded" if not d["depends_on_it"] else ""))
+    for dep in d["depends_on_it"]:
+        print("       %-38s %s" % (dep["what"], dep["why"][:88]))
+    mod = d["modified_after_first_record"]
+    print("  5. changed after it was first recorded  %s"
+          % ("no" if not mod else "YES, %d time(s): %s" % (len(mod), mod)))
+    print("  6. does the gate consider the evidence sufficient")
+    for gid in ("ready_to_cut", "ready_to_wash", "ready_to_finalize"):
+        try:
+            v = GATES.evaluate(gid, spec, st, garment_dir=gdir)
+        except Exception as e:
+            print("       %-20s could not be evaluated: %s" % (gid, e))
+            continue
+        print("       %-20s %s" % (gid, "READY" if v.ready else
+                                   "blocked on " + ", ".join(sorted(b.condition for b in v.blocks))))
+    return OK
+
+
 def cmd_measure(a):
     st = Store(garment_dir(a.garment))
-    print("Physical measurements. Each reading is taken INDEPENDENTLY -- lay the tape again,\n"
+    state, _ = st.fold()
+    # A measurement belongs to a lifecycle state. The state is not asked for as a free choice: it
+    # is where the log says the garment has actually got to, because the entries that move it -- the
+    # recorded cut, the recorded wash -- are physical facts already in the record. It is PRINTED,
+    # and a measurement that is not a before-cut one has to be confirmed, because the difference
+    # between "the waist" and "the waist after washing" is the entire result.
+    ms = a.state or state["lifecycle_state"]
+    wanted = (GATES.POST_WASH_MEASUREMENTS if ms == "post_wash" else GATES.REQUIRED_MEASUREMENTS)
+    print("Recording %s measurements for %s.\n" % (ms.upper(), a.garment))
+    # ALWAYS confirmed, including for the pre-cut set. The lifecycle is derived from the LOG, and
+    # the log lags the room: the garment is cut and washed hours before anybody types
+    # `cut-performed`, so running `measure` in that window silently filed post-wash readings into
+    # the pre-cut bucket -- destroying the baseline every later comparison is made against, with no
+    # prompt, because the confirmation only fired when the state was not "before". The software
+    # cannot know what has happened to the garment. It can say which set it is about to write and
+    # make the operator agree.
+    existing = sorted((state.get("measurements_by_state") or {}).get(ms) or {})
+    if ms == "before":
+        print("This is the PRE-CUT baseline: the numbers every later comparison is made against.\n"
+              "If this garment has already been cut or washed, these are not before-measurements,\n"
+              "whatever the log says -- record the cut with `cut-performed` first, or pass\n"
+              "--state post_wash.\n")
+    else:
+        print("The log has this garment at %r. These readings will NOT replace the pre-cut ones --\n"
+              "they are a separate set, and the difference between them is the shrinkage.\n" % ms)
+    if existing:
+        print("%d %s measurement(s) are already recorded (%s); re-recording one replaces it and\n"
+              "the gate will ask you to say why.\n"
+              % (len(existing), ms, ", ".join(existing[:6])))
+    if not _prompt("record these as %s measurements? (y/n)" % ms, None, _bool):
+        print("nothing recorded; pass --state to say which set you meant")
+        return FAIL
+    print("Each reading is taken INDEPENDENTLY -- lay the tape again,\n"
           "do not copy the first number. Readings that disagree beyond tolerance block the cut.\n")
-    for name, n in sorted(GATES.REQUIRED_MEASUREMENTS.items()):
+    for name, n in sorted(wanted.items()):
         tol = GATES.MEASUREMENT_TOLERANCE.get(name, GATES.MEASUREMENT_TOLERANCE["_default_cm"])
         readings = []
         for i in range(n):
@@ -319,8 +457,37 @@ def cmd_measure(a):
         flag = "" if spread <= tol else "  <-- readings differ by %.2f, tolerance %.2f" % (spread, tol)
         print("    mean %.2f%s" % (mean, flag))
         st.append("measurement", {"name": name, "readings": readings, "mean": mean,
-                                  "spread": spread, "tolerance": tol,
+                                  "spread": spread, "tolerance": tol, "state": ms,
                                   "in_tolerance": spread <= tol}, operator=a.operator)
+    return OK
+
+
+def cmd_cut_performed(a):
+    """What the cut ACHIEVED. PROTOCOL 3.1 requires it, and it can only be taken between the
+    shears and the water: after the wash the garment has shrunk, and the length you measure is no
+    longer the length you cut."""
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    if state.get("cut_performed"):
+        print("this garment already has a recorded cut (seq %s). A second record is a CORRECTION:\n"
+              "the first one stands, and the gate will ask you to acknowledge the disagreement."
+              % state["cut_performed"].get("seq"))
+    payload = {
+        "achieved_inseam_cm": {"L": a.inseam_l, "R": a.inseam_r},
+        "achieved_outseam_cm": {"L": a.outseam_l, "R": a.outseam_r},
+        "tool": a.tool,
+        "legs_cut_separately": a.legs_separately,
+        "operator": a.operator,
+        "deviations": a.deviation or None,
+    }
+    st.append("cut_performed", payload, operator=a.operator)
+    cs = state.get("cut_spec") or {}
+    tgt = cs.get("target_inseam_cm")
+    print("recorded: inseam L %.1f R %.1f, outseam L %.1f R %.1f, tool %r"
+          % (a.inseam_l, a.inseam_r, a.outseam_l, a.outseam_r, a.tool))
+    if tgt:
+        print("target was %.1f cm; achieved differs by L %+.1f R %+.1f"
+              % (tgt, a.inseam_l - tgt, a.inseam_r - tgt))
     return OK
 
 
@@ -329,7 +496,7 @@ def cmd_plan(a):
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
     shots, meta = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
-                                state.get("cut_spec"))
+                                state.get("cut_spec"), annotations=state.get("annotations"))
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     print("%s -- %d frames, %s remaining\n"
@@ -354,7 +521,7 @@ def cmd_next(a):
     st = Store(garment_dir(a.garment))
     state, _ = st.fold()
     shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
-                                state.get("cut_spec"))
+                                state.get("cut_spec"), annotations=state.get("annotations"))
     ordered = PLAN.order(spec, shots, state=a.state)
     done = st.done_keys()
     e = PLAN.next_action(ordered, done)
@@ -415,7 +582,7 @@ def cmd_add(a):
     st = Store(gdir)
     state, problems = st.fold()
     shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
-                                state.get("cut_spec"))
+                                state.get("cut_spec"), annotations=state.get("annotations"))
     by_id = {s["shot_id"]: s for s in shots}
     shot = by_id.get(a.shot)
     if shot is None:
@@ -429,10 +596,21 @@ def cmd_add(a):
     import cv2
     img = cv2.imread(str(dest))
     h, w = (img.shape[:2] if img is not None else (None, None))
+    # The instance identity travels WITH the photograph. The planner computed instance_index,
+    # instance_total and -- when the operator has recorded the physical objects -- the annotation
+    # this frame is of, and the capture record threw all three away. Instance identity then survived
+    # only as a substring of the shot id, recoverable solely by re-deriving the plan from the
+    # CURRENT feature answers: a function of mutable state, not a recorded fact. Answer the count
+    # differently later and the photographs silently mean something else.
     st.append("capture", {"shot_id": a.shot, "rep": a.rep, "path": rel, "sha256": sha,
                           "exif": exif, "exif_ts": ts, "width": w, "height": h,
                           "dhash": _dhash_hex(img),
                           "state": shot["state"], "region_id": shot.get("region_id"),
+                          "instance_index": shot.get("instance_index"),
+                          "instance_total": shot.get("instance_total"),
+                          "annotation_id": shot.get("annotation_id"),
+                          "annotation_type": shot.get("annotation_type"),
+                          "annotation_location": shot.get("annotation_location"),
                           "already_present": already},
               operator=a.operator, setup_hash=state["setup_hash"])
     b, bspec = board()
@@ -477,7 +655,7 @@ def cmd_reuse(a):
     st = Store(gdir)
     state, _ = st.fold()
     shots, _m = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
-                                state.get("cut_spec"))
+                                state.get("cut_spec"), annotations=state.get("annotations"))
     by_id = {x["shot_id"]: x for x in shots}
     target = by_id.get(a.target)
     if target is None:
@@ -516,9 +694,31 @@ def cmd_reuse(a):
     # path left every reuse looking misfiled to captures.files_intact -- so the command exited 0
     # saying "recorded" and left the garment permanently unable to pass the gate.
     dest, _sha, _already = ingest_photo(path, gdir / "images" / target["state"], a.target, a.rep)
+    # Two DIFFERENT physical objects are never each other's evidence. A reuse is legitimate when
+    # one frame happens to satisfy a second shot's requirements; it is never legitimate when the
+    # two shots are of two different tears, because the requirement the second one states is a
+    # photograph of the OTHER tear and no re-run check can tell them apart.
+    sa, ta = src.get("annotation_id"), target.get("annotation_id")
+    if (sa or ta) and sa != ta:
+        raise SystemExit(
+            "refusing: %s is of %s and %s is of %s. Those are two different physical things, and a "
+            "photograph of one is not evidence about the other -- none of the checks re-run on it "
+            "can tell them apart." % (a.source, sa or "no recorded instance", a.target,
+                                      ta or "no recorded instance"))
+    # The borrowed frame takes the TARGET shot's identity, never the source's. Copying the source
+    # record wholesale carried annotation_id/location across, so a photograph of TEAR.01 filed
+    # against the slot the plan says is TEAR.02 positively asserted it was of TEAR.01 -- under a
+    # shot id that means the other tear. Every re-run check passed, because none of them is about
+    # which tear is in the frame.
     st.append("capture", dict(src, shot_id=a.target, rep=a.rep, state=target["state"],
                               path=str(dest.relative_to(gdir)),
-                              region_id=target.get("region_id"), reused_from=a.source),
+                              region_id=target.get("region_id"),
+                              instance_index=target.get("instance_index"),
+                              instance_total=target.get("instance_total"),
+                              annotation_id=target.get("annotation_id"),
+                              annotation_type=target.get("annotation_type"),
+                              annotation_location=target.get("annotation_location"),
+                              reused_from=a.source),
               operator=a.operator, setup_hash=src.get("setup_hash"))
     st.append("qa_result", {"shot_id": a.target, "rep": a.rep, "outcome": outcome,
                             "shot_class": QA.shot_class(target),
@@ -577,8 +777,10 @@ def cmd_confirm(a):
     if a.shot:
         spec = load_spec()
         state0, _ = st.fold()
-        activated, _m = PLAN.activate(spec, state0["features"], GATES.plan_safe_measurements(state0),
-                                      state0.get("cut_spec"))
+        activated, _m = PLAN.activate(spec, state0["features"],
+                                      GATES.plan_safe_measurements(state0),
+                                      state0.get("cut_spec"),
+                                      annotations=state0.get("annotations"))
         if a.shot not in {x["shot_id"] for x in activated}:
             raise SystemExit("%s is not an activated shot for this garment, so there is nothing "
                              "about it to verify" % a.shot)
@@ -816,7 +1018,7 @@ def cmd_status(a):
     st = Store(gdir)
     state, problems = st.fold()
     shots, meta = PLAN.activate(spec, state["features"], GATES.plan_safe_measurements(state),
-                                state.get("cut_spec"))
+                                state.get("cut_spec"), annotations=state.get("annotations"))
     ordered = PLAN.order(spec, shots)
     done = st.done_keys()
     print("%s   state=%s   spec=%s   rig=%s"
@@ -896,8 +1098,15 @@ def cmd_finalize(a):
         return FAIL
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(sanitised, indent=1, sort_keys=True) + "\n")
+    try:
+        shown = out.relative_to(ROOT)
+    except ValueError:
+        # PILOT_GARMENTS is the documented way to rehearse outside the repository, and printing a
+        # repo-relative path threw there -- AFTER the manifest had been written. The operator saw
+        # "refused" and exit 1 on a session the gate had just passed.
+        shown = out
     print("\nwrote %s (%d entries, absolute paths and location EXIF removed)"
-          % (out.relative_to(ROOT), len(sanitised)))
+          % (shown, len(sanitised)))
     return OK
 
 
@@ -924,7 +1133,29 @@ def main(argv=None):
     s = add("setup", cmd_setup)
     s.add_argument("--reason", default=None)
     add("intake", cmd_intake)
-    add("measure", cmd_measure)
+    s = add("provenance", cmd_provenance)
+    s.add_argument("kind", choices=("measurement", "annotation", "capture", "cut_spec"))
+    s.add_argument("key", help="the name, id, or SHOT_ID:REP for a capture")
+    s = add("annotate", cmd_annotate)
+    s.add_argument("--id", required=True, help="stable id for this one physical thing, e.g. TEAR.01")
+    s.add_argument("--feature", required=True, help="which counted feature it instantiates, e.g. n_tears")
+    s.add_argument("--type", required=True, help="tear / stain / repair / paint ...")
+    s.add_argument("--location", required=True, help="where on the garment, in words a person can relocate it by")
+    s.add_argument("--note", default="", help="what it looks like")
+    s.add_argument("--size-mm", type=float, default=None, dest="size_mm")
+    s = add("measure", cmd_measure)
+    s.add_argument("--state", default=None, choices=("before", "post_wash"),
+                   help="which set these readings belong to; default is where the log says the "
+                        "garment has got to")
+    s = add("cut-performed", cmd_cut_performed)
+    s.add_argument("--inseam-l", type=float, required=True, dest="inseam_l")
+    s.add_argument("--inseam-r", type=float, required=True, dest="inseam_r")
+    s.add_argument("--outseam-l", type=float, required=True, dest="outseam_l")
+    s.add_argument("--outseam-r", type=float, required=True, dest="outseam_r")
+    s.add_argument("--tool", required=True, help="the shears actually used")
+    s.add_argument("--legs-separately", type=_bool, required=True, dest="legs_separately",
+                   help="PROTOCOL 3.4 cuts the legs separately; say what you did")
+    s.add_argument("--deviation", default=None, help="anything that departed from the plan")
     s = add("plan", cmd_plan)
     s.add_argument("--state", default=None)
     s = add("next", cmd_next)

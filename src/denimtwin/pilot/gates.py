@@ -90,6 +90,29 @@ WASH_FIELDS = ("machine", "location", "cycle", "water_temp_c", "spin_rpm", "dete
 #: Second-person verification of the cut marks. PROTOCOL.md 3.2 sets this.
 CUT_MARK_TOLERANCE_MM = 3.0
 
+#: The dimensions that must be measured AGAIN after the wash, with the number of readings each
+#: needs. Shrinkage is the difference between these and the pre-cut values, so a post-wash record
+#: that omits them leaves the wash unmeasured -- and unlike almost everything else in the protocol,
+#: it cannot be gone back for: the next wash is a different sample.
+#: The dimensions where the pre-cut and post-wash numbers are measurements OF THE SAME THING, so
+#: their difference is shrinkage and nothing else.
+#:
+#: original_inseam_cm is absent because after the cut the garment does not have one; the length
+#: that replaced it is recorded by cut_performed. leg_opening_cm is absent for exactly the same
+#: reason and it took a dry run to notice: before the cut it is the original factory hem, after the
+#: cut it is the NEW RAW EDGE somewhere up the leg, whose circumference the cut spec itself
+#: predicts. Subtracting one from the other and calling it shrinkage published -45.5% on a garment
+#: whose cut edge matched its prediction to 0.02 cm. A number that is not a shrinkage must not be
+#: reported as one, least of all in the record that closes the experiment.
+#:
+#: mass_grams and fabric_thickness_mm are absent because PROTOCOL does not ask for them after the
+#: wash, and adding a required physical measurement on our own judgement would be inventing
+#: protocol; they are named in the report as an owner decision rather than quietly required or
+#: quietly forgotten.
+POST_WASH_MEASUREMENTS = {
+    "waist_cm": 2, "thigh_cm": 2, "front_rise_cm": 2, "back_rise_cm": 2,
+}
+
 #: The rig fields a freeze has to state. Every one of them is a fact about physical hardware, so
 #: none of them has a default anywhere: a default here is a measurement nobody took, attached by
 #: the hash to every photograph in the session. The web app validated this list from the start; the
@@ -319,7 +342,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     activated = None
     try:
         activated, meta = PLAN.activate(spec, state["features"], safe_measurements,
-                                        state.get("cut_spec"))
+                                        state.get("cut_spec"),
+                                        annotations=state.get("annotations"))
     except Exception as e:
         blocks.append(Block("plan.generated",
                             "no shot plan could be generated: %s" % e,
@@ -340,14 +364,42 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     def c_spec_bound():
         if not state["spec_hash"]:
             return False, "this session never recorded which shot plan it was opened under", \
-                   "run `pilot.py new` / `pilot.py open` to bind the session to a specification", {}
+                   "run `pilot.py new` to create the garment and bind the session to a " \
+                   "specification (there is no separate `open` command)", {}
         if state["spec_hash"] != spec.content_hash:
-            return False, ("the session was opened under shot plan %s but the specification on disk "
-                           "now hashes to %s -- the plan changed underneath the evidence"
-                           % (state["spec_hash"][:12], spec.content_hash[:12])), \
-                   "re-run the gate against the specification version the session used, or " \
-                   "re-validate every capture against the new plan", \
-                   {"session": state["spec_hash"], "on_disk": spec.content_hash}
+            # This used to be a permanent lockout. Any edit to the shot plan -- including one that
+            # ADDS a required photograph, which is the edit you most want to be able to make -- left
+            # every open session blocked here forever, and the remedy the message named ("re-run the
+            # gate against the specification version the session used") was not something any
+            # command could do: there is no --spec on the gate.
+            #
+            # Acknowledging it does not weaken anything. Every other condition re-derives against
+            # the plan ON DISK: captures.required_complete still demands every frame the NEW plan
+            # requires, and a frame the new plan added is still missing until it is taken. What the
+            # deviation adds is that the substitution is in the record instead of being silent.
+            # Matched on the ON-DISK hash only. Requiring the session's old hash as well adds no
+            # safety -- it is in the log either way -- and doubles the chance that the remedy fails
+            # silently because a character of a 64-digit hash was retyped wrongly, which is the
+            # realistic way an operator meets this at the end of a long day: the deviation is
+            # recorded, the gate keeps refusing, and nothing says the two nearly matched.
+            ack = deviation_covers(state["deviations"], "protocol", "spec_rebound",
+                                   actual=spec.content_hash)
+            if ack is None:
+                return False, ("the session was opened under shot plan %s but the specification on "
+                               "disk now hashes to %s -- the plan changed underneath the evidence"
+                               % (state["spec_hash"][:12], spec.content_hash[:12])), \
+                       ("every other condition already re-checks this session against the plan on "
+                        "disk, so a frame the new plan requires is still missing until it is "
+                        "taken. Record which plan this session is being held to:\n"
+                        "  tools/pilot.py deviation %s --kind protocol --field spec_rebound "
+                        "--actual %s --reason '<what changed and why the evidence already taken "
+                        "still stands>'"
+                        % (state["garment_id"], spec.content_hash)), \
+                       {"session": state["spec_hash"], "on_disk": spec.content_hash}
+            return True, ("opened under shot plan %s, re-bound to %s with the change recorded"
+                          % (state["spec_hash"][:12], spec.content_hash[:12])), \
+                   None, {"session": state["spec_hash"], "on_disk": spec.content_hash,
+                          "acknowledged": True}
         return True, "bound to shot plan %s v%s" % (spec.content_hash[:12], spec.version), None, {}
 
     _guard(blocks, satisfied, "spec.bound", c_spec_bound)
@@ -668,6 +720,224 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                % len(REQUIRED_MEASUREMENTS), None, {}
 
     _guard(blocks, satisfied, "measurements.complete", c_measurements)
+
+    def c_measurement_record_is_coherent():
+        """Re-measurements and mis-filed states are recorded; this is what reads them back.
+
+        store.fold has projected `measurement_revisions` and `measurement_state_conflicts` since
+        the measurements were bucketed by state, and nothing consumed either -- a projection no
+        condition reads is not a check, it is a comment. A re-measurement inside one state is
+        legitimate (the tape was laid again) and must be visible, not silent: it is the difference
+        between a corrected number and a number that changed while nobody was looking. A reading
+        filed under a state the log contradicts is an ordinary mistake with an ordinary remedy, and
+        saying so beats leaving it in the record unmentioned.
+        """
+        revs = state.get("measurement_revisions") or []
+        back = state.get("measurement_backdated") or []
+        if back:
+            # No acknowledgement path, deliberately. This is a reading filed into a state the
+            # garment has already left -- a write back into the pre-cut baseline after the cut --
+            # and the baseline is the number every later comparison is made against. A deviation
+            # can excuse a departure from procedure; it cannot make a measurement of a cut garment
+            # into a measurement of the garment before it was cut.
+            return False, ("%d measurement(s) were filed into a state the garment had already "
+                           "left: %s" % (len(back),
+                                         "; ".join("%s claims %s, the log had reached %s at that "
+                                                   "point" % (c["name"], c["claimed"], c["log_says"])
+                                                   for c in back[:4]))), \
+                   ("the pre-cut baseline cannot be written after the cut. Record the reading in "
+                    "the state it was actually taken in:\n"
+                    "  tools/pilot.py measure %s --state post_wash" % state["garment_id"]), \
+                   {"backdated": back[:6]}
+        if revs:
+            # Targeted at the measurement it explains. An untargeted one cleared every revision in
+            # the session at once, including revisions written after it.
+            names = sorted({r["name"] for r in revs})
+            unexplained = [n for n in names
+                           if deviation_covers(state["deviations"], "protocol",
+                                               "measurement_revised:%s" % n) is None]
+            if unexplained:
+                revs = [r for r in revs if r["name"] in unexplained]
+                return False, ("%d measurement(s) were replaced by a later reading in the same "
+                               "state: %s" % (len(revs),
+                                              "; ".join("%s %s -> %s (entry %s)"
+                                                        % (r["name"], r["was"], r["now"], r["seq"])
+                                                        for r in revs[:4]))), \
+                       ("a corrected measurement is fine and a silent one is not. Say why the "
+                        "first reading was wrong, naming the measurement:\n"
+                        + "\n".join(
+                            "  tools/pilot.py deviation %s --kind protocol --field "
+                            "measurement_revised:%s --reason '<which reading was wrong and how "
+                            "you know>'" % (state["garment_id"], n) for n in unexplained[:3])), \
+                       {"revisions": revs[:6], "unexplained": unexplained}
+        ahead = state.get("measurement_ahead_of_record") or []
+        return True, ("no measurement was replaced or back-dated without a reason on record"
+                      + ("; %d taken ahead of the record they belong to" % len(ahead) if ahead
+                         else "")), None, {"ahead_of_record": ahead[:6]}
+
+    _guard(blocks, satisfied, "measurements.revisions_explained", c_measurement_record_is_coherent)
+
+    def c_annotations_account_for_instances():
+        """Every counted instance is described, so a photograph can name what it is of.
+
+        `n_tears = 3` requires three tear photographs and says nothing about which tear each one
+        shows. The frames were expanded from an ordinal, the capture recorded only the shot id, and
+        the mapping from ordinal to physical object lived nowhere -- so two frames of the same tear
+        satisfied the requirement, and after the cut nobody could tell which was which. The count
+        and the descriptions have to agree BEFORE the garment is cut, because that is the last
+        moment the garment is intact enough to go back and look.
+        """
+        anns = state.get("annotations") or {}
+        counts = [f["key"] for f in spec.features if f["type"] == "count"]
+        short, over, ids = [], [], {}
+        for key in sorted(counts):
+            want = state["features"].get(key)
+            try:
+                want = int(float(want))
+            except (TypeError, ValueError):
+                continue                     # unanswered: the plan already assumes it is present
+            if want <= 0:
+                continue
+            got = PLAN.annotations_for(anns, key)
+            if len(got) < want:
+                short.append("%s: %d of %d described" % (key, len(got), want))
+            elif len(got) > want:
+                over.append("%s: %d described but the count says %d" % (key, len(got), want))
+            for a in got:
+                ids.setdefault(str(a.get("annotation_id")), []).append(key)
+        dupes = sorted(k for k, v in ids.items() if len(v) > 1)
+        thin = sorted(str(a.get("annotation_id")) for a in anns.values()
+                      if not (a.get("location") or "").strip())
+        if short or over or dupes or thin:
+            parts = []
+            if short:
+                parts.append("%d counted feature(s) not fully described (%s)"
+                             % (len(short), "; ".join(short)))
+            if over:
+                parts.append("%d described more times than counted (%s)"
+                             % (len(over), "; ".join(over)))
+            if dupes:
+                parts.append("%d annotation id(s) reused (%s)" % (len(dupes), ", ".join(dupes)))
+            if thin:
+                parts.append("%d annotation(s) with no location, so no photograph of them can be "
+                             "relocated (%s)" % (len(thin), ", ".join(thin[:4])))
+            return False, "the garment's features are counted but not identified: " \
+                          + "; ".join(parts), \
+                   ("describe each one, with a stable id and where it is:\n"
+                    "  tools/pilot.py annotate <ID> --id TEAR.01 --feature n_tears --type tear "
+                    "--location 'left leg front, 12 cm above the hem' --note '<what it looks like>'"), \
+                   {"short": short, "over": over, "duplicate_ids": dupes, "no_location": thin}
+        n = sum(len(PLAN.annotations_for(anns, k)) for k in counts)
+        return True, "%d physical feature instance(s) described, each with a stable id" % n, \
+               None, {"annotations": sorted(anns)[:12]}
+
+    _guard(blocks, satisfied, "annotations.identify_instances",
+           c_annotations_account_for_instances)
+
+    def c_capture_instance_matches_plan():
+        """The photograph's own record of what it is of must agree with what the plan says.
+
+        Every instanced capture stores the annotation it was taken of. Nothing read it back, so the
+        log could hold the contradiction -- `capture ...I01 annotation_id=TEAR.01` sitting beside
+        `plan ...I01 = TEAR.00` -- and no condition looked at the two together. One equality check
+        turns a silent re-labelling into a block, and it is the same check that catches a frame
+        borrowed from one instance to satisfy another.
+        """
+        if activated is None:
+            return None
+        want = {s["shot_id"]: s.get("annotation_id") for s in activated if s.get("annotation_id")}
+        wrong, orphan = [], []
+        for (sid, rep), c in sorted(state["captures"].items()):
+            claimed = c.get("annotation_id")
+            expect = want.get(sid)
+            if expect is None:
+                if claimed:
+                    orphan.append("%s r%s says it is of %s, but the plan does not instance that shot"
+                                  % (sid, rep, claimed))
+                continue
+            if claimed is None:
+                # NOT a skip. Omitting the field was the cheapest way past this condition: a
+                # photograph filed into an instanced slot with no recorded subject left the check
+                # reporting "0 photographs name what they are of" and passing.
+                wrong.append("%s r%s records no subject at all, and the plan says that slot is %s"
+                             % (sid, rep, expect))
+                continue
+            if claimed != expect:
+                wrong.append("%s r%s was taken of %s and the plan now says that slot is %s"
+                             % (sid, rep, claimed, expect))
+        if wrong or orphan:
+            ack = deviation_covers(state["deviations"], "protocol", "instance_mismatch")
+            if ack is not None:
+                return True, ("%d photograph(s) disagree with the plan about their subject, "
+                              "acknowledged as a deviation" % (len(wrong) + len(orphan))), \
+                       None, {"mismatched": wrong[:6], "orphaned": orphan[:6],
+                              "acknowledged": True}
+            return False, ("%d photograph(s) disagree with the plan about which physical thing "
+                           "they show: %s" % (len(wrong) + len(orphan),
+                                              "; ".join((wrong + orphan)[:4]))), \
+                   ("do not re-point the annotations to make this go away -- the photographs are "
+                    "of what they are of. Re-take the frames whose subject changed, or record the "
+                    "mismatch as a deviation and treat them as absent:\n"
+                    "  tools/pilot.py deviation %s --kind protocol --field instance_mismatch "
+                    "--reason '<what happened>'" % state["garment_id"]), \
+                   {"mismatched": wrong[:6], "orphaned": orphan[:6]}
+        n = sum(1 for c in state["captures"].values() if c.get("annotation_id"))
+        return True, "%d photograph(s) name the physical thing they are of, and agree with the " \
+                     "plan" % n, None, {}
+
+    _guard(blocks, satisfied, "captures.instance_identity", c_capture_instance_matches_plan)
+
+    def c_captures_match_the_lifecycle():
+        """A photograph's state must be consistent with when the log says it was taken.
+
+        Nothing compared the two. cut.not_already_performed closed this for the CUT gate only, so
+        the two later gates still accepted a 'before' frame filed after the shears -- a photograph
+        of the intact garment that cannot exist -- and a 'post_wash' frame taken before the garment
+        had been cut or washed, which is a photograph of something that had not happened yet. Both
+        produced a fully green, fully chained record. The physical facts that order the session are
+        already in this log; this reads them.
+        """
+        cut_seq = (state.get("cut_performed") or {}).get("seq")
+        wash_seq = (state.get("wash_actual") or {}).get("seq")
+        plan_state_of = {s["shot_id"]: s.get("state") for s in (activated or [])}
+        PRE = ("intake", "before", "marked")
+        POST = ("post_wash", "offcut_after")
+        bad = []
+        for (sid, rep), c in sorted(state["captures"].items()):
+            seq = c.get("seq")
+            # A capture that records no state is given the state its SHOT is in. Reading only the
+            # capture's own field meant omitting it skipped the check entirely.
+            cs = str(c.get("state") or (plan_state_of.get(sid) or ""))
+            if seq is None:
+                continue
+            if cs in PRE and cut_seq is not None and seq > cut_seq:
+                bad.append("%s r%s is a %s frame filed at entry %s, after the cut at entry %s"
+                           % (sid, rep, cs, seq, cut_seq))
+            elif cs in POST and wash_seq is not None and seq < wash_seq:
+                bad.append("%s r%s is a %s frame filed at entry %s, before the wash at entry %s"
+                           % (sid, rep, cs, seq, wash_seq))
+            elif cs in POST and wash_seq is None:
+                bad.append("%s r%s is a %s frame and no wash has been recorded" % (sid, rep, cs))
+        if bad:
+            # The remedy this message names is honoured here. A condition that tells the operator
+            # to record a deviation and then ignores the deviation is the "remedy that does not
+            # exist" this module has closed twice already.
+            ack = deviation_covers(state["deviations"], "protocol", "capture_order")
+            if ack is not None:
+                return True, ("%d photograph(s) are out of order with the log, acknowledged as a "
+                              "deviation" % len(bad)), None, {"out_of_order": bad[:8],
+                                                              "acknowledged": True}
+            return False, ("%d photograph(s) are filed in a state the log's own order contradicts: "
+                           "%s" % (len(bad), "; ".join(bad[:4]))), \
+                   ("a photograph of the uncut garment cannot have been taken after the cut, and "
+                    "one of the washed garment cannot have been taken before the wash. Nothing "
+                    "here can be re-taken: record what happened as a deviation and treat the "
+                    "affected frames as absent.\n"
+                    "  tools/pilot.py deviation %s --kind protocol --field capture_order "
+                    "--reason '<what happened>'" % state["garment_id"]), {"out_of_order": bad[:8]}
+        return True, "every photograph's state agrees with the log's own order", None, {}
+
+    _guard(blocks, satisfied, "captures.state_order", c_captures_match_the_lifecycle)
 
     # --- captures -------------------------------------------------------------------------
     def c_required_captures():
@@ -1287,6 +1557,58 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
 
         _guard(blocks, satisfied, "wash.planned", c_wash_planned)
 
+        def c_cut_performed():
+            """PROTOCOL 3.1: "Record both inseam and outseam lengths after cutting."
+
+            Nothing enforced it. The gate required the cut to be SPECIFIED and verified before the
+            cut, and the wash to be planned -- and then let the garment into the machine without
+            ever asking what the cut actually achieved. That number is the ground truth the whole
+            prediction is scored against, it can only be taken between the shears and the water,
+            and after the wash it is gone: the garment has shrunk, and the length you measure is no
+            longer the length you cut.
+            """
+            cp = state.get("cut_performed")
+            if not cp:
+                return False, "the cut itself was never recorded", \
+                       ("record what the cut achieved, before the garment is washed:\n"
+                        "  tools/pilot.py cut-performed <ID> --inseam-l N --inseam-r N "
+                        "--outseam-l N --outseam-r N --tool '<shears>' --legs-separately y/n"), {}
+            missing = []
+            for side in ("L", "R"):
+                for field, label in (("achieved_inseam_cm", "inseam"),
+                                     ("achieved_outseam_cm", "outseam")):
+                    v = (cp.get(field) or {}).get(side)
+                    if v is None:
+                        missing.append("%s %s" % (label, side))
+                        continue
+                    try:
+                        f = float(v)
+                    except (TypeError, ValueError):
+                        missing.append("%s %s (not a number: %r)" % (label, side, v))
+                        continue
+                    if not math.isfinite(f) or not (10.0 <= f <= 130.0):
+                        missing.append("%s %s = %r, outside a plausible cut length" % (label, side, v))
+            if not cp.get("tool"):
+                missing.append("the cutting tool")
+            if cp.get("legs_cut_separately") is None:
+                missing.append("whether the legs were cut separately (PROTOCOL 3.4 says they are)")
+            if missing:
+                return False, "the record of the cut is incomplete: %s" % "; ".join(missing[:6]), \
+                       "re-run `pilot.py cut-performed` with every field", {"missing": missing}
+            if state.get("cut_performed_rewrites"):
+                ack = deviation_covers(state["deviations"], "protocol", "cut_performed_rewritten")
+                if ack is None:
+                    return False, ("the cut was recorded %d more time(s) after the first, and the "
+                                   "accounts differ. The first stands"
+                                   % len(state["cut_performed_rewrites"])), \
+                           ("acknowledge it:\n  tools/pilot.py deviation <ID> --kind protocol "
+                            "--field cut_performed_rewritten --reason '<which account is right>'"), \
+                           {"rewrites": [r["seq"] for r in state["cut_performed_rewrites"]][:5]}
+            return True, "the cut is recorded: inseam %s, outseam %s, tool %r" % (
+                cp.get("achieved_inseam_cm"), cp.get("achieved_outseam_cm"), cp.get("tool")), None, {}
+
+        _guard(blocks, satisfied, "cut.performed_recorded", c_cut_performed)
+
     if gate_id == "ready_to_finalize":
         def c_wash_actual():
             """The wash actually happened, and its deviations from the plan are recorded.
@@ -1352,7 +1674,141 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
 
         _guard(blocks, satisfied, "wash.actual", c_wash_actual)
 
+        def c_post_wash_measurements():
+            """The garment was measured again after the wash.
+
+            `measurements.complete` runs for every gate, so finalize appeared to check this -- but
+            it reads the PRE-MODIFICATION bucket, and before measurements were bucketed by state it
+            read whatever had been written last. A post-wash re-measurement therefore satisfied the
+            finalize gate by overwriting the pre-cut value it was supposed to be compared WITH, and
+            the shrinkage the wash exists to measure became uncomputable at the moment it was
+            recorded. Now the two live in different buckets and finalize asks for both.
+            """
+            from .store import mean_of
+            post = (state.get("measurements_by_state") or {}).get("post_wash") or {}
+            pre = state.get("measurements") or {}
+            missing, thin, nopair, implausible, inconsistent = [], [], [], [], []
+            for name, n_required in sorted(POST_WASH_MEASUREMENTS.items()):
+                m = post.get(name)
+                if not m:
+                    missing.append(name)
+                    continue
+                readings = [r for r in (m.get("readings") or []) if r is not None]
+                if len(readings) < n_required:
+                    thin.append("%s (%d of %d readings)" % (name, len(readings), n_required))
+                    continue
+                # The SAME arithmetic the pre-cut set gets. This condition checked only that the
+                # numbers were present, so a post-wash tape read in inches -- two readings agreeing
+                # perfectly and 2.5x wrong, the exact case measurements.complete names in its own
+                # message -- finalised the experiment and published a 60% shrinkage.
+                if any(not isinstance(r, (int, float)) or not math.isfinite(float(r))
+                       for r in readings):
+                    implausible.append("%s (a reading is not a finite number)" % name)
+                    continue
+                lo, hi = MEASUREMENT_RANGE.get(name, (None, None))
+                mean = sum(readings) / len(readings)
+                if lo is not None and not (lo <= mean <= hi):
+                    implausible.append("%s = %.2f, outside the plausible %.0f-%.0f" % (name, mean, lo, hi))
+                    continue
+                tol = MEASUREMENT_TOLERANCE.get(name, MEASUREMENT_TOLERANCE["_default_cm"])
+                if max(readings) - min(readings) > tol:
+                    inconsistent.append("%s (readings differ by %.2f, tolerance %.2f)"
+                                        % (name, max(readings) - min(readings), tol))
+                    continue
+                if not pre.get(name):
+                    nopair.append(name)
+                # DELIBERATELY no plausibility band on the shrinkage itself. A band was written
+                # here and removed: no source in this repository supports one. docs/LITERATURE.md
+                # entry 14 is the only verified measurement of denim shrinkage, it reports 0.04% to
+                # 5.0% for INDUSTRIAL ROPE-WASHING OF FABRIC ROLLS, and the same entry says it does
+                # not transfer to one home cycle on a made-up garment -- "our shrinkage parameters
+                # therefore remain unsupported priors". Refusing a reading for falling outside an
+                # invented range would also be backwards: the shrinkage is the RESULT, and a gate
+                # that rejects surprising results is not a check on the measurement, it is a filter
+                # on the finding. What is checked above is the measurement's own quality -- finite
+                # numbers, a plausible adult-garment dimension, two readings that agree -- which is
+                # the same arithmetic the pre-cut set gets and rests on nothing new.
+            if implausible and deviation_covers(state["deviations"], "protocol",
+                                                "post_wash_out_of_range") is not None:
+                # A small garment that shrinks can put an HONEST reading below a band whose floor
+                # was set for whole adult jeans, and this condition had no escape -- the remedy it
+                # printed re-recorded the same number. The band still catches a tape read in
+                # inches; it must not strand a true measurement, for the reason the shrinkage band
+                # was removed for: a gate that rejects surprising results filters the finding.
+                implausible = []
+            if missing or thin or nopair or implausible or inconsistent:
+                parts = []
+                if implausible:
+                    parts.append("%d outside a plausible range (%s)"
+                                 % (len(implausible), "; ".join(implausible)))
+                if inconsistent:
+                    parts.append("%d whose readings disagree (%s)"
+                                 % (len(inconsistent), "; ".join(inconsistent)))
+                if missing:
+                    parts.append("%d not re-measured after the wash (%s)"
+                                 % (len(missing), ", ".join(missing)))
+                if thin:
+                    parts.append("%d with too few readings (%s)" % (len(thin), "; ".join(thin)))
+                if nopair:
+                    parts.append("%d have no pre-cut value to compare with, so no shrinkage can be "
+                                 "computed from them (%s)" % (len(nopair), ", ".join(nopair)))
+                return False, "post-wash dimensions incomplete: " + "; ".join(parts), \
+                       ("measure the washed garment on the same rig and record it:\n"
+                        "  tools/pilot.py measure %s --state post_wash\n"
+                        "If a reading is outside the band and CORRECT -- a small garment that "
+                        "shrank below a floor set for whole adult jeans -- say so:\n"
+                        "  tools/pilot.py deviation %s --kind protocol --field "
+                        "post_wash_out_of_range --reason '<the reading and why it is right>'"
+                        % (state["garment_id"], state["garment_id"])), \
+                       {"missing": missing, "thin": thin, "unpaired": nopair,
+                        "implausible": implausible, "inconsistent": inconsistent}
+            shrink = {}
+            for name in sorted(POST_WASH_MEASUREMENTS):
+                a, b = mean_of(pre.get(name)), mean_of(post.get(name))
+                if a and b:
+                    shrink[name] = round(100.0 * (a - b) / a, 2)
+            return True, "post-wash dimensions recorded for %d dimension(s); shrinkage computable" \
+                   % len(POST_WASH_MEASUREMENTS), None, {"shrinkage_percent": shrink}
+
+        _guard(blocks, satisfied, "measurements.post_wash", c_post_wash_measurements)
+
     if gate_id == "ready_to_cut":
+        def c_not_already_cut():
+            """The cut gate answers a question about the future. Once the cut is recorded it is not.
+
+            No condition read the log's own order against the irreversible step, although the same
+            file applies exactly that discipline to the wash: c_wash_planned refuses a plan written
+            after the wash, and c_offcuts refuses an assignment written after it. The cut -- the more
+            irreversible of the two -- had none. So a session in which the legs were cut first and
+            photographed afterwards produced a fully green, fully hash-chained record that no reader
+            could tell from a compliant one, and the honest failure it hides is worse than the
+            dishonest one: a before-frame rejected by QA and noticed after the cut is a retake
+            nobody can take, and nothing said so.
+            """
+            cp = state.get("cut_performed")
+            if not cp:
+                return True, "the cut has not been recorded, so this gate is still a question " \
+                             "about the future", None, {}
+            cut_seq = cp.get("seq")
+            late = sorted(("%s r%s" % (sid, rep))
+                          for (sid, rep), c in state["captures"].items()
+                          if cut_seq is not None and (c.get("seq") or -1) > cut_seq
+                          and str(c.get("state")) in ("before", "marked", "intake"))
+            detail = {"cut_seq": cut_seq, "later_pre_cut_captures": late[:8]}
+            if late:
+                return False, ("this garment has already been cut (recorded at entry %s), and %d "
+                               "pre-cut photograph(s) were filed after it. A photograph of the "
+                               "uncut garment cannot have been taken after it was cut"
+                               % (cut_seq, len(late))), \
+                       ("nothing here can be re-taken. Record what happened as a deviation and "
+                        "treat the affected frames as absent:\n"
+                        "  tools/pilot.py deviation %s --kind protocol --field cut_order "
+                        "--reason '<what happened>'" % state["garment_id"]), detail
+            return False, "this garment has already been cut (recorded at entry %s); the cut gate " \
+                          "cannot authorise it again" % cut_seq, \
+                   "the next gate is `pilot.py gate %s ready_to_wash`" % state["garment_id"], detail
+
+        _guard(blocks, satisfied, "cut.not_already_performed", c_not_already_cut)
         def c_cut_spec():
             cs = state["cut_spec"]
             if not cs:
@@ -1364,6 +1820,42 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if gaps:
                 return False, "the cut specification is missing %s" % ", ".join(gaps), \
                        "re-run `pilot.py cutspec`", {"missing": gaps}
+            # The cut line is DERIVED from three measurements, and cutspec.compute records which
+            # values it used in `inputs` -- the one dependency edge anywhere in this system. Nothing
+            # compared it with the measurements afterwards. So the ordinary, careful sequence --
+            # measure, specify the cut, mark the garment, have a second person verify, then re-lay
+            # the tape, find the first thigh reading was wrong and record the correction the tool
+            # asks for -- left the measurements saying one thing and the cut line computed from
+            # another, with the gate clean. The second-person check could not catch it either: it
+            # compares the tape against the SAME stale specification, so the two agree perfectly.
+            # The garment is then cut in the wrong place, by a gate that said READY.
+            from .store import mean_of
+            if not (cs.get("inputs") or {}):
+                # The drift check below is the only thing tying the cut line to the measurements it
+                # came from, and it did nothing at all when the specification recorded no inputs.
+                return False, ("the cut specification does not record the measurements it was "
+                               "computed from, so it cannot be checked against them"), \
+                       "re-run `pilot.py cutspec`, which records its inputs", {}
+            # Compared at the precision the value is STORED at. cutspec.compute rounds its inputs
+            # to 3 decimals, so a comparison at 1e-6 could fire on a difference the record does not
+            # contain -- and the message, printing 2 decimals, then showed the operator two
+            # identical numbers and asked them to explain the difference. A cut line is transferred
+            # to cloth with a tape; a micrometre of float noise is not a drifted measurement.
+            drifted = []
+            for name, was in sorted((cs.get("inputs") or {}).items()):
+                now = mean_of(state["measurements"].get(name))
+                if now is None:
+                    drifted.append("%s is no longer recorded (the cut used %s)" % (name, was))
+                elif round(float(now), 3) != round(float(was), 3):
+                    drifted.append("%s: the cut was computed from %.3f, the record now says %.3f"
+                                   % (name, float(was), float(now)))
+            if drifted:
+                return False, ("the cut line was computed from measurements that have since "
+                               "changed: %s" % "; ".join(drifted)), \
+                       ("re-run `pilot.py cutspec` so the line is derived from the numbers now on "
+                        "record, then have the marks verified again -- the second-person check "
+                        "compares the tape against the specification, so it agrees with a stale "
+                        "one"), {"drifted": drifted, "inputs": cs.get("inputs")}
             # The cut geometry can carry a warning: the cut lands so close to the crotch that the
             # straight-perpendicular model stops describing a real inseam. Nothing read it, so the
             # one cut the tool says it cannot predict passed as silently as any other. It does not
@@ -1419,6 +1911,17 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                 return False, "no second person has verified the cut marks", \
                        "a second person measures both marks with a tape and records the reading; " \
                        "PROTOCOL.md 3.2 requires it before cutting", {}
+            # The approval has to be of THIS cut line. Re-running cutspec after a corrected
+            # measurement writes a new specification at a later entry, and an approval recorded
+            # against the old one must not carry over: the marks it checked are on the garment in
+            # a different place.
+            cs_seq = (state.get("cut_spec") or {}).get("seq")
+            if cs_seq is not None and (v.get("seq") or -1) < cs_seq:
+                return False, ("the marks were verified at entry %s, before the cut line now on "
+                               "record was computed at entry %s. That approval was given to a "
+                               "different line" % (v.get("seq"), cs_seq)), \
+                       "re-mark the garment from the current specification and have it verified " \
+                       "again", {"verification_seq": v.get("seq"), "cut_spec_seq": cs_seq}
             for k in ("verifier_name", "measured_inseam_cm", "measured_outseam_cm"):
                 if not v.get(k):
                     return False, "the second-person verification is missing %s" % k, \
@@ -1472,18 +1975,38 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             need = {"legs_cut_separately": "confirm the legs will be cut one at a time",
                     "offcuts_retained_labelled": "confirm both offcuts will be kept and labelled "
                                                  "<GARMENT>_OFFCUT_L / _R"}
-            missing = []
+            # These have to be made about a cut that has been specified. _human_resolved binds a
+            # per-frame HUMAN claim to the photograph's own sha256 AND to a seq after it, and its
+            # docstring gives the reason: otherwise "every claim the plan could ever raise could be
+            # confirmed in a loop before a single photograph existed, and each frame arrived
+            # pre-cleared". That reasoning was applied to per-frame claims and to none of the three
+            # that actually authorise the shears. A confirmation written before the cut line existed
+            # is a confirmation of nothing, and re-running cutspec after one has to invalidate it --
+            # otherwise a corrected cut line inherits the approval given to the line it replaced.
+            cs_seq = (state.get("cut_spec") or {}).get("seq")
+            missing, premature = [], []
             for claim, how in need.items():
                 recs = [rec for (_, _, c), rec in state["verifications"].items() if c == claim]
                 latest = max(recs, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
                     if recs else None
                 if latest is None or latest.get("value") is not True:
                     missing.append((claim, how))
+                    continue
+                if cs_seq is not None and (latest.get("seq") or -1) < cs_seq:
+                    premature.append("%s (recorded at entry %s, before the cut line at entry %s)"
+                                     % (claim, latest.get("seq"), cs_seq))
             if missing:
                 return False, "%d cut-day confirmation(s) not recorded: %s" % (
                     len(missing), ", ".join(c for c, _ in missing)), \
                     "; ".join(h for _, h in missing), {"missing": [c for c, _ in missing]}
-            return True, "cut-day confirmations recorded", None, {}
+            if premature:
+                return False, ("%d cut-day confirmation(s) predate the cut they authorise: %s"
+                               % (len(premature), "; ".join(premature))), \
+                       ("confirm them again, now that the cut line they refer to exists:\n"
+                        "  tools/pilot.py confirm %s --claim <claim> --value y"
+                        % state["garment_id"]), {"premature": premature}
+            return True, "cut-day confirmations recorded, after the cut line they authorise", \
+                   None, {"cut_spec_seq": cs_seq}
 
         _guard(blocks, satisfied, "cut.specified", c_cut_spec)
         _guard(blocks, satisfied, "cut.second_person_verified", c_second_person)
