@@ -492,8 +492,9 @@ CONDITION_LINES = {
                                         "state carries a recorded reason, and none declares a "
                                         "lifecycle state the log contradicts",
     "captures.state_order": "no photograph is filed in a state the log's own order contradicts: "
-                             "nothing of the uncut garment after the cut, nothing of the washed "
-                             "one before the wash",
+                             "nothing of the uncut garment after the cut, nothing of the garment "
+                             "or the offcut before the water after the wash, nothing of the "
+                             "washed one before it",
     "cut.not_already_performed": "this garment has not already been cut; a gate that authorises an "
                                  "irreversible act may not be asked after it",
     "cut.performed_recorded": "the cut's achieved inseam and outseam are recorded for both legs, "

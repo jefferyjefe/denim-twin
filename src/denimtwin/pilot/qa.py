@@ -385,6 +385,28 @@ def human_claim_ids(shot, rep=1):
     return ["confirmed_%s" % c for c in human_claims(shot, rep)]
 
 
+def self_signed_check(check_id, assertions, claim, fix):
+    """The one shape of refusal for an approval that arrived with the photograph.
+
+    `gates._verification_for` is this system's single statement of when a confirmation counts: an
+    explicit yes, from a named person, naming this file's sha256, recorded after it, and not stale
+    against a re-described instance. `operator_assertions` is filled from whatever the INGEST
+    request carried -- `--confirm X` on the command line, the phone's comma-separated `confirm`
+    field -- so a PASS written from it bypasses all five properties at once, in the command that
+    delivered the file, before anyone could have looked at it.
+
+    That was closed once, for the claims a shot spells out, and four checks asking exactly the same
+    kind of question were left passing on a flag. The rule lives here now rather than in five
+    branches, because the next check somebody adds will be written by copying one of them.
+    """
+    return Check(check_id, HUMAN,
+                 "an approval of this arrived in the same command as the photograph, naming %s, "
+                 "so nobody had yet seen the frame it is about: %s"
+                 % (assertions.get("operator") or "nobody", claim),
+                 {"self_signed_by": assertions.get("operator") or None},
+                 fix=fix)
+
+
 def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, image=None,
                   compare_to=None, operator_assertions=None):
     """Run every applicable check on one capture and return a list of Check.
@@ -717,9 +739,11 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     if (shot.get("scale_reference") in ("ruler", "both") or quality.get("requires_ruler")) \
             and applies("ruler_visible"):
         if assertions.get("ruler_visible") is True:
-            checks.append(Check("ruler_visible", PASS,
-                                "operator confirmed the ruler is in frame, in the garment's plane, "
-                                "and readable", {"asserted_by": assertions.get("operator")}))
+            checks.append(self_signed_check(
+                "ruler_visible", assertions,
+                "the ruler is in frame, in the garment's plane, and readable",
+                "confirm it against the photograph -- in the app, or `pilot.py confirm "
+                "--claim-code <code>` (`pilot.py claims` lists the codes)"))
         elif assertions.get("ruler_visible") is False:
             checks.append(Check("ruler_visible", RETAKE,
                                 "operator reported the ruler is not usable in this frame",
@@ -734,8 +758,14 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     side = shot.get("garment_side")
     if side in ("front", "back") and applies("garment_side"):
         if assertions.get("side_confirmed") is True:
-            checks.append(Check("garment_side", PASS,
-                                "operator confirmed the %s is facing up" % side))
+            checks.append(self_signed_check(
+                "garment_side", assertions, "the %s is facing up" % side,
+                "confirm the facing side against the photograph -- in the app, or `pilot.py "
+                "confirm --claim-code <code>`"))
+        elif assertions.get("side_confirmed") is False:
+            checks.append(Check("garment_side", RETAKE,
+                                "operator reported the %s is not the face that is up" % side,
+                                fix="lay the garment %s up and re-shoot" % side))
         else:
             checks.append(Check("garment_side", HUMAN,
                                 "which face of the garment is up is not reliably detectable from "
@@ -759,8 +789,14 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
                  or shot.get("camera_angle") in ("macro_perpendicular", "side_profile",
                                                  "oblique_30", "oblique_45", "handheld_free")):
         if assertions.get("region_confirmed") is True:
-            checks.append(Check("anatomical_region", PASS,
-                                "operator confirmed this is %s" % shot["region_id"]))
+            checks.append(self_signed_check(
+                "anatomical_region", assertions, "this frame is %s" % shot["region_id"],
+                "confirm the region against the photograph -- in the app, or `pilot.py confirm "
+                "--claim-code <code>`"))
+        elif assertions.get("region_confirmed") is False:
+            checks.append(Check("anatomical_region", RETAKE,
+                                "operator reported this frame is not %s" % shot["region_id"],
+                                fix="photograph %s" % shot["region_id"]))
         else:
             checks.append(Check("anatomical_region", HUMAN,
                                 "at macro range one piece of denim looks like another; the region "
@@ -922,9 +958,24 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
             secs = None
             if other.get("exif_ts") and other.get("this_exif_ts"):
                 secs = abs(float(other["this_exif_ts"]) - float(other["exif_ts"]))
+            # operator_confirmed=False, unconditionally, and NOT from the ingest request. This
+            # is the same defect as the four checks above, in the one place it is most expensive:
+            # `relay_verdict` never returns PASS on geometry alone -- displacement and a
+            # decorrelated interior are consistent with a re-lay but do not prove the operator
+            # lifted the cloth rather than dragging it -- so the operator's confirmation is the
+            # last thing between "consistent with" and PASS. Reading it from
+            # `assertions["relay_confirmed"]` meant `--confirm relay_confirmed`, on the command
+            # that delivered the photograph, supplied that final step; and the requirement this
+            # arm of the plan exists for is exactly the one round 4 found five photographs of one
+            # lay satisfying.
+            #
+            # False here matches what `gates.c_relays` already passes when it re-derives the same
+            # verdict from the photographs (see its relay_verdict call). The two were divergent:
+            # the gate would not take the operator's word at re-derivation and the ingest path did.
+            # The resulting HUMAN is a claim like any other, cleared afterwards, against the
+            # photograph, by a named person, through `pilot.py confirm` or the app.
             o, d, ev = Q.relay_verdict(other.get("pose"), pose, mm_per_px, interior_ncc=interior,
-                                       seconds_apart=secs,
-                                       operator_confirmed=bool(assertions.get("relay_confirmed")))
+                                       seconds_apart=secs, operator_confirmed=False)
             # Name the frame this verdict is about. The comparison happens once, at ingest, against
             # whatever was filed under the previous repeat at that moment, and the verdict is then
             # frozen into the record -- so replacing the earlier repeat afterwards left a passing
@@ -940,9 +991,16 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     if shot.get("reposition_camera_between_reps") and int(rep) > 1 \
             and applies("camera_repositioned"):
         if assertions.get("camera_repositioned") is True:
-            checks.append(Check("camera_repositioned", PASS,
-                                "operator confirmed the camera was taken off the mount and "
-                                "remounted before this repeat"))
+            checks.append(self_signed_check(
+                "camera_repositioned", assertions,
+                "the camera was taken off the mount and remounted before this repeat",
+                "confirm it against the photograph -- in the app, or `pilot.py confirm "
+                "--claim-code <code>`"))
+        elif assertions.get("camera_repositioned") is False:
+            checks.append(Check("camera_repositioned", RETAKE,
+                                "operator reported the camera did not come off the mount before "
+                                "this repeat, so it measures nothing this repeat exists to measure",
+                                fix="take the phone off the mount, remount it, and re-shoot"))
         else:
             checks.append(Check("camera_repositioned", HUMAN,
                                 "this repeat only measures mounting variance if the phone actually "

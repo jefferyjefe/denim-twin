@@ -712,6 +712,32 @@ def cmd_reuse(a):
     path = gdir / src["path"]
     if not path.exists():
         raise SystemExit("the source photograph is not on disk: %s" % src["path"])
+    # THE BORROWED FRAME CARRIES ITS OWN PHYSICAL STATE. Refused here, before anything is written,
+    # because the log is append-only and a refusal after the write leaves the wrong record in it
+    # for good -- which is the mistake this command has already been fixed for twice.
+    #
+    # One command filed a photograph of the garment before the shears as the post-wash frame:
+    # identical bytes, identical hash, an EXIF timestamp predating the cut, copied into
+    # images/post_wash/ under the post-wash shot's own name. Every check the borrowing shot raises
+    # passed on it -- same camera, same board, same region in frame -- because the only thing that
+    # had changed was that the cloth had been through the water, and nothing compares a borrowed
+    # frame against anything that would know.
+    #
+    # Not "the states must be equal": intake and before are both the garment as received, and a
+    # borrow between them claims nothing false. What may not lie between them is an irreversible
+    # act. `gates.py` enforces the same rule at the gate, which is the authority; this is so the
+    # operator finds out at the command that did it.
+    src_state = str(src.get("state") or "")
+    if src_state and GATES.lifecycle_epoch(spec, src_state) is not None \
+            and GATES.lifecycle_epoch(spec, target["state"]) is not None \
+            and GATES.lifecycle_epoch(spec, src_state) != GATES.lifecycle_epoch(spec,
+                                                                               target["state"]):
+        raise SystemExit(
+            "refusing: %s r%s is a photograph of the garment in the %s state, and %s is a %s "
+            "frame. The cut or the wash happened between those two, so the cloth in that "
+            "photograph is not the cloth this shot is asking for -- and none of the checks re-run "
+            "on it can tell. Photograph the shot."
+            % (a.source, a.source_rep, src_state, a.target, target["state"]))
     import cv2
     img = cv2.imread(str(path))
     b, bspec = board()

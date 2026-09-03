@@ -21,7 +21,7 @@ this is safe' is not permission.
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
 | `captures.required_complete` | every required frame captured, checked, and passing |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
-| `captures.state_order` | no photograph is filed in a state the log's own order contradicts: nothing of the uncut garment after the cut, nothing of the washed one before the wash |
+| `captures.state_order` | no photograph is filed in a state the log's own order contradicts: nothing of the uncut garment after the cut, nothing of the garment or the offcut before the water after the wash, nothing of the washed one before it |
 | `captures.subjects_bound` | where a shot's repeats are different physical things -- the other leg, the other outseam -- each repeat records WHICH, it is the one the plan asks for, and no two repeats claim the same one |
 | `captures.verdicts_reproduce` | every frame recorded as passing still passes when the checker is run again on the photograph itself |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |

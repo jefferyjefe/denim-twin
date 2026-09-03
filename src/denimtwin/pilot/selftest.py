@@ -2781,12 +2781,21 @@ def _fault_matrix():
                         and e["payload"].get("rep", 1) == rep)]
 
     def fail_one_qa(es):
+        # An ACCEPTED frame, not an ingest-time PASS. Every frame in the real plan raises at least
+        # one question only a person can answer -- the rule in the frame, which face is up, which
+        # region this is -- and since an approval delivered with the photograph stopped counting,
+        # every one of those verdicts is HUMAN_VERIFICATION_REQUIRED at ingest and is cleared
+        # afterwards through the confirmation model. Selecting on PASS found nothing and this
+        # control reported "could not be built", which is a negative control that stopped running.
+        # The fault it exists to inject is the same either way: a frame the gate currently accepts,
+        # whose verdict is now RETAKE.
         es = list(es)
-        i = _first(es, "qa_result", lambda e: e["payload"].get("outcome") == "PASS")
+        i = _first(es, "qa_result",
+                   lambda e: e["payload"].get("outcome") in ("PASS", QA.HUMAN))
         p = dict(es[i]["payload"])
         p["outcome"] = "RETAKE_REQUIRED"
-        p["checks"] = [dict(c, outcome="RETAKE_REQUIRED") if c.get("outcome") == "PASS" else c
-                       for c in (p.get("checks") or [])][:1] or p.get("checks")
+        p["checks"] = [dict(c, outcome="RETAKE_REQUIRED") if c.get("outcome") in ("PASS", QA.HUMAN)
+                       else c for c in (p.get("checks") or [])][:1] or p.get("checks")
         es[i] = dict(es[i], payload=p)
         return es
 

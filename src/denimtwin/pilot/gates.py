@@ -274,6 +274,21 @@ GATE_LAST_STATE = {
     "ready_to_finalize": "offcut_after",
 }
 
+#: The two irreversible physical acts, each named by the last lifecycle state that precedes it.
+#: `captures.state_order` reads them out of the specification's ordering to decide which side of
+#: each act a photograph's state belongs on. They are protocol facts -- the shears come after the
+#: garment is marked, the water comes after the offcut has been photographed dry -- and naming them
+#: here rather than transcribing the state sets means a state added between two of them lands on
+#: the correct side by construction. The first version of that condition transcribed the sets, and
+#: the two states it left out were the whole of the wash arm's before-side.
+LIFECYCLE_LAST_BEFORE_CUT = "marked"
+LIFECYCLE_LAST_BEFORE_WASH = "offcut_before"
+
+#: The one state neither act constrains. The seventeen `rig` shots are of the backdrop, the board
+#: and the camera; nothing in them is the garment, so one taken after the cut or after the wash is
+#: still a true photograph of the rig. What binds a rig frame to its session is the setup hash.
+LIFECYCLE_UNBOUND = ("rig",)
+
 
 def gate_states(spec, gate_id):
     """Every state at or below the one this gate guards, in the specification's own order."""
@@ -287,7 +302,58 @@ def gate_states(spec, gate_id):
                  if st["order"] <= cutoff)
 
 
-def deviation_covers(deviations, kind, field, planned=None, actual=None, after=None):
+def lifecycle_epoch(spec, state_name):
+    """Which side of the two irreversible acts a lifecycle state lies on: 0 whole, 1 cut, 2 washed.
+
+    None for `rig`, which is a photograph of the backdrop and the board rather than of the garment,
+    and None for a state the specification does not declare -- an unknown state is compared with
+    nothing rather than being silently placed on a side.
+
+    Shared with `tools/pilot.py reuse` so the command and the gate answer "may this photograph
+    stand for that slot" the same way. Two copies of this arithmetic is two places for it to drift.
+    """
+    order = {st["state"]: st["order"] for st in spec.states}
+    for b in (LIFECYCLE_LAST_BEFORE_CUT, LIFECYCLE_LAST_BEFORE_WASH):
+        if b not in order:
+            raise ValueError("the specification declares no state %r" % b)
+    if state_name in LIFECYCLE_UNBOUND or state_name not in order:
+        return None
+    o = order[state_name]
+    return 0 if o <= order[LIFECYCLE_LAST_BEFORE_CUT] else (
+        1 if o <= order[LIFECYCLE_LAST_BEFORE_WASH] else 2)
+
+
+#: The two per-frame acknowledgements. Each is recorded by the operator, one per frame, naming the
+#: frame in `--actual`, after the frame exists, and each blocker that asks for one ends with the
+#: same instruction: "treat those frames as absent".
+PER_FRAME_ACKNOWLEDGEMENTS = ("capture_order", "instance_mismatch")
+
+
+def acknowledged_absent(state, key):
+    """The per-frame deviation that stands for this frame, if one does.
+
+    A photograph that `captures.state_order` or `captures.instance_identity` has refused is a
+    photograph of the wrong physical thing -- the cut garment filed as the whole one, one tear
+    filed as another. The deviation the blocker prints explains why the log contradicts itself. It
+    does not turn the photograph into the missing evidence, and both blockers said so in their
+    last sentence. This is the one statement of what "acknowledged" means for the frame itself, so
+    `captures.required_complete` reads it rather than each condition keeping a private copy.
+
+    Bound to the frame's own entry: the acknowledgement has to postdate the photograph, or it is a
+    permission slip written before there was anything to acknowledge.
+    """
+    cap = state["captures"].get(key) or {}
+    if not cap:
+        return None
+    for field in PER_FRAME_ACKNOWLEDGEMENTS:
+        d = deviation_covers(state["deviations"], "protocol", field,
+                             actual="%s r%s" % key, after=cap.get("seq") or 0)
+        if d is not None:
+            return d
+    return None
+
+
+def deviation_covers(deviations, kind, field, *, after, planned=None, actual=None):
     """Is this departure actually EXPLAINED by a recorded deviation?
 
     Matching on `kind` alone means an empty deviation -- no field, no values, recordable before the
@@ -301,6 +367,15 @@ def deviation_covers(deviations, kind, field, planned=None, actual=None, after=N
     or before it was written before there was anything to excuse, which makes it a standing
     permission for whatever happens next rather than an account of what happened. Such a record is
     skipped rather than returned, so a stale one never shadows a later one that does count.
+
+    IT HAS NO DEFAULT, and that is the point. Ten of the twelve call sites used to leave it out,
+    and the recorded reason -- that each site needs its own answer to "when did this departure come
+    into existence" and inventing one per site is how a guard stops meaning anything -- does not
+    survive reading them: at every site but one the answer is a sequence number already in the log,
+    and most of the blockers already PRINT it. Requiring the argument turns "nobody thought about
+    it" into a TypeError and leaves `after=None` meaning what it says: this departure is not
+    something the log can date. Exactly one site is in that position -- `spec_rebound`, whose
+    departure is an edit to a file outside the log entirely.
     """
     for d in deviations or []:
         if d.get("kind") != kind:
@@ -454,7 +529,13 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # silently because a character of a 64-digit hash was retyped wrongly, which is the
             # realistic way an operator meets this at the end of a long day: the deviation is
             # recorded, the gate keeps refusing, and nothing says the two nearly matched.
-            ack = deviation_covers(state["deviations"], "protocol", "spec_rebound",
+            # after=None, deliberately and uniquely. This departure is an EDIT TO A FILE, made
+            # outside the log by a text editor; no entry marks the moment the shot plan on disk
+            # stopped matching the one the session opened against, so there is no sequence number
+            # to bind to and inventing one would be worse than saying so. What bounds this record
+            # instead is `actual`: it must name the exact content hash now on disk, so an
+            # acknowledgement of one edit does not carry to the next.
+            ack = deviation_covers(state["deviations"], "protocol", "spec_rebound", after=None,
                                    actual=spec.content_hash)
             if ack is None:
                 return False, ("the session was opened under shot plan %s but the specification on "
@@ -732,9 +813,22 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                    None, {}
         # It must name WHICH rig change, and that hash must be one the session actually used. A
         # deviation of kind "rig" and nothing else excused any number of configurations.
+        #
+        # AND it must be recorded after the re-freeze it excuses. The moment a configuration came
+        # into existence is `setup_history`'s own entry number for it, so this is a fact in the log
+        # rather than a judgement: a "rig" deviation naming the second configuration's hash, typed
+        # before that configuration was ever frozen, is a permission slip for a rig change the
+        # operator has not yet made.
+        froze_at = {}
+        for h_ in (state.get("setup_history") or []):
+            sh_ = str(h_.get("setup_hash") or "")
+            if sh_:
+                froze_at[sh_] = min(froze_at.get(sh_, h_.get("seq") or 0), h_.get("seq") or 0)
         recorded = {h for h in used
-                    if deviation_covers(state["deviations"], "rig", h)
-                    or deviation_covers(state["deviations"], "rig", h[:12])}
+                    if deviation_covers(state["deviations"], "rig", h,
+                                        after=froze_at.get(h, 0))
+                    or deviation_covers(state["deviations"], "rig", h[:12],
+                                        after=froze_at.get(h, 0))}
         if len(used) - len(recorded) > 1:
             return False, ("the captures in these states were taken under %d different rig "
                            "configurations and no rig deviation was recorded"
@@ -830,10 +924,20 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         if revs:
             # Targeted at the measurement it explains. An untargeted one cleared every revision in
             # the session at once, including revisions written after it.
+            # The departure is the REVISING READING, and its entry number is already in `revs` --
+            # the blocker below prints it as "(entry N)". Binding to it stops one acknowledgement,
+            # typed once, from standing for every later silent replacement of that measurement:
+            # a corrected measurement is fine and a silent one is not, and an untargeted-in-time
+            # record made every correction after it silent, forever.
+            first_rev = {}
+            for r in revs:
+                nm = r["name"]
+                first_rev[nm] = min(first_rev.get(nm, r.get("seq") or 0), r.get("seq") or 0)
             names = sorted({r["name"] for r in revs})
             unexplained = [n for n in names
                            if deviation_covers(state["deviations"], "protocol",
-                                               "measurement_revised:%s" % n) is None]
+                                               "measurement_revised:%s" % n,
+                                               after=first_rev.get(n, 0)) is None]
             if unexplained:
                 revs = [r for r in revs if r["name"] in unexplained]
                 return False, ("%d measurement(s) were replaced by a later reading in the same "
@@ -1102,12 +1206,61 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         had been cut or washed, which is a photograph of something that had not happened yet. Both
         produced a fully green, fully chained record. The physical facts that order the session are
         already in this log; this reads them.
+
+        THE SECOND ACT. The first version of this named its two ends by hand -- three states before
+        and two after -- and the specification declares EIGHT. The three it left out are the whole
+        of the wash arm's before-side: `immediate_after` and `offcut_before` exist only in the
+        window between the shears and the water, and neither hand-kept tuple contained them, so
+        NEITHER boundary applied to them. The twenty IMMEDIATE_AFTER frames -- including the tape
+        laid against the freshly cut inseam, which is the ground truth the prediction is scored
+        against and stops being takeable the moment the cloth shrinks -- and the ten OFFCUT_BEFORE
+        frames could all be skipped on cut day, the garment washed, and the empty slots then filled
+        from photographs of the WASHED garment and the WASHED offcuts. Both later gates returned
+        ready with no blocker here at all. The boundaries are derived from the specification's own
+        ordering now, and there are two of them, one per irreversible act.
+
+        ONE DIRECTION ONLY, on the cut boundary and on the wash boundary alike. A frame of an
+        EARLIER physical state filed after the later act was recorded is impossible: the cloth it
+        would show no longer exists. The converse is not impossible, it is ordinary -- an operator
+        photographs the cut garment and types `cut-performed` afterwards, which is the habit
+        `measurement_ahead_of_record` exists for, and refusing it would block an honest session. So
+        a later-state frame is only refused where the act it depends on is ABSENT entirely, which
+        is the rule the post-wash states already carried.
+
+        `rig` is outside both boundaries and deliberately so: those seventeen shots are of the
+        backdrop, the board and the camera, not of the garment, so one taken later is still a true
+        photograph of the rig. What binds them is the setup hash, not the lifecycle.
         """
         cut_seq = (state.get("cut_performed") or {}).get("seq")
         wash_seq = (state.get("wash_actual") or {}).get("seq")
         plan_state_of = {s["shot_id"]: s.get("state") for s in (activated or [])}
-        PRE = ("intake", "before", "marked")
-        POST = ("post_wash", "offcut_after")
+        # The two irreversible acts, each named by the state it ENDS. Read out of the
+        # specification's ordering rather than transcribed, so that a state added between them
+        # falls on the correct side by construction instead of by somebody remembering to widen a
+        # tuple. A specification that does not declare a boundary raises, and `_guard` turns that
+        # into a block: a condition that cannot locate its own boundary has not checked anything.
+        order = {st["state"]: st["order"] for st in spec.states}
+        for _b in (LIFECYCLE_LAST_BEFORE_CUT, LIFECYCLE_LAST_BEFORE_WASH):
+            if _b not in order:
+                raise ValueError("the specification declares no state %r, which captures."
+                                 "state_order needs to place the cut and the wash" % _b)
+        cut_edge, wash_edge = order[LIFECYCLE_LAST_BEFORE_CUT], order[LIFECYCLE_LAST_BEFORE_WASH]
+        PRE_CUT = tuple(s for s, o in order.items() if o <= cut_edge and s not in LIFECYCLE_UNBOUND)
+        PRE_WASH = tuple(s for s, o in order.items() if o <= wash_edge and s not in LIFECYCLE_UNBOUND)
+        POST = tuple(s for s, o in order.items() if o > wash_edge)
+
+        def _epoch(st_):
+            """Which side of the two irreversible acts a state lies on: 0 whole, 1 cut, 2 washed.
+
+            None for a state neither act constrains, and for one the specification does not
+            declare -- a frame whose state is unknown is compared with nothing rather than being
+            silently placed on a side.
+            """
+            if st_ in LIFECYCLE_UNBOUND or st_ not in order:
+                return None
+            o_ = order[st_]
+            return 0 if o_ <= cut_edge else (1 if o_ <= wash_edge else 2)
+
         bad = []
         for (sid, rep), c in sorted(state["captures"].items()):
             seq = c.get("seq")
@@ -1116,10 +1269,14 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             cs = str(c.get("state") or (plan_state_of.get(sid) or ""))
             if seq is None:
                 continue
-            if cs in PRE and cut_seq is not None and seq > cut_seq:
+            if cs in PRE_CUT and cut_seq is not None and seq > cut_seq:
                 bad.append(((sid, rep),
                             "%s r%s is a %s frame filed at entry %s, after the cut at entry %s"
                             % (sid, rep, cs, seq, cut_seq)))
+            elif cs in PRE_WASH and wash_seq is not None and seq > wash_seq:
+                bad.append(((sid, rep),
+                            "%s r%s is a %s frame filed at entry %s, after the wash at entry %s"
+                            % (sid, rep, cs, seq, wash_seq)))
             elif cs in POST and wash_seq is not None and seq < wash_seq:
                 bad.append(((sid, rep),
                             "%s r%s is a %s frame filed at entry %s, before the wash at entry %s"
@@ -1127,6 +1284,33 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             elif cs in POST and wash_seq is None:
                 bad.append(((sid, rep),
                             "%s r%s is a %s frame and no wash has been recorded" % (sid, rep, cs)))
+            else:
+                # A BORROWED FRAME CARRIES ITS OWN PHYSICAL STATE, not the state of the slot it is
+                # filed in. Everything above tests the ENTRY's position in the log, and for a
+                # `reuse` that is the position of the copy, not of the photograph: borrowing a
+                # BEFORE frame into a POSTWASH slot after the wash is appended in exactly the right
+                # place, so every test above passed and the condition reported "every photograph's
+                # state agrees with the log's own order" about a picture of the garment before the
+                # shears. The bytes, the sha256 and the EXIF timestamp all say otherwise and none
+                # of them was read.
+                #
+                # The rule is not that the two states must be EQUAL -- intake and before are both
+                # the garment as received, and a borrow between them is not a false claim about
+                # anything. It is that no irreversible act may lie BETWEEN them: the cloth in the
+                # photograph must be in the condition the slot says it is.
+                src_key = c.get("reused_from") and (c["reused_from"],
+                                                    int(c.get("reused_from_rep") or 1))
+                if src_key:
+                    src = state["captures"].get(src_key) or {}
+                    ss = str(src.get("state")
+                             or (plan_state_of.get(src_key[0]) or "")) if src else ""
+                    a_, b_ = _epoch(ss), _epoch(cs)
+                    if a_ is not None and b_ is not None and a_ != b_:
+                        bad.append(((sid, rep),
+                                    "%s r%s is filed as a %s frame but the photograph is %s r%s, "
+                                    "taken in the %s state -- the %s happened between them"
+                                    % (sid, rep, cs, src_key[0], src_key[1], ss,
+                                       "cut" if min(a_, b_) == 0 else "wash")))
         if bad:
             # The remedy this message names is honoured here. A condition that tells the operator
             # to record a deviation and then ignores the deviation is the "remedy that does not
@@ -1152,10 +1336,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                               "by a deviation naming that frame" % len(bad)), None, ev
             return False, ("%d photograph(s) are filed in a state the log's own order contradicts: "
                            "%s" % (len(live), "; ".join(w for _, w in live[:4]))), \
-                   ("a photograph of the uncut garment cannot have been taken after the cut, and "
-                    "one of the washed garment cannot have been taken before the wash. Nothing "
-                    "here can be re-taken: record what happened as a deviation naming the frame, "
-                    "one per frame, and treat those frames as absent.\n"
+                   ("a photograph of the uncut garment cannot have been taken after the cut, one "
+                    "of the garment or the offcut before the water cannot have been taken after "
+                    "the wash, and one of the washed garment cannot have been taken before it. "
+                    "Nothing here can be re-taken: record what happened as a deviation naming the "
+                    "frame, one per frame, and treat those frames as absent.\n"
                     + "\n".join(
                         "  tools/pilot.py deviation %s --kind protocol --field capture_order "
                         "--actual '%s r%s' --reason '<what happened>'"
@@ -1181,6 +1366,19 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     # still count as the second's evidence.
                     failing.append("%s r%d (filed under state %r, but the shot belongs to %r)"
                                    % (key[0], key[1], cap.get("state"), s["state"]))
+                    continue
+                ack = acknowledged_absent(state, key)
+                if ack is not None:
+                    # THE FRAME THE OPERATOR WAS TOLD TO TREAT AS ABSENT, treated as absent. The
+                    # per-frame scoping of `capture_order` and `instance_mismatch` closed the
+                    # session-wide amnesty and left this hole underneath it: both conditions
+                    # honoured the acknowledgement, this one never read it, and a photograph of
+                    # the cut garment filed into an empty before slot went from "blocked" to
+                    # "captured and passing" with one typed line. It is missing evidence with a
+                    # recorded reason, and it stays missing. A before-state frame that was never
+                    # taken cannot be typed into existence after the shears.
+                    missing.append("%s r%d (acknowledged absent: %s, entry %s)"
+                                   % (key[0], key[1], ack.get("field"), ack.get("seq")))
                     continue
                 if key not in done:
                     # `done` excludes frames the checker rejected, so "not done" covers two very
@@ -1796,8 +1994,18 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                        ("record those conditions in the protocol's vocabulary (%s)"
                         % ", ".join(OFF.CONDITIONS)), {"unclassified": alt["unclassified"][:3]}
             if not alt["alternating"]:
+                # The departure came into existence when the assignment that broke the
+                # alternation was recorded. `alt["sequence"]` is derived from the offcut records,
+                # and the latest of their assignment entries is the moment the break existed. A
+                # waiver typed before it pre-authorises the confound the whole cross-garment
+                # design exists to avoid.
+                broke_at = 0
+                for _v in (state.get("offcuts") or {}).values():
+                    _sq = (_v.get("_seq") or {}).get("assigned_wash_condition")
+                    if _sq is not None:
+                        broke_at = max(broke_at, int(_sq))
                 excused = deviation_covers(state["deviations"], "offcut_alternation",
-                                           "".join(alt["sequence"]))
+                                           "".join(alt["sequence"]), after=broke_at)
                 if not excused:
                     return False, ("the left/right alternation is broken across garments (%s): leg "
                                    "and wash condition are confounded"
@@ -1836,7 +2044,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # garment. The FIRST plan still stands -- that is the point -- but a deviation naming
             # the rewrite acknowledges it, exactly as the sentence promised.
             if state["wash_plan_rewrites"]:
-                ack = deviation_covers(state["deviations"], "wash", "wash_plan_rewritten")
+                # The departure is the rewrite, and its entry number is in the record the
+                # blocker below already prints.
+                ack = deviation_covers(
+                    state["deviations"], "wash", "wash_plan_rewritten",
+                    after=min(int(r.get("seq") or 0) for r in state["wash_plan_rewrites"]))
                 if ack is None:
                     return False, ("the wash plan was written %d more time(s) after the first; the "
                                    "planned settings are what the deviation is measured against and "
@@ -1903,7 +2115,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             wa = state.get("wash_actual") or {}
             cp_seq, wa_seq = cp.get("seq"), wa.get("seq")
             if cp_seq is not None and wa_seq is not None and int(cp_seq) > int(wa_seq):
-                ack = deviation_covers(state["deviations"], "protocol", "cut_recorded_after_wash")
+                # The departure exists at the moment the LATER of the two acts was recorded,
+                # which is the cut record here by construction. Both numbers are printed in the
+                # message below; the acknowledgement has to come after them, or it is a permission
+                # slip for laying a tape on a garment that has not been washed yet.
+                ack = deviation_covers(state["deviations"], "protocol", "cut_recorded_after_wash",
+                                       after=int(cp_seq))
                 if ack is None:
                     return False, ("the cut was recorded at entry %s, after the wash was recorded "
                                    "at entry %s. These are the lengths the prediction is scored "
@@ -1917,7 +2134,11 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                             "cut edge>'" % state["garment_id"]), \
                            {"cut_performed_seq": cp_seq, "wash_actual_seq": wa_seq}
             if state.get("cut_performed_rewrites"):
-                ack = deviation_covers(state["deviations"], "protocol", "cut_performed_rewritten")
+                # The departure is the second, differing account of the cut. Its entry number
+                # is in `cut_performed_rewrites`, which the evidence below already reports.
+                ack = deviation_covers(
+                    state["deviations"], "protocol", "cut_performed_rewritten",
+                    after=min(int(r.get("seq") or 0) for r in state["cut_performed_rewrites"]))
                 if ack is None:
                     return False, ("the cut was recorded %d more time(s) after the first, and the "
                                    "accounts differ. The first stands"
@@ -1951,7 +2172,9 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             # account of what the machine did sat in the log with nothing reporting it. First-write
             # still wins -- that is what makes a correction visible -- but the gate has to say so.
             if state.get("wash_actual_rewrites"):
-                ack = deviation_covers(state["deviations"], "wash", "wash_actual_rewritten")
+                ack = deviation_covers(
+                    state["deviations"], "wash", "wash_actual_rewritten",
+                    after=min(int(r.get("seq") or 0) for r in state["wash_actual_rewrites"]))
                 if ack is None:
                     return False, ("what the machine did was recorded %d more time(s) after the "
                                    "first, and the accounts differ. The first stands; the later "
@@ -2049,8 +2272,31 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                 # on the finding. What is checked above is the measurement's own quality -- finite
                 # numbers, a plausible adult-garment dimension, two readings that agree -- which is
                 # the same arithmetic the pre-cut set gets and rests on nothing new.
+            # AFTER THE READING IT EXCUSES. This was the one blanket waiver left in the file: a
+            # single line, typed at intake before a tape had been laid on anything, disarmed the
+            # plausibility band on every post-wash reading in the session -- and the case that band
+            # exists for is a post-wash tape read in INCHES, two readings agreeing perfectly and
+            # 2.5x wrong, finalising the experiment and publishing a 60% shrinkage.
+            #
+            # The departure is the out-of-range reading itself, and its entry number is on the
+            # measurement record. Binding to the EARLIEST of them is the conservative choice: it
+            # admits a waiver written after all the readings it covers and refuses one written
+            # before any of them.
+            #
+            # STILL NOT SCOPED TO THE MEASUREMENT NAME, and that is a known remaining gap rather
+            # than an oversight: unlike `measurement_revised:<name>`, this field has no per-name
+            # form in the operator's vocabulary, and inventing one here would change a command the
+            # blocker below prints. One waiver still covers every out-of-range post-wash reading
+            # taken before it. Recorded in docs/PILOT_OWNER_DECISIONS.md rather than left silent.
+            _oor_seq = 0
+            _oor_seqs = [int((post.get(nm_) or {}).get("seq") or 0)
+                         for nm_ in POST_WASH_MEASUREMENTS
+                         if any(str(x).startswith(nm_) for x in implausible)]
+            if _oor_seqs:
+                _oor_seq = min(_oor_seqs)
             if implausible and deviation_covers(state["deviations"], "protocol",
-                                                "post_wash_out_of_range") is not None:
+                                                "post_wash_out_of_range",
+                                                after=_oor_seq) is not None:
                 # A small garment that shrinks can put an HONEST reading below a band whose floor
                 # was set for whole adult jeans, and this condition had no escape -- the remedy it
                 # printed re-recorded the same number. The band still catches a tape read in
