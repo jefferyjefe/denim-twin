@@ -56,3 +56,48 @@ jobs:
       - name: verification summary
         if: always()
         run: cat /tmp/verify-ci.json || echo "no summary written"
+
+  # The real-plan proof, and deliberately NOT part of clean-CI above.
+  #
+  # `clean-ci` runs tools/verify.py --profile ci, whose pilot check is the ORDINARY self-test. That
+  # run's three gate positive controls are on `_mini_spec`, a four-shot fixture: enough to show the
+  # wiring is connected, not that the plan an operator will actually shoot can be satisfied. The
+  # real 424-frame plan is driven to READY at all three gates only behind `--full`, and that is also
+  # the only place the single-fault negative controls run. So until this job existed, nothing in CI
+  # had ever proved the production plan opens the gates -- the claim rested on somebody having run
+  # it by hand.
+  #
+  # It is a separate job with a name that cannot be mistaken for the ordinary build, because the two
+  # prove different things and a green tick on one must never be quoted for the other. It is not on
+  # every push: it synthesises the whole plan's frames and takes tens of minutes. It is hermetic --
+  # no network, no weights, no photographs, no gitignored evidence -- so it needs nothing this
+  # runner does not already have.
+  real-plan-proof:
+    name: real-plan proof (424-frame plan, all three gates)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements-ci.txt
+
+      # The switch, run directly rather than through a profile, so the log says exactly what ran.
+      # 125 scenarios: the ordinary 103 plus the real-plan positive controls at all three gates and
+      # the single-fault negative controls built from that one valid session.
+      - name: drive the real 424-frame plan to READY at all three gates
+        run: python tools/pilot.py selftest --full
+
+      - name: what this job proves, and what it does not
+        if: always()
+        run: |
+          echo "PROVES: one synthetic garment can be driven through the committed 424-frame shot"
+          echo "plan, and ready_to_cut, ready_to_wash and ready_to_finalize each open on it with no"
+          echo "blockers; and that each single-fault mutant of that session is refused by the one"
+          echo "condition its fault breaks."
+          echo
+          echo "DOES NOT PROVE: anything about a real garment, a real rig, a real phone or a real"
+          echo "cut. Every frame in this run was synthesised. See docs/PILOT_REHEARSALS.md for the"
+          echo "three rehearsals a person has to perform, and docs/PILOT_OWNER_DECISIONS.md for the"
+          echo "decisions that are not the software's to make."

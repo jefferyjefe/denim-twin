@@ -14,6 +14,14 @@ proto = (ROOT / "protocol/PROTOCOL.md").read_text()
 # detergent volume, the dryer setting, the conditioning period and the thread-count window were
 # all still open, and the one guard standing between the pilot and an undecided protocol stopped
 # firing exactly there. See src/denimtwin/pilot/protocol_fields.py.
+# `hard` and `soft` are bound BEFORE the first finding, not after it. They used to be bound three
+# lines further down, below the `if unknown:` block -- so the one finding that block can produce
+# was an append to a name that did not exist yet, and the audit died with a NameError at exactly
+# the moment it had something HARD to say. The trigger is the ordinary act the owner-decision packet
+# asks for: add a [FILL] field to PROTOCOL.md. Every other path through this file left `unknown`
+# empty, so the crash was unreachable until the guard was needed, which is the shape of defect the
+# adversarial rounds keep finding.
+hard, soft = [], []
 classified = PROTOFIELDS.classify(proto)
 fills = [f["raw"] for f in classified]
 unknown = [f for f in classified if f["coverage"] is None]
@@ -21,7 +29,6 @@ if unknown:
     hard.append("PROTOCOL.md has %d [FILL] field(s) protocol_fields.COVERAGE does not classify "
                 "(line(s) %s); the audit cannot say whether they block."
                 % (len(unknown), ", ".join(str(f["line"]) for f in unknown)))
-hard, soft = [], []
 if fills:
     counts = PROTOFIELDS.summary(proto)
     soft.append(f"{len(fills)} unfilled [FILL] fields in PROTOCOL.md "

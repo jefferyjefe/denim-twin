@@ -44,7 +44,9 @@ the code.
 
 Exit 0 all required checks passed for this profile
      1 a required check FAILED -- something is wrong with the code or the numbers
-     2 the profile could not be satisfied -- evidence is missing, nothing is claimed
+     2 the profile could not be satisfied -- evidence is missing, nothing is claimed. This covers
+       both a full run refused before it started and a run where a REQUIRED check was reported NOT
+       RUN. Neither is a failure of the code and neither is a pass; the claim was not made.
 """
 import argparse, json, os, subprocess, sys, time
 from collections import namedtuple
@@ -86,7 +88,17 @@ CHECKS = [Check(*c) for c in [
     # It runs in the hermetic profile because it needs no photograph: the self test synthesises its
     # own captures around a real ChArUco board, so a clean clone can still prove that the gate
     # refuses incomplete evidence and opens on complete evidence.
-    ("pilot", [PY_, "tools/pilot.py", "selftest"], ("ci", "full"), (), True, [],
+    #
+    # `--full` under the scientific profile, and the reason is the same reason this file has
+    # profiles at all. The ordinary run's three gate positive controls are on `_mini_spec`, a
+    # four-shot fixture. The REAL 424-frame plan -- the one an operator will actually shoot -- is
+    # driven to READY at all three gates only behind `--full`, and that is also the only place the
+    # single-fault negative controls run. So the ordinary run proves the wiring is connected and
+    # the full run proves the plan can be satisfied, and only the second of those is the claim
+    # `--profile full` makes about itself. It costs the better part of an hour and writes several
+    # gigabytes of synthetic frames, which is why it stays out of `ci`: the hermetic profile has to
+    # remain something a contributor will actually run.
+    ("pilot", [PY_, "tools/pilot.py", "selftest"], ("ci", "full"), (), True, ["--full"],
      "the capture navigator's cut gate can be made to say READY without the evidence, or refuses "
      "to say it with the evidence -- either way a garment is at risk"),
     ("runbook", [PY_, "tools/make_runbook.py", "--check"], ("ci", "full"), (), True, [],
@@ -121,7 +133,10 @@ locally: a fresh clone plus requirements-ci.txt, or force them absent, e.g.
 DENIMTWIN_FORCE_ABSENT=torch,sam_checkpoint,pair_masks tools/verify.py --profile ci"""
 
 FULL_PROVES = """A --profile full pass means every check above ran against the evidence this
-repository actually has: the found tutorial pairs and the artefacts derived from them. It is NOT a
+repository actually has: the found tutorial pairs and the artefacts derived from them, and that the
+capture navigator drove one simulated garment through the REAL 424-frame shot plan and opened all
+three gates on it -- which is the proof the ci profile does not run, because its positive controls
+are on a four-shot fixture. It is NOT a
 claim about a controlled physical capture -- no such pair exists yet (docs/PROJECT_STATUS.md, "What
 is blocked by missing physical data"), and `garment_images` is deliberately not a prerequisite of
 this profile, because requiring it would make the profile unrunnable rather than merely bounded.
@@ -196,7 +211,7 @@ def main():
     suite_json = ROOT / "reports" / "suite.json"
     env["DENIMTWIN_SUITE_JSON"] = str(suite_json)
 
-    rows, failed, unavailable = [], 0, 0
+    rows, failed, unavailable, unavailable_required = [], 0, 0, []
     for c in CHECKS:
         if profile not in c.profiles:
             rows.append((c.name, SKIP, 0.0, c.required, f"not part of --profile {profile}"))
@@ -206,6 +221,8 @@ def main():
         miss = P.missing(c.needs) if c.needs else []
         if miss:
             unavailable += 1
+            if c.required:
+                unavailable_required.append(c.name)
             rows.append((c.name, UNAVAIL, 0.0, c.required,
                          f"needs {', '.join(miss)} | {P.RESOURCES[miss[0]].how}"))
             continue
@@ -215,7 +232,11 @@ def main():
         if not ok and c.required:
             failed += 1
         tail = (r.stdout + r.stderr).strip().splitlines()
-        rows.append((c.name, OK if ok else (FAIL if c.required else WARN), dt, c.required,
+        # What the profile actually added, printed beside the row. A check whose argv differs by
+        # profile was invisible in this table: `pilot` read the same in both, and in one of them it
+        # was the four-shot fixture and in the other the real 424-frame plan.
+        extra = (" +" + " ".join(c.full_args)) if (profile == "full" and c.full_args) else ""
+        rows.append((c.name + extra, OK if ok else (FAIL if c.required else WARN), dt, c.required,
                      "" if ok else (c.meaning + " | " + (tail[-1][:110] if tail else "no output"))))
 
     # ---------------------------------------------------------------- table
@@ -250,9 +271,19 @@ def main():
               f"tests/test_guards_are_not_optional.py caps it.")
 
     n_required_run = sum(1 for r in rows if r[3] and r[1] in (OK, FAIL))
-    print(f"\n  {'FAILED' if failed else 'OK'}: {failed} required check(s) failing of "
+    # A REQUIRED check that could not run leaves the profile INCOMPLETE. It is not a failure of the
+    # code and it is not a pass either, and the exit code has to say so: `return 1 if failed else 0`
+    # counted only checks that RAN, so a required check reported NOT RUN, in its own row, with its
+    # own remediation printed underneath it, still exited 0 -- a green tick over a claim nobody
+    # made. This whole file exists because a green run was read as a stronger statement than it was.
+    verdict = "FAILED" if failed else ("INCOMPLETE" if unavailable_required else "OK")
+    print(f"\n  {verdict}: {failed} required check(s) failing of "
           f"{n_required_run} run"
           + (f"; {unavailable} check(s) NOT RUN (evidence absent)" if unavailable else "") + ".")
+    if unavailable_required:
+        print(f"  {len(unavailable_required)} of those was REQUIRED: "
+              f"{', '.join(unavailable_required)}. This profile did not complete. Nothing above "
+              f"adds up to a pass while a required check has not run.")
 
     # ---------------------------------------------------------------- what this proves
     # The most expensive mistake this repository has made is letting a green run be read as a
@@ -285,6 +316,8 @@ def main():
 
     payload = {
         "profile": profile, "failed": failed, "unavailable_checks": unavailable,
+        "unavailable_required": unavailable_required,
+        "complete": not unavailable_required,
         "required_run": n_required_run,
         "checks": [{"name": n, "status": s, "seconds": round(dt, 2), "required": req, "why": why}
                    for n, s, dt, req, why in rows],
@@ -298,7 +331,11 @@ def main():
         Path(a.json).parent.mkdir(parents=True, exist_ok=True)
         Path(a.json).write_text(json.dumps(payload, indent=1) + "\n")
 
-    return 1 if failed else 0
+    if failed:
+        return 1
+    # An incomplete profile exits 2, the same code a full run over absent evidence already used.
+    # Both mean "the claim could not be made", which is a different thing from "the claim is false".
+    return 2 if unavailable_required else 0
 
 
 if __name__ == "__main__":
