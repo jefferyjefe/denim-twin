@@ -294,6 +294,32 @@ def content_sha256(path):
     return h.hexdigest()
 
 
+def decode_any(path):
+    """The image a capture can be compared BY, whether it is a still or a motion clip.
+
+    `cv2.imread` returns None for every video container. So an accepted clip carried no perceptual
+    signature, and `check_capture`'s duplicate comparison treats "no signature" as "I must look" --
+    then could not decode the file and recorded `duplicate_content` UNAVAILABLE, which blocks.
+    Every frame taken after the two required motion clips therefore blocked on a comparison against
+    them, and `ready_to_finalize` could not open once they were in the log: a gate that valid
+    evidence cannot open, which is the failure this arm of the plan exists to make impossible.
+
+    A clip's first frame is an image, and is a perfectly good signature for it -- so the comparison
+    becomes a real one rather than an excused one, and two clips of the same lay are still caught.
+    """
+    img = cv2.imread(str(path))
+    if img is not None:
+        return img
+    cap = cv2.VideoCapture(str(path))
+    try:
+        ok, frame = cap.read()
+    except Exception:                          # noqa: BLE001 -- a container this build cannot open
+        return None
+    finally:
+        cap.release()
+    return frame if ok else None
+
+
 def dhash_bits(img, n=16):
     g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     r = cv2.resize(g, (n + 1, n), interpolation=cv2.INTER_AREA)

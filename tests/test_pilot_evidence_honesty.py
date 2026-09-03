@@ -252,10 +252,17 @@ def test_every_cli_plan_is_sized_through_the_same_screen_the_gate_uses():
     The web app screened its two call sites from the day a phone keypad turned 40.0 into 4000. The
     CLI's seven passed the raw reading, so `status`, `plan`, `next`, `add`, `reuse`, `confirm` and
     `intake` each expanded a hem series quadratically from a number the gate would refuse.
+
+    The count below is a FLOOR, not an equality. What must hold is that every site screens, and the
+    line after this one is what enforces it -- across all sites, whatever their number. The floor
+    is here for the other direction: a site quietly deleted, or `PLAN.activate` renamed out from
+    under this regex, would otherwise leave the screening assertion passing vacuously over an empty
+    list. Adding a new SCREENED command is not a regression and must not read as one; `claims` was
+    the eighth.
     """
     src = (ROOT / "tools" / "pilot.py").read_text()
     calls = re.findall(r"PLAN\.activate\((.*?)\)", src, re.S)
-    assert len(calls) == 7, "expected the seven CLI plan sites, found %d" % len(calls)
+    assert len(calls) >= 7, "expected at least the seven CLI plan sites, found %d" % len(calls)
     unscreened = [c for c in calls if "plan_safe_measurements" not in c]
     assert not unscreened, (
         "these CLI call sites size a plan from an unscreened measurement: %r" % unscreened)

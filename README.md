@@ -68,16 +68,25 @@ Put a coin in the frame if you want any answer in centimetres.
     python tools/pilot.py cut-performed DENIM_0003 --inseam-l .. --inseam-r .. \
         --outseam-l .. --outseam-r .. --tool 'shears' --legs-separately y
     python tools/pilot.py measure DENIM_0003 --state post_wash   # the washed garment
+    python tools/pilot.py claims DENIM_0003 --pending  # what still needs a person
     python tools/pilot.py finalize DENIM_0003    # the post-wash gate and the committable manifest
 
-Two things about that sequence are load-bearing. **A count is not an identity**: `n_tears = 3`
+Four things about that sequence are load-bearing. **A count is not an identity**: `n_tears = 3`
 requires three photographs and says nothing about which tear each one shows, so every counted
 feature is described one instance at a time with a stable id, each frame is expanded from one of
 those descriptions and carries its id, and the cut gate refuses a garment whose features are
-counted but not identified. **A measurement belongs to a state**: the waist before the cut and the
-waist after the wash are two facts about two different physical objects, and the shrinkage is the
-difference between them, so `measure --state post_wash` writes a second set rather than replacing
-the first.
+counted but not identified — or whose description changed after the photographs were accepted.
+**A measurement belongs to a state**: the waist before the cut and the waist after the wash are two
+facts about two different physical objects, and the shrinkage is the difference between them, so
+`measure --state post_wash` writes a second set rather than replacing the first. **A repeat can be
+a different physical thing**: six shots use `min_reps` to mean the other leg or the other outseam,
+so each repeat is bound to the subject the plan requires, no two repeats may claim the same one,
+and the person confirms a claim naming that repeat's subject alone. The software cannot see which
+leg is in a photograph and does not pretend to — it makes the requirement specific and the answer
+recorded, and `PILOT_RUNBOOK.md` states the remaining physical assumption as one. **A claim is an
+identifier, not a sentence to retype**: the plan's human claims run to 204 characters, so
+`pilot.py claims` prints a short stable code for each one and `confirm --claim-code` takes it. The
+phone shows the same list with the same codes, and both doors write the same record.
 
     python tools/pilot.py provenance DENIM_0003 measurement leg_opening_cm
 
@@ -85,10 +94,10 @@ answers, for any measurement, annotation, capture or the cut spec: what physical
 to, when in the lifecycle it was collected, who supplied it, what later data depends on it, whether
 it was changed after it was first recorded, and what each gate currently says about it.
 
-`tools/pilot.py --help` lists the rest: `plan`, `next`, `add`, `confirm`, `reuse`, `cutspec`,
-`packet`, `hem`, `wash`, `offcut`, `deviation`, `gate`, `selftest`. Set `PILOT_GARMENTS` to a
-scratch directory to rehearse the whole thing without being able to write where the real garment
-records live.
+`tools/pilot.py --help` lists the rest: `plan`, `next`, `add`, `confirm`, `claims`, `reuse`,
+`cutspec`, `packet`, `hem`, `wash`, `offcut`, `deviation`, `gate`, `selftest`. Set
+`PILOT_GARMENTS` to a scratch directory to rehearse the whole thing without being able to write
+where the real garment records live.
 
 A local, phone-friendly web app over a CLI that does the whole job on its own. It walks the owner
 through every frame in an order chosen to minimise handling, checks each capture as it arrives, and
@@ -98,7 +107,7 @@ machine: the server binds to loopback unless `--lan` is passed, mints a session 
 stores captures in the gitignored garment directory it shows you on screen.
 
 The capture list is not in the code. [`protocol/shotplan/shotplan.json`](protocol/shotplan) is a
-versioned, schema-checked document of 290 shots over 157 anatomical regions, and the gate enumerates
+versioned, schema-checked document of 295 shots over 157 anatomical regions, and the gate enumerates
 its requirements from that document — so a shot added there extends the gate, and a shot that is not
 there is not required. `tools/make_runbook.py` generates the printed pack
 ([`protocol/pilot/`](protocol/pilot)) from the same document, including the one-page

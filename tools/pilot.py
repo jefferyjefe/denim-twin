@@ -39,13 +39,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from denimtwin.pilot import claims as CLAIMS       # noqa: E402
 from denimtwin.pilot import cutspec as CUT          # noqa: E402
 from denimtwin.pilot import gates as GATES          # noqa: E402
 from denimtwin.pilot import hem as HEM              # noqa: E402
 from denimtwin.pilot import plan as PLAN            # noqa: E402
 from denimtwin.pilot import qa as QA                # noqa: E402
+from denimtwin.pilot import qa_primitives as QP     # noqa: E402
 from denimtwin.pilot import spec as SPEC            # noqa: E402
-from denimtwin.pilot.store import Store, setup_hash, diff_planned_actual, mean_of  # noqa: E402
+from denimtwin.pilot import subjects as SUBJ        # noqa: E402
+from denimtwin.pilot.store import Store, Rejected, setup_hash, diff_planned_actual, mean_of  # noqa: E402
 from denimtwin.pilot.manifest import (ingest_photo, read_exif, exif_timestamp, sha256_file,  # noqa: E402
                                       ManifestError)
 
@@ -92,10 +95,15 @@ def _rep_arg(v):
 
 
 def _claim_arg(v):
-    v = str(v).strip()
-    if not v or not len(v) <= 64:
-        raise argparse.ArgumentTypeError("a claim must say what it verifies, briefly")
-    return v
+    # The cap used to be 64 characters, and the production plan raises 164 claims longer than that:
+    # a claim's identity is `confirmed_` followed by the shot plan's own sentence, up to 204
+    # characters. So the CLI could not confirm the frames that most needed confirming -- the ones
+    # no automatic check can judge -- while the phone could. `claims.validate_claim` is now the one
+    # statement of what a claim may be, and both front doors ask it.
+    try:
+        return CLAIMS.validate_claim(v)
+    except CLAIMS.ClaimError as e:
+        raise argparse.ArgumentTypeError(str(e))
 
 
 def board():
@@ -420,6 +428,15 @@ def cmd_measure(a):
     # and a measurement that is not a before-cut one has to be confirmed, because the difference
     # between "the waist" and "the waist after washing" is the entire result.
     ms = a.state or state["lifecycle_state"]
+    # The DERIVED state is checked as well as an explicit one. argparse `choices` constrains only
+    # `--state`, so between a recorded cut and a recorded wash the default landed readings in
+    # `immediate_after` -- a bucket no gate reads -- and told the operator it had recorded them.
+    if ms not in GATES.MEASUREMENT_STATES:
+        raise SystemExit(
+            "the log has this garment in %r, and a measurement belongs to %s. Say which set this "
+            "reading is:\n  tools/pilot.py measure %s --state %s"
+            % (ms, " or ".join(GATES.MEASUREMENT_STATES), a.garment,
+               GATES.MEASUREMENT_STATES[-1]))
     wanted = (GATES.POST_WASH_MEASUREMENTS if ms == "post_wash" else GATES.REQUIRED_MEASUREMENTS)
     print("Recording %s measurements for %s.\n" % (ms.upper(), a.garment))
     # ALWAYS confirmed, including for the pre-cut set. The lifecycle is derived from the LOG, and
@@ -472,6 +489,26 @@ def cmd_cut_performed(a):
         print("this garment already has a recorded cut (seq %s). A second record is a CORRECTION:\n"
               "the first one stands, and the gate will ask you to acknowledge the disagreement."
               % state["cut_performed"].get("seq"))
+    # REFUSED AT THE KEYBOARD. `store.fold` is first-write-wins for `cut_performed` -- correctly,
+    # because a second account of an irreversible act is a correction and a correction that
+    # overwrites is indistinguishable from the act never having differed -- so a first record the
+    # gate rejects can never be replaced. `c_cut_performed`'s "the record of the cut is incomplete"
+    # branch returns above both acknowledgement paths, and its printed remedy ("re-run with every
+    # field") appends a rewrite the fold routes to `cut_performed_rewrites` and never reads. One
+    # mistyped digit closed ready_to_wash and ready_to_finalize permanently, on a garment already
+    # in two pieces. The number has to be refused before it is written down.
+    lo, hi = GATES.CUT_LENGTH_RANGE_CM
+    for label, val in (("--inseam-l", a.inseam_l), ("--inseam-r", a.inseam_r),
+                       ("--outseam-l", a.outseam_l), ("--outseam-r", a.outseam_r)):
+        if val is None or not (lo <= float(val) <= hi):
+            raise SystemExit(
+                "%s = %r is not a plausible achieved cut length (%.0f-%.0f cm), and this record "
+                "cannot be replaced once written: the log is append-only and the first account of "
+                "the cut is the one every gate reads. Check the tape and run it again."
+                % (label, val, lo, hi))
+    if not (a.tool or "").strip():
+        raise SystemExit("--tool is what did the cutting; the gate requires it and this record "
+                         "cannot be replaced once written")
     payload = {
         "achieved_inseam_cm": {"L": a.inseam_l, "R": a.inseam_r},
         "achieved_outseam_cm": {"L": a.outseam_l, "R": a.outseam_r},
@@ -588,13 +625,20 @@ def cmd_add(a):
     if shot is None:
         raise SystemExit("%s is not an activated shot for this garment. `plan` lists what is."
                          % a.shot)
+    # WHICH PHYSICAL THING this is a photograph of, decided before the file is ingested so a
+    # mis-declared subject is refused rather than filed and then blocked.
+    try:
+        subject = SUBJ.capture_fields(shot, a.rep, declared=getattr(a, "subject", None))
+    except (SUBJ.WrongSubject, SUBJ.UnknownSemantics) as e:
+        raise SystemExit(str(e))
     dest_dir = gdir / "images" / shot["state"]
     dest, sha, already = ingest_photo(a.file, dest_dir, a.shot, a.rep)
     rel = str(dest.relative_to(gdir))
     exif = read_exif(dest)
     ts = exif_timestamp(exif)
     import cv2
-    img = cv2.imread(str(dest))
+    # decode_any, so a motion clip is decoded from its first frame rather than not at all.
+    img = QP.decode_any(dest)
     h, w = (img.shape[:2] if img is not None else (None, None))
     # The instance identity travels WITH the photograph. The planner computed instance_index,
     # instance_total and -- when the operator has recorded the physical objects -- the annotation
@@ -611,6 +655,8 @@ def cmd_add(a):
                           "annotation_id": shot.get("annotation_id"),
                           "annotation_type": shot.get("annotation_type"),
                           "annotation_location": shot.get("annotation_location"),
+                          "subject_id": subject["subject_id"],
+                          "subject_aspect": subject["subject_aspect"],
                           "already_present": already},
               operator=a.operator, setup_hash=state["setup_hash"])
     b, bspec = board()
@@ -686,10 +732,43 @@ def cmd_reuse(a):
     for c in checks:
         if c.outcome != QA.PASS:
             print("  %-22s %-28s %s" % (c.check_id, c.outcome, c.detail[:90]))
-    if outcome != QA.PASS:
+    # A frame may satisfy a second shot only when every requirement of that shot passes on it --
+    # but a claim awaiting a person is not a failed requirement, it is an unanswered one, and it is
+    # answered the same way it is for `add`: afterwards, against the photograph, through `confirm`.
+    # Refusing on it made `reuse` impossible for every shot that raises a claim, which is nearly
+    # all of them. The only way it ever succeeded was by confirming those claims in the same
+    # command as the borrow -- the self-signature that no longer counts -- so leaving this as it
+    # was would have closed the command rather than the hole. UNAVAILABLE stays a refusal: a check
+    # that could not be run is not a check that passed.
+    unfit = [c for c in checks if c.outcome not in (QA.PASS, QA.HUMAN)]
+    if unfit:
         print("\nrefused: a frame may satisfy a second shot only when every requirement of that "
-              "shot passes on it.")
+              "shot passes on it. %d did not: %s"
+              % (len(unfit), ", ".join(c.check_id for c in unfit[:4])))
         return FAIL
+    # WHICH PHYSICAL THING the borrowed frame is of. `reuse` is the one capture writer that does
+    # not go through subjects.capture_fields -- `add` and the phone both do -- so borrowing the
+    # left-hem frame for the repeat the plan reserves for the right hem printed PASS and
+    # "recorded", counted as that repeat's photograph, and left captures.subjects_bound blocking
+    # the cut gate for the rest of the session. Fail-closed, so never a false READY; but the
+    # operator found out at the gate instead of at the command that did it, and the log is
+    # append-only, so the wrong record stays in it.
+    #
+    # Only the subject is compared, not the plan's aspect sentence. Two different shots that are
+    # both of the left hem word their repeats differently, and refusing on that would refuse the
+    # legitimate reuse this command exists for. Which of the two the frame shows is what the
+    # target repeat's own human claim asks, and that claim is re-run above.
+    try:
+        subj_req = SUBJ.required(target, a.rep)
+    except SUBJ.UnknownSemantics as e:
+        raise SystemExit(str(e))
+    if subj_req is not None and src.get("subject_id") != subj_req["subject_id"]:
+        raise SystemExit(
+            "refusing: %s r%s was taken of %s, and repeat %s of %s is the photograph of %s (%s). "
+            "Those are different physical things, and none of the checks re-run on the frame can "
+            "tell them apart -- take the photograph that repeat is for."
+            % (a.source, a.source_rep, src.get("subject_id") or "no recorded subject",
+               a.rep, a.target, subj_req["subject_id"], subj_req["aspect"]))
     # File the borrowed bytes under the TARGET's own content-addressed name. Keeping the source's
     # path left every reuse looking misfiled to captures.files_intact -- so the command exited 0
     # saying "recorded" and left the garment permanently unable to pass the gate.
@@ -710,6 +789,20 @@ def cmd_reuse(a):
     # against the slot the plan says is TEAR.02 positively asserted it was of TEAR.01 -- under a
     # shot id that means the other tear. Every re-run check passed, because none of them is about
     # which tear is in the frame.
+    # The subject fields follow the TARGET where the plan names one for this repeat, because that
+    # is exactly where the gate compares them -- `captures.subjects_bound` tests the pair
+    # (subject_id, subject_aspect) against what the plan says that repeat is. The check above
+    # compares only the id, deliberately: two shots that are both of the left hem word their
+    # repeats differently, and refusing on the wording would refuse the legitimate borrow this
+    # command exists for. Copying the SOURCE's aspect through then left the gate calling the
+    # result the wrong subject -- a permitted reuse that closes the gate is the dead end this
+    # command has already been fixed for once.
+    #
+    # Where the plan names no subject for the repeat, the source's own fields are kept: the gate
+    # does not compare them there, and they describe the photograph truthfully.
+    subject_out = {}
+    if subj_req is not None:
+        subject_out = SUBJ.capture_fields(target, a.rep)
     st.append("capture", dict(src, shot_id=a.target, rep=a.rep, state=target["state"],
                               path=str(dest.relative_to(gdir)),
                               region_id=target.get("region_id"),
@@ -718,7 +811,8 @@ def cmd_reuse(a):
                               annotation_id=target.get("annotation_id"),
                               annotation_type=target.get("annotation_type"),
                               annotation_location=target.get("annotation_location"),
-                              reused_from=a.source),
+                              reused_from=a.source,
+                              **subject_out),
               operator=a.operator, setup_hash=src.get("setup_hash"))
     st.append("qa_result", {"shot_id": a.target, "rep": a.rep, "outcome": outcome,
                             "shot_class": QA.shot_class(target),
@@ -737,7 +831,15 @@ def cmd_reuse(a):
               operator=a.operator)
     print("\nrecorded. The manifest names the source, the shot it now also satisfies, and every "
           "check that was re-run on it.")
-    return OK
+    open_claims = [c for c in checks if c.outcome == QA.HUMAN]
+    if open_claims:
+        print("\n%d claim(s) about this frame still need a person, against the photograph:"
+              % len(open_claims))
+        for c in open_claims:
+            print("  %s" % c.check_id)
+        print("  pilot.py claims %s --shot %s --rep %d   lists them with their codes"
+              % (a.garment, a.target, a.rep))
+    return OK if outcome == QA.PASS else FAIL
 
 
 def cmd_deviation(a):
@@ -771,31 +873,177 @@ def cmd_deviation(a):
 
 
 def cmd_confirm(a):
+    """record a human verification of one claim"""
     st = Store(garment_dir(a.garment))
     if not a.operator:
         raise SystemExit("--operator is required: a human verification without a name is not one")
+    spec = load_spec()
+    state, _ = st.fold()
+
+    shot = None
     if a.shot:
-        spec = load_spec()
-        state0, _ = st.fold()
-        activated, _m = PLAN.activate(spec, state0["features"],
-                                      GATES.plan_safe_measurements(state0),
-                                      state0.get("cut_spec"),
-                                      annotations=state0.get("annotations"))
-        if a.shot not in {x["shot_id"] for x in activated}:
+        activated, _m = PLAN.activate(spec, state["features"],
+                                      GATES.plan_safe_measurements(state),
+                                      state.get("cut_spec"),
+                                      annotations=state.get("annotations"))
+        by_id = {x["shot_id"]: x for x in activated}
+        if a.shot not in by_id:
             raise SystemExit("%s is not an activated shot for this garment, so there is nothing "
                              "about it to verify" % a.shot)
-    cap_sha = None
+        shot = by_id[a.shot]
+
+    # A claim ABOUT A PHOTOGRAPH belongs to a repeat, and the repeat defaults to the first one --
+    # in the RECORD as well as in the lookup. Resolving against repeat 1 and then storing `None`
+    # wrote the verification under a key the gate never reads: `store.fold` keys on
+    # (shot_id, rep, claim) and `_human_resolved` asks for (shot_id, 1, claim). It recorded
+    # successfully, printed success, and cleared nothing, which is the worst of the three
+    # possible outcomes and the exact failure this module exists to remove.
+    rep = int(a.rep or 1) if a.shot else a.rep
+    try:
+        claim = CLAIMS.resolve(state, a.shot, rep, shot=shot,
+                               claim=_claim_text(a), code=a.claim_code, index=a.claim_index)
+        note = CLAIMS.validate_note(_read_text_arg(a.note, a.note_file, "--note"))
+        bind = CLAIMS.binding(state, spec, a.shot, rep)
+        payload = CLAIMS.payload(
+            claim=claim, shot_id=a.shot, rep=rep, value=not a.deny, note=note,
+            operator=a.operator, verifier=a.verifier,
+            measured_inseam_cm=a.measured_inseam, measured_outseam_cm=a.measured_outseam,
+            bind=bind, interface="cli", entry_mode=CLAIMS.cli_entry_mode())
+    except CLAIMS.ClaimError as e:
+        raise SystemExit(str(e))
+
+    st.append("human_verification", payload, operator=a.operator)
+    print("recorded: %s [%s] = %s by %s"
+          % (claim, CLAIMS.claim_code(claim), not a.deny, a.operator))
+    return OK
+
+
+def _claim_text(a):
+    """The claim as text, from the positional argument or from a file or standard input.
+
+    A claim is an identifier and is never long, but the file and stdin routes exist because the
+    identifier is a whole sentence and retyping it is how an operator writes a verification of a
+    claim nobody raised. `--claim-code` is the route to prefer; these two are for pasting.
+    """
+    given = [x for x in (a.claim, a.claim_file, getattr(a, "claim_stdin", False) or None)
+             if x not in (None, False)]
+    if len(given) > 1:
+        raise SystemExit("give the claim once: as the argument, --claim-file or --claim-stdin")
+    if a.claim_file:
+        return _read_file_arg(a.claim_file, "--claim-file")
+    if getattr(a, "claim_stdin", False):
+        # Bounded too. `sys.stdin.read()` pulled the whole stream into memory and only then let
+        # `validate_claim` object that it was over 512 characters.
+        cap = CLAIMS.MAX_CLAIM_CHARS * 4
+        data = sys.stdin.read(cap + 1)
+        if len(data) > cap:
+            raise SystemExit("--claim-stdin is longer than the %d characters a claim can be" % cap)
+        return data
+    return a.claim
+
+
+def _read_text_arg(inline, path, flag):
+    if inline is not None and path is not None:
+        raise SystemExit("give %s once: inline or as a file" % flag)
+    if path is not None:
+        return _read_file_arg(path, flag + "-file")
+    return inline
+
+
+def _read_file_arg(path, flag):
+    """Read a text argument from a file, refusing what cannot be a text argument.
+
+    Bounded before it is read, not after: the point of a file route is to accept a long value, and
+    a route that accepts an arbitrarily long one is a way to put a gigabyte into an append-only log
+    that nothing can remove.
+    """
+    p = Path(path)
+    # A REGULAR FILE, and a bounded read. `st_size` is 0 for /dev/zero, /dev/urandom and for a
+    # FIFO, so a size test alone never fired for exactly the inputs that have no end: pointing
+    # --claim-file at /dev/zero read until the process was killed, and a FIFO hung forever. The
+    # comment that used to sit here said "bounded before it is read, not after", and for anything
+    # that was not a regular file that was not true.
+    if not p.is_file():
+        raise SystemExit("%s must be an ordinary file; %s is not one" % (flag, path))
+    cap = CLAIMS.MAX_NOTE_CHARS * 4
+    try:
+        with open(str(p), "r", encoding="utf-8") as f:
+            data = f.read(cap + 1)
+    except (OSError, UnicodeDecodeError) as e:
+        raise SystemExit("cannot read %s as text: %s" % (flag, e))
+    if len(data) > cap:
+        raise SystemExit("%s is longer than the %d characters that can be recorded" % (flag, cap))
+    return data
+
+
+def cmd_claims(a):
+    """list the claims a frame raised, and whether each is confirmed"""
+    st = Store(garment_dir(a.garment))
+    state, _ = st.fold()
+    # The plan on disk, so a claim a revision added to a frame already taken is listed too.
+    # The spec is hoisted rather than called inline because the guard in
+    # tests/test_pilot_evidence_honesty.py reads these call sites as text, and a nested call in the
+    # first argument truncates its match before it reaches the screen -- it fails closed, which is
+    # correct of it, but the site really is screened and should read as such.
+    spec = load_spec()
+    try:
+        activated, _m = PLAN.activate(spec, state["features"],
+                                      GATES.plan_safe_measurements(state),
+                                      state.get("cut_spec"),
+                                      annotations=state.get("annotations"))
+        by_id = {x["shot_id"]: x for x in activated}
+    except Exception:                                    # noqa: BLE001 -- listing is not a gate
+        by_id = {}
     if a.shot:
-        state, _ = st.fold()
-        cap = state["captures"].get((a.shot, int(a.rep or 1)))
-        cap_sha = (cap or {}).get("sha256")
-    st.append("human_verification",
-              {"shot_id": a.shot, "rep": a.rep, "claim": a.claim, "value": not a.deny,
-               "note": a.note, "verifier_name": a.verifier or a.operator,
-               "operator": a.operator, "capture_sha256": cap_sha,
-               "measured_inseam_cm": a.measured_inseam, "measured_outseam_cm": a.measured_outseam},
-              operator=a.operator)
-    print("recorded: %s = %s by %s" % (a.claim, not a.deny, a.operator))
+        rows = [(a.shot, int(a.rep or 1))]
+    else:
+        rows = sorted(set(state["qa"]) | {(sid, r) for sid in by_id
+                                          for r in range(1, int(by_id[sid].get("min_reps", 1)) + 1)
+                                          if (sid, r) in state["captures"]})
+    n = 0
+    for sid, rep in rows:
+        pend = CLAIMS.pending_claims(state, sid, rep, shot=by_id.get(sid))
+        if not pend:
+            continue
+        if a.pending and all(p["resolved"] for p in pend):
+            continue
+        print("%s r%d" % (sid, rep))
+        for p_ in pend:
+            if a.pending and p_["resolved"]:
+                continue
+            n += 1
+            print("  [%d] %s  %s  %s" % (p_["index"], p_["code"],
+                                         "CONFIRMED" if p_["resolved"] else "open   ", p_["claim"]))
+            if not p_["resolved"] and p_["why"]:
+                print("        %s" % p_["why"])
+    # The claims that belong to the SESSION rather than to a photograph. They were listed by
+    # neither door, so the queue an operator worked through was missing exactly the three that
+    # authorise the shears.
+    if not a.shot:
+        print("\nsession claims (not about any one photograph):")
+        for name in sorted(CLAIMS.SESSION_CLAIMS):
+            recs = [r for (_s, _r, c), r in state["verifications"].items() if c == name]
+            latest = max(recs, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
+                if recs else None
+            if latest is None:
+                mark, note = "open   ", ""
+            elif latest.get("value") is True:
+                mark, note = "CONFIRMED", " by %s" % (latest.get("verifier_name") or "?")
+                n += 1
+            else:
+                mark, note = "REFUSED  ", " by %s" % (latest.get("verifier_name") or "?")
+            print("      %s  %s  %s%s" % (CLAIMS.claim_code(name), mark, name, note))
+            print("        %s" % CLAIMS.SESSION_CLAIMS[name])
+    if not n:
+        print("nothing outstanding" if a.pending else "no frame here raised a claim for a person")
+        return OK
+    print("\nconfirm one with its code, which is stable and short:")
+    # --operator is a TOP-LEVEL flag and argparse rejects it after the subcommand, so the line
+    # printed here has to put it where it actually goes. gates.py prints the same command and gets
+    # this right; this one told the operator to run something the tool refuses.
+    print("  tools/pilot.py --operator <you> confirm %s --shot <SHOT> --rep <N> "
+          "--claim-code <CODE>" % a.garment)
+    print("refuse one the same way, with --deny and a --note saying what you saw.")
     return OK
 
 
@@ -866,8 +1114,12 @@ def cmd_precut(a):
         print("\n  Every required photograph, measurement, calibration reading, hash, cut")
         print("  specification and human verification is present and valid. You may cut.\n")
         return OK
-    unavail = any("could not be evaluated" in b.what for b in v.blocks)
-    return UNAVAILABLE if unavail else FAIL
+    # The VERDICT'S OWN FLAG, not a substring of an English sentence. Sniffing for "could not be
+    # evaluated" missed every block that says it a different way -- `log.readable` and `spec.usable`
+    # among them -- so the one command that exists to say "do not cut" reported a plain refusal for
+    # a gate that had not been able to answer at all. `cmd_gate` already does this correctly, and
+    # the two disagreed on the same session.
+    return UNAVAILABLE if v.unavailable else FAIL
 
 
 def cmd_gate(a):
@@ -957,8 +1209,34 @@ def cmd_wash(a):
     for key, cast, label in fields:
         hint = ("  %s [planned: %s]" % (label, base.get(key))) if a.actual else ("  %s" % label)
         rec[key] = _prompt(hint, None, cast)
-    st.append(which, rec, operator=a.operator)
+
+    # `state` was folded before sixteen interactive prompts, so the checks above answered a
+    # question about the log as it stood minutes ago. The phone writes to the same log. The window
+    # was wide enough to walk to the machine in: the app records the actual wash, this command
+    # appends a second one on top, exits 0 printing "recorded, not overwritten" -- and fold() keeps
+    # the phone's, so the three deviation entries this then writes describe a wash that never
+    # happened. Asked again with the write lock held, against the log as it is now.
+    def occupied(s_):
+        if a.actual and not s_["wash_planned"]:
+            return "the planned wash is no longer on record"
+        if a.actual and s_["wash_actual"]:
+            return ("the actual wash was recorded by someone else while you were typing "
+                    "(machine %r, cycle %r). It is written once, like the plan."
+                    % (s_["wash_actual"].get("machine"), s_["wash_actual"].get("cycle")))
+        if not a.actual and s_["wash_planned"]:
+            return "a wash plan was recorded by someone else while you were typing"
+        return None
+
+    try:
+        st.append_guarded(which, rec, operator=a.operator, guard=occupied)
+    except Rejected as e:
+        raise SystemExit(
+            "%s\nNothing was written. What you typed is above; record the difference with\n"
+            "  tools/pilot.py deviation %s --kind wash --field <field> --planned <x> --actual <y>"
+            % (e, a.garment))
     if a.actual:
+        # Re-folded: the plan this is diffed against must be the one the log holds now.
+        state, _ = st.fold()
         d = diff_planned_actual(state["wash_planned"], rec)
         if d:
             print("\n%d deviation(s) from the plan -- recorded, not overwritten:" % len(d))
@@ -1144,7 +1422,7 @@ def main(argv=None):
     s.add_argument("--note", default="", help="what it looks like")
     s.add_argument("--size-mm", type=float, default=None, dest="size_mm")
     s = add("measure", cmd_measure)
-    s.add_argument("--state", default=None, choices=("before", "post_wash"),
+    s.add_argument("--state", default=None, choices=GATES.MEASUREMENT_STATES,
                    help="which set these readings belong to; default is where the log says the "
                         "garment has got to")
     s = add("cut-performed", cmd_cut_performed)
@@ -1166,6 +1444,10 @@ def main(argv=None):
     s.add_argument("--rep", type=_rep_arg, default=1)
     s.add_argument("--confirm", action="append",
                    help="record an operator assertion, e.g. --confirm ruler_visible")
+    s.add_argument("--subject", default=None,
+                   help="the physical thing photographed (GARMENT, LEG.L, LEG.R, OFFCUT.L, "
+                        "OFFCUT.R, APPARATUS, FEATURE.<id>). Refused if it is not the subject "
+                        "this repeat is for")
     s = add("deviation", cmd_deviation)
     s.add_argument("--kind", required=True,
                    help="rig, wash, intake, offcut_alternation or protocol")
@@ -1181,14 +1463,36 @@ def main(argv=None):
     s.add_argument("--reason", default=None)
     s.add_argument("--confirm", action="append")
     s = add("confirm", cmd_confirm)
-    s.add_argument("claim", type=_claim_arg)
+    # The claim may be named three ways and they all resolve, through `claims.resolve`, to the one
+    # string the gate looks for. The code is the route to prefer: it is short, it is stable, it is
+    # printed by `pilot.py claims`, and it cannot be mistyped into a verification of a claim that
+    # was never raised -- which the full text could, and which recorded successfully and cleared
+    # nothing.
+    s.add_argument("claim", type=_claim_arg, nargs="?", default=None,
+                   help="the claim's text or its code; or use --claim-code / --claim-index")
+    s.add_argument("--claim-code", default=None, dest="claim_code",
+                   help="the short stable code from `pilot.py claims`")
+    s.add_argument("--claim-index", type=int, default=None, dest="claim_index",
+                   help="the claim's position in THIS LISTING of the frame (positions move when "
+                        "the frame is retaken; --claim-code does not)")
+    s.add_argument("--claim-file", default=None, dest="claim_file",
+                   help="read the claim's text from a file")
+    s.add_argument("--claim-stdin", action="store_true", dest="claim_stdin",
+                   help="read the claim's text from standard input")
     s.add_argument("--shot", default=None)
     s.add_argument("--rep", type=_rep_arg, default=None)
     s.add_argument("--deny", action="store_true")
     s.add_argument("--note", default=None)
+    s.add_argument("--note-file", default=None, dest="note_file",
+                   help="read the note from a file, for a note that does not fit on one line")
     s.add_argument("--verifier", default=None)
     s.add_argument("--measured-inseam", type=float, default=None, dest="measured_inseam")
     s.add_argument("--measured-outseam", type=float, default=None, dest="measured_outseam")
+    s = add("claims", cmd_claims)
+    s.add_argument("--shot", default=None)
+    s.add_argument("--rep", type=_rep_arg, default=None)
+    s.add_argument("--pending", action="store_true",
+                   help="only the claims that are still open")
     s = add("cutspec", cmd_cutspec)
     s.add_argument("--inseam", type=float, required=True)
     s = add("packet", cmd_packet)

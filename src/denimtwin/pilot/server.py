@@ -51,6 +51,15 @@ MAX_UPLOAD_BYTES = 200 * 1024 * 1024      # a 48 MP HEIC burst is nowhere near t
 MAX_BODY_BYTES = 2 * 1024 * 1024          # non-upload JSON bodies
 
 
+class NoSuchGarment(KeyError):
+    """Asked about a garment this session has no directory for.
+
+    A KeyError SUBCLASS on purpose: the two handlers that already catch KeyError around `store()`
+    keep catching it first and keep their own wording, so nothing that already answers this
+    question changes its answer.
+    """
+
+
 def _operator_missing(body, is_multipart=False):
     """Every write must name the person making it. Returns an error sentence, or None.
 
@@ -112,7 +121,18 @@ class Api(object):
                     bad = _operator_missing(body, is_multipart=path == "/api/upload")
                     if bad:
                         return 400, {"error": bad}
-                return fn(mo, query, body)
+                try:
+                    return fn(mo, query, body)
+                except NoSuchGarment as e:
+                    # Ten of the eleven routes reached for a garment directory that was not there
+                    # and let the KeyError out of the handler, which the base handler turns into a
+                    # dropped connection: the phone saw "the server closed the connection", which
+                    # is what it also sees when the capture app has died. The CLI has answered this
+                    # in a sentence from the start ("no such garment: %s"). Caught by TYPE, and
+                    # narrowly: a blanket except here would answer "no such garment" to an internal
+                    # failure on a garment that does exist, which is a reassuring sentence about
+                    # the wrong thing.
+                    return 404, {"error": "no such garment: %s" % (e.args[0] if e.args else "")}
         return 404, {"error": "no such endpoint", "path": path}
 
 
@@ -313,27 +333,51 @@ def _parse_multipart(rfile, headers, length):
         raise ValueError("no multipart boundary")
     boundary = ("--" + m.group(1)).encode("ascii")
     body = rfile.read(length)
+    # A SHORT READ IS NOT A PHOTOGRAPH. read() returns what arrived, and a phone that walks out of
+    # range or a wifi drop mid-upload ends the stream early -- so the body was parsed as though it
+    # were complete, the truncated bytes were written out under the shot's own content-addressed
+    # name, and the gate then saw a photograph present for that frame. Measured on this parser:
+    # 209715200 bytes declared, 183500800 arrived, accepted silently. This is an evidence question,
+    # not an availability one, and the only honest answer to half a photograph is to refuse it.
+    if len(body) != length:
+        raise ValueError(
+            "the upload ended early: %d bytes of the %d the client declared. A truncated "
+            "photograph is not a photograph -- take it again." % (len(body), length))
     out = {"files": {}, "fields": {}}
-    for chunk in body.split(boundary):
-        if not chunk or chunk in (b"--", b"--\r\n", b"\r\n"):
+    # Walked with find() over a memoryview rather than body.split(boundary). split() built a second
+    # copy of every byte of the photograph and held it for the whole loop, .partition() built a
+    # third and the trailing-CRLF slice a fourth, so parsing one upload peaked at four times its
+    # size in heap -- measured 4.00x by both tracemalloc and ru_maxrss at 4 MiB, 16 MiB and 64 MiB.
+    # MAX_UPLOAD_BYTES caps ONE request at 200 MB and nothing counts bytes in flight, so eight
+    # phones finishing together were 6.4 GB of demanded heap. Slicing a memoryview copies nothing,
+    # so the only copy made per part is the one the caller keeps.
+    view = memoryview(body)
+    start = body.find(boundary)
+    while start >= 0:
+        start += len(boundary)
+        nxt = body.find(boundary, start)
+        stop = len(body) if nxt < 0 else nxt
+        sep = body.find(b"\r\n\r\n", start, stop)
+        if sep < 0:                                  # preamble, epilogue, or a headerless chunk
+            start = nxt
             continue
-        head, _, data = chunk.partition(b"\r\n\r\n")
-        if not _:
-            continue
-        data = data[:-2] if data.endswith(b"\r\n") else data
+        d0, d1 = sep + 4, stop
+        if body[d1 - 2:d1] == b"\r\n":
+            d1 -= 2
         disp = ""
-        for line in head.split(b"\r\n"):
+        for line in bytes(view[start:sep]).split(b"\r\n"):
             if line.lower().startswith(b"content-disposition:"):
                 disp = line.decode("latin-1", "replace")
         name = re.search(r'name="([^"]*)"', disp)
         fname = re.search(r'filename="([^"]*)"', disp)
+        start = nxt
         if not name:
             continue
         if fname and fname.group(1):
             out["files"][name.group(1)] = {"filename": os.path.basename(fname.group(1)),
-                                           "data": data}
+                                           "data": bytes(view[d0:d1])}
         else:
-            out["fields"][name.group(1)] = data.decode("utf-8", "replace")
+            out["fields"][name.group(1)] = bytes(view[d0:d1]).decode("utf-8", "replace")
     return out
 
 
@@ -352,6 +396,13 @@ class PilotServer(ThreadingHTTPServer):
 
     #: Concurrent connections. One operator, one phone, one laptop tab: single digits in practice.
     max_connections = 32
+
+    #: The accept queue has to be at least as deep as the ceiling, or the ceiling is not what
+    #: decides. socketserver's default is 5: connections six and beyond were reset by the OS before
+    #: process_request ever ran, so the visible refusal promised above never reached the phone --
+    #: it saw a connection reset, which is indistinguishable from the capture app having died
+    #: mid-session. The 503 is the answer this server means to give; this is what lets it give it.
+    request_queue_size = max_connections
 
     def __init__(self, *args, **kw):
         ThreadingHTTPServer.__init__(self, *args, **kw)

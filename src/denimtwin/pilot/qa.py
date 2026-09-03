@@ -28,6 +28,8 @@ most actionable.
 """
 from pathlib import Path
 
+from . import subjects as SUBJ
+
 PASS = "PASS"
 RETAKE = "RETAKE_REQUIRED"
 UNAVAILABLE = "UNAVAILABLE_CHECK"
@@ -344,6 +346,43 @@ def merged_quality(spec_defaults, shot):
             q.pop(k, None)
     q.update(shot_q)
     return q
+
+
+def human_claims(shot, rep=1):
+    """The claims a person must make about this frame, DERIVED FROM THE SHOT PLAN.
+
+    One source, and both readers of it matter. `check_capture` uses it to raise the claims when a
+    photograph is checked. `gates.captures.required_complete` uses it to require them -- and used
+    to read the requirement off the stored qa record instead, which is the record written under
+    whatever plan was on disk at the time. So a shot plan revision that ADDED a `requires_human`
+    claim to an already-photographed shot was satisfied by a frame accepted before the claim
+    existed: `spec.bound` blocks on the revision, the operator records the deviation that block
+    itself prints, and the gate returns READY with the new claim never asked of anybody.
+
+    The generic subject claim is dropped in favour of the per-repeat one; see the note in
+    `check_capture` and `subjects.claim_for`.
+    """
+    generic = [c for c in (shot.get("requires_human") or [])
+               if SUBJ.is_generic_subject_claim(c)]
+    out = [c for c in (shot.get("requires_human") or [])
+           if not SUBJ.is_generic_subject_claim(c)]
+    subject_claim = SUBJ.claim_for(shot, rep)
+    if subject_claim:
+        out.append(subject_claim)
+    elif generic:
+        # REPLACED, never merely deleted. `claim_for` returns None when the shot carries no
+        # `rep_semantics`, so a plan that asked the generic subject question WITHOUT naming what
+        # each repeat is of would have had a required confirmation silently removed and nothing
+        # put in its place. No shot in the committed plan is shaped that way, and a plan-level
+        # guard in tests/test_pilot_subjects.py says so -- but the safe reading of a plan this
+        # code does not recognise is to keep asking the question, not to stop asking it.
+        out.extend(generic)
+    return out
+
+
+def human_claim_ids(shot, rep=1):
+    """`human_claims` as the check ids the record and the gate key on."""
+    return ["confirmed_%s" % c for c in human_claims(shot, rep)]
 
 
 def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, image=None,
@@ -770,11 +809,35 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
     # test, a proof that the board and the garment share a plane. Every numeric threshold passes on
     # a photograph of anything, so without this the requirement is satisfied by any file that
     # decodes. A shot can name the claims a person has to make about it.
-    for claim in (shot.get("requires_human") or []):
+    #
+    # One of those claims is WHAT THIS REPEAT IS A PHOTOGRAPH OF, where a shot's repeats are
+    # different physical subjects rather than repetitions of one view. The plan names every subject
+    # the shot has, identically for every repeat, so confirming repeat 1 and repeat 2 recorded the
+    # same sentence twice and separated nothing: two photographs of one leg cleared both. It is
+    # REPLACED, not supplemented, by a claim naming this repeat's subject alone, so that confirming
+    # the wrong frame is a statement a person can be wrong about rather than one true either way.
+    #
+    # An APPROVAL delivered with the file does not clear one of these. `--confirm "<the claim>"`
+    # and the phone's comma-separated `confirm` field both accept a whole claim sentence, so one
+    # non-interactive command could file a photograph and sign off its own subject claim in the
+    # same breath -- before anyone could have looked at the frame, with no human_verification
+    # record anywhere in the log, and (because `operator` may be absent) attributed to nobody. The
+    # gate then reported a confirmation that was never made. `gates._verification_for` is this
+    # system's single statement of when a confirmation counts -- an explicit yes, from a named
+    # person, naming this file's hash, recorded after it, not stale against a re-described
+    # instance -- and a PASS written here bypassed all of it. A REFUSAL still counts: saying "this
+    # frame does not show it" needs no ceremony and forces another photograph.
+    for claim in human_claims(shot, rep):
         cid = "confirmed_%s" % str(claim)
-        if assertions.get(claim) is True or assertions.get(cid) is True:
-            checks.append(Check(cid, PASS, "operator confirmed: %s" % claim,
-                                {"asserted_by": assertions.get("operator")}))
+        if (assertions.get(claim) is True or assertions.get(cid) is True) \
+                and assertions.get(claim) is not False:
+            checks.append(Check(cid, HUMAN,
+                                "an approval of this arrived in the same command as the "
+                                "photograph, naming %s, so nobody had yet seen the frame it is "
+                                "about: %s" % (assertions.get("operator") or "nobody", claim),
+                                fix="confirm it against the photograph -- in the app, or "
+                                    "`pilot.py confirm --claim-code <code>` (`pilot.py claims` "
+                                    "lists the codes)"))
         elif assertions.get(claim) is False:
             checks.append(Check(cid, RETAKE, "operator reported this frame does not show: %s"
                                 % claim, fix="re-take it so that it does"))
@@ -801,7 +864,9 @@ def check_capture(path, shot, quality, *, rep=1, board=None, board_spec=None, im
         candidate = is_prev or dist is None or dist <= DUPLICATE_CANDIDATE_HAMMING
         oimg = other.get("image")
         if oimg is None and candidate and other.get("path"):
-            oimg = cv2.imread(str(other["path"]))
+            # decode_any, not imread: a motion clip is a capture like any other and must be
+            # comparable, or every frame taken after one blocks on a comparison it cannot make.
+            oimg = Q.decode_any(other["path"])
         n = Q.ncc(img, oimg) if oimg is not None else None
         # The HASH comparison costs nothing and needs no image, so it runs on every pair whatever
         # the signatures said: an exact re-use is caught unconditionally. Dropping a pair entirely

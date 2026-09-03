@@ -31,7 +31,9 @@ from . import gates as GATES
 from . import hem as HEM
 from . import plan as PLAN
 from . import qa as QA
+from . import claims as CLAIMS
 from . import spec as SPEC
+from . import subjects as SUBJ
 from . import manifest as MF
 from .fixtures import synth_capture
 from .manifest import ManifestError, ingest_photo, sha256_file
@@ -175,6 +177,13 @@ class Bench(object):
         # rejects. The bug was in the fixture, and it looked exactly like a system fault.
         base = seed if seed is not None else 0
         uniq = zlib.crc32(("%s|%d|%d" % (shot["shot_id"], rep, base)).encode()) % (2 ** 31)
+        # A VIDEO SHOT NEEDS A VIDEO. The plan requires two motion clips after the wash, and a
+        # fixture that answers them with a PNG fails them for a fact about the fixture: `readable`
+        # is cv2.imread, which returns None for every container, so the frame is a RETAKE and the
+        # finalize gate cannot open. Excusing that in the assertion would have hidden the one
+        # difference between a positive control and a list of things that happen to be true.
+        if QA.shot_class(shot) == "video":
+            return self._synth_clip(shot, rep, uniq)
         args = dict(subject=subject, mm_per_px=mm, size=(w, h),
                     seed=uniq,
                     # An explicit relay index means the caller is saying something specific about
@@ -190,10 +199,52 @@ class Bench(object):
         synth_capture(str(p), **args)
         return p
 
-    def add(self, shot, rep, src, *, confirm_all=True, setup_hash_override="__default__"):
+    def _synth_clip(self, shot, rep, uniq, fps=20.0):
+        """A synthetic clip, sized and timed from the SHOT'S OWN requirements.
+
+        Same principle as the still path: a fixture that cannot meet the requirement under test
+        proves nothing about the requirement, because the positive control then fails on the
+        fixture's resolution rather than on the system's behaviour, and the two failures look
+        identical. So the long edge comes from `min_long_edge_px` and the duration from the shot's
+        own `video_seconds`.
+
+        Deliberately moving: `duplicate_content` compares frames, and a clip of a still image is a
+        still image with a container around it.
+        """
+        import cv2
+        import numpy as np
+        q = QA.merged_quality(self.spec.doc["quality_defaults"], shot)
+        p = self.tmp / "synth" / ("%s_r%d.mp4" % (shot["shot_id"].replace(".", "_"), rep))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        w = max(int(q.get("min_long_edge_px") or 1080) + 120, 1200)
+        h = int(w * 0.75)
+        seconds = float(shot.get("video_seconds") or 6.0)
+        vw = cv2.VideoWriter(str(p), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+        if not vw.isOpened():
+            vw.release()
+            raise RuntimeError("this build of OpenCV has no video writer, so a video-class shot "
+                               "cannot be exercised; the finalize gate cannot be proven here")
+        rng = np.random.RandomState(uniq % (2 ** 31))
+        bg = np.full((h, w, 3), 90, np.uint8)
+        bg[:, :, 1] = np.clip(bg[:, :, 1].astype(int)
+                              + rng.randint(0, 14, (h, w)), 0, 255).astype(np.uint8)
+        n = max(int(seconds * fps), 2)
+        x0, x1 = int(w * 0.2), int(w * 0.8)
+        for i in range(n):
+            fr = bg.copy()
+            y = int(h * 0.2) + int(h * 0.12 * abs(((i / float(n - 1)) * 2) - 1))
+            cv2.rectangle(fr, (x0, y), (x1, y + int(h * 0.45)), (128, 96, 64), -1)
+            cv2.rectangle(fr, (x0, y), (x1, y + int(h * 0.45)), (170, 140, 110), 3)
+            vw.write(fr)
+        vw.release()
+        return p
+
+    def add(self, shot, rep, src, *, confirm_all=True, setup_hash_override="__default__",
+            subject_declared=None):
         from .manifest import read_exif, exif_timestamp
         from . import qa_primitives as Q
         import cv2
+        subject = SUBJ.capture_fields(shot, rep, declared=subject_declared)
         dest, sha, already = ingest_photo(src, self.dir / "images" / shot["state"],
                                           shot["shot_id"], rep)
         rel = str(dest.relative_to(self.dir))
@@ -203,7 +254,7 @@ class Bench(object):
         # correctly refused a re-lay that appeared to take no time at all.
         self._clock = getattr(self, "_clock", 0) + 1
         ts = exif_timestamp(exif) or (time.time() + self._clock * 180)
-        img = cv2.imread(str(dest))
+        img = Q.decode_any(dest)   # a clip is decoded from its first frame, like the real paths
         sh = self.setup_hash if setup_hash_override == "__default__" else setup_hash_override
         self.store.append("capture",
                           {"shot_id": shot["shot_id"], "rep": rep, "path": rel, "sha256": sha,
@@ -211,7 +262,14 @@ class Bench(object):
                            "width": img.shape[1] if img is not None else None,
                            "height": img.shape[0] if img is not None else None,
                            "dhash": Q.dhash_bits(img).hex() if img is not None else None,
-                           "state": shot["state"], "region_id": shot.get("region_id")},
+                           "state": shot["state"], "region_id": shot.get("region_id"),
+                           "instance_index": shot.get("instance_index"),
+                           "instance_total": shot.get("instance_total"),
+                           "annotation_id": shot.get("annotation_id"),
+                           "annotation_type": shot.get("annotation_type"),
+                           "annotation_location": shot.get("annotation_location"),
+                           "subject_id": subject["subject_id"],
+                           "subject_aspect": subject["subject_aspect"]},
                           operator="selftest", setup_hash=sh)
         st, _ = self.store.fold()
         board, bspec = self.board
@@ -238,20 +296,32 @@ class Bench(object):
         return outcome, checks
 
     def resolve_humans(self):
-        """Record a verification for every claim a check referred to a person."""
+        """Clear every outstanding claim, THROUGH THE MODEL BOTH FRONT DOORS USE.
+
+        This used to hand-write the log entry, so the full-plan run -- the one thing that drives the
+        real 424-frame plan end to end -- exercised neither front door's confirmation path. Every
+        claim in it was cleared by a record the operator has no way to produce. Going through
+        `claims.resolve` and `claims.payload` means the run proves the path an operator will
+        actually use, including the binding fields.
+
+        Already-cleared claims are skipped, so calling this after each capture phase does not write
+        the same verification three times.
+        """
         st, _ = self.store.fold()
         n = 0
-        for (sid, rep), q in sorted(st["qa"].items()):
-            for c in (q.get("checks") or []):
-                if c.get("outcome") == QA.HUMAN:
-                    cap = st["captures"].get((sid, rep)) or {}
-                    self.store.append("human_verification",
-                                      {"shot_id": sid, "rep": rep, "claim": c["check_id"],
-                                       "value": True, "verifier_name": "selftest",
-                                       "operator": "selftest",
-                                       "capture_sha256": cap.get("sha256")},
-                                      operator="selftest")
-                    n += 1
+        for (sid, rep) in sorted(st["qa"]):
+            for c in CLAIMS.pending_claims(st, sid, rep):
+                if c["resolved"]:
+                    continue
+                claim = CLAIMS.resolve(st, sid, rep, code=c["code"])
+                self.store.append(
+                    "human_verification",
+                    CLAIMS.payload(claim=claim, shot_id=sid, rep=rep, value=True,
+                                   operator="selftest", verifier="selftest",
+                                   bind=CLAIMS.binding(st, self.spec, sid, rep),
+                                   interface="cli", entry_mode="scripted"),
+                    operator="selftest")
+                n += 1
         return n
 
     def cut_ready_extras(self, *, tolerance_error_cm=0.0, skip=()):
@@ -327,6 +397,66 @@ class Bench(object):
                                    "spread": max(readings) - min(readings),
                                    "state": "post_wash"},
                                   operator="selftest")
+
+    def describe_instances(self, *, discovered_in=None, feature_keys=None, prefix=""):
+        """Describe every counted feature instance the answers say the garment has.
+
+        Without this the full plan is not the full plan: `answer_features` answers 0 to every count,
+        and the 424-frame plan collapses to 197. The counted features are exactly the part where a
+        photograph has to name the object it is of, so a full-plan run that never expands one is a
+        run that skips the mechanism most worth exercising.
+        """
+        st, _ = self.store.fold()
+        out = []
+        for f in self.spec.features:
+            if f["type"] != "count":
+                continue
+            if feature_keys is not None and f["key"] not in feature_keys:
+                continue
+            try:
+                n = int(float(st["features"].get(f["key"]) or 0))
+            except (TypeError, ValueError):
+                continue
+            for i in range(1, n + 1):
+                aid = "%s%s.%02d" % (prefix, f["key"].replace("n_", "").upper(), i)
+                payload = {"annotation_id": aid, "feature": f["key"],
+                           "type": f["key"].replace("n_", ""),
+                           "location": "synthetic instance %d of %s" % (i, f["key"]),
+                           "note": "self-test", "size_mm": 10.0 + i,
+                           "operator": "selftest"}
+                if discovered_in:
+                    payload["discovered_in"] = discovered_in
+                self.store.append("annotation", payload, operator="selftest")
+                out.append(aid)
+        return out
+
+    def capture_states(self, states, *, include_optional=False, seed=0, skip_shots=()):
+        """Every required frame in these lifecycle states, taken once per repeat.
+
+        Returns (frames captured, the shot dicts it captured). The plan is re-derived on entry, so
+        a state reached after an annotation or a cut specification sees the frames that only exist
+        because of it.
+        """
+        shots, _m = self.activated()
+        _SHOT_BY_ID.update({x["shot_id"]: x for x in shots})
+        want = [x for x in shots
+                if x["state"] in states
+                and (include_optional or x["necessity"] != "optional")
+                and x["shot_id"] not in skip_shots]
+        n = 0
+        for sh in PLAN.order(self.spec, want):
+            rep = sh.get("rep", 1)
+            self.add(sh, rep, self.synth_for(sh, rep, relay=_lay_index(sh, rep), seed=seed))
+            n += 1
+        return n, want
+
+    def entries(self):
+        """This session's log entries, in order, as the appender wrote them."""
+        return self.manifest_entries()
+
+    def manifest_entries(self):
+        entries, _problems = self.store.manifest.read(verify=False)
+        return entries
 
     def gate(self, gate_id="ready_to_cut", **kw):
         return GATES.evaluate(gate_id, self.spec, self.store, garment_dir=self.dir, **kw)
@@ -2373,52 +2503,484 @@ def scenarios(full_spec, tmp_root, want_full=False):
                       "a gate that cannot be opened by valid evidence is broken, not safe"))
 
     if want_full:
-        # The full plan driven end to end. What this can and cannot assert needs stating, because
-        # the honest version is narrower than "the gate opens".
-        #
-        # The synthetic garment is one silhouette on one backdrop. It cannot render 290 different
-        # FRAMINGS -- a frame written as "the hem edge filling the width" is a different photograph
-        # from a whole-garment overhead, and the fixture draws the same jeans for both. So a frame
-        # can fail a framing requirement here for a reason that says nothing about the system.
-        #
-        # What this run therefore asserts is the part that IS about the system: that no GATE
-        # CONDITION -- log integrity, feature answers, plan expansion, rig attribution, measurement
-        # completeness, relay independence, reposition records, image reuse, file integrity, cut
-        # specification, second-person verification -- blocks a session in which all of those were
-        # supplied. Frames the fixture cannot render are reported separately and counted.
-        b = new("happyfull", spec=full_spec, gid="DENIM_9003")
-        b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
-        shots, _m = b.activated()
-        _SHOT_BY_ID.update({x["shot_id"]: x for x in shots})
-        req = [s for s in shots if s["state"] in ("rig", "intake", "before", "marked")
-               and s["necessity"] != "optional"]
-        n = 0
-        for s in req:
-            for rep in range(1, int(s.get("min_reps", 1)) + 1):
-                b.add(s, rep, b.synth_for(s, rep, relay=_lay_index(s, rep)))
-                n += 1
-        b.resolve_humans()
-        b.cut_ready_extras()
-        v = b.gate()
-        conditions = {x.condition for x in v.blocks}
-        fixture_only = conditions <= {"captures.required_complete"}
-        st_, _ = b.store.fold()
-        fixture_frames = sorted(
-            "%s r%d" % k for k, q in st_["qa"].items() if q.get("outcome") != QA.PASS
-            and all(c.get("check_id") in ("subject_span", "resolution", "scale", "subject_extent",
-                                          "duplicate_content", "camera_tilt")
-                    for c in (q.get("checks") or []) if c.get("outcome") != QA.PASS))
-        out.append(Result(
-            "on the FULL plan, no gate condition blocks a complete session",
-            fixture_only,
-            "%d frames captured; blocking conditions: %s; %d frame(s) the synthetic garment "
-            "cannot frame (%s)"
-            % (n, ", ".join(sorted(conditions)) or "none", len(fixture_frames),
-               ", ".join(fixture_frames[:4]) or "-"),
-            "every condition about evidence, integrity and verification is satisfiable on the real "
-            "plan; only per-frame framing requirements the fixture cannot render may remain"))
+        out.extend(full_plan_scenarios(full_spec, tmp_root))
     return out
 
+
+# ------------------------------------------------------------------------------------------
+# the real plan, end to end
+# ------------------------------------------------------------------------------------------
+
+def _rebuild(entries, gid, dest_parent, *, images_from=None):
+    """Replay a list of log entries into a fresh garment, legitimately chained.
+
+    How the single-fault matrix below builds its mutants. NOT an edit of a manifest file: entries
+    are appended through the ordinary appender in their original order, so the chain, the head
+    sidecar and the witness are all constructed the way a real session constructs them. A mutation
+    that corrupted the file instead would be caught by `log.intact` and would prove nothing at all
+    about the condition it was meant to isolate -- every mutant would "block correctly" for the one
+    reason that has nothing to do with the evidence.
+    """
+    d = Path(dest_parent) / gid
+    d.mkdir(parents=True, exist_ok=True)
+    if images_from is not None and not (d / "images").exists():
+        # Symlinked, not copied: the frames are the expensive part of this run and the mutants
+        # never write to them.
+        try:
+            (d / "images").symlink_to(Path(images_from) / "images", target_is_directory=True)
+        except (OSError, NotImplementedError):
+            shutil.copytree(str(Path(images_from) / "images"), str(d / "images"))
+    st = Store(d)
+    mf = st.manifest
+    # Written in one pass rather than through `append`, which re-reads the whole file on every
+    # entry to find the head: on a full-plan session that is 2600 reads of a 2600-line file per
+    # mutant, and the matrix builds sixteen of them. The CHAIN FORMULA is not duplicated -- it is
+    # `manifest.sha256_text(prev + canonical(entry))`, called here exactly as the appender calls it
+    # -- and the fold below re-verifies the result, so a divergence between this and the appender
+    # shows up as an integrity problem on the mutant instead of hiding inside it.
+    prev = mf.seed
+    lines = []
+    for i, e in enumerate(entries):
+        entry = {"schema": MF.SCHEMA_VERSION, "seq": i, "ts": float(e.get("ts") or 0.0),
+                 "kind": e.get("kind"), "operator": e.get("operator"),
+                 "setup_hash": e.get("setup_hash"), "payload": e.get("payload"),
+                 "prev_chain": prev}
+        entry["chain"] = MF.sha256_text(prev + MF.canonical(entry))
+        prev = entry["chain"]
+        lines.append(MF.canonical(entry))
+    mf.path.parent.mkdir(parents=True, exist_ok=True)
+    mf.path.write_text("\n".join(lines) + ("\n" if lines else ""))
+    mf._write_head(prev, len(lines))
+    mf._write_witness(prev, len(lines))
+    _st, problems = st.fold()
+    assert not problems, ("the rebuilt log does not verify, so this mutant would block on log "
+                          "integrity rather than on the fault it carries: %s" % problems[:3])
+    return st
+
+
+def _drop(pred):
+    return lambda es: [e for e in es if not pred(e)]
+
+
+def _first(es, kind, pred=None):
+    for i, e in enumerate(es):
+        if e.get("kind") == kind and (pred is None or pred(e)):
+            return i
+    raise AssertionError("no %s entry to mutate" % kind)
+
+
+def full_plan_scenarios(full_spec, tmp_root):
+    """ONE simulated garment carried through the whole real capture plan, then broken 20 ways.
+
+    The previous version of this stopped at the pre-cut gate and asserted
+    `blocking conditions <= {"captures.required_complete"}` -- which permits the gate to be blocked
+    by the very condition that says the evidence is not there. It also answered 0 to every counted
+    feature, so the 424-frame plan collapsed to 197 and the instance machinery -- the part where a
+    photograph has to name the object it is of -- was never expanded at all. And the three gates'
+    positive controls all ran on `_mini_spec`, a four-shot fixture: enough to show the wiring is
+    connected, not that the production plan can be satisfied.
+
+    So this drives creation, setup, intake, counted-feature expansion, measurement, the whole
+    before-state capture, the marked state and the cut confirmations, the recorded cut with its
+    achieved lengths, the immediate-after and offcut frames, the frozen wash configuration, the
+    recorded wash, the post-wash re-measurement, an anomaly the wash itself produced, the post-wash
+    and offcut-after frames, and finalisation -- on the real plan, and asserts that each of the
+    three gates OPENS at the point it is supposed to.
+
+    Then it takes that one valid session and injects exactly one fault at a time. Because the
+    pristine session blocks on nothing, any condition that blocks in a mutant was caused by that
+    mutant's single fault, which is what makes each of these a real negative control rather than a
+    session that was never going to pass for a dozen reasons.
+    """
+    out = []
+    t = Path(tempfile.mkdtemp(dir=str(tmp_root), prefix="fullplan_"))
+    b = Bench(t, full_spec, gid="DENIM_9003")
+
+    # -- creation, setup, intake, counted-feature expansion, measurement ----------------------
+    b.open_session()
+    b.freeze_rig()
+    # Every feature present and one instance of each counted one: the same answers
+    # `tools/check_shotplan.py` uses to count the plan at 424 frames.
+    answers = {f["key"]: (1 if f["type"] == "count" else True) for f in full_spec.features}
+    b.answer_features(overrides=answers)
+    b.measure()
+    described = b.describe_instances()
+    planned = PLAN.order(full_spec, b.activated()[0])
+    out.append(Result("the full plan expands with every feature present",
+                      len(planned) >= 400 and bool(described),
+                      "%d frames planned; %d counted-feature instance(s) described"
+                      % (len(planned), len(described)),
+                      "answering 0 to every count collapses the plan and never exercises the "
+                      "instance machinery, which is the part a photograph's meaning rests on"))
+
+    # -- the before-state arm ------------------------------------------------------------------
+    n_pre, _ = b.capture_states(("rig", "intake", "before", "marked"))
+    b.resolve_humans()
+    b.cut_ready_extras()
+    v_cut = b.gate("ready_to_cut")
+    out.append(Result("REAL PLAN: a complete session opens the CUT gate (positive control)",
+                      v_cut.ready,
+                      "%d frames captured; %d satisfied, %d blocking%s"
+                      % (n_pre, len(v_cut.satisfied), len(v_cut.blocks),
+                         (": " + _why(v_cut)) if v_cut.blocks else ""),
+                      "every positive control the suite had ran on a four-shot fixture. A gate "
+                      "that opens on `_mini_spec` and cannot be opened on the plan the operator "
+                      "will actually shoot is discovered on cut day"))
+
+    # -- the cut, the offcuts and the frozen wash configuration --------------------------------
+    b.after_cut_extras(skip=("wash_actual", "post_wash_measurements"))
+    n_after, _ = b.capture_states(("immediate_after", "offcut_before"))
+    b.resolve_humans()
+    v_wash = b.gate("ready_to_wash")
+    out.append(Result("REAL PLAN: a complete session opens the WASH gate (positive control)",
+                      v_wash.ready,
+                      "%d further frames; %d satisfied, %d blocking%s"
+                      % (n_after, len(v_wash.satisfied), len(v_wash.blocks),
+                         (": " + _why(v_wash)) if v_wash.blocks else ""),
+                      "the gate that authorises putting the only copy of the evidence into water"))
+
+    # -- the wash, the re-measurement, and the damage the wash itself caused --------------------
+    b.after_cut_extras(skip=("cut_performed", "offcuts", "wash_planned"))
+    # An anomaly discovered AFTER the wash. It cannot have a before frame, and instancing it on a
+    # global count used to demand exactly that -- an intake photograph of a tear that did not exist
+    # then, on a garment that is now in two pieces -- which made the session unfinalizable by any
+    # route and made not recording it the operator's only workable move.
+    b.store.append("annotation",
+                   {"annotation_id": "WASHTEAR.01", "feature": "n_tears", "type": "tear",
+                    "location": "opened by the wash, right leg offcut", "note": "self-test",
+                    "size_mm": 8.0, "discovered_in": "post_wash", "operator": "selftest"},
+                   operator="selftest")
+    b.store.append("feature_answers", {"answers": {"n_tears": 2}}, operator="selftest")
+    n_post, _ = b.capture_states(("post_wash", "offcut_after"))
+    b.resolve_humans()
+    v_fin = b.gate("ready_to_finalize")
+    out.append(Result("REAL PLAN: a complete session opens the FINALIZE gate (positive control)",
+                      v_fin.ready,
+                      "%d post-wash frames; %d satisfied, %d blocking%s"
+                      % (n_post, len(v_fin.satisfied), len(v_fin.blocks),
+                         (": " + _why(v_fin)) if v_fin.blocks else ""),
+                      "the terminal state. A plan that cannot reach it is a plan whose evidence "
+                      "can never be closed and committed"))
+
+    st_final, problems_final = b.store.fold()
+    total = n_pre + n_after + n_post
+    out.append(Result("REAL PLAN: the whole lifecycle was reached from the physical facts alone",
+                      st_final["lifecycle_state"] == "post_wash" and not problems_final
+                      and st_final["cut_performed"] is not None
+                      and st_final["wash_actual"] is not None
+                      and bool(st_final["measurements_by_state"].get("post_wash"))
+                      and bool(st_final["measurements_by_state"].get("before")),
+                      "lifecycle=%s, %d frames, %d log entries, before-bucket=%d "
+                      "post-wash-bucket=%d, integrity problems=%d"
+                      % (st_final["lifecycle_state"], total, st_final["n_entries"],
+                         len(st_final["measurements_by_state"].get("before") or {}),
+                         len(st_final["measurements_by_state"].get("post_wash") or {}),
+                         len(problems_final)),
+                      "no marker was set by hand: the cut and the wash are entries in the log and "
+                      "the replay advances the lifecycle from them, so both measurement buckets "
+                      "survive and shrinkage stays computable"))
+
+    # -- SINGLE-FAULT NEGATIVE CONTROLS ---------------------------------------------------------
+    # The pristine session above blocks on nothing, so every block below is attributable to the one
+    # fault injected. Each case names the condition that must close the gate.
+    good = b.entries()
+    # TWO BASELINES, because a pre-cut fault cannot be isolated against a session that has been
+    # cut: `cut.not_already_performed` blocks ready_to_cut on the finished log no matter what, so
+    # every ready_to_cut mutant would "block correctly" for a reason that is not its fault. The
+    # pre-cut baseline is this same session truncated at the shears -- the state it was actually in
+    # when the cut gate was asked -- and it opens that gate.
+    cut_at = _first(good, "cut_performed")
+    bases = {"pre": good[:cut_at], "full": good}
+    muts = _fault_matrix()
+    mroot = t / "mutants"
+    mroot.mkdir(exist_ok=True)
+
+    # THE BASELINE EACH MUTANT IS COMPARED AGAINST. Evaluated exactly the way the mutants are --
+    # same gate, same `check_files=False` -- because the point is to attribute a block to the ONE
+    # fault injected, and that only works if everything else is held constant.
+    #
+    # Two things block every mutant regardless of its fault and would otherwise have been read as
+    # the fault working: `check_files=False` makes `captures.files_intact` and
+    # `captures.verdicts_reproduce` refuse by construction (a verdict that was not re-derived from
+    # the photograph is not a verdict this gate will accept), and a session carried through the
+    # whole lifecycle blocks `cut.not_already_performed` at ready_to_cut because it HAS been cut.
+    # Requiring the named condition to be NEWLY blocking removes all three from the comparison
+    # without weakening any of them.
+    baseline, nbase = {}, 0
+    for base_key, gid_ in sorted({(m[1], m[2]) for m in muts}):
+        st0 = _rebuild(bases[base_key], "DENIM_9003", mroot / ("base_%s" % base_key),
+                       images_from=b.dir)
+        v0 = GATES.evaluate(gid_, full_spec, st0, garment_dir=st0.dir, check_files=False)
+        baseline[(base_key, gid_)] = {x.condition for x in v0.blocks}
+        nbase += 1
+    # `check_files=False` makes `captures.files_intact` and `captures.verdicts_reproduce` refuse by
+    # construction -- a verdict that was not re-derived from the photograph is not one this gate
+    # accepts -- so those two block every mutant regardless of its fault. Nothing else may.
+    forced = {"captures.files_intact", "captures.verdicts_reproduce"}
+    stray = {k: sorted(v - forced) for k, v in baseline.items() if v - forced}
+    out.append(Result(
+        "REAL PLAN: the unmutated session blocks only on what disabling file checks forces",
+        not stray,
+        "; ".join("%s/%s: %s" % (k[0], k[1], ", ".join(sorted(v)) or "none")
+                  for k, v in sorted(baseline.items())),
+        "each fault below is credited only with the conditions it ADDS to its own baseline, so a "
+        "mutant that blocks for an unrelated reason cannot be read as the fault working"))
+
+    for i, (name, base_key, gate_id, want_condition, fn, why) in enumerate(muts):
+        try:
+            entries = fn(list(bases[base_key]))
+        except AssertionError as e:
+            out.append(Result("REAL PLAN fault: %s" % name, False,
+                              "the mutation could not be built: %s" % e, why))
+            continue
+        st_m = _rebuild(entries, "DENIM_9003", mroot / ("m%02d" % i), images_from=b.dir)
+        v = GATES.evaluate(gate_id, full_spec, st_m, garment_dir=st_m.dir, check_files=False)
+        conds = {x.condition for x in v.blocks}
+        added = conds - baseline.get((base_key, gate_id), set())
+        out.append(Result("REAL PLAN fault: %s" % name,
+                          (not v.ready) and want_condition in added,
+                          "%s on the %s-cut log -> ready=%s; NEWLY blocking: %s%s"
+                          % (gate_id, base_key, v.ready, ", ".join(sorted(added)) or "none",
+                             ("  [%s]" % _why(v, want_condition)) if want_condition in added
+                             else ""),
+                          why))
+    return out
+
+
+def _why(verdict, only=None):
+    """A verdict's blocks with the evidence that names the frames, not just the count.
+
+    "2 failing (of 439 required frames)" costs another hour to find out WHICH two.
+    """
+    bits = []
+    for x in verdict.blocks:
+        if only is not None and x.condition != only:
+            continue
+        ev = x.evidence or {}
+        detail = ""
+        for k in ("failing", "missing", "unresolved", "wrong", "collided", "mismatched",
+                  "redescribed", "backdated", "revisions"):
+            if ev.get(k):
+                detail += "  %s=%s" % (k, "; ".join(str(y) for y in list(ev[k])[:4]))
+        bits.append("%s -- %s%s" % (x.condition, x.what[:130], detail))
+    return "; ".join(bits)
+
+
+def _fault_matrix():
+    """(name, which baseline, gate, the condition that must close it, mutation, why it matters).
+
+    One fault each. A mutation that tripped three conditions would still 'pass' its assertion while
+    telling you nothing about the one it names, so these are built to change exactly one fact.
+    """
+    def drop_one_capture(es):
+        i = _first(es, "capture", lambda e: e["payload"].get("state") == "before")
+        sid, rep = es[i]["payload"]["shot_id"], es[i]["payload"].get("rep", 1)
+        return [e for e in es
+                if not (e.get("kind") in ("capture", "qa_result")
+                        and e["payload"].get("shot_id") == sid
+                        and e["payload"].get("rep", 1) == rep)]
+
+    def fail_one_qa(es):
+        es = list(es)
+        i = _first(es, "qa_result", lambda e: e["payload"].get("outcome") == "PASS")
+        p = dict(es[i]["payload"])
+        p["outcome"] = "RETAKE_REQUIRED"
+        p["checks"] = [dict(c, outcome="RETAKE_REQUIRED") if c.get("outcome") == "PASS" else c
+                       for c in (p.get("checks") or [])][:1] or p.get("checks")
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def drop_one_human(es):
+        # EVERY entry for that claim, not the first. `resolve_humans` runs once per capture phase,
+        # so the log holds three verifications of each claim and dropping one left two behind --
+        # the mutation changed nothing and the control reported the gate had failed to notice.
+        i = _first(es, "human_verification", lambda e: e["payload"].get("shot_id"))
+        p = es[i]["payload"]
+        key = (p.get("shot_id"), p.get("rep"), p.get("claim"))
+        return [e for e in es
+                if not (e.get("kind") == "human_verification"
+                        and (e["payload"].get("shot_id"), e["payload"].get("rep"),
+                             e["payload"].get("claim")) == key)]
+
+    def stale_human(es):
+        """Re-ingest a different photograph under a confirmed frame: the confirmation is of the
+        picture that is no longer there."""
+        es = list(es)
+        i = _first(es, "human_verification", lambda e: e["payload"].get("shot_id"))
+        sid, rep = es[i]["payload"]["shot_id"], es[i]["payload"].get("rep", 1)
+        j = _first(es, "capture", lambda e: e["payload"].get("shot_id") == sid
+                   and e["payload"].get("rep", 1) == rep)
+        p = dict(es[j]["payload"])
+        p["sha256"] = "0" * 64
+        es[j] = dict(es[j], payload=p)
+        return es
+
+    def one_reading(es):
+        es = list(es)
+        i = _first(es, "measurement", lambda e: len(e["payload"].get("readings") or []) > 1)
+        p = dict(es[i]["payload"])
+        p["readings"] = p["readings"][:1]
+        p["mean"] = p["readings"][0]
+        p["spread"] = 0.0
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def backdate_measurement(es):
+        """A pre-cut baseline written back AFTER the cut: the overwrite all of this exists to stop."""
+        i = _first(es, "measurement", lambda e: e["payload"].get("name") == "waist_cm")
+        p = dict(es[i]["payload"], state="before", readings=[1.0, 1.1], mean=1.05)
+        return list(es) + [{"kind": "measurement", "payload": p, "operator": "selftest",
+                            "setup_hash": None, "ts": es[-1].get("ts", 0) + 1}]
+
+    def wrong_state_measurement(es):
+        i = _first(es, "measurement", lambda e: e["payload"].get("name") == "waist_cm")
+        p = dict(es[i]["payload"], state="marked")
+        return [dict(e, payload=p) if j == i else e for j, e in enumerate(es)]
+
+    def cut_before_the_gate(es):
+        """The shears used before the pre-cut gate was ever satisfied.
+
+        Built on the PRE-cut log, which is the state the session was in when the gate was asked, so
+        the block this produces is the fault and not the ordinary consequence of having been cut.
+        """
+        return list(es) + [{"kind": "cut_performed",
+                            "payload": {"achieved_inseam_cm": {"L": 15.0, "R": 15.0},
+                                        "achieved_outseam_cm": {"L": 16.0, "R": 16.0},
+                                        "tool": "shears", "legs_cut_separately": True},
+                            "operator": "selftest", "setup_hash": None,
+                            "ts": es[-1].get("ts", 0) + 1}]
+
+    def cut_recorded_after_the_wash(es):
+        """The achieved lengths written down after the machine, on a garment that has shrunk.
+
+        Exactly one entry moves: the cut record, to the end. Moving the WASH earlier instead would
+        also put it before the wash plan and trip two more conditions, and a mutation that changes
+        three facts proves nothing about any one of them.
+        """
+        i = _first(es, "cut_performed")
+        e = es[i]
+        rest = [x for k, x in enumerate(es) if k != i]
+        return rest + [dict(e, ts=rest[-1].get("ts", 0) + 1)]
+
+    def no_achieved_lengths(es):
+        es = list(es)
+        i = _first(es, "cut_performed")
+        p = dict(es[i]["payload"])
+        p.pop("achieved_inseam_cm", None)
+        p.pop("achieved_outseam_cm", None)
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def swap_offcut_identity(es):
+        es = list(es)
+        i = _first(es, "offcut")
+        p = dict(es[i]["payload"])
+        p["originating_leg"] = {"L": "R", "R": "L"}.get(p.get("originating_leg"), "R")
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def redescribe_an_instance(es):
+        """Correct a described instance's location after its photographs were accepted.
+
+        Targeted at an instance THIS LOG HAS A PHOTOGRAPH OF. Picking the first annotation entry
+        instead chose CURL_POSITIONS.01, whose only instanced frames are post-wash, so on the
+        pre-cut log there was nothing to drift and the mutation changed nothing -- and the control
+        read that as the gate failing to notice a re-description.
+        """
+        have = {e["payload"].get("annotation_id") for e in es
+                if e.get("kind") == "capture" and e["payload"].get("annotation_id")}
+        assert have, "this log has no photograph of any described instance to re-describe"
+        i = _first(es, "annotation", lambda e: e["payload"].get("annotation_id") in have)
+        p = dict(es[i]["payload"])
+        p["location"] = "somewhere else entirely"
+        return list(es) + [{"kind": "annotation", "payload": p, "operator": "selftest",
+                            "setup_hash": None, "ts": es[-1].get("ts", 0) + 1}]
+
+    def drop_an_instance(es):
+        i = _first(es, "annotation", lambda e: e["payload"].get("annotation_id") != "WASHTEAR.01")
+        aid = es[i]["payload"]["annotation_id"]
+        return [e for e in es
+                if not (e.get("kind") == "annotation"
+                        and e["payload"].get("annotation_id") == aid)]
+
+    def swap_a_rep_subject(es):
+        """Two repeats of a subject-distinguishing shot both filed as the same leg."""
+        es = list(es)
+        i = _first(es, "capture", lambda e: e["payload"].get("subject_id") == "LEG.R")
+        p = dict(es[i]["payload"], subject_id="LEG.L",
+                 subject_aspect="the garment-LEFT hem")
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def unbind_a_rep_subject(es):
+        es = list(es)
+        i = _first(es, "capture", lambda e: e["payload"].get("subject_id") in ("LEG.L", "LEG.R"))
+        p = dict(es[i]["payload"])
+        p["subject_id"] = None
+        p["subject_aspect"] = None
+        es[i] = dict(es[i], payload=p)
+        return es
+
+    def photograph_after_the_cut(es):
+        """A before-state frame filed after the garment was cut, which is not possible."""
+        i = _first(es, "capture", lambda e: e["payload"].get("state") == "before")
+        j = _first(es, "wash_actual")
+        e = es[i]
+        rest = [x for k, x in enumerate(es) if k != i]
+        return rest[:j] + [dict(e)] + rest[j:]
+
+    return [
+        ("a required frame is missing", "pre", "ready_to_cut", "captures.required_complete",
+         drop_one_capture,
+         "the frame nobody took is the whole reason the gate exists"),
+        ("an automated check failed", "pre", "ready_to_cut", "captures.required_complete", fail_one_qa,
+         "a RETAKE verdict on an accepted frame is not evidence"),
+        ("a human confirmation is missing", "pre", "ready_to_cut", "captures.required_complete",
+         drop_one_human,
+         "a claim no pixel test can judge, with nobody's name against it"),
+        ("a confirmation is of a photograph that is no longer there", "pre", "ready_to_cut",
+         "captures.required_complete", stale_human,
+         "re-ingesting a different frame under a confirmed shot id must not inherit the approval"),
+        ("a measurement has one reading, not two", "pre", "ready_to_cut", "measurements.complete",
+         one_reading, "the protocol asks for two so their spread can be seen"),
+        ("the pre-cut baseline is written back after the cut", "full", "ready_to_finalize",
+         "measurements.revisions_explained", backdate_measurement,
+         "shrinkage is the difference between the two readings; overwriting one destroys it"),
+        ("a measurement is filed into the wrong lifecycle state", "pre", "ready_to_cut",
+         "measurements.complete", wrong_state_measurement,
+         "the waist before the cut and the waist after the wash are two different facts"),
+        ("the cut was performed before the pre-cut gate", "pre", "ready_to_cut",
+         "cut.not_already_performed", cut_before_the_gate,
+         "the gate authorises an irreversible act; a gate consulted afterwards is a formality"),
+        ("the cut was recorded after the wash", "full", "ready_to_wash", "cut.performed_recorded",
+         cut_recorded_after_the_wash,
+         "the achieved lengths can only be taken between the shears and the water; after the wash "
+         "the garment has shrunk and the length you measure is no longer the length you cut"),
+        ("the achieved cut lengths are absent", "full", "ready_to_wash", "cut.performed_recorded",
+         no_achieved_lengths,
+         "PROTOCOL 3.1 asks for both lengths; they are the ground truth the prediction is scored "
+         "against"),
+        ("an offcut is attributed to the wrong leg", "full", "ready_to_wash", "offcuts.assigned",
+         swap_offcut_identity,
+         "the two offcuts go into different wash conditions; swapping them swaps the experiment"),
+        ("a described instance was re-described after its frames were accepted", "pre",
+         "ready_to_cut", "captures.instance_identity", redescribe_an_instance,
+         "the id still matches and the meaning has changed, which is the silent version"),
+        ("a described instance was removed", "pre", "ready_to_cut", "annotations.identify_instances",
+         drop_an_instance,
+         "the count and the descriptions must agree before the garment is cut, because that is "
+         "the last moment it is intact enough to go back and look"),
+        ("two repeats claim to be the same leg", "pre", "ready_to_cut", "captures.subjects_bound",
+         swap_a_rep_subject,
+         "min_reps meant the other leg, and two photographs of one leg satisfied both"),
+        ("a repeat records no subject at all", "pre", "ready_to_cut", "captures.subjects_bound",
+         unbind_a_rep_subject,
+         "omitting the field was the cheapest way past a check that only looked at frames which "
+         "carried one"),
+        ("a before-state photograph was filed after the wash", "full", "ready_to_finalize",
+         "captures.state_order", photograph_after_the_cut,
+         "that photograph cannot exist: the garment was in two pieces and wet"),
+    ]
 
 def run(verbose=False, want_full=False):
     spec = SPEC.load(ROOT / "protocol" / "shotplan" / "shotplan.json")

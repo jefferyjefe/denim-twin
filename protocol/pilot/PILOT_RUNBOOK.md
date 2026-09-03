@@ -199,6 +199,7 @@ materially shorter, and the app tells you your own number after intake.
       footprint, then (2)-(5) each of the four corners of that footprint. The card lies
       flat and must fill at least a quarter of the frame's short dimension in every
       position.
+      **THIS REPEAT IS OF: card position 1 (APPARATUS).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §1 freezes 'two diffuse sources at ~45 degrees', which constrains direction and says nothing about uniformity over a 1.1 m footprint. A single empty-backdrop frame cannot separate an illumination gradient from the backdrop's own reflectance variation and from lens vignetting — they are confounded. Moving one card of fixed reflectance through five positions is the only way to isolate the light. It matters because check_image judges garment exposure by a single mean over the whole foreground, so a thigh lit 30% brighter than a hem passes as correctly exposed while the hem — the thing this project exists to measure — is underexposed.
 - [ ] `RIG.LIGHTING.CARD_SWEEP` (2/5, required)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Five frames from the locked mount with the camera, exposure and white balance
@@ -206,6 +207,7 @@ materially shorter, and the app tells you your own number after intake.
       footprint, then (2)-(5) each of the four corners of that footprint. The card lies
       flat and must fill at least a quarter of the frame's short dimension in every
       position.
+      **THIS REPEAT IS OF: card position 2 (APPARATUS).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §1 freezes 'two diffuse sources at ~45 degrees', which constrains direction and says nothing about uniformity over a 1.1 m footprint. A single empty-backdrop frame cannot separate an illumination gradient from the backdrop's own reflectance variation and from lens vignetting — they are confounded. Moving one card of fixed reflectance through five positions is the only way to isolate the light. It matters because check_image judges garment exposure by a single mean over the whole foreground, so a thigh lit 30% brighter than a hem passes as correctly exposed while the hem — the thing this project exists to measure — is underexposed.
 - [ ] `RIG.LIGHTING.CARD_SWEEP` (3/5, required)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Five frames from the locked mount with the camera, exposure and white balance
@@ -213,6 +215,7 @@ materially shorter, and the app tells you your own number after intake.
       footprint, then (2)-(5) each of the four corners of that footprint. The card lies
       flat and must fill at least a quarter of the frame's short dimension in every
       position.
+      **THIS REPEAT IS OF: card position 3 (APPARATUS).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §1 freezes 'two diffuse sources at ~45 degrees', which constrains direction and says nothing about uniformity over a 1.1 m footprint. A single empty-backdrop frame cannot separate an illumination gradient from the backdrop's own reflectance variation and from lens vignetting — they are confounded. Moving one card of fixed reflectance through five positions is the only way to isolate the light. It matters because check_image judges garment exposure by a single mean over the whole foreground, so a thigh lit 30% brighter than a hem passes as correctly exposed while the hem — the thing this project exists to measure — is underexposed.
 - [ ] `RIG.LIGHTING.CARD_SWEEP` (4/5, required)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Five frames from the locked mount with the camera, exposure and white balance
@@ -220,6 +223,7 @@ materially shorter, and the app tells you your own number after intake.
       footprint, then (2)-(5) each of the four corners of that footprint. The card lies
       flat and must fill at least a quarter of the frame's short dimension in every
       position.
+      **THIS REPEAT IS OF: card position 4 (APPARATUS).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §1 freezes 'two diffuse sources at ~45 degrees', which constrains direction and says nothing about uniformity over a 1.1 m footprint. A single empty-backdrop frame cannot separate an illumination gradient from the backdrop's own reflectance variation and from lens vignetting — they are confounded. Moving one card of fixed reflectance through five positions is the only way to isolate the light. It matters because check_image judges garment exposure by a single mean over the whole foreground, so a thigh lit 30% brighter than a hem passes as correctly exposed while the hem — the thing this project exists to measure — is underexposed.
 - [ ] `RIG.LIGHTING.CARD_SWEEP` (5/5, required)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Five frames from the locked mount with the camera, exposure and white balance
@@ -227,6 +231,7 @@ materially shorter, and the app tells you your own number after intake.
       footprint, then (2)-(5) each of the four corners of that footprint. The card lies
       flat and must fill at least a quarter of the frame's short dimension in every
       position.
+      **THIS REPEAT IS OF: card position 5 (APPARATUS).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §1 freezes 'two diffuse sources at ~45 degrees', which constrains direction and says nothing about uniformity over a 1.1 m footprint. A single empty-backdrop frame cannot separate an illumination gradient from the backdrop's own reflectance variation and from lens vignetting — they are confounded. Moving one card of fixed reflectance through five positions is the only way to isolate the light. It matters because check_image judges garment exposure by a single mean over the whole foreground, so a thigh lit 30% brighter than a hem passes as correctly exposed while the hem — the thing this project exists to measure — is underexposed.
 - [ ] `RIG.LAY.GAP_TEMPLATE` (1/1, required)
       From the locked mount, bare backdrop with the frozen leg-centreline marks in place
@@ -349,6 +354,7 @@ materially shorter, and the app tells you your own number after intake.
       edge toward the camera. Rule standing vertically on the surface immediately behind
       the hem, graduations facing the camera, so any lift of the edge off the surface is
       read directly against it.
+      **THIS REPEAT IS OF: the garment-LEFT hem (LEG.L).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §5 defines edge curl as 'max vertical lift of the hem edge from the surface', a purely out-of-plane quantity that an overhead frame cannot see at all. This is its pre-cut, pre-wash baseline: without it, any curl measured after the wash is an absolute number with nothing to be a change from, and a garment that arrived with a curled hem would be scored as having curled in the wash.
 - [ ] `INTAKE.FEATURE.HEM_CURL.HEM_LEFT_FRONT.I01` (2/2, conditional, has_hem_curl_visible)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Lens axis within about 10 mm of the backdrop surface, sighting ALONG the surface at
@@ -356,6 +362,7 @@ materially shorter, and the app tells you your own number after intake.
       edge toward the camera. Rule standing vertically on the surface immediately behind
       the hem, graduations facing the camera, so any lift of the edge off the surface is
       read directly against it.
+      **THIS REPEAT IS OF: the garment-RIGHT hem (LEG.R).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* PROTOCOL §5 defines edge curl as 'max vertical lift of the hem edge from the surface', a purely out-of-plane quantity that an overhead frame cannot see at all. This is its pre-cut, pre-wash baseline: without it, any curl measured after the wash is an absolute number with nothing to be a change from, and a garment that arrived with a curled hem would be scored as having curled in the wash.
 
 ### Garment intake — either face, lay 1, handheld_macro_close, macro lens
@@ -385,22 +392,26 @@ materially shorter, and the app tells you your own number after intake.
       coloured warp are visible, hold it flat, camera perpendicular, rule laid along the
       seam in the fabric plane. At least 100 mm of seam and the selvedge's woven edge must
       be in frame.
+      **THIS REPEAT IS OF: the garment-LEFT outseam (LEG.L).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A selvedge outseam is a woven edge that cannot fray in the way a cut edge does, so it is a within-garment negative control for the fray measurement: the same fabric, the same wash, an edge that must not read as frayed. Every fray control this project has used so far has been a different garment (EXP_0016's nine finished-hem flat-lays), which confounds edge finish with fabric, lighting and photographer. This is the only control that does not.
 - [ ] `INTAKE.FEATURE.SELVEDGE.SEAM_OUTSEAM_LEFT.I01` (2/2, conditional, has_selvedge)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Turn the garment-left leg's outseam open at the hem so the selvedge line and its
       coloured warp are visible, hold it flat, camera perpendicular, rule laid along the
       seam in the fabric plane. At least 100 mm of seam and the selvedge's woven edge must
       be in frame.
+      **THIS REPEAT IS OF: the garment-RIGHT outseam (LEG.R).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A selvedge outseam is a woven edge that cannot fray in the way a cut edge does, so it is a within-garment negative control for the fray measurement: the same fabric, the same wash, an edge that must not read as frayed. Every fray control this project has used so far has been a different garment (EXP_0016's nine finished-hem flat-lays), which confounds edge finish with fabric, lighting and photographer. This is the only control that does not.
 - [ ] `INTAKE.FEATURE.CUFFS.HEM_LEFT_FRONT.I01` (1/2, conditional, has_cuffs)
       Two frames per leg: the cuff as received (rolled), then the SAME hem fully unrolled
       and flattened. Camera perpendicular, rule in the fabric plane, at least 100 mm of
       hem edge in frame in both.
+      **THIS REPEAT IS OF: rolled as received (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true hem and shortens every length measured to it. Because the cut position is computed from the inseam and the cut is irreversible, a cuff mistaken for the hem is one of the few errors in this whole protocol that cannot be corrected after the fact. Photographing both states makes the correction auditable instead of remembered.
 - [ ] `INTAKE.FEATURE.CUFFS.HEM_LEFT_FRONT.I01` (2/2, conditional, has_cuffs)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       Two frames per leg: the cuff as received (rolled), then the SAME hem fully unrolled
       and flattened. Camera perpendicular, rule in the fabric plane, at least 100 mm of
       hem edge in frame in both.
+      **THIS REPEAT IS OF: unrolled and flat (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true hem and shortens every length measured to it. Because the cut position is computed from the inseam and the cut is irreversible, a cuff mistaken for the hem is one of the few errors in this whole protocol that cannot be corrected after the fact. Photographing both states makes the correction auditable instead of remembered.
 - [ ] `INTAKE.FEATURE.FACTORY_HEM.HEM_LEFT_FRONT.I01` (1/2, conditional, has_factory_hem)
       About 100 mm of the original factory hem filling the frame width, camera
@@ -408,6 +419,7 @@ materially shorter, and the app tells you your own number after intake.
       hem), rule laid in the fabric plane immediately alongside the hem edge. The turned-
       and-topstitched edge, its stitch line, and at least 30 mm of denim above it must be
       in frame.
+      **THIS REPEAT IS OF: the garment-LEFT hem (LEG.L).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* This is the single most valuable control frame in Part A. A factory hem is a finished edge that physically cannot fray, on this garment, in this fabric, under this light, at this scale — the exact within-subject control every fray result in this project currently lacks. EXP_0016's zero-false-positive claim rests on nine finished hems from nine other garments, and EXP_0021 showed two of those nine flip to 'frayed' under a mere JPEG re-encode. Framed identically to the post-wash raw-edge close-up, this frame is what makes 'the cut edge frayed' a comparison rather than an assertion.
 - [ ] `INTAKE.FEATURE.FACTORY_HEM.HEM_LEFT_FRONT.I01` (2/2, conditional, has_factory_hem)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       About 100 mm of the original factory hem filling the frame width, camera
@@ -415,6 +427,7 @@ materially shorter, and the app tells you your own number after intake.
       hem), rule laid in the fabric plane immediately alongside the hem edge. The turned-
       and-topstitched edge, its stitch line, and at least 30 mm of denim above it must be
       in frame.
+      **THIS REPEAT IS OF: the garment-RIGHT hem (LEG.R).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* This is the single most valuable control frame in Part A. A factory hem is a finished edge that physically cannot fray, on this garment, in this fabric, under this light, at this scale — the exact within-subject control every fray result in this project currently lacks. EXP_0016's zero-false-positive claim rests on nine finished hems from nine other garments, and EXP_0021 showed two of those nine flip to 'frayed' under a mere JPEG re-encode. Framed identically to the post-wash raw-edge close-up, this frame is what makes 'the cut edge frayed' a comparison rather than an assertion.
 - [ ] `INTAKE.LABEL.SIZE_TAG` (1/1, conditional, has_size_tag)
       Size tag held flat, camera perpendicular, tag filling most of the frame with a rule
@@ -581,12 +594,14 @@ materially shorter, and the app tells you your own number after intake.
       the cuff as found (folded), one with the cuff fully unrolled and smoothed flat, both
       about 100 mm of edge centred on the cuff's mid-front, loop tape in frame. Record the
       unrolled cuff depth in mm from the tape.
+      **THIS REPEAT IS OF: cuffed, as received (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true original hem edge and changes the leg-opening circumference the loop arithmetic depends on. Both states must be recorded so the measured circumference is unambiguous and so the finished-edge control is the actual hem rather than a fold.
 - [ ] `BEFORE.HEM.LEFT.CUFF.MACRO` (2/2, conditional, has_cuffs)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       PARAMETERISED OVER LEG. Two frames per leg at the same station and framing: one with
       the cuff as found (folded), one with the cuff fully unrolled and smoothed flat, both
       about 100 mm of edge centred on the cuff's mid-front, loop tape in frame. Record the
       unrolled cuff depth in mm from the tape.
+      **THIS REPEAT IS OF: uncuffed and flat (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true original hem edge and changes the leg-opening circumference the loop arithmetic depends on. Both states must be recorded so the measured circumference is unambiguous and so the finished-edge control is the actual hem rather than a fold.
 - [ ] `BEFORE.HEM.RIGHT.RULER_MACRO.P01` (1/1, required)
       As BEFORE.HEM.LEFT.RULER_MACRO.Pnn but for the right leg. The right leg's
@@ -647,12 +662,14 @@ materially shorter, and the app tells you your own number after intake.
       the cuff as found (folded), one with the cuff fully unrolled and smoothed flat, both
       about 100 mm of edge centred on the cuff's mid-front, loop tape in frame. Record the
       unrolled cuff depth in mm from the tape.
+      **THIS REPEAT IS OF: cuffed, as received (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true original hem edge and changes the leg-opening circumference the loop arithmetic depends on. Both states must be recorded so the measured circumference is unambiguous and so the finished-edge control is the actual hem rather than a fold.
 - [ ] `BEFORE.HEM.RIGHT.CUFF.MACRO` (2/2, conditional, has_cuffs)  **TAKE THE PHONE OFF THE MOUNT AND REMOUNT IT**
       PARAMETERISED OVER LEG. Two frames per leg at the same station and framing: one with
       the cuff as found (folded), one with the cuff fully unrolled and smoothed flat, both
       about 100 mm of edge centred on the cuff's mid-front, loop tape in frame. Record the
       unrolled cuff depth in mm from the tape.
+      **THIS REPEAT IS OF: uncuffed and flat (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* A cuff hides the true original hem edge and changes the leg-opening circumference the loop arithmetic depends on. Both states must be recorded so the measured circumference is unambiguous and so the finished-edge control is the actual hem rather than a fold.
 - [ ] `BEFORE.HEM.LEFT.WEAR.I01.MACRO` (1/1, conditional, n_distressing > 0)
       PARAMETERISED OVER LEG AND INSTANCE. The generator emits one instance per counted
@@ -1224,6 +1241,7 @@ materially shorter, and the app tells you your own number after intake.
       RECEIVED, untouched. R2 = the identical framing after the turn-up has been unfolded
       and smoothed, with the fold crease visible. Both frames carry the whole leg opening
       plus >=60 mm of leg above the cuff.
+      **THIS REPEAT IS OF: cuffed, as received (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* CONTRIBUTING_PAIRS is explicit that a cuffed or hemmed edge cannot fray however it is washed, so whether the garment arrived cuffed changes what the original inseam even means and where the crease has already set the fabric. Recording only the as-received state loses the true leg length; recording only the unfolded state destroys the evidence of how it was worn.
 - [ ] `BEFORE.ANOM.PRINT_FADE.R1.I01` (1/1, conditional, n_printed_fade > 0)
       350 mm field centred on fade instance NN (whiskering fan, knee fade, honeycomb): the
@@ -1245,6 +1263,7 @@ materially shorter, and the app tells you your own number after intake.
       RECEIVED, untouched. R2 = the identical framing after the turn-up has been unfolded
       and smoothed, with the fold crease visible. Both frames carry the whole leg opening
       plus >=60 mm of leg above the cuff.
+      **THIS REPEAT IS OF: uncuffed and flat (GARMENT).** Read the label in the frame before you take it. Two photographs of the same one satisfy nothing.
       *why:* CONTRIBUTING_PAIRS is explicit that a cuffed or hemmed edge cannot fray however it is washed, so whether the garment arrived cuffed changes what the original inseam even means and where the crease has already set the fabric. Recording only the as-received state loses the true leg length; recording only the unfolded state destroys the evidence of how it was worn.
 
 ### Before cut — BACK up, lay 1, mount_low_macro, tele lens

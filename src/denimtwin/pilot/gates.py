@@ -30,6 +30,8 @@ import math
 import os
 from pathlib import Path
 
+from . import claims as CLAIMS
+from . import subjects as SUBJ
 from . import plan as PLAN
 from . import qa as QA
 
@@ -112,6 +114,23 @@ CUT_MARK_TOLERANCE_MM = 3.0
 POST_WASH_MEASUREMENTS = {
     "waist_cm": 2, "thigh_cm": 2, "front_rise_cm": 2, "back_rise_cm": 2,
 }
+
+#: The lifecycle states a measurement may be filed into. Not every declared state: these are the
+#: two the gates READ, and a reading filed anywhere else lands in a bucket no condition looks at.
+#:
+#: The CLI has always restricted `--state` to these by argparse choices, and the web app took the
+#: field straight off the request -- so the phone could file the post-wash re-measurement into
+#: "post-wash", "postwash" or "post_was", and the result was a session that could never be
+#: finalised with nothing anywhere saying why. It fails closed either way; it should fail at the
+#: keyboard instead. One list, both front doors.
+MEASUREMENT_STATES = ("before", "post_wash")
+
+#: A plausible achieved cut length, in centimetres. Shared so the keyboard and the gate agree:
+#: `cmd_cut_performed` refuses a value outside it BEFORE appending, because `store.fold` is
+#: first-write-wins for `cut_performed` and the gate's own remedy ("re-run with every field")
+#: cannot replace a first record that is already there. One mistyped digit therefore closed
+#: ready_to_wash and ready_to_finalize permanently, on a garment that had already been cut.
+CUT_LENGTH_RANGE_CM = (10.0, 130.0)
 
 #: The rig fields a freeze has to state. Every one of them is a fact about physical hardware, so
 #: none of them has a default anywhere: a default here is a measurement nobody took, attached by
@@ -229,6 +248,26 @@ def _guard(blocks, satisfied, condition, fn):
 #: offcut_after appeared in none, so a hundred required frames -- a fifth of the plan, and the whole
 #: offcut experiment -- were required by no gate at all. Deriving the set means adding a state to
 #: the document cannot leave it unguarded.
+#: Every condition `evaluate` can name. The authoritative list, because the two places that need
+#: it cannot both derive it: `make_runbook` enumerates by RUNNING the three gates against a fresh
+#: store, whose fold always succeeds, so `log.readable` -- the block an operator sees when the log
+#: is damaged -- was invisible to the enumerator that exists to stop the green sheet falling behind
+#: the gate, and had no sentence in it. `tests/test_pilot_gate_matrix.py` reads the source and
+#: fails if this set and the `_guard`/`Block` calls disagree, so it cannot drift.
+ALL_CONDITIONS = frozenset({
+    "annotations.identify_instances", "captures.files_intact", "captures.instance_identity",
+    "captures.no_undeclared_reuse", "captures.relays_independent",
+    "captures.repositions_recorded", "captures.required_complete", "captures.reuse_legitimate",
+    "captures.state_order", "captures.subjects_bound", "captures.verdicts_reproduce",
+    "cut.confirmations", "cut.not_already_performed", "cut.performed_recorded",
+    "cut.second_person_verified", "cut.specified", "features.answered", "log.intact",
+    "log.readable", "measurements.complete", "measurements.post_wash",
+    "measurements.revisions_explained", "offcuts.assigned", "plan.fully_expanded",
+    "plan.generated", "rig.board_square_measured", "rig.calibrated", "rig.captures_attributable",
+    "rig.frozen", "rig.one_configuration", "spec.bound", "spec.usable", "wash.actual",
+    "wash.planned",
+})
+
 GATE_LAST_STATE = {
     "ready_to_cut": "marked",
     "ready_to_wash": "offcut_before",
@@ -248,7 +287,7 @@ def gate_states(spec, gate_id):
                  if st["order"] <= cutoff)
 
 
-def deviation_covers(deviations, kind, field, planned=None, actual=None):
+def deviation_covers(deviations, kind, field, planned=None, actual=None, after=None):
     """Is this departure actually EXPLAINED by a recorded deviation?
 
     Matching on `kind` alone means an empty deviation -- no field, no values, recordable before the
@@ -257,6 +296,11 @@ def deviation_covers(deviations, kind, field, planned=None, actual=None):
 
     A deviation has to name what departed. When the caller can say what the two values were, it has
     to name those too.
+
+    `after` is the log position at which the departure came into existence. A deviation written at
+    or before it was written before there was anything to excuse, which makes it a standing
+    permission for whatever happens next rather than an account of what happened. Such a record is
+    skipped rather than returned, so a stale one never shadows a later one that does count.
     """
     for d in deviations or []:
         if d.get("kind") != kind:
@@ -270,6 +314,8 @@ def deviation_covers(deviations, kind, field, planned=None, actual=None):
             continue
         if actual is not None and d.get("actual") != actual:
             continue
+        if after is not None and (d.get("seq") or 0) <= after:
+            continue                                   # predates the departure; explains nothing
         return d
     return None
 
@@ -331,13 +377,39 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                                        "the log is damaged beyond replay. Do not cut. Recover from "
                                        "the phone's own copies and re-ingest; a log this code "
                                        "cannot read is not evidence.",
-                                       {"exception": type(e).__name__})], [],
+                                       {"exception": type(e).__name__},
+                                       # A gate whose log could not be read has not answered NO;
+                                       # it has failed to answer. Without this the verdict reported
+                                       # unavailable=False and `pilot.py precut` exited 1 rather
+                                       # than 3 -- and the whole point of the distinction, per
+                                       # Verdict.unavailable, is telling "go and capture something"
+                                       # apart from "go and fix something". Every other
+                                       # could-not-evaluate path already sets it.
+                                       unavailable=True)], [],
                        {"fold_failed": True})
     garment_dir = Path(garment_dir or store.dir)
-    states = gate_states(spec, gate_id)
 
-    # --- the plan itself ------------------------------------------------------------------
-    safe_measurements = plan_safe_measurements(state)
+    # The same rule, one line further down, and it was still broken here. `gate_states` raises when
+    # the specification does not declare the state this gate guards -- which a perfectly valid shot
+    # plan can produce: drop the offcut arm, its state and its shots together, and every reference
+    # still resolves, the loader is happy, and `ready_to_finalize` raises ValueError straight out of
+    # `evaluate`. The operator, who asked whether the garment may be finalised, gets a traceback
+    # instead of an answer, and `pilot.py` exits on the exception rather than with the code that
+    # means "could not be determined". A gate that cannot answer must still answer no.
+    try:
+        states = gate_states(spec, gate_id)
+        safe_measurements = plan_safe_measurements(state)
+    except Exception as e:                     # noqa: BLE001
+        return Verdict(gate_id, [Block("spec.usable",
+                                       "this gate cannot be evaluated against the shot plan on "
+                                       "disk: %s: %s" % (type(e).__name__, e),
+                                       "the specification does not describe what this gate guards. "
+                                       "Do not proceed. Restore the shot plan this session was "
+                                       "opened under, or bind the session to one that declares "
+                                       "every state its gates name.",
+                                       {"exception": type(e).__name__, "gate": gate_id},
+                                       unavailable=True)], [],
+                       {"spec_unusable": True})
 
     activated = None
     try:
@@ -470,6 +542,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
     _guard(blocks, satisfied, "features.answered", c_features)
 
     def c_plan_expanded():
+        if activated is None:
+            # `plan.generated` is already blocking. Reporting "every templated series expanded into
+            # frames" in the same verdict said the opposite of the block sitting beside it, and a
+            # printed verdict that contradicts itself is one an operator learns to skim.
+            return False, "no shot plan was generated, so no series could be expanded from it", \
+                   "answer the intake questionnaire (`pilot.py intake`); see plan.generated", {}
         stuck = (meta.get("expansion_blocked") or []) if isinstance(meta, dict) else []
         if stuck:
             return False, ("%d templated shot series could not be expanded into frames: %s"
@@ -846,46 +924,174 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         if activated is None:
             return None
         want = {s["shot_id"]: s.get("annotation_id") for s in activated if s.get("annotation_id")}
-        wrong, orphan = [], []
+        # What the plan says each instanced slot is a photograph OF, in words. The id alone was
+        # compared, and the id is not the meaning: correcting TEAR.02's location from "left leg" to
+        # "right leg" left every accepted photograph of it still matching on id while meaning
+        # something else entirely, and nothing anywhere could see that the frames had changed
+        # subject without changing slot.
+        want_where = {s["shot_id"]: (s.get("annotation_location") or "")
+                      for s in activated if s.get("annotation_id")}
+        wrong, orphan, redescribed = [], [], []
         for (sid, rep), c in sorted(state["captures"].items()):
             claimed = c.get("annotation_id")
             expect = want.get(sid)
             if expect is None:
                 if claimed:
-                    orphan.append("%s r%s says it is of %s, but the plan does not instance that shot"
-                                  % (sid, rep, claimed))
+                    orphan.append(((sid, rep),
+                                   "%s r%s says it is of %s, but the plan does not instance that "
+                                   "shot" % (sid, rep, claimed)))
                 continue
             if claimed is None:
                 # NOT a skip. Omitting the field was the cheapest way past this condition: a
                 # photograph filed into an instanced slot with no recorded subject left the check
                 # reporting "0 photographs name what they are of" and passing.
-                wrong.append("%s r%s records no subject at all, and the plan says that slot is %s"
-                             % (sid, rep, expect))
+                wrong.append(((sid, rep),
+                              "%s r%s records no subject at all, and the plan says that slot is %s"
+                              % (sid, rep, expect)))
                 continue
             if claimed != expect:
-                wrong.append("%s r%s was taken of %s and the plan now says that slot is %s"
-                             % (sid, rep, claimed, expect))
-        if wrong or orphan:
-            ack = deviation_covers(state["deviations"], "protocol", "instance_mismatch")
-            if ack is not None:
-                return True, ("%d photograph(s) disagree with the plan about their subject, "
-                              "acknowledged as a deviation" % (len(wrong) + len(orphan))), \
-                       None, {"mismatched": wrong[:6], "orphaned": orphan[:6],
-                              "acknowledged": True}
+                wrong.append(((sid, rep),
+                              "%s r%s was taken of %s and the plan now says that slot is %s"
+                              % (sid, rep, claimed, expect)))
+                continue
+            was = (c.get("annotation_location") or "")
+            now = want_where.get(sid, "")
+            if not was and now:
+                # NOT a skip, for the same reason a missing annotation_id is not one: omitting the
+                # field was the cheapest way past a check that only looked at captures which
+                # carried it. Every annotation must have a location before the cut
+                # (`annotations.identify_instances`), so a frame of one that recorded none cannot
+                # be compared with the plan and must not be treated as agreeing with it.
+                redescribed.append(((sid, rep),
+                                    "%s r%s records no description of %s, and the plan describes "
+                                    "it as %r" % (sid, rep, claimed, now[:60])))
+            elif was and now and was != now:
+                redescribed.append(((sid, rep),
+                                    "%s r%s was taken of %s described as %r, now described as %r"
+                                    % (sid, rep, claimed, was[:60], now[:60])))
+        found = wrong + orphan + redescribed
+        if found:
+            # ONE DEVIATION EXCUSES ONE FRAME, and only once that frame's disagreement exists.
+            # Matching on the field alone made a single record a session-wide, retroactive amnesty:
+            # it cleared every instanced frame in the log at once -- frames of instances that never
+            # changed, a frame borrowed from another tear, frames filed hours afterwards, and
+            # frames already in the log when it was written. An operator clearing one genuine
+            # re-description silently cleared everything else that ever disagreed, in both
+            # directions in time, on a condition that guards the cut. So a deviation now has to
+            # NAME the frame it is about, in `--actual`, and be recorded after that frame and after
+            # the last revision of the annotation the frame is bound to -- otherwise it is a
+            # permission slip for a re-pointing that has not happened yet, which is precisely the
+            # move the fix text below tells the operator not to make.
+            touched = {}
+            for r_ in state.get("annotation_revisions") or []:
+                aid_ = str(r_.get("annotation_id"))
+                touched[aid_] = max(touched.get(aid_, 0), r_.get("seq") or 0)
+
+            def _excused(key):
+                cap = state["captures"].get(key) or {}
+                after = max(cap.get("seq") or 0,
+                            touched.get(str(cap.get("annotation_id")), 0),
+                            touched.get(str(want.get(key[0])), 0))
+                return deviation_covers(state["deviations"], "protocol", "instance_mismatch",
+                                        actual="%s r%s" % key, after=after)
+
+            live = [(k, w) for k, w in found if _excused(k) is None]
+            ev = {"mismatched": [w for _, w in wrong][:6],
+                  "orphaned": [w for _, w in orphan][:6],
+                  "redescribed": [w for _, w in redescribed][:6],
+                  "acknowledged": len(found) - len(live)}
+            if not live:
+                return True, ("%d photograph(s) disagree with the plan about their subject, each "
+                              "acknowledged by a deviation naming that frame" % len(found)), \
+                       None, ev
             return False, ("%d photograph(s) disagree with the plan about which physical thing "
-                           "they show: %s" % (len(wrong) + len(orphan),
-                                              "; ".join((wrong + orphan)[:4]))), \
+                           "they show: %s"
+                           % (len(live), "; ".join(w for _, w in live[:4]))), \
                    ("do not re-point the annotations to make this go away -- the photographs are "
-                    "of what they are of. Re-take the frames whose subject changed, or record the "
-                    "mismatch as a deviation and treat them as absent:\n"
-                    "  tools/pilot.py deviation %s --kind protocol --field instance_mismatch "
-                    "--reason '<what happened>'" % state["garment_id"]), \
-                   {"mismatched": wrong[:6], "orphaned": orphan[:6]}
+                    "of what they are of. Re-take the frames whose subject changed, or record one "
+                    "deviation PER FRAME, naming that frame, and treat those frames as absent:\n"
+                    + "\n".join(
+                        "  tools/pilot.py deviation %s --kind protocol --field instance_mismatch "
+                        "--actual '%s r%s' --reason '<what happened>'"
+                        % (state["garment_id"], k[0], k[1]) for k, _ in live[:4])), \
+                   ev
         n = sum(1 for c in state["captures"].values() if c.get("annotation_id"))
         return True, "%d photograph(s) name the physical thing they are of, and agree with the " \
                      "plan" % n, None, {}
 
     _guard(blocks, satisfied, "captures.instance_identity", c_capture_instance_matches_plan)
+
+    def c_capture_subjects_bound():
+        """A repeat that is a different physical subject must record WHICH, and no two the same.
+
+        Six shots use `min_reps` to mean the other leg, the other outseam, the other hem position.
+        Nothing bound a repeat to its subject, so two photographs of the LEFT leg satisfied both
+        repeats and the right leg's original hem was never taken -- discovered, if ever, after the
+        cut, when there is no going back for it.
+
+        The shot plan did ask a person to confirm it, and the claim it asked was the same sentence
+        for every repeat: "this frame shows the garment-LEFT hem / the garment-RIGHT hem". A claim
+        that is true of either photograph distinguishes neither. `subjects.claim_for` now names one
+        subject per repeat, and this condition checks the recorded binding underneath it.
+
+        WHAT THIS DOES NOT DO. It does not verify that the photograph is of the leg it says. No
+        pixel test can, the operator's reading of a physical label is the evidence, and calling that
+        verification would be the lie this whole module exists to avoid. What it verifies is that
+        the binding was made explicitly, that it is the binding the plan requires, and that two
+        repeats do not claim the same subject.
+        """
+        if activated is None:
+            return None
+        by_id = {sh["shot_id"]: sh for sh in activated}
+        missing, wrong, collided = [], [], []
+        seen = {}
+        for (sid, rep), c in sorted(state["captures"].items()):
+            sh = by_id.get(sid)
+            if sh is None:
+                continue
+            try:
+                req = SUBJ.required(sh, rep)
+            except SUBJ.UnknownSemantics as e:
+                # A shot plan whose repetition semantics this version cannot read is not a plan it
+                # can gate a cut on. It blocks rather than defaulting to "no distinction required".
+                return False, ("the shot plan states repetition semantics this version has no "
+                               "reading of, on %s: %s" % (sid, e)),                        "upgrade the tool to the version that understands this shot plan",                        {"shot_id": sid}
+            if req is None:
+                continue
+            got = (c.get("subject_id"), c.get("subject_aspect"))
+            if not got[0]:
+                missing.append("%s r%s records no subject, and the plan says that repeat is %s"
+                               % (sid, rep, req["subject_id"]))
+                continue
+            if got[0] != req["subject_id"] or (got[1] or "") != (req["aspect"] or ""):
+                wrong.append("%s r%s is filed as %s (%s) and the plan says that repeat is %s (%s)"
+                             % (sid, rep, got[0], got[1], req["subject_id"], req["aspect"]))
+                continue
+            prev = seen.get((sid, got))
+            if prev is not None:
+                collided.append("%s r%s and r%s both claim to be %s"
+                                % (sid, prev, rep, got[0]))
+            seen[(sid, got)] = rep
+        if missing or wrong or collided:
+            parts = []
+            if missing:
+                parts.append("%d frame(s) with no recorded subject (%s)"
+                             % (len(missing), "; ".join(missing[:3])))
+            if wrong:
+                parts.append("%d filed against the wrong subject (%s)"
+                             % (len(wrong), "; ".join(wrong[:3])))
+            if collided:
+                parts.append("%d pair(s) of repeats claiming the same subject (%s)"
+                             % (len(collided), "; ".join(collided[:3])))
+            return False, ("the repeats that are different physical things are not bound to "
+                           "them: " + "; ".join(parts)),                    ("re-ingest the frame naming what it is of, and take the one that is missing:\n"
+                    "  tools/pilot.py add %s <SHOT> <FILE> --rep <N> --subject <LEG.L|LEG.R|...>"
+                    % state["garment_id"]),                    {"missing": missing[:6], "wrong": wrong[:6], "collided": collided[:6]}
+        n = len(seen)
+        return True, ("%d repeat(s) of subject-distinguishing shots are bound to the subject the "
+                      "plan requires, each to a different one" % n), None,                {"bound": ["%s r%s=%s" % (k[0], v, k[1][0]) for k, v in sorted(seen.items())][:8]}
+
+    _guard(blocks, satisfied, "captures.subjects_bound", c_capture_subjects_bound)
 
     def c_captures_match_the_lifecycle():
         """A photograph's state must be consistent with when the log says it was taken.
@@ -911,30 +1117,49 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if seq is None:
                 continue
             if cs in PRE and cut_seq is not None and seq > cut_seq:
-                bad.append("%s r%s is a %s frame filed at entry %s, after the cut at entry %s"
-                           % (sid, rep, cs, seq, cut_seq))
+                bad.append(((sid, rep),
+                            "%s r%s is a %s frame filed at entry %s, after the cut at entry %s"
+                            % (sid, rep, cs, seq, cut_seq)))
             elif cs in POST and wash_seq is not None and seq < wash_seq:
-                bad.append("%s r%s is a %s frame filed at entry %s, before the wash at entry %s"
-                           % (sid, rep, cs, seq, wash_seq))
+                bad.append(((sid, rep),
+                            "%s r%s is a %s frame filed at entry %s, before the wash at entry %s"
+                            % (sid, rep, cs, seq, wash_seq)))
             elif cs in POST and wash_seq is None:
-                bad.append("%s r%s is a %s frame and no wash has been recorded" % (sid, rep, cs))
+                bad.append(((sid, rep),
+                            "%s r%s is a %s frame and no wash has been recorded" % (sid, rep, cs)))
         if bad:
             # The remedy this message names is honoured here. A condition that tells the operator
             # to record a deviation and then ignores the deviation is the "remedy that does not
             # exist" this module has closed twice already.
-            ack = deviation_covers(state["deviations"], "protocol", "capture_order")
-            if ack is not None:
-                return True, ("%d photograph(s) are out of order with the log, acknowledged as a "
-                              "deviation" % len(bad)), None, {"out_of_order": bad[:8],
-                                                              "acknowledged": True}
+            #
+            # ONE DEVIATION EXCUSES ONE FRAME, and only once that frame exists. Matching on the
+            # field alone made a single record -- writable at intake, before any photograph had
+            # been taken -- a standing permission for every out-of-order frame that followed. A
+            # required `before` photograph that was never taken, and now cannot be because the
+            # garment has been cut and washed, was then satisfied by a photograph of the cut,
+            # washed garment, and both later gates went green with no blocks at all. This is the
+            # same shape as `instance_mismatch` above and is scoped the same way.
+            def _excused(key):
+                cap = state["captures"].get(key) or {}
+                return deviation_covers(state["deviations"], "protocol", "capture_order",
+                                        actual="%s r%s" % key, after=cap.get("seq") or 0)
+
+            live = [(k, w) for k, w in bad if _excused(k) is None]
+            ev = {"out_of_order": [w for _, w in bad][:8],
+                  "acknowledged": len(bad) - len(live)}
+            if not live:
+                return True, ("%d photograph(s) are out of order with the log, each acknowledged "
+                              "by a deviation naming that frame" % len(bad)), None, ev
             return False, ("%d photograph(s) are filed in a state the log's own order contradicts: "
-                           "%s" % (len(bad), "; ".join(bad[:4]))), \
+                           "%s" % (len(live), "; ".join(w for _, w in live[:4]))), \
                    ("a photograph of the uncut garment cannot have been taken after the cut, and "
                     "one of the washed garment cannot have been taken before the wash. Nothing "
-                    "here can be re-taken: record what happened as a deviation and treat the "
-                    "affected frames as absent.\n"
-                    "  tools/pilot.py deviation %s --kind protocol --field capture_order "
-                    "--reason '<what happened>'" % state["garment_id"]), {"out_of_order": bad[:8]}
+                    "here can be re-taken: record what happened as a deviation naming the frame, "
+                    "one per frame, and treat those frames as absent.\n"
+                    + "\n".join(
+                        "  tools/pilot.py deviation %s --kind protocol --field capture_order "
+                        "--actual '%s r%s' --reason '<what happened>'"
+                        % (state["garment_id"], k[0], k[1]) for k, _ in live[:4])), ev
         return True, "every photograph's state agrees with the log's own order", None, {}
 
     _guard(blocks, satisfied, "captures.state_order", c_captures_match_the_lifecycle)
@@ -998,6 +1223,47 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     failing.append("%s r%d (recorded %s, but its own checks roll up to %s)"
                                    % (key[0], key[1], out, recomputed))
                     continue
+                # THE CLAIMS THE CURRENT PLAN ASKS FOR, re-derived from the plan exactly as the
+                # mechanical set above is re-derived from the code. This condition read the
+                # required claims off the STORED RECORD, and the record was written under whatever
+                # plan was on disk when the photograph was taken -- so a shot plan revision that
+                # ADDS a `requires_human` claim to an already-photographed shot was satisfied by a
+                # frame accepted before the claim existed. `spec.bound` blocks on the revision, the
+                # operator records the deviation that block itself prints, and the gate returned
+                # READY with the new claim never asked of anybody. Two ordinary commands, following
+                # the gate's own printed remedy, on the gate that authorises the shears.
+                by_id = {c.get("check_id"): c for c in (q.get("checks") or [])}
+                unmet = []
+                for cid in QA.human_claim_ids(s, rep):
+                    c = by_id.get(cid)
+                    # A STORED PASS IS NOT A CONFIRMATION. This used to `continue` on one --
+                    # "asserted by the operator at ingest" -- and that is the one thing a person
+                    # can write without having seen the photograph: the claim's own sentence
+                    # passed to `--confirm` alongside the file. `_verification_for` is this
+                    # module's single statement of when a confirmation counts, and skipping it for
+                    # a PASS meant the gate reported as met a claim with no record behind it,
+                    # attributable to nobody. Every claim the plan raises goes through it now.
+                    if c is not None and c.get("outcome") not in (QA.PASS, QA.HUMAN):
+                        unmet.append("%s (%s)" % (cid, c.get("outcome")))
+                        continue
+                    # Raised and awaiting, or added by a revision AFTER this frame was accepted.
+                    # Either way what clears it is a person saying it about THIS photograph, and
+                    # `_verification_for` requires the confirmation to name the capture's own hash
+                    # and to postdate it. Re-ingesting an unchanged file to make the checker raise
+                    # the claim would add friction and no evidence.
+                    rec, why = _verification_for(state, s["shot_id"], rep, cid,
+                                                 state["captures"].get(key))
+                    if rec is None:
+                        if c is not None and c.get("outcome") == QA.PASS:
+                            why = ("recorded as passed in the same command as the photograph, so "
+                                   "nobody had seen the frame; %s" % why)
+                        elif c is None:
+                            why = ("required by the shot plan on disk; never asked of this frame "
+                                   "and never confirmed")
+                        unmet.append("%s (%s)" % (cid, why))
+                if unmet:
+                    unresolved.append("%s r%d: %s" % (key[0], key[1], "; ".join(unmet[:2])))
+                    continue
                 if out == QA.PASS:
                     continue
                 if out == QA.HUMAN:
@@ -1011,7 +1277,12 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                            "(of %d required frames)"
                            % (len(missing), len(failing), len(unresolved),
                               sum(int(s.get("min_reps", 1)) for s in req))), \
-                   "the app's next action names the first of these; work through them", \
+                   ("the app's next action names the first of these; work through them. A claim a "
+                    "later revision of the shot plan added to a frame already taken is not in that "
+                    "list -- confirm it directly:\n"
+                    "  tools/pilot.py --operator <you> confirm %s --shot <SHOT> --rep <N> "
+                    "--claim-code <CODE>   (`pilot.py claims` prints the codes)"
+                    % state["garment_id"]), \
                    {"missing": missing[:12], "failing": failing[:12], "unresolved": unresolved[:12],
                     "n_missing": len(missing), "n_failing": len(failing),
                     "n_unresolved": len(unresolved)}
@@ -1336,15 +1607,35 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
         by_shot = {sh["shot_id"]: sh for sh in (activated or [])}
         for r in state["reuse"]:
             sid = r.get("shot_id")
+            rep = r.get("rep") or 1
             if not r.get("source_shot_id") or not r.get("checks_rerun"):
                 bad.append("%s (names no source, or records no re-run checks)" % sid)
-                continue
-            if r.get("outcome") != QA.PASS:
-                bad.append("%s (recorded outcome %s)" % (sid, r.get("outcome")))
                 continue
             shot = by_shot.get(sid)
             if shot is None:
                 bad.append("%s (not an activated shot)" % sid)
+                continue
+            if r.get("outcome") == QA.HUMAN:
+                # A claim awaiting a person is not a failed requirement, it is an unanswered one,
+                # and it is answered the same way a captured frame's is: afterwards, against the
+                # photograph. Demanding a frozen PASS here made a reuse of any shot that raises a
+                # claim unrecoverable -- the declaration cannot be superseded in an append-only log
+                # and the confirmation arrives as a different entry kind -- so one `pilot.py reuse`
+                # closed all three gates for the rest of the garment's life. The claims are
+                # re-derived from the plan and each put through `_verification_for`, which is this
+                # module's single statement of when a confirmation counts.
+                unmet = []
+                for cid in QA.human_claim_ids(shot, rep):
+                    rec, why = _verification_for(state, sid, rep, cid,
+                                                 state["captures"].get((sid, rep)))
+                    if rec is None:
+                        unmet.append("%s (%s)" % (cid, why))
+                if unmet:
+                    bad.append("%s r%s (borrowed, and %d claim(s) about it are unanswered: %s)"
+                               % (sid, rep, len(unmet), "; ".join(unmet[:2])))
+                    continue
+            elif r.get("outcome") != QA.PASS:
+                bad.append("%s (recorded outcome %s)" % (sid, r.get("outcome")))
                 continue
             rerun = set(r.get("checks_rerun") or [])
             mandatory = set(QA.APPLICABLE.get(QA.shot_class(shot), ())) - QA.OPTIONAL_CHECKS
@@ -1356,7 +1647,10 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                            "was re-checked against the borrowing shot's own requirements"
                            % len(bad)), \
                    "an image may satisfy a second shot only when every requirement of that shot " \
-                   "passes on it; run `pilot.py reuse`, which re-runs them, or capture the shot", \
+                   "passes on it; run `pilot.py reuse`, which re-runs them, or capture the shot. " \
+                   "A borrowed frame with claims outstanding is not refused -- confirm them " \
+                   "against the photograph (`pilot.py claims <garment> --shot <id> --rep <n>` " \
+                   "lists them with their codes)", \
                    {"shots": bad[:8]}
         return True, "%d image reuse declaration(s), each re-checked" % len(state["reuse"]), None, {}
 
@@ -1586,7 +1880,7 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     except (TypeError, ValueError):
                         missing.append("%s %s (not a number: %r)" % (label, side, v))
                         continue
-                    if not math.isfinite(f) or not (10.0 <= f <= 130.0):
+                    if not math.isfinite(f) or not (CUT_LENGTH_RANGE_CM[0] <= f <= CUT_LENGTH_RANGE_CM[1]):
                         missing.append("%s %s = %r, outside a plausible cut length" % (label, side, v))
             if not cp.get("tool"):
                 missing.append("the cutting tool")
@@ -1595,6 +1889,33 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
             if missing:
                 return False, "the record of the cut is incomplete: %s" % "; ".join(missing[:6]), \
                        "re-run `pilot.py cut-performed` with every field", {"missing": missing}
+            # WRITTEN BEFORE THE WATER. The docstring above says the achieved lengths "can only be
+            # taken between the shears and the water, and after the wash it is gone", and nothing
+            # checked it: a `cut_performed` entry appended after `wash_actual` satisfied every
+            # content test above and was accepted as the ground truth the prediction is scored
+            # against. The garment it was measured from had already shrunk.
+            #
+            # Not refused outright, because there is a legitimate version -- the operator cut,
+            # washed, and typed the record afterwards from notes taken at the table -- and refusing
+            # it on an append-only log would brick a real session for a typing order. The software
+            # cannot tell that case from a tape laid on a washed garment, so it asks, exactly as it
+            # does for a re-measurement inside one state.
+            wa = state.get("wash_actual") or {}
+            cp_seq, wa_seq = cp.get("seq"), wa.get("seq")
+            if cp_seq is not None and wa_seq is not None and int(cp_seq) > int(wa_seq):
+                ack = deviation_covers(state["deviations"], "protocol", "cut_recorded_after_wash")
+                if ack is None:
+                    return False, ("the cut was recorded at entry %s, after the wash was recorded "
+                                   "at entry %s. These are the lengths the prediction is scored "
+                                   "against, and after the wash the garment has shrunk -- the "
+                                   "length you measure is no longer the length you cut"
+                                   % (cp_seq, wa_seq)), \
+                           ("if the lengths were measured at the table before the wash and only "
+                            "typed in afterwards, say so and say when they were taken:\n"
+                            "  tools/pilot.py deviation %s --kind protocol --field "
+                            "cut_recorded_after_wash --reason '<when the tape was laid on the "
+                            "cut edge>'" % state["garment_id"]), \
+                           {"cut_performed_seq": cp_seq, "wash_actual_seq": wa_seq}
             if state.get("cut_performed_rewrites"):
                 ack = deviation_covers(state["deviations"], "protocol", "cut_performed_rewritten")
                 if ack is None:
@@ -1883,8 +2204,8 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                     return False, ("the cut geometry carries a warning that nobody has "
                                    "acknowledged: %s" % cs["warning"]), \
                            ("either move the cut, or record that you read the warning and meant "
-                            "it:\n  tools/pilot.py confirm <ID> --claim "
-                            "cut_out_of_model_acknowledged --operator <you>"), \
+                            "it:\n  tools/pilot.py --operator <you> confirm %s %s"
+                            % (state["garment_id"], CLAIMS.CUT_OUT_OF_MODEL_CLAIM)), \
                            {"warning": cs["warning"]}
             return True, "cut specified: inseam %.1f cm, predicted outseam %.1f cm%s" % (
                 float(cs["target_inseam_cm"]), float(cs["predicted_outseam_cm"]),
@@ -1972,9 +2293,10 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                    None, {"errors_mm": errs, "verifier": v["verifier_name"], "at": v.get("ts")}
 
         def c_cut_confirmations():
-            need = {"legs_cut_separately": "confirm the legs will be cut one at a time",
-                    "offcuts_retained_labelled": "confirm both offcuts will be kept and labelled "
-                                                 "<GARMENT>_OFFCUT_L / _R"}
+            # One vocabulary, defined in `claims` and shared with both front doors. A second copy
+            # here is a second place for the set to drift, and a claim the CLI cannot name is a
+            # claim the CLI cannot clear.
+            need = dict(CLAIMS.CUT_DAY_CLAIMS)
             # These have to be made about a cut that has been specified. _human_resolved binds a
             # per-frame HUMAN claim to the photograph's own sha256 AND to a seq after it, and its
             # docstring gives the reason: otherwise "every claim the plan could ever raise could be
@@ -2003,8 +2325,9 @@ def evaluate(gate_id, spec, store, *, garment_dir=None, check_files=True, rehash
                 return False, ("%d cut-day confirmation(s) predate the cut they authorise: %s"
                                % (len(premature), "; ".join(premature))), \
                        ("confirm them again, now that the cut line they refer to exists:\n"
-                        "  tools/pilot.py confirm %s --claim <claim> --value y"
-                        % state["garment_id"]), {"premature": premature}
+                        + "\n".join("  tools/pilot.py --operator <you> confirm %s %s"
+                                    % (state["garment_id"], c.split(" ")[0])
+                                    for c in premature)), {"premature": premature}
             return True, "cut-day confirmations recorded, after the cut line they authorise", \
                    None, {"cut_spec_seq": cs_seq}
 
@@ -2055,39 +2378,90 @@ def _hash_changed(path, want, use_cache=True):
     return got != want
 
 
+def _verification_for(state, shot_id, rep, claim, capture=None):
+    """The verification that clears ONE claim on ONE frame, or (None, why it does not).
+
+    The single authoritative statement of when a human confirmation counts. `_human_resolved` is
+    this applied to every claim a frame raised; `claims.pending_claims` is this applied to show an
+    operator what is still outstanding and why. Two implementations of "does this confirmation
+    count" is two answers to the question the gate exists to ask, so there is one.
+
+    A verification clears a claim only when all of these hold:
+
+    * it exists, records approval rather than refusal, and names who made it. A recorded REFUSAL --
+      a second person writing "no, that is the back of the garment" -- counted the same as an
+      approval wherever `value` was not read;
+    * it names the sha256 of the photograph CURRENTLY filed under that shot and repeat. Re-ingesting
+      a different frame under the same shot id used to leave the old confirmation in place, so a
+      photograph of the back inherited a confirmation that the front was facing up;
+    * it was written AFTER that photograph. Both, not either: the API takes `capture_sha256` from
+      the client, so a verification carrying a sha no capture had yet satisfied a hash test on its
+      own, and every claim the plan could ever raise could be cleared in a loop before a single
+      photograph existed. The ordering is by log POSITION, because the payload's clock is writable
+      while the sequence number is stamped by the appender;
+    * the instance it is of has not been re-described since. A frame expanded from one described
+      tear means whatever that description says, and correcting the description after the frame was
+      accepted left a confirmation attached to a sentence nobody confirmed.
+    """
+    if capture is None:
+        capture = state["captures"].get((shot_id, rep))
+    cap = capture or {}
+    rec = state["verifications"].get((shot_id, rep, claim))
+    if not rec:
+        return None, "not confirmed"
+    if rec.get("value") is not True:
+        return None, "recorded as NOT verified"
+    if not rec.get("operator"):
+        return None, "the confirmation names nobody"
+    cap_sha, cap_seq = cap.get("sha256"), cap.get("seq")
+    if not cap_sha or rec.get("capture_sha256") != cap_sha:
+        return None, "confirmed about a different photograph than the one now filed here"
+    if cap_seq is not None and rec.get("seq") is not None and int(rec["seq"]) < int(cap_seq):
+        return None, "confirmed before the photograph it is about was taken"
+    why = _stale_instance_binding(state, rec, cap)
+    if why:
+        return None, why
+    return rec, None
+
+
+def _stale_instance_binding(state, rec, cap):
+    """Has the physical thing this frame is of been re-described since it was confirmed?
+
+    Only meaningful for a frame expanded from one instance of a counted feature. A confirmation
+    written before this field existed carries no revision to compare, and is left alone here rather
+    than being failed for a fact about the software: `captures.instance_identity` independently
+    refuses any capture whose recorded subject disagrees with the plan, so the identity itself is
+    never resting on this.
+    """
+    aid = cap.get("annotation_id")
+    if not aid:
+        return None
+    want = rec.get("annotation_revision")
+    if want is None:
+        return None
+    ann = (state.get("annotations") or {}).get(aid) or {}
+    now = ann.get("revised_at") or ann.get("first_seq") or ann.get("seq")
+    if now is not None and want != now:
+        return ("%s was re-described at entry %s; this confirmation was made about the description "
+                "at entry %s" % (aid, now, want))
+    return None
+
+
 def _human_resolved(state, shot_id, rep, qa_record, capture=None):
-    """A HUMAN outcome counts only when every claim it raised has a verification OF THIS PHOTOGRAPH.
+    """Is EVERY claim this photograph referred to a person cleared, by `_verification_for`?
 
-    Three things were wrong with resolving a claim by name alone, and each was a false READY:
-
-    * The verification was not bound to the frame. Re-ingesting a different photograph under the
-      same shot id left the old confirmation in place, so a frame of the back of the garment
-      inherited a confirmation that the front was facing up.
-    * It was not bound in TIME either, so every claim the plan could ever raise could be confirmed
-      in a loop before a single photograph existed, and each frame arrived pre-cleared.
-    * A recorded refusal counted the same as an approval wherever `value` was not read.
-
-    So a verification clears a claim only when it names the capture's own hash, or -- for records
-    written before that field existed -- was made after the photograph it is about.
+    False when the frame raised no claim at all, which is not a judgement about the frame: callers
+    reach this only for a qa outcome of HUMAN, and an outcome of HUMAN with no claim in the record
+    is a record that does not say what it is waiting for.
     """
     claims = [c.get("check_id") for c in (qa_record.get("checks") or [])
               if c.get("outcome") == QA.HUMAN]
     if not claims:
         return False
-    cap_sha = (capture or {}).get("sha256")
-    cap_seq = (capture or {}).get("seq")
+    if capture is None:
+        capture = state["captures"].get((shot_id, rep))
     for claim in claims:
-        rec = state["verifications"].get((shot_id, rep, claim))
-        if not rec or rec.get("value") is not True or not rec.get("operator"):
-            return False
-        # Both, not either. The OR was the hole: a verification carrying a sha that no capture had
-        # yet -- the API takes capture_sha256 straight from the client -- satisfied the first branch
-        # and never reached the second, so every claim could still be pre-cleared before the
-        # photograph existed. And the ordering is log POSITION, because the payload's clock is
-        # writable while the sequence number is stamped by the appender.
-        if not cap_sha or rec.get("capture_sha256") != cap_sha:
-            return False
-        if cap_seq is not None and rec.get("seq") is not None \
-                and int(rec["seq"]) < int(cap_seq):
+        rec, _why = _verification_for(state, shot_id, rep, claim, capture)
+        if rec is None:
             return False
     return True

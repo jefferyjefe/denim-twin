@@ -36,7 +36,12 @@ def test_every_resource_is_fully_described():
     """A resource with no remediation is a dead end for whoever hits it, and a resource with no
     `absent_means` cannot be printed instead of a result -- which is the one job it has."""
     for name, r in P.RESOURCES.items():
-        assert r.kind in ("module", "path", "glob", "optin"), f"{name}: bad probe kind {r.kind}"
+        # "exe" was added for `node`: the phone screen is JavaScript, and the test that runs the
+        # real ui/app.js needs a runtime to run it in. The list stays hand-written rather than
+        # derived from Resource._probe, because deriving it would make any future kind valid by
+        # construction and this assertion exists to refuse exactly that.
+        assert r.kind in ("module", "path", "glob", "optin", "exe"), \
+            f"{name}: bad probe kind {r.kind}"
         assert r.targets, f"{name}: probes nothing"
         assert len(r.what) > 10, f"{name}: no description"
         assert len(r.how) > 10, f"{name}: no command that would satisfy it"

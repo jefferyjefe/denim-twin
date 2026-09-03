@@ -165,3 +165,12 @@ svg#frameguide .margin { fill: none; stroke: var(--warn); stroke-width: 1; strok
   max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .who.unset { border-color: var(--retake); color: var(--retake); }
+
+/* Outstanding human confirmations. A claim no pixel test can judge, shown where it can be
+   answered rather than only where it can be read. */
+.pendingclaim { border-top: 1px solid var(--line); padding: 10px 0; }
+.pendingclaim .k { font: 600 12px/1.4 ui-monospace, monospace; color: var(--muted); }
+.pendingclaim button { margin-top: 6px; }
+.scfields { display: grid; gap: 6px; margin: 6px 0; }
+.scfields input { background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px; font: inherit; }

@@ -405,3 +405,78 @@ def test_a_threshold_no_check_can_evaluate_fails_the_specification():
     assert "max_mm_per_px" in found, "a ruler-scaled shot carries no board, so nothing can produce it"
     boarded = dict(ruler_macro, scale_reference="charuco_board")
     assert "max_mm_per_px" not in dict(QA.quality_is_evaluable(boarded))
+
+
+# --- a motion clip is a capture like any other -------------------------------------------------
+
+def test_an_ingested_motion_clip_records_a_perceptual_signature(tmp_path):
+    """HALF ONE of the failure: the ingest paths stored `dhash: None` for a clip.
+
+    `cv2.imread` returns None for every video container, so an accepted clip carried no signature.
+    `check_capture`'s duplicate comparison reads "no signature" as "I must look", could not decode
+    the file, and recorded `duplicate_content` UNAVAILABLE -- which blocks. Every frame taken after
+    the two required motion clips blocked on a comparison against them, and `ready_to_finalize`
+    could not open once they were in the log.
+    """
+    import sys as _sys
+    from pathlib import Path as _P
+    _root = _P(__file__).resolve().parents[1]
+    _sys.path.insert(0, str(_root / "src"))
+    from denimtwin.pilot import qa as QA, spec as SPEC
+    from denimtwin.pilot.selftest import Bench
+
+    spec = SPEC.load(_root / "protocol" / "shotplan" / "shotplan.json")
+    b = Bench(tmp_path, spec, "DENIM_9904")
+    b.open_session(); b.freeze_rig(); b.answer_features(); b.measure()
+    clip_shot = [s for s in spec.shots if QA.shot_class(s) == "video"][0]
+    b.add(clip_shot, 1, b.synth_for(clip_shot, 1))
+    st, _ = b.store.fold()
+    cap = st["captures"][(clip_shot["shot_id"], 1)]
+    assert cap["dhash"], "an accepted motion clip was filed with no perceptual signature"
+    assert cap["width"] and cap["height"], "and with no dimensions either"
+
+
+def test_a_frame_compared_against_a_clip_with_no_signature_is_not_blocked(tmp_path):
+    """HALF TWO: even where no signature was recorded, the comparison must be able to LOOK.
+
+    With `dhash` absent the comparison cannot pre-filter, so it must decode the other file -- and
+    `cv2.imread` cannot decode a clip. That path is what turned a missing signature into a blocking
+    UNAVAILABLE rather than a comparison that simply ran.
+    """
+    import sys as _sys
+    from pathlib import Path as _P
+    _root = _P(__file__).resolve().parents[1]
+    _sys.path.insert(0, str(_root / "src"))
+    from denimtwin.pilot import qa as QA, spec as SPEC
+    from denimtwin.pilot.selftest import Bench
+
+    spec = SPEC.load(_root / "protocol" / "shotplan" / "shotplan.json")
+    b = Bench(tmp_path, spec, "DENIM_9905")
+    clip_shot = [s for s in spec.shots if QA.shot_class(s) == "video"][0]
+    clip = b.synth_for(clip_shot, 1)
+    still_shot = [s for s in spec.shots if s["shot_id"] == "BEFORE.WHOLE.F00.R1"][0]
+    still = b.synth_for(still_shot, 1)
+
+    checks, _na = QA.check_capture(
+        still, still_shot, QA.merged_quality(spec.doc["quality_defaults"], still_shot), rep=1,
+        compare_to=[{"shot_id": clip_shot["shot_id"], "rep": 1, "path": str(clip),
+                     "sha256": "a" * 64, "self_sha256": "b" * 64, "dhash": None}],
+        operator_assertions={"operator": "alice"})
+    dup = [c for c in checks if c.check_id == "duplicate_content"]
+    assert dup, "the comparison left no record at all"
+    assert all(c.outcome != QA.UNAVAILABLE for c in dup), (
+        "a still frame blocked on a comparison with a motion clip: %s"
+        % [(c.check_id, c.outcome, c.detail) for c in dup])
+
+
+def test_decode_any_falls_back_to_the_first_frame_only_for_real_video(tmp_path):
+    """It must not turn an unreadable file into a readable one."""
+    import sys as _sys
+    from pathlib import Path as _P
+    _sys.path.insert(0, str(_P(__file__).resolve().parents[1] / "src"))
+    from denimtwin.pilot import qa_primitives as QP
+
+    junk = tmp_path / "not-an-image.bin"
+    junk.write_bytes(b"\x00\x01\x02 this is not a photograph")
+    assert QP.decode_any(junk) is None
+    assert QP.decode_any(tmp_path / "does-not-exist.png") is None

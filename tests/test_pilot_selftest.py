@@ -169,3 +169,51 @@ def test_the_readme_quotes_the_number_of_scenarios_there_actually_are():
     assert m, "the README no longer states how many selftest scenarios there are"
     assert int(m.group(1)) == len(SCENARIOS), (
         "README says %s scenarios, the suite has %d" % (m.group(1), len(SCENARIOS)))
+
+
+def test_the_real_plan_controls_exist_and_cannot_be_quietly_dropped():
+    """The strongest evidence in the suite lives behind a switch CI does not throw.
+
+    `ST.scenarios(spec, tmp)` -- what the fixture above calls, and what CI runs -- omits
+    `want_full`, so the real-plan positive controls for all three gates and the sixteen
+    single-fault negative controls run only under `tools/pilot.py selftest --full`, which takes
+    over an hour and writes several gigabytes. That is a deliberate trade (CI cannot afford it) and
+    it is exactly the shape of gap this file exists to close, so at minimum the controls must be
+    impossible to delete without a failure here, and the names must be stated where a reader can
+    check them against the run.
+
+    This does NOT run them. It asserts they are still there to run. `docs/PILOT_OWNER_DECISIONS.md`
+    records that a `--full` pass is required before a real cut and that CI does not provide one.
+    """
+    import inspect
+    src = inspect.getsource(ST.full_plan_scenarios)
+    for name in ("REAL PLAN: a complete session opens the CUT gate (positive control)",
+                 "REAL PLAN: a complete session opens the WASH gate (positive control)",
+                 "REAL PLAN: a complete session opens the FINALIZE gate (positive control)",
+                 "REAL PLAN: the whole lifecycle was reached from the physical facts alone",
+                 "REAL PLAN: the unmutated session blocks only on what disabling file checks "
+                 "forces"):
+        assert name in src, "the real-plan control %r is gone from full_plan_scenarios" % name
+
+    faults = ST._fault_matrix()
+    assert len(faults) >= 16, "the single-fault matrix has shrunk to %d cases" % len(faults)
+    gates_covered = {f[2] for f in faults}
+    assert gates_covered == {"ready_to_cut", "ready_to_wash", "ready_to_finalize"}, gates_covered
+    conditions = {f[3] for f in faults}
+    for must in ("captures.required_complete", "measurements.complete",
+                 "measurements.revisions_explained", "cut.not_already_performed",
+                 "cut.performed_recorded", "offcuts.assigned", "captures.instance_identity",
+                 "annotations.identify_instances", "captures.subjects_bound",
+                 "captures.state_order"):
+        assert must in conditions, "no single-fault control closes %s any more" % must
+    # Every case names a baseline, and only the two that exist.
+    assert {f[1] for f in faults} == {"pre", "full"}, sorted({f[1] for f in faults})
+
+
+def test_selftest_full_is_reachable_from_the_command_line():
+    """`--full` is the only way to run the above, so the switch itself is load-bearing."""
+    import subprocess
+    r = subprocess.run([sys.executable, str(ROOT / "tools" / "pilot.py"), "selftest", "--help"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "--full" in r.stdout

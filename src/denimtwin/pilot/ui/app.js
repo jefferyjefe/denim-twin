@@ -15,6 +15,9 @@ var SEL = null;          // region tapped on the map
 var GHOST = false;
 var CONFIRM = {};        // operator assertions staged for the next upload
 var BUSY = false;
+var SEQ = 0;             // every /api/state request, in issue order
+var FRESH = false;       // is S the answer to the newest request, for the garment on screen?
+var READ_AT = '';        // the clock time the snapshot on screen was read back from the log
 
 var $ = function (id) { return document.getElementById(id); };
 var esc = function (s) {
@@ -28,6 +31,11 @@ function mins(sec) {
   return m >= 60 ? (Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm') : (m + ' min');
 }
 function showErr(msg) { var e = $('err'); e.hidden = !msg; e.textContent = msg || ''; }
+function clockNow() {
+  var d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') +
+    ':' + String(d.getSeconds()).padStart(2, '0');
+}
 
 /* ------------------------------------------------------------ who is operating
  * Every write the server accepts must name the person making it. This app used to read
@@ -96,6 +104,10 @@ function showTab(name) {
     s.classList.toggle('on', s.id === 's-' + name);
   });
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  // Nothing polls, so what is on screen is as old as the last thing the operator did. This is the
+  // screen read immediately before an irreversible cut, so opening it re-reads the log -- first
+  // the projection, then the full audit -- and says so until both answers are back.
+  if (name === 'gate') { FRESH = false; render(); refresh().then(loadGate); }
 }
 Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
   b.addEventListener('click', function () { showTab(b.dataset.tab); });
@@ -260,6 +272,10 @@ function renderNow() {
   $('f-why').textContent = n.purpose;
 
   var h = [];
+  // WHICH PHYSICAL THING this repeat is of. Six shots use the repeat count to mean the other leg,
+  // the other outseam, the other hem position -- and this screen, which is where the frames are
+  // actually taken, said only "2 of 2". Two photographs of one leg satisfied both.
+  if (n.subject && n.subject.aspect) h.push('THIS REPEAT IS OF: ' + n.subject.aspect + ' (' + (n.subject.subject_id || '?') + '). The repeats of this shot are DIFFERENT PHYSICAL THINGS, not repetitions of one view. Read the label in the frame before you take it; two photographs of the same one satisfy nothing.');
   if (n.needs_relay_before) h.push('LIFT the garment clear of the surface, shake it out, and lay it out again before this frame. This repeat measures what changes when it is re-laid, so re-shooting the same lay records nothing.');
   if (n.needs_camera_reposition_before) h.push('Take the phone OFF the mount and remount it before this frame.');
   if (n.needs_second_person) h.push('This frame needs a second person.');
@@ -307,11 +323,22 @@ function renderNow() {
 
   var t = $('checks');
   t.innerHTML = (n.last_checks || []).map(function (c) {
+    // A claim no pixel test can judge needs a person, and this table used to show it with nothing
+    // to press. The button carries the claim's CODE, not its text: the text is the shot plan's own
+    // sentence and retyping it is how a verification of a claim nobody raised gets recorded.
+    var act = '';
+    if (c.confirmable) {
+      act = c.confirmed
+        ? '<div class="fix">confirmed</div>'
+        : '<div>' + claimButtons(n.shot_id, n.rep, c.claim_code) +
+          (c.why_open ? '<div class="fix">' + esc(c.why_open) + '</div>' : '') + '</div>';
+    }
     return '<tr><td class="k">' + esc(c.check_id) + '</td><td class="o o-' + c.outcome + '">' +
       esc(c.outcome.replace('_REQUIRED', '').replace('_CHECK', '')) + '</td><td>' + esc(c.detail) +
       (c.outcome !== 'PASS' && c.fix ? '<div class="fix">' + esc(c.fix) + '</div>' : '') +
-      '</td></tr>';
+      act + '</td></tr>';
   }).join('');
+  wireClaimButtons(t, null);
 
   $('p-done').textContent = S.n_done;
   $('p-total').textContent = S.n_total;
@@ -438,13 +465,46 @@ function hemRing(h) {
 function renderHem() { $('hemwrap').innerHTML = (S.hems || []).map(hemRing).join(''); }
 
 /* ------------------------------------------------------------------ GATE */
+/* The full cut gate re-derives every recorded verdict from the photographs themselves -- a decode
+ * and a pixel re-check per frame -- so it is fetched only when this tab is actually opened, and it
+ * is DROPPED by every refresh(). A verdict carried over from before the last photograph would be a
+ * green light for evidence it never saw. Until it arrives the banner shows the cheap gate from
+ * /api/state, whose file conditions block with "integrity unknown", because unknown is not
+ * permission. */
+var GATE = null, GATE_BUSY = false;
+
+function loadGate() {
+  if (!GARMENT || GATE || GATE_BUSY) { return; }
+  GATE_BUSY = true;
+  renderGate();
+  api('/api/gate/' + GARMENT + '/ready_to_cut')
+    .then(function (j) { GATE = j; })
+    .catch(function (e) { showErr(e.message); })
+    .then(function () { GATE_BUSY = false; renderGate(); });
+}
+
 function renderGate() {
-  var g = S.gate || { ready: false, blocks: [], satisfied: [] };
+  var g = GATE || (S && S.gate) || { ready: false, blocks: [], satisfied: [] };
   var b = $('gatebanner');
-  b.className = 'banner ' + (g.ready ? 'b-PASS' : 'b-RETAKE_REQUIRED');
-  b.innerHTML = g.ready ? 'READY TO CUT<small>every required photograph, measurement, calibration reading, hash and human verification is present and valid</small>'
-    : 'NOT READY TO CUT<small>' + g.blocks.length + ' condition(s) blocking</small>';
-  $('g-blocks').innerHTML = g.blocks.length ? g.blocks.map(function (x) {
+  if (GATE_BUSY) {
+    b.className = 'banner b-UNAVAILABLE_CHECK';
+    b.innerHTML = 'CHECKING EVERY PHOTOGRAPH<small>re-deriving each recorded verdict from the '
+      + 'file on disk</small>';
+  } else if (!FRESH) {
+    // The verdict below was not read back from the log just now, so it is not a verdict. Keeping
+    // the last green banner on a failed or superseded read is what authorises a cut on a
+    // readiness nobody re-read. An unavailable answer is not a pass.
+    b.className = 'banner b-UNAVAILABLE_CHECK';
+    b.innerHTML = 'READINESS NOT READ<small>the capture log has not been re-read; this is not a '
+      + 'pass and nothing here authorises a cut</small>';
+  } else {
+    b.className = 'banner ' + (g.ready ? 'b-PASS' : 'b-RETAKE_REQUIRED');
+    b.innerHTML = g.ready
+      ? 'READY TO CUT<small>read at ' + READ_AT + ' \u2014 every required photograph, measurement, calibration reading, hash and human verification is present and valid</small>'
+      : 'NOT READY TO CUT<small>read at ' + READ_AT + ' \u2014 ' + (g.blocks || []).length + ' condition(s) blocking</small>';
+  }
+  var gb = g.blocks || [];
+  $('g-blocks').innerHTML = gb.length ? gb.map(function (x) {
     return '<div class="block"><div class="c">' + esc(x.condition) + '</div><div class="w">' +
       esc(x.what) + '</div>' + (x.fix ? '<div class="f">→ ' + esc(x.fix) + '</div>' : '') + '</div>';
   }).join('') : '<div class="muted">nothing blocking</div>';
@@ -466,14 +526,122 @@ function render() {
     $('lrnote').textContent = MAP.left_right_convention || '';
     regionInfo();
   }
+  // NOT inside renderNow(): that returns early once every frame is captured, which is
+  // exactly cut day -- the moment the outstanding claims are all that is left. Both claim
+  // cards vanished from the screen at the point the operator needs them, and the phone is
+  // the only door that shows the photograph a claim is about.
+  renderPendingClaims(S);
   renderDash(); renderHem(); renderGate();
+}
+
+function confirmClaim(btn, shot, rep, code, label, value, extra) {
+  // `value` is passed explicitly and is a real boolean. A screen that can only say YES is not a
+  // check: a person who looks at the frame and sees the backdrop is NOT empty could previously
+  // only do nothing, which reads in the log exactly like not having got to it yet.
+  var who = operator();
+  if (!who) { return; }
+  var body = { operator: who, claim_code: code, value: value !== false };
+  if (shot) { body.shot_id = shot; body.rep = rep; }
+  if (body.value === false) {
+    var why = window.prompt('What did you see? A refusal is recorded and needs to say why.');
+    if (!why) { return; }
+    body.note = why;
+  }
+  Object.keys(extra || {}).forEach(function (k) { body[k] = extra[k]; });
+  btn.disabled = true;
+  btn.textContent = 'recording...';
+  api('/api/confirm/' + GARMENT, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(function () { refresh(); })
+    .catch(function (e) { btn.disabled = false; btn.textContent = label; alert(String(e)); });
+}
+
+function claimButtons(shot, rep, code) {
+  return '<button class="sec pc-yes" data-shot="' + esc(shot || '') + '" data-rep="' +
+    esc(String(rep || '')) + '" data-code="' + esc(code) + '">I CONFIRM THIS</button>' +
+    ' <button class="sec pc-no" data-shot="' + esc(shot || '') + '" data-rep="' +
+    esc(String(rep || '')) + '" data-code="' + esc(code) + '">NO — it does not</button>';
+}
+
+function wireClaimButtons(host, extraFor) {
+  Array.prototype.forEach.call(host.querySelectorAll('.pc-yes, .pc-no'), function (b) {
+    b.addEventListener('click', function () {
+      var yes = b.classList.contains('pc-yes');
+      confirmClaim(b, b.dataset.shot || null,
+                   b.dataset.rep ? parseInt(b.dataset.rep, 10) : null,
+                   b.dataset.code, b.textContent, yes,
+                   extraFor ? extraFor(b, yes) : null);
+    });
+  });
+}
+
+function renderSessionClaims(S) {
+  // cut_marks_verified carries a second person's name and their two tape readings, so it asks for
+  // them rather than posting a bare yes the gate will refuse anyway.
+  var card = $('sessionclaimscard');
+  if (!card) { return; }
+  var rows = S.session_claims || [];
+  card.hidden = !rows.length;
+  var host = $('sessionclaimlist');
+  host.innerHTML = rows.map(function (c) {
+    var state = c.recorded ? (c.value ? 'confirmed' : 'REFUSED') : 'not recorded';
+    var form = '';
+    if (c.needs_measurements && !(c.recorded && c.value)) {
+      form = '<div class="scfields">' +
+        '<input id="sc-verifier" placeholder="who verified (not you)">' +
+        '<input id="sc-inseam" inputmode="decimal" placeholder="their inseam reading, cm">' +
+        '<input id="sc-outseam" inputmode="decimal" placeholder="their outseam reading, cm">' +
+        '</div>';
+    }
+    return '<div class="pendingclaim"><div class="k">' + esc(c.claim) + ' — ' + esc(state) +
+      '</div><div>' + esc(c.detail) + '</div>' + form +
+      '<div>' + claimButtons(null, null, c.code) + '</div></div>';
+  }).join('');
+  wireClaimButtons(host, function (b) {
+    var row = rows.filter(function (r) { return r.code === b.dataset.code; })[0];
+    if (!row || !row.needs_measurements) { return null; }
+    var v = $('sc-verifier'), i = $('sc-inseam'), o = $('sc-outseam');
+    return { verifier: v && v.value, measured_inseam_cm: i && i.value,
+             measured_outseam_cm: o && o.value };
+  });
+}
+
+function renderPendingClaims(S) {
+  // The whole session's outstanding confirmations, not just this frame's. `plan.next_action`
+  // treats a frame whose outcome is HUMAN_VERIFICATION_REQUIRED as taken and moves on, so the
+  // claims it raised never came back on screen and the operator met all of them at once at the
+  // gate -- with no route in the app to answer any of them.
+  var card = $('claimscard');
+  if (!card) { return; }
+  var rows = S.pending_claims || [];
+  card.hidden = !rows.length;
+  $('c-count').textContent = String(S.n_pending_claims || rows.length);
+  var host = $('claimlist');
+  host.innerHTML = rows.map(function (c) {
+    return '<div class="pendingclaim"><div class="k">' + esc(c.shot_id) + ' r' + c.rep +
+      '</div><div>' + esc(c.detail || c.claim) + '</div>' +
+      '<div>' + claimButtons(c.shot_id, c.rep, c.code) + '</div></div>';
+  }).join('');
+  wireClaimButtons(host, null);
+  renderSessionClaims(S);
 }
 
 function refresh() {
   if (!GARMENT) return Promise.resolve();
-  return api('/api/state/' + GARMENT).then(function (j) {
-    S = j; showErr(''); render();
-  }).catch(function (e) { showErr(e.message); });
+  // Responses arrive in whatever order the network returns them, and this app has no poll, so the
+  // two requests in flight are typically for two different garments -- the one being left and the
+  // one being opened. Applied in arrival order, the slower stale answer repaints every panel,
+  // READY TO CUT included, for a garment the operator is no longer looking at.
+  var seq = ++SEQ, want = GARMENT;
+  return api('/api/state/' + want).then(function (j) {
+    if (seq !== SEQ || want !== GARMENT || j.garment_id !== want) { return; }
+    // Anything at all has changed, so a gate verdict computed before it is worthless.
+    S = j; GATE = null; FRESH = true; READ_AT = clockNow(); showErr(''); render();
+  }).catch(function (e) {
+    // A read that failed leaves nothing on screen that anybody may act on.
+    FRESH = false; GATE = null; showErr(e.message); render();
+  });
 }
 
 /* ------------------------------------------------------------------ actions */

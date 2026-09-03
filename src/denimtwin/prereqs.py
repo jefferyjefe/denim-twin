@@ -34,6 +34,7 @@ DENIMTWIN_ALLOW_NETWORK=1 for a deliberate harvest. No verification profile sets
 """
 import functools
 import glob
+import shutil
 import importlib.util
 import os
 from pathlib import Path
@@ -79,6 +80,8 @@ class Resource:
             return True
         if self.kind == "optin":
             return os.environ.get(self.targets[0], "") == "1"
+        if self.kind == "exe":
+            return all(shutil.which(t) is not None for t in self.targets)
         if self.kind == "path":
             return all((ROOT / t).exists() for t in self.targets)
         if self.kind == "glob":
@@ -91,7 +94,7 @@ class Resource:
 
     def found(self):
         """How many artefacts the probe can see. Used for reporting, not for deciding."""
-        if self.kind in ("module", "optin", "path"):
+        if self.kind in ("module", "optin", "path", "exe"):
             return int(self._probe())
         return sum(len(glob.glob(str(ROOT / t), recursive=True)) for t in self.targets)
 
@@ -223,6 +226,14 @@ _R = [
         "physical-accuracy claim impossible, not merely unproven.",
     ),
     Resource(
+        "node", "exe", "a JavaScript runtime, to execute the capture app's own ui/app.js",
+        ["node"],
+        "install Node.js (brew install node, or your platform's package)",
+        "the phone screen's own logic was not executed. The banner an operator reads immediately "
+        "before an irreversible cut is written in JavaScript, and nothing else in this suite can "
+        "run it -- a Python re-implementation would be testing a copy.",
+    ),
+    Resource(
         "network", "optin", "permission to make outbound HTTP requests",
         ["DENIMTWIN_ALLOW_NETWORK"],
         "DENIMTWIN_ALLOW_NETWORK=1 <command>   # deliberate, human-initiated, never in a verify profile",
@@ -250,7 +261,7 @@ CI_RESOURCES = frozenset({"pair_runs"})
 FULL_RESOURCES = frozenset({
     "torch", "segment_anything", "sam_checkpoint",
     "pair_runs", "pair_masks", "experiment_masks", "pair_cmp_metrics", "pair_predict_batch",
-    "pair_images", "external_images",
+    "pair_images", "external_images", "node",
 })
 
 

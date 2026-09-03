@@ -38,6 +38,31 @@ DEVIATION_KINDS = ("rig", "wash", "intake", "offcut_alternation", "protocol")
 #: `measurements_by_state`, so a consumer that wants the post-wash waist has to say so.
 PRE_MODIFICATION_STATE = "before"
 
+#: How the lifecycle progresses. One authoritative ordering: the fold advances the garment through
+#: it, and a measurement's declared state is compared against it. It was defined inside the
+#: measurement branch, where the advance itself could not reach it -- which is how the advance came
+#: to be a plain assignment that could move backwards.
+LIFECYCLE_ORDER = {"rig": 0, "intake": 1, "before": 2, "marked": 3, "immediate_after": 4,
+                   "offcut_before": 5, "post_wash": 6, "offcut_after": 7}
+
+
+def _advance(current, to):
+    """The lifecycle only ever moves forward. A cut and a wash are irreversible.
+
+    `lifecycle = "immediate_after"` on the cut and `lifecycle = "post_wash"` on the wash meant the
+    replay followed the ORDER THE ENTRIES WERE TYPED rather than the order the acts happened in.
+    Record the wash and then remember to type the cut record afterwards -- which the runbook's own
+    sequence invites, since `measurement_ahead_of_record` exists for exactly that habit -- and the
+    garment went from post_wash back to immediate_after. Every measurement written after that with
+    no explicit state then landed in a bucket no gate reads: `measurements.post_wash` reported that
+    the washed garment had never been measured, while the readings sat in the log under
+    `immediate_after`, and shrinkage was uncomputable from a record that contained both numbers.
+    """
+    if LIFECYCLE_ORDER.get(to, -1) > LIFECYCLE_ORDER.get(current, -1):
+        return to
+    return current
+
+
 KINDS = (
     "session_opened",        # garment id, spec version and hash
     "setup_frozen",          # the rig configuration and its hash
@@ -57,6 +82,14 @@ KINDS = (
     "offcut",                # one offcut sample's identity and measurements
     "note",
 )
+
+
+class Rejected(Exception):
+    """A conditional append abandoned because its condition no longer held once the lock was taken.
+
+    Raised by `append_guarded`. A caller catching this is being told that another writer got there
+    first -- not that anything is wrong with the log.
+    """
 
 
 class Store(object):
@@ -84,6 +117,42 @@ class Store(object):
                              "reader cannot silently ignore something it does not understand" % kind)
         return self.manifest.append(kind, payload, operator=operator, setup_hash=setup_hash,
                                     now=now)
+
+    def append_many(self, items, *, operator=None):
+        """Several entries written under one hold of the write lock, so nothing interleaves.
+
+        `items` are dicts of kind/payload, optionally operator and setup_hash. Use it where the
+        entries only mean anything as a group -- the rig freeze and the calibration readings taken
+        against it are the case this exists for.
+        """
+        norm = []
+        for it in items:
+            kind = it["kind"]
+            if kind not in KINDS:
+                raise ValueError("unknown log entry kind %r" % kind)
+            norm.append((kind, it["payload"], it.get("operator", operator), it.get("setup_hash")))
+        return self.manifest.append_many(norm)
+
+    def append_guarded(self, kind, payload, *, guard, operator=None, setup_hash=None, now=None):
+        """append(), with `guard` re-run against a freshly folded state under the write lock.
+
+        `guard(state)` returns None to write, or a sentence saying why this entry must not be
+        written; that sentence becomes `Rejected`. Use it for every record the log accepts only
+        once. Deciding from a fold taken before the call is not enough: the fold and the append are
+        then two steps, and concurrent writers interleave between them. The wash's actual settings
+        are the case that matters -- ThreadingHTTPServer, a phone retrying a timed-out POST, eight
+        requests each told "saved" and seven discarded by a fold that keeps the first.
+
+        The guard runs with the lock held, so it must only read.
+        """
+        def _recheck():
+            state, _ = self.fold()
+            why = guard(state)
+            if why:
+                raise Rejected(why)
+
+        return self.manifest.append(kind, payload, operator=operator, setup_hash=setup_hash,
+                                    now=now, precheck=_recheck)
 
     # -- reading ------------------------------------------------------------------------------
 
@@ -271,10 +340,7 @@ class Store(object):
                     # after the garment has been cut, which is the overwrite all of this exists to
                     # prevent, and it is recorded separately so the gate can refuse it outright.
                     if p.get("state") and p["state"] != lifecycle:
-                        _ORDER = {"rig": 0, "intake": 1, "before": 2, "marked": 3,
-                                  "immediate_after": 4, "offcut_before": 5, "post_wash": 6,
-                                  "offcut_after": 7}
-                        if _ORDER.get(p["state"], 9) < _ORDER.get(lifecycle, 0):
+                        if LIFECYCLE_ORDER.get(p["state"], 9) < LIFECYCLE_ORDER.get(lifecycle, 0):
                             st["measurement_backdated"].append(
                                 {"seq": e.get("seq"), "name": key, "claimed": p["state"],
                                  "log_says": lifecycle})
@@ -347,7 +413,7 @@ class Store(object):
                 if st["cut_performed"] is None:
                     st["cut_performed"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
                                                operator=p.get("operator") or e.get("operator"))
-                    lifecycle = "immediate_after"
+                    lifecycle = _advance(lifecycle, "immediate_after")
                 else:
                     st["cut_performed_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "wash_planned":
@@ -370,7 +436,7 @@ class Store(object):
                 if st["wash_actual"] is None:
                     st["wash_actual"] = dict(p, ts=e.get("ts"), seq=e.get("seq"),
                                              operator=_who(p, e))
-                    lifecycle = "post_wash"
+                    lifecycle = _advance(lifecycle, "post_wash")
                 else:
                     st["wash_actual_rewrites"].append({"seq": e.get("seq"), "payload": p})
             elif k == "offcut":

@@ -26,10 +26,12 @@ from . import hem as HEM
 from . import qa_primitives as Q
 from . import plan as PLAN
 from . import qa as QA
+from . import claims as CLAIMS
+from . import subjects as SUBJ
 from . import spec as SPEC
 from .manifest import ingest_photo, read_exif, exif_timestamp
-from .server import Api, serve
-from .store import Store, setup_hash, diff_planned_actual, mean_of
+from .server import Api, NoSuchGarment, serve
+from .store import Store, Rejected, setup_hash, diff_planned_actual, mean_of
 
 
 def _to_path(poly):
@@ -85,19 +87,19 @@ class Session(object):
     # somewhere else entirely.
     def store(self, gid):
         if not re.match(r"^DENIM_[0-9]{4}$", str(gid or "")):
-            raise KeyError(gid)
+            raise NoSuchGarment(gid)
         d = self.garments / str(gid)
         try:
             d.resolve().relative_to(self.garments.resolve())
         except (ValueError, OSError):
-            raise KeyError(gid)
+            raise NoSuchGarment(gid)
         if not d.is_dir():
-            raise KeyError(gid)
+            raise NoSuchGarment(gid)
         return Store(d)
 
     # -- the projection ----------------------------------------------------------------------
 
-    def snapshot(self, gid, *, state_filter=None):
+    def snapshot(self, gid, *, state_filter=None, check_files=False):
         spec = self.spec
         gdir = self.garments / gid
         store = self.store(gid)
@@ -187,7 +189,21 @@ class Session(object):
             cov["next_macro"] = nm
             hems.append(cov)
 
-        gate = GATES.evaluate("ready_to_cut", spec, store, garment_dir=gdir, check_files=True)
+        # NOT the file re-derivation, unless the caller asks. `check_files=True` makes the gate
+        # decode and fully re-check every photograph already taken; gates.py says of that work that
+        # "the gate runs once, before something irreversible, and can afford the decode". This
+        # projection is not that. It is re-fetched after every photograph and every confirmation,
+        # and app.js latches the camera button until it returns, so the screen the operator lives
+        # in cost O(captures already taken) -- measured at ~35 ms per frame, 8.9 s at 48 frames,
+        # and the pre-cut arm of the real plan is 197. The operator could not take the next
+        # photograph until the audit of all the previous ones finished.
+        #
+        # With check_files=False the two file conditions BLOCK, saying the integrity is unknown --
+        # unknown is not permission, and this route can therefore only ever report LESS ready than
+        # the truth, never more. Deliberately not a cache: a remembered verdict is a green banner
+        # for evidence nobody re-checked.
+        gate = GATES.evaluate("ready_to_cut", spec, store, garment_dir=gdir,
+                              check_files=check_files)
         qa_counts = {}
         for q in st["qa"].values():
             qa_counts[q.get("outcome")] = qa_counts.get(q.get("outcome"), 0) + 1
@@ -206,6 +222,40 @@ class Session(object):
                 if ghost:
                     break
 
+        # Outstanding confirmations, oldest frame first, so the queue is stable while it is worked
+        # through. Capped: the list is a to-do list on a phone, and the count says how many more.
+        pending_claims = []
+        n_pending = 0
+        plan_by_id = {x["shot_id"]: x for x in shots}
+        for (sid, rep) in sorted(st["qa"]):
+            for c in CLAIMS.pending_claims(st, sid, rep, shot=plan_by_id.get(sid)):
+                if c["resolved"]:
+                    continue
+                n_pending += 1
+                if len(pending_claims) < 40:
+                    pending_claims.append({"shot_id": sid, "rep": rep, "claim": c["claim"],
+                                           "code": c["code"], "detail": c["detail"],
+                                           "why": c["why"]})
+
+        # The claims that belong to the SESSION rather than to any one photograph -- the three that
+        # authorise the cut and the acknowledgement of an out-of-model geometry warning. They were
+        # reachable from the CLI and from nowhere on the phone, which is the door the operator is
+        # holding on cut day. Whether each is SUFFICIENT stays the gate's judgement; this reports
+        # only whether one has been recorded and what it said.
+        session_claims = []
+        for name, detail in sorted(CLAIMS.SESSION_CLAIMS.items()):
+            recs = [r for (_s, _r, c), r in st["verifications"].items() if c == name]
+            latest = max(recs, key=lambda r: (r.get("seq") if r.get("seq") is not None else -1)) \
+                if recs else None
+            session_claims.append({
+                "claim": name, "code": CLAIMS.claim_code(name), "detail": detail,
+                "recorded": latest is not None,
+                "value": latest.get("value") if latest else None,
+                "verifier": latest.get("verifier_name") if latest else None,
+                "needs_measurements": name == CLAIMS.CUT_MARKS_CLAIM,
+                "needs_second_person": name == CLAIMS.CUT_MARKS_CLAIM,
+            })
+
         nxt_out = None
         if nxt:
             nxt_out = dict(nxt)
@@ -214,10 +264,33 @@ class Session(object):
             key = (nxt["shot_id"], nxt["rep"])
             q = st["qa"].get(key)
             nxt_out["last_result"] = q.get("outcome") if q else None
-            nxt_out["last_checks"] = (q.get("checks") if q else None)
+            # Each check as recorded, and for the ones that refer the frame to a PERSON, the short
+            # stable code that names the claim plus whether it is already cleared. The screen listed
+            # these read-only: it showed "confirm that the rule's millimetre graduations are
+            # individually separated" and offered nothing to press, while the CLI refused the same
+            # claim for being over 64 characters. Between the two front doors there was no way at
+            # all to complete 164 of the 177 claims the production plan raises.
+            checks = list(q.get("checks") or []) if q else []
+            pend = {c["claim"]: c for c in
+                    CLAIMS.pending_claims(st, nxt["shot_id"], nxt["rep"], shot=nxt)}
+            for c in checks:
+                hit = pend.get(c.get("check_id"))
+                if hit:
+                    c["claim_code"] = hit["code"]
+                    c["confirmable"] = True
+                    c["confirmed"] = hit["resolved"]
+                    c["why_open"] = hit["why"]
+            nxt_out["last_checks"] = checks or None
             nxt_out["matched_captured"] = [
                 {"shot_id": m, "captured": any((m, r) in done for r in range(1, 9))}
                 for m in (nxt.get("matched_shot_ids") or [])]
+            # WHICH PHYSICAL THING this repeat is of. The phone is where the frames are actually
+            # taken, and it was the interface with no way of saying that frame 2 of 2 is the OTHER
+            # leg: the plan's own claim named every subject the shot has, identically for both.
+            try:
+                nxt_out["subject"] = SUBJ.required(nxt, nxt["rep"])
+            except SUBJ.UnknownSemantics as e:
+                nxt_out["subject"] = {"subject_id": None, "aspect": None, "error": str(e)}
 
         return {
             "garment_id": gid,
@@ -237,6 +310,15 @@ class Session(object):
                              for k, v in st["measurements"].items()},
             "measurements_required": GATES.REQUIRED_MEASUREMENTS,
             "next": nxt_out,
+            # EVERY claim still waiting for a person, across the whole session -- not just the
+            # frame on screen. `plan.next_action` treats a frame whose outcome is
+            # HUMAN_VERIFICATION_REQUIRED as taken and moves on, so the claims it raised were
+            # never shown again: the operator worked to the end of the plan and met them all at
+            # once at the gate, as `captures.required_complete`, with no route in the app to
+            # answer them. This is that route.
+            "pending_claims": pending_claims,
+            "n_pending_claims": n_pending,
+            "session_claims": session_claims,
             "ghost": ghost,
             "n_total": len(ordered), "n_done": len(done & {(e["shot_id"], e["rep"]) for e in ordered}),
             "seconds_remaining": PLAN.estimate_seconds(spec, remaining),
@@ -405,7 +487,9 @@ def build_api(session):
     @api.route("GET", "/api/state/(DENIM_[0-9]{4})")
     def _state(m, q, _b):
         try:
-            return 200, session.snapshot(m.group(1), state_filter=(q.get("state") or [None])[0])
+            return 200, session.snapshot(
+                m.group(1), state_filter=(q.get("state") or [None])[0],
+                check_files=(q.get("files") or ["0"])[0] == "1")
         except KeyError:
             return 404, {"error": "no such garment"}
         except Exception as e:                  # noqa: BLE001
@@ -458,6 +542,15 @@ def build_api(session):
         # phone is not a second set of rules.
         folded, _ = st.fold()
         ms = b.get("state") or folded["lifecycle_state"]
+        # UNCONDITIONALLY, on the derived state as well as an explicit one. Guarding this on
+        # `b.get("state") is not None` meant the check never ran on the normal path, where the
+        # state comes from the lifecycle: between a recorded cut and a recorded wash that is
+        # `immediate_after`, a bucket no gate reads, and the route answered 200.
+        if ms not in GATES.MEASUREMENT_STATES:
+            return 400, {"error": "a measurement belongs to %s; %r is neither, and a reading "
+                                  "filed there lands in a bucket no gate reads. Say which set "
+                                  "this reading is."
+                                  % (" or ".join(GATES.MEASUREMENT_STATES), ms)}
         st.append("measurement", {"name": name, "readings": readings,
                                   "mean": sum(readings) / len(readings), "spread": spread,
                                   "tolerance": tol, "state": ms,
@@ -465,35 +558,97 @@ def build_api(session):
                   operator=b.get("operator"))
         return 200, {"ok": True, "spread": spread, "in_tolerance": spread <= tol, "state": ms}
 
+    @api.route("GET", "/api/claims/(DENIM_[0-9]{4})")
+    def _claims(m, q, _b):
+        """The claims a frame raised, each with the short stable code that names it.
+
+        The phone needs this for the same reason the CLI does: a claim's identity is the shot
+        plan's own sentence, and an interface that makes a person retype one is an interface that
+        records verifications of claims nobody raised.
+        """
+        st = session.store(m.group(1))
+        state, _ = st.fold()
+        try:
+            shot_ = _shot_id((q.get("shot_id") or [None])[0], allow_none=True)
+            rep_ = _int((q.get("rep") or [None])[0], "rep", allow_none=True, lo=1, hi=99)
+        except BadInput as e:
+            return 400, {"error": str(e)}
+        rows = [(shot_, rep_ or 1)] if shot_ else sorted(state["qa"])
+        out = []
+        for sid, rep in rows:
+            for c in CLAIMS.pending_claims(state, sid, rep):
+                out.append(dict(c, shot_id=sid, rep=rep))
+        return 200, {"claims": out,
+                     "session_claims": [{"claim": k, "code": CLAIMS.claim_code(k), "detail": v}
+                                        for k, v in sorted(CLAIMS.SESSION_CLAIMS.items())]}
+
     @api.route("POST", "/api/confirm/(DENIM_[0-9]{4})")
     def _confirm(m, _q, b):
         if not b.get("operator"):
             return 400, {"error": "a human verification needs a name on it"}
-        if not b.get("claim"):
-            return 400, {"error": "a verification must say what it verifies"}
         try:
             rep_ = _int(b.get("rep"), "rep", allow_none=True, lo=1, hi=99)
             shot_ = _shot_id(b.get("shot_id"), allow_none=True)
             mi = _num(b.get("measured_inseam_cm"), "measured_inseam_cm", allow_none=True)
             mo = _num(b.get("measured_outseam_cm"), "measured_outseam_cm", allow_none=True)
+            # Every other number on this route goes through _int; claim_index went straight into
+            # `int()`, where a JSON `true` becomes 1 and confirmed the frame's first claim.
+            idx_ = _int(b.get("claim_index"), "claim_index", allow_none=True, lo=1, hi=99)
         except BadInput as e:
             return 400, {"error": str(e)}
+        # The ANSWER is a boolean. `bool(b.get("value", True))` made every non-empty string an
+        # approval, so an operator who typed their refusal into the value field had it recorded as
+        # a yes -- and `_verification_for`, which is careful to refuse anything that `is not True`,
+        # never saw the refusal at all.
+        val_ = b.get("value", True)
+        if not isinstance(val_, bool):
+            return 400, {"error": "a verification's value is yes or no and nothing else; %r is "
+                                  "neither. Put the explanation in the note." % (val_,)}
         st = session.store(m.group(1))
-        # Bind it to the photograph it is about, so re-ingesting a different frame under the same
-        # shot id cannot inherit the confirmation.
-        cap_sha = b.get("capture_sha256")
-        if cap_sha is None and shot_:
-            st_, _ = st.fold()
-            cap = st_["captures"].get((shot_, rep_ or 1))
-            cap_sha = (cap or {}).get("sha256")
-        st.append("human_verification",
-                  {"shot_id": shot_, "rep": rep_, "claim": str(b.get("claim")),
-                   "value": bool(b.get("value", True)), "note": b.get("note"),
-                   "verifier_name": b.get("verifier") or b.get("operator"),
-                   "operator": b.get("operator"), "capture_sha256": cap_sha,
-                   "measured_inseam_cm": mi, "measured_outseam_cm": mo},
-                  operator=b.get("operator"))
-        return 200, {"ok": True}
+        state, _ = st.fold()
+
+        # The CLI refuses a claim about a shot this garment's plan never activated, and this did
+        # not: the phone would record a verification of a frame that does not exist for this
+        # garment, which folds into the state as a confirmation of nothing and is indistinguishable
+        # afterwards from one that was simply never made.
+        if shot_:
+            try:
+                activated, _m = PLAN.activate(session.spec, state["features"],
+                                              GATES.plan_safe_measurements(state),
+                                              state.get("cut_spec"),
+                                              annotations=state.get("annotations"))
+            except Exception as e:                                   # noqa: BLE001
+                return 409, {"error": "no shot plan could be generated for this garment: %s" % e}
+            if shot_ not in {x["shot_id"] for x in activated}:
+                return 400, {"error": "%s is not an activated shot for this garment, so there is "
+                                      "nothing about it to verify" % shot_}
+
+        # The same default, in the record as well as in the lookup. See tools/pilot.py.
+        rep_ = (rep_ or 1) if shot_ else rep_
+        try:
+            claim = CLAIMS.resolve(state, shot_, rep_,
+                                   shot={x["shot_id"]: x for x in activated}.get(shot_)
+                                   if shot_ else None,
+                                   claim=b.get("claim"), code=b.get("claim_code"),
+                                   index=idx_)
+            # Bound from the LOG, never from the request. This route used to take
+            # `capture_sha256` straight from the client and only fall back to the accepted
+            # photograph when the field was absent, so the one identity field that says which
+            # photograph was confirmed was supplied by the party being checked.
+            payload = CLAIMS.payload(
+                claim=claim, shot_id=shot_, rep=rep_, value=val_,
+                note=b.get("note"), operator=b.get("operator"), verifier=b.get("verifier"),
+                measured_inseam_cm=mi, measured_outseam_cm=mo,
+                bind=CLAIMS.binding(state, session.spec, shot_, rep_),
+                # The server cannot tell a phone tap from a scripted POST -- they are the
+                # same bytes -- so it records what it can stand behind rather than "app", which
+                # read as though a person had been observed.
+                interface="app", entry_mode="app:unattested")
+        except CLAIMS.ClaimError as e:
+            return 400, {"error": str(e)}
+
+        st.append("human_verification", payload, operator=b.get("operator"))
+        return 200, {"ok": True, "claim": claim, "claim_code": CLAIMS.claim_code(claim)}
 
     @api.route("POST", "/api/setup/(DENIM_[0-9]{4})")
     def _setup(m, _q, b):
@@ -527,11 +682,17 @@ def build_api(session):
                 except BadInput as e:
                     return 400, {"error": str(e)}
             checks_ok.append(c)
-        st.append("setup_frozen", {"setup": cfg, "setup_hash": h,
-                                   "reason": b.get("reason") or "frozen from the app"},
-                  operator=b.get("operator"))
-        for c in checks_ok:
-            st.append("setup_check", c, operator=b.get("operator"), setup_hash=h)
+        # ONE hold of the write lock for the freeze and every reading taken against it. They were
+        # N+1 separate appends, and a reading counts only against the freeze in effect -- so a
+        # second freeze arriving between them left the readings bound to a configuration no longer
+        # current, and the gate blocked `rig.calibrated` on a rig that had been measured correctly.
+        # Eight concurrent freezes left nine of ten readings orphaned.
+        st.append_many(
+            [{"kind": "setup_frozen",
+              "payload": {"setup": cfg, "setup_hash": h,
+                          "reason": b.get("reason") or "frozen from the app"}}]
+            + [{"kind": "setup_check", "payload": c, "setup_hash": h} for c in checks_ok],
+            operator=b.get("operator"))
         return 200, {"ok": True, "setup_hash": h}
 
     @api.route("POST", "/api/upload")
@@ -584,13 +745,23 @@ def build_api(session):
             except OSError:
                 pass
             raise
+        # The subject, decided before the file is filed and by the same function the CLI calls.
+        try:
+            subject = SUBJ.capture_fields(shot, rep, declared=fields.get("subject"))
+        except (SUBJ.WrongSubject, SUBJ.UnknownSemantics) as e:
+            try:
+                os.unlink(stage_name)
+            except OSError:
+                pass
+            return 400, {"error": str(e)}
         dest_dir = gdir / "images" / shot["state"]
         dest, sha, already = ingest_photo(stage, dest_dir, shot_id, rep, move=True)
         rel = str(dest.relative_to(gdir))
         exif = read_exif(dest)
         ts = exif_timestamp(exif)
         import cv2
-        img = cv2.imread(str(dest))
+        # decode_any, so a motion clip is decoded from its first frame rather than not at all.
+        img = Q.decode_any(dest)
         h_, w_ = (img.shape[:2] if img is not None else (None, None))
         store.append("capture", {"shot_id": shot_id, "rep": rep, "path": rel, "sha256": sha,
                                  "exif": exif, "exif_ts": ts, "width": w_, "height": h_,
@@ -606,6 +777,8 @@ def build_api(session):
                                  "annotation_id": shot.get("annotation_id"),
                                  "annotation_type": shot.get("annotation_type"),
                                  "annotation_location": shot.get("annotation_location"),
+                                 "subject_id": subject["subject_id"],
+                                 "subject_aspect": subject["subject_aspect"],
                                  "already_present": already},
                      operator=fields.get("operator"), setup_hash=st["setup_hash"])
         board, bspec = session.board
@@ -647,16 +820,36 @@ def build_api(session):
                             thigh_cm=need("thigh_cm"), leg_opening_cm=need("leg_opening_cm"))
         except Exception as e:
             return 400, {"error": str(e)}
-        store.append("cut_spec", s, operator=b.get("operator"))
-        return 200, {"ok": True, "cut_spec": s,
-                     "packet": CUT.packet_lines(m.group(1), s)}
+        entry = store.append("cut_spec", s, operator=b.get("operator"))
+        # A cut specification is deliberately revisable -- a corrected measurement should be able to
+        # produce a new line -- so this is not a once-only record and fold() keeps the LAST. What
+        # must not happen is this route handing back a printable cut packet that is not the line the
+        # log kept: the operator marks denim from the packet in front of them, and two clients
+        # posting together each got their own packet and a 200. The gate would still have caught the
+        # divergence -- a new cut_spec invalidates an earlier mark verification by seq, and the
+        # second person's measurements are checked against the log's spec to CUT_MARK_TOLERANCE_MM
+        # -- but only after someone had already drawn on the garment. So the answer describes the
+        # log, and says plainly when what the log kept is not what this request computed.
+        kept_state, _ = store.fold()
+        kept = kept_state["cut_spec"] or dict(s, seq=entry.get("seq"))
+        superseded = kept.get("seq") != entry.get("seq")
+        out = {"ok": True, "cut_spec": kept, "seq": kept.get("seq"),
+               "packet": CUT.packet_lines(m.group(1), kept)}
+        if superseded:
+            out["superseded"] = True
+            out["error"] = ("another cut specification was written for this garment while this one "
+                            "was being computed, and the log keeps the later of the two. The packet "
+                            "returned here is the line the log holds -- do not mark the garment "
+                            "from an earlier one.")
+        return 200, out
 
     @api.route("POST", "/api/wash/(DENIM_[0-9]{4})")
     def _wash(m, _q, b):
         store = session.store(m.group(1))
         st, _ = store.fold()
-        which = "wash_actual" if b.get("actual") else "wash_planned"
-        if b.get("actual") and not st["wash_planned"]:
+        actual = bool(b.get("actual"))
+        which = "wash_actual" if actual else "wash_planned"
+        if actual and not st["wash_planned"]:
             return 400, {"error": "record the planned wash first; actual settings never replace "
                                   "planned ones"}
         rec = dict(b.get("wash") or {})
@@ -669,24 +862,49 @@ def build_api(session):
                 rec[k] = _num(rec.get(k), k)
             except BadInput as e:
                 return 400, {"error": str(e)}
-        if not b.get("actual") and st["wash_planned"]:
-            return 400, {"error": "this garment already has a wash plan; the planned settings are "
-                                  "what a deviation is measured against and are not revised"}
-        # Symmetrically for the ACTUAL. The CLI refuses a second recording by name and this route
-        # accepted any number, returning {"ok": true} each time while fold() discarded all but the
-        # first -- so a phone retrying a timed-out POST was told its settings were saved when they
-        # were not, and a correction that overwrites erases exactly the deviation the planned/actual
-        # split exists to preserve.
-        if b.get("actual") and st["wash_actual"]:
-            return 409, {"error": "the actual wash is already recorded for this garment. It is "
-                                  "written once, like the plan: a correction that overwrites is "
-                                  "indistinguishable from the wash never having deviated.",
-                         "fix": "record the difference as a deviation of kind 'wash', naming the "
-                                "field"}
-        store.append(which, rec, operator=b.get("operator"))
+        # A wash record is written once, planned and actual alike. Deciding that from `st` alone is
+        # not enough: `st` was folded before this handler did any work, the server is a
+        # ThreadingHTTPServer, and a phone retrying a timed-out POST sends the request again. Eight
+        # concurrent requests all folded, all saw the slot empty, all passed this check and all
+        # appended; fold() keeps the first, so seven operators were told {"ok": true} for settings
+        # the log discarded -- and for the ACTUAL that silently erases the deviation the
+        # planned/actual split exists to preserve. So the same question is asked again inside the
+        # append lock, and this pre-check now exists only to give the ordinary sequential case its
+        # usual message without a write attempt.
+        def occupied(s):
+            if actual and not s["wash_planned"]:
+                return ("record the planned wash first; actual settings never replace planned ones")
+            if actual and s["wash_actual"]:
+                return ("the actual wash is already recorded for this garment. It is written once, "
+                        "like the plan: a correction that overwrites is indistinguishable from the "
+                        "wash never having deviated.")
+            if not actual and s["wash_planned"]:
+                return ("this garment already has a wash plan; the planned settings are what a "
+                        "deviation is measured against and are not revised")
+            return None
+
+        why = occupied(st)
+        if why:
+            return (409 if actual else 400), {
+                "error": why,
+                "fix": "record the difference as a deviation of kind 'wash', naming the field",
+            }
+        try:
+            store.append_guarded(which, rec, operator=b.get("operator"), guard=occupied)
+        except Rejected as e:
+            # Same status the sequential path would have given: losing a race is the same refusal
+            # as arriving second, and an operator reading the two should not have to tell them
+            # apart.
+            return (409 if actual else 400), {
+                "error": str(e),
+                "fix": "record the difference as a deviation of kind 'wash', naming the field",
+            }
         devs = []
-        if b.get("actual"):
-            devs = diff_planned_actual(st["wash_planned"], rec)
+        if actual:
+            # Re-folded, not reused: the planned settings this actual is diffed against must be the
+            # ones the log holds now, not the ones a fold from before the lock happened to see.
+            st2, _ = store.fold()
+            devs = diff_planned_actual(st2["wash_planned"], rec)
             for d in devs:
                 store.append("deviation", dict(d, kind="wash"), operator=b.get("operator"))
         return 200, {"ok": True, "deviations": devs}

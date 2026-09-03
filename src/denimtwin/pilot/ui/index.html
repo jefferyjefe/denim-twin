@@ -82,6 +82,26 @@
       <table class="chk" id="checks"></table>
     </div>
 
+    <!-- Claims no pixel test can judge, across the whole session. The capture flow moves on from
+         a frame whose outcome is HUMAN_VERIFICATION_REQUIRED, so without this list the operator
+         met all of them at once at the gate with no way to answer them. -->
+    <div class="card" id="claimscard" hidden>
+      <h2>Waiting for you to confirm (<span id="c-count">0</span>)</h2>
+      <div class="muted">A photograph cannot judge these. Look at the frame, then say what you see.
+        Nothing here is confirmed by taking the picture.</div>
+      <div id="claimlist"></div>
+    </div>
+
+    <!-- The claims that authorise the cut. They belong to the session, not to any one photograph,
+         and this screen had no route to any of them -- so the door the operator is holding on cut
+         day could not record the three things the cut gate reads. -->
+    <div class="card" id="sessionclaimscard" hidden>
+      <h2>Cut-day confirmations</h2>
+      <div class="muted">These are about the session, not about one photograph. The cut gate reads
+        them.</div>
+      <div id="sessionclaimlist"></div>
+    </div>
+
     <div class="card">
       <h2>Session</h2>
       <div class="srow"><div><b id="p-done">0</b> <span>of <span id="p-total">0</span> frames</span></div>

@@ -1,7 +1,7 @@
 {
- "profile": "ci",
+ "profile": "full",
  "failed": 0,
- "passed": 702,
+ "passed": 909,
  "skipped": 2,
  "xfailed": 6,
  "error": 0,

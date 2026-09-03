@@ -15,13 +15,14 @@ this is safe' is not permission.
 |---|---|
 | `annotations.identify_instances` | every counted feature is described one instance at a time, with a stable id and a location, so each photograph names the physical thing it is of |
 | `captures.files_intact` | every recorded photograph on disk, hash unchanged, filed under its own name inside the garment directory |
-| `captures.instance_identity` | every photograph of a repeated feature agrees with the plan about which one of them it shows |
+| `captures.instance_identity` | every photograph of a repeated feature agrees with the plan about which one of them it shows, and none of them was re-described after it was accepted -- or the disagreement is acknowledged one frame at a time, by a deviation naming that frame and recorded after it |
 | `captures.no_undeclared_reuse` | no photograph satisfies two shots without a declared reuse |
 | `captures.relays_independent` | each repeat followed a real re-lay |
 | `captures.repositions_recorded` | each repeat that needed a camera reposition records one |
 | `captures.required_complete` | every required frame captured, checked, and passing |
 | `captures.reuse_legitimate` | any reused image passed the borrowing shot's own checks |
 | `captures.state_order` | no photograph is filed in a state the log's own order contradicts: nothing of the uncut garment after the cut, nothing of the washed one before the wash |
+| `captures.subjects_bound` | where a shot's repeats are different physical things -- the other leg, the other outseam -- each repeat records WHICH, it is the one the plan asks for, and no two repeats claim the same one |
 | `captures.verdicts_reproduce` | every frame recorded as passing still passes when the checker is run again on the photograph itself |
 | `cut.confirmations` | legs cut separately, offcuts retained and labelled |
 | `cut.not_already_performed` | this garment has not already been cut; a gate that authorises an irreversible act may not be asked after it |
@@ -54,6 +55,8 @@ this is safe' is not permission.
 |---|---|
 | `measurements.post_wash` | the washed garment was measured again, so shrinkage is the difference between two recorded numbers rather than one |
 | `wash.actual` | what actually happened, with every departure from the plan recorded |
+| `log.readable` | the capture log could be read at all. When it cannot, this is the only thing the gate can say, and it is UNAVAILABLE rather than NO: recover from the phone's own copies and re-ingest |
+| `spec.usable` | the shot plan on disk still declares every state this gate guards, so the gate can be evaluated at all |
 On the most demanding garment the plan can describe, that is **221 required frames** before
 the cut.
 

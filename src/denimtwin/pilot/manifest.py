@@ -224,7 +224,7 @@ class Manifest(object):
         # without it is exactly the behaviour before the lock existed: an honest read that may catch
         # a torn tail mid-append and reports it, which the caller already handles.
         shared = None
-        if verify:
+        if verify and not self._holding_write_lock:
             try:
                 import fcntl
                 shared = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
@@ -482,13 +482,34 @@ class Manifest(object):
 
     # -- writing ------------------------------------------------------------------------------
 
-    def append(self, kind, payload, *, operator=None, setup_hash=None, now=None):
+    #: Set while THIS instance holds the exclusive write lock. A verifying read waits for that
+    #: lock to clear before it reads, which is right for every other reader and wrong for the one
+    #: holding it: flock conflicts between two file descriptors of the same file even inside one
+    #: process, so a precheck that folds the log would spin for the whole READ_LOCK_WAIT_S and then
+    #: read anyway -- two seconds per guarded append, with every other writer blocked behind it.
+    #: While this is set the wait is skipped, and it is skipped SAFELY: holding the exclusive lock
+    #: is itself the proof that no writer is mid-append.
+    _holding_write_lock = False
+
+    def append(self, kind, payload, *, operator=None, setup_hash=None, now=None, precheck=None):
         """Append one chained entry and return it. fsync'd before returning.
 
         Serialised with an exclusive lock across read-head-then-write. Without it two writers read
         the same head, both stamp prev_chain with it, and the chain breaks permanently -- and the
         web app is a ThreadingHTTPServer, so two photographs arriving together from one phone were
         enough. The failure then accused the operator of tampering with their own log.
+
+        `precheck`, when given, is called with no arguments while that same lock is held, just
+        before the entry is composed, and may raise to abandon the append. It exists because the
+        lock covering only the write is not enough to make a once-only record once. A caller that
+        folds the log, sees the record absent and then appends has decided OUTSIDE the lock: N
+        concurrent callers all fold, all see it absent, all pass their own guard, and all write.
+        fold() then keeps the first, so N-1 operators were told their settings were saved when they
+        were discarded -- and for the actual wash that silently erases the deviation the
+        planned/actual split exists to preserve. The decision has to be inside the lock too.
+
+        A precheck may only READ the log. Appending from inside one deadlocks against the lock it
+        is already holding.
         """
         self.path.parent.mkdir(parents=True, exist_ok=True)
         lock = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
@@ -498,9 +519,44 @@ class Manifest(object):
                 fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             except (ImportError, OSError):
                 pass                      # no flock here; the rest still runs, single-writer
+            self._holding_write_lock = True
+            if precheck is not None:
+                precheck()
             return self._append_locked(kind, payload, operator=operator, setup_hash=setup_hash,
                                        now=now)
         finally:
+            self._holding_write_lock = False
+            lock.close()
+
+    def append_many(self, items, *, precheck=None):
+        """Append several chained entries under ONE hold of the write lock.
+
+        For a group of entries that only mean anything together. Freezing the rig is the case: the
+        freeze and the calibration readings taken against it are separate entries, and a reading
+        counts only against the freeze in effect, so a second freeze landing between them leaves
+        the readings bound to a configuration that is no longer current -- the gate then blocks a
+        rig that was measured correctly. Measured on the phone route: eight concurrent freezes,
+        eight distinct hashes handed back, nine of ten readings orphaned.
+
+        This does not make the group atomic against a crash -- a machine that dies mid-group leaves
+        a prefix, which the chain still verifies and the gate still blocks on. What it guarantees
+        is that no other WRITER interleaves with it.
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        lock = open(str(self.path.parent / (self.path.name + ".lock")), "a+")
+        try:
+            try:
+                import fcntl
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            except (ImportError, OSError):
+                pass
+            self._holding_write_lock = True
+            if precheck is not None:
+                precheck()
+            return [self._append_locked(k, p_, operator=op, setup_hash=sh)
+                    for (k, p_, op, sh) in items]
+        finally:
+            self._holding_write_lock = False
             lock.close()
 
     def _append_locked(self, kind, payload, *, operator=None, setup_hash=None, now=None):
