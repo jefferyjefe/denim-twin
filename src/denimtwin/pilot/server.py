@@ -50,6 +50,106 @@ IMAGE_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
 MAX_UPLOAD_BYTES = 200 * 1024 * 1024      # a 48 MP HEIC burst is nowhere near this; a runaway is
 MAX_BODY_BYTES = 2 * 1024 * 1024          # non-upload JSON bodies
 
+#: The environment variable that carries the AGGREGATE in-flight upload budget, in bytes.
+INFLIGHT_ENV = "PILOT_MAX_INFLIGHT_UPLOAD_BYTES"
+
+#: There is deliberately no default. `MAX_UPLOAD_BYTES` caps ONE upload at 200 MB and
+#: `max_connections` caps connections at 32, and nothing counted bytes in flight -- so the server
+#: permitted, by construction, thirty-two uploads holding their read buffers at once. Measured over
+#: real sockets: six concurrent 200 MiB uploads all returned 200 OK with `refused_connections=0`
+#: and 1.80 GiB resident.
+#:
+#: What that ceiling should be is decision D5 in docs/PILOT_OWNER_DECISIONS.md and is not the
+#: software's to make: an aggregate byte budget, a smaller upload cap, a limit on concurrent
+#: uploads distinct from connections and a request deadline are four different answers, and each of
+#: them is a number about a machine on a bench that this repository does not describe. A default
+#: here would be a threshold nobody measured, sitting in the path every photograph crosses -- which
+#: is the same failure as a pre-filled rig field, one layer down. So the accounting, the refusal
+#: and the rejection of a bad configuration are all here, and the number is not.
+DEFAULT_INFLIGHT_UPLOAD_BYTES = None
+
+
+class UnsafeExposure(RuntimeError):
+    """The server was asked to bind where a phone can reach it, without the budget that bounds it.
+
+    Refusing is safe in the only direction that matters. A server that will not start is an
+    operator who has to make a decision; a server that starts unbounded is 6.4 GB of resident
+    buffers on the machine holding the only copy of the evidence.
+    """
+
+
+def parse_inflight_budget(raw):
+    """Bytes, or None for 'nobody has decided'. Raises ValueError for anything else.
+
+    Absent and unlimited are different states and must not collapse into one another, which is why
+    this returns None rather than a large number: the caller decides what absent means where it is,
+    and it means different things on loopback and on a network interface.
+    """
+    if raw is None:
+        return None
+    raw = raw.strip()
+    if not raw:
+        return None
+    if not re.fullmatch(r"[0-9]+", raw):
+        raise ValueError(
+            "%s must be a whole number of bytes, and is %r. It is an aggregate ceiling on the "
+            "bytes this machine will hold in upload buffers at once; see decision D5 in "
+            "docs/PILOT_OWNER_DECISIONS.md." % (INFLIGHT_ENV, raw))
+    n = int(raw)
+    if n <= 0:
+        raise ValueError(
+            "%s must be greater than zero, and is %d. Zero is not 'no limit' -- it is a server "
+            "that refuses every photograph, which loses evidence rather than protecting it. Unset "
+            "the variable to leave the decision unmade." % (INFLIGHT_ENV, n))
+    if n < MAX_UPLOAD_BYTES:
+        raise ValueError(
+            "%s is %d, which is smaller than MAX_UPLOAD_BYTES (%d) -- the largest single upload "
+            "the protocol already permits. A budget below that can never admit one motion clip, so "
+            "the server would refuse evidence it is supposed to collect. The smallest defensible "
+            "value is %d." % (INFLIGHT_ENV, n, MAX_UPLOAD_BYTES, MAX_UPLOAD_BYTES))
+    return n
+
+
+def configured_inflight_budget(env=None):
+    """The budget this process was configured with, validated. None if nobody has set one."""
+    return parse_inflight_budget((env if env is not None else os.environ).get(INFLIGHT_ENV))
+
+
+class InFlightBudget(object):
+    """Bytes reserved before a body is read, released when the request ends however it ends.
+
+    `limit=None` is the state the server has always been in: everything admitted. The counter still
+    runs there, because "how much is this machine holding right now" is a question worth being able
+    to answer even when nothing refuses on the answer.
+    """
+
+    __slots__ = ("limit", "_held", "_lock")
+
+    def __init__(self, limit=None):
+        self.limit = limit
+        self._held = 0
+        self._lock = threading.Lock()
+
+    @property
+    def in_flight(self):
+        with self._lock:
+            return self._held
+
+    def reserve(self, n):
+        """True if `n` bytes may be held. Reserve BEFORE reading, or the budget is advisory."""
+        n = max(0, int(n))
+        with self._lock:
+            if self.limit is not None and self._held + n > self.limit:
+                return False
+            self._held += n
+            return True
+
+    def release(self, n):
+        """Give the bytes back. Clamped at zero: a double release must not mint capacity."""
+        n = max(0, int(n))
+        with self._lock:
+            self._held = max(0, self._held - n)
+
 
 class NoSuchGarment(KeyError):
     """Asked about a garment this session has no directory for.
@@ -289,12 +389,37 @@ class _Handler(BaseHTTPRequestHandler):
         if u.path == "/api/upload":
             if length > MAX_UPLOAD_BYTES:
                 return self._send(413, {"error": "upload larger than %d bytes" % MAX_UPLOAD_BYTES})
+            # The read buffer lives for the whole upload, and `timeout = 30` is a per-recv socket
+            # timeout rather than a request deadline, so a client trickling bytes holds its buffer
+            # far longer than thirty seconds. Reserve BEFORE the read or the accounting is a
+            # description of what already happened. `_parse_multipart` peaks at 2x the body, which
+            # is what this reserves against; the ratio is measured in its own comment.
+            hold = length * _PARSE_PEAK_RATIO
+            budget = getattr(self.server, "inflight", None)
+            if budget is not None and not budget.reserve(hold):
+                # 503 is the refusal this server already knows how to give, and it is the honest
+                # one: the upload is not wrong, the machine is full. A refused upload is a missing
+                # photograph and a missing photograph makes the gate refuse, so this cannot become
+                # a false READY in either direction.
+                return self._send(503, {
+                    "error": "this machine is already holding %d bytes of uploads, and the "
+                             "configured ceiling is %d. Wait for the ones in flight to finish and "
+                             "send this one again -- it has not been recorded."
+                             % (budget.in_flight, budget.limit)})
             try:
-                parts = _parse_multipart(self.rfile, self.headers, length)
-            except ValueError as e:
-                return self._send(400, {"error": "could not read the upload: %s" % e})
-            status, obj = self.server.api.dispatch("POST", u.path, q, parts)
-            return self._send(status, obj)
+                try:
+                    parts = _parse_multipart(self.rfile, self.headers, length)
+                except ValueError as e:
+                    return self._send(400, {"error": "could not read the upload: %s" % e})
+                status, obj = self.server.api.dispatch("POST", u.path, q, parts)
+                return self._send(status, obj)
+            finally:
+                # However this ended -- refused, parsed, dispatched, or raised past all of it --
+                # the bytes are no longer held. A budget that is not decremented on the failure
+                # path is a server that stops accepting photographs after its first bad upload,
+                # which loses evidence exactly when something has already gone wrong.
+                if budget is not None:
+                    budget.release(hold)
         if length > MAX_BODY_BYTES:
             return self._send(413, {"error": "body too large"})
         raw = self.rfile.read(length) if length else b"{}"
@@ -318,6 +443,13 @@ class _Handler(BaseHTTPRequestHandler):
             return self._send(415, {"error": "expected application/json"})
         status, obj = self.server.api.dispatch("POST", u.path, q, body)
         return self._send(status, obj)
+
+
+#: What one upload actually costs in heap, as a multiple of its declared length. The parse was
+#: measured at 4.00x before the memoryview rewrite and at 2.00x after it, at 4 MiB, 16 MiB and
+#: 64 MiB alike, by both tracemalloc and ru_maxrss. The budget reserves against the real cost
+#: rather than the wire length, because it is the heap that runs out.
+_PARSE_PEAK_RATIO = 2
 
 
 def _parse_multipart(rfile, headers, length):
@@ -453,7 +585,26 @@ def serve(api, *, data_root, host="127.0.0.1", port=8765, lan=False, ui_dir=None
           token=None, verbose=False):
     """Start the server and return (httpd, url). Caller runs serve_forever or shutdown."""
     bind = "0.0.0.0" if lan else host
+    # Validate the configuration BEFORE the socket exists. A malformed value is a mistake wherever
+    # it appears, so it is refused on loopback too; an ABSENT value is a decision nobody has made,
+    # and that only becomes exposure when the phone can reach the port.
+    budget = configured_inflight_budget()
+    if budget is None and lan:
+        raise UnsafeExposure(
+            "refusing to bind 0.0.0.0 with no aggregate upload budget.\n"
+            "  MAX_UPLOAD_BYTES caps ONE upload at %d bytes and max_connections caps connections "
+            "at %d, and nothing bounds the two together -- so this would permit that many upload "
+            "buffers at once on the machine holding the only copy of the evidence.\n"
+            "  What that ceiling should be is decision D5 in docs/PILOT_OWNER_DECISIONS.md and is "
+            "not the software's to choose. Set it deliberately:\n"
+            "      %s=<bytes> tools/pilot.py serve <GARMENT> --lan\n"
+            "  The smallest defensible value is %d, one permitted upload. Refusing an upload is "
+            "safe: a refused upload is a missing photograph, and a missing photograph makes the "
+            "gate refuse.\n"
+            "  Loopback needs no decision: drop --lan to serve 127.0.0.1."
+            % (MAX_UPLOAD_BYTES, PilotServer.max_connections, INFLIGHT_ENV, MAX_UPLOAD_BYTES))
     httpd = PilotServer((bind, port), _Handler)
+    httpd.inflight = InFlightBudget(budget)
     httpd.api = api
     httpd.data_root = Path(data_root)
     httpd.ui_dir = Path(ui_dir or UI_DIR)

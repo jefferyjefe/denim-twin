@@ -30,7 +30,7 @@ from . import claims as CLAIMS
 from . import subjects as SUBJ
 from . import spec as SPEC
 from .manifest import ingest_photo, read_exif, exif_timestamp
-from .server import Api, NoSuchGarment, serve
+from .server import Api, NoSuchGarment, UnsafeExposure, serve
 from .store import Store, Rejected, setup_hash, diff_planned_actual, mean_of
 
 
@@ -974,7 +974,13 @@ def run(*, root, garments, spec_path, board_path, garment=None, port=8765, lan=F
         print("cannot start: the shot-plan specification does not load.\n%s" % e, file=sys.stderr)
         return 2
     api = build_api(session)
-    httpd, url = serve(api, data_root=garments, port=port, lan=lan)
+    try:
+        httpd, url = serve(api, data_root=garments, port=port, lan=lan)
+    except (UnsafeExposure, ValueError) as e:
+        # A refusal with a sentence, not a stack trace -- the rule the gate already holds one layer
+        # down. Exit 2: this is not a failure, it is a configuration the operator has not made yet.
+        print("cannot start: %s" % e, file=sys.stderr)
+        return 2
     where = "this machine only" if not lan else "this machine and the local network"
     print("=" * 68)
     print("  denim-twin Pilot Capture Navigator")
