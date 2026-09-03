@@ -474,3 +474,104 @@ Three of the fixes above were themselves wrong, and the dry runs found them:
 **What this round is evidence of.** The same narrow thing as the others: these are the attacks that
 have been tried. It is not a claim that the evidence set is now complete — nineteen regions have no
 post-wash frame and no decision, and that is written down rather than fixed.
+
+
+## Round 8 — what survived the per-frame fixes, and a review harness that failed open
+
+Round 7's own fixes were the target. The handoff into this round reported a green suite, a green
+real-plan run, and three independent false-READY paths found in code that had already survived a
+review — two of them introduced by attempted fixes. It also reported something about the review
+process itself: several refuter agents had become unavailable on a session limit, and the harness
+had counted their findings as dismissed.
+
+That last defect is the one this round has to record first, because it happened again. Ten
+falsification lenses were dispatched, each with a precise invariant, a file set, an output schema
+and a requirement to produce an executable reproduction; every finding was to be judged by three
+adversarial verifiers with distinct sub-lenses. **Nine lenses reported. One -- verification
+profiles and CI claims -- never ran. Of roughly a hundred and seventy verifier agents, all but a
+handful died on a session limit.** Exactly one finding carries two independent CONFIRMED verdicts.
+Every other finding in this round was reproduced or refuted by the primary agent alone, and that
+is recorded here as what it is: not independent review. The unavailable lens is unavailable, not
+passed.
+
+| angle | reported | independently adjudicated |
+|---|---|---|
+| append-only folding and lifecycle monotonicity | 6 | 0 |
+| deviation scope and time travel | 10 | 0 |
+| positive/negative controls and vacuity | reported, all verifiers unavailable | 0 |
+| human claims, evidence binding, stale confirmation | 3 | 0 |
+| reuse reachability and the borrow ceremony | 4 | 1 confirmed |
+| CLI / phone / service parity and printed remedies | 8 | 0 |
+| concurrency, interruption, restart recovery | 6 | 0 |
+| gate conditions read one at a time | 8 | 0 |
+| the owner decision packet against the code | 10 | 0 |
+| verification profiles, CI claims, reviewer semantics | **lens unavailable** | -- |
+
+### What was reproduced and closed
+
+Every one of these has a regression that fails on the code as it was, and each was reproduced
+against the live checkout before it was touched.
+
+**The same-command approval, five more times.** The claims a shot spells out had been closed
+against `--confirm` on the ingest command: an approval arriving with the photograph is a HUMAN
+outcome, not a PASS. Four checks asking exactly the same kind of question -- `ruler_visible`,
+`garment_side`, `anatomical_region`, `camera_repositioned` -- still went straight to PASS on a
+flag, and a fifth, `relay_independence`, took the operator's confirmation from the same flag as
+its final step to PASS while the gate's own re-derivation refused to. Eighty shots in the committed
+plan raise the first two together. One helper now, five call sites, and a structural test that
+walks every read of the ingest assertions in `check_capture` and refuses any branch that reaches a
+PASS. The self-test's positive controls had been pre-authorising the same five keys through the
+same route; they clear them through the real confirmation model now and still open all three
+gates.
+
+**Three of the eight lifecycle states were outside both boundaries.** `captures.state_order`
+named its ends by hand -- three states before the cut, two after the wash -- and `immediate_after`
+and `offcut_before`, the only states that exist between the shears and the water, were in neither
+tuple. The tape laid against the freshly cut inseam, the cut-edge macros and the offcut's dry faces
+could all be skipped on cut day and filled afterwards from the washed garment with no blocker at
+either later gate. The boundaries are derived from the specification's ordering now, there are two
+of them, and only the direction that is physically impossible is refused.
+
+**A borrowed frame carries its own state.** `pilot.py reuse` compared subjects and instances and
+never compared lifecycle states, so one command copied the pre-cut bytes into the post-wash slot;
+`captures.state_order` judged the copy's log position, which really was after the wash, and
+reported that every photograph agreed with the log. This is the one finding with two independent
+confirmations. The command refuses it before writing; the gate tests the source frame's state
+against the slot's, and refuses when the cut or the wash lies between them.
+
+**"Treat those frames as absent" did not.** Both per-frame acknowledgements ended their blocker
+with that sentence, both conditions honoured the acknowledgement, and `captures.required_complete`
+never read it -- so a photograph of the cut garment in an empty before slot went from blocked to
+captured-and-passing with one typed line. Three lenses found it independently. The acknowledged
+frame is missing evidence now, with its reason beside it.
+
+**Ten deviation sites could be pre-registered.** `after` had a default, two sites passed it, and
+the recorded reason for leaving the rest -- that each would need an invented answer to "when did
+this departure exist" -- was wrong at every site but one: the answer was a sequence number already
+in the log, and most blockers printed it. `after` is mandatory now; `spec_rebound` passes `None`
+with its reason written beside it.
+
+**The audit that crashes when it has something to say.** `tools/protocol_audit.py` appended its
+one HARD finding to a list bound three lines later. Adding a `[FILL]` field -- the act the owner
+packet asks for twice -- produced a NameError instead of a sentence, in an advisory check that
+could not have gone red either way.
+
+**The scientific profile did not run the scientific proof.** `verify.py --profile full` ran the
+ordinary self-test, whose gate positive controls are on a four-shot fixture; the real 424-frame
+plan ran only behind a switch no profile threw, and CI had never executed it. It runs under the
+full profile now and under a separately named CI job, and the workflow file is parsed, not grepped,
+to prove it. A required check that could not run also exited 0; it exits 2.
+
+**The aggregate upload ceiling, built without a number.** Accounting before the read, release on
+every exit, 503 over budget, the value read from the environment with no default, and `serve
+--lan` refusing to start until the owner sets one. The number is still decision D5.
+
+### What this round is evidence of
+
+Less than the count suggests, and the reason is above the table. One round of independent
+falsification was attempted and did not complete; the primary agent's reproductions are real but
+are not a second pair of eyes. The rate of discovery in the changed code has not converged: five
+of the fixes above are to code that had survived a review, and two of them close holes underneath
+fixes made in round 7. The standing rule is unchanged -- a finding is closed by a fix and a
+scenario that fails without it -- and the standing claim is narrower than it was: **these are the
+attacks that have been tried, and this round's independent adjudication is incomplete.**

@@ -7,6 +7,22 @@ fact or settling a research question to make a gate go green.
 
 Nothing here blocks a **simulated** run. Several of them block a **real** one, and they are marked.
 
+## The register
+
+Each decision has a stable ID, so a commit, a log entry or a conversation can name it without
+quoting a heading that may be reworded. Three columns say what the sections below did not: whether
+the choice can still be changed once capture has begun, what act freezes it, and how -- or whether
+-- the software proves it was frozen before an irreversible act.
+
+| ID | decision | reversible after capture begins? | what freezes it | how the system proves it was frozen before the cut or the wash |
+|---|---|---|---|---|
+| **D1** | the nineteen open post-wash regions, and the cut line they depend on | the region answers: yes, until the post-wash session ends -- every before-state twin is already in the plan, and a dedicated post-wash frame can still be taken while the washed garment exists; `omit` is the only answer that is irreversible once the garment is gone. The cut line: no -- it is the cut | `protocol/shotplan/regions.json` (each region's decision `status`; for `covered`, `also_covers_regions` on the `POSTWASH.WHOLE.*` shots in `shotplan.json`), reported by `tools/check_shotplan.py`. The cut line: `tools/pilot.py cutspec <G> --inseam N`, per garment | **It does not.** No gate condition reads `spec.undeclared_changing_regions()`. `tools/check_shotplan.py` is a required check in `tools/verify.py`, and it is satisfied by a decision recorded as `open`. `precut` will print READY TO CUT with all nineteen undecided. The cut line is bound per garment by `cut.specified` before `precut`, but nothing freezes it pilot-wide |
+| **D2** | the thirteen `[FILL]` field lines in `protocol/PROTOCOL.md`; one (`thread count within a [FILL] mm window`) answered by nothing | the document: yes. A rig freeze or a wash record that supplied the same fact on the day: no -- the log is append-only | editing `protocol/PROTOCOL.md`; audited by `tools/protocol_audit.py` | Twelve are proved at the point of use, not in the document: `gates.REQUIRED_SETUP_FIELDS` has no defaults and the wash record demands its own values, so a real session cannot freeze the rig or record the wash without them. The thirteenth has no consumer, so nothing can prove it. `protocol_audit.py` is an **advisory** check in `verify.py`: it cannot fail a build |
+| **D3** | whether `mass_grams` and `fabric_thickness_mm` are re-measured post-wash | adding a post-wash measurement: yes, while the washed garment exists. Its pre-cut counterpart: no -- that garment no longer exists | one line in `gates.POST_WASH_MEASUREMENTS`, plus a named location in `PROTOCOL.md` for thickness | `measurements.post_wash` refuses `ready_to_finalize` without every entry in that dictionary. Whatever is in it is enforced; whatever is not is not |
+| **D4** | -- not a decision: two things the owner must run by hand; see section 4 | | | |
+| **D5** | the aggregate ceiling on upload bytes held in flight | yes, at any time -- it is configuration, not evidence | the environment variable `PILOT_MAX_INFLIGHT_UPLOAD_BYTES`, in bytes, on the machine running `serve` | `tools/pilot.py serve --lan` **refuses to start** (exit 2) while the variable is unset, and names this decision. A malformed value, zero, or a value below one permitted upload is refused on loopback too. Over budget, an upload gets 503 and is not recorded. There is no default: the accounting and the refusal are built, the number is not |
+| **D6** | the deviation ceremony: one command per frame, and whether that is the right shape | yes -- it is the shape of a command, not a recorded fact; but every deviation already recorded stays in the log | the `deviation` sub-command's own argument set in `tools/pilot.py` | Every `deviation_covers` site now requires a deviation to postdate the departure it excuses (one exception, `spec_rebound`, whose departure is an edit to a file the log cannot date). A per-frame acknowledgement makes the frame **absent** for `captures.required_complete`, as its blocker always said. Neither is a proof the ceremony is right; both are proofs it cannot be pre-registered |
+
 ---
 
 ## 1. Nineteen post-wash regions with no frame and no decision
@@ -267,11 +283,17 @@ gate before they exist would make the finalize gate demand a number nobody can t
 
 **`tools/pilot.py selftest --full`, before a real cut.** It is the only thing that drives one
 garment through the entire 424-frame plan and asserts that all three gates OPEN, and the only place
-the sixteen single-fault negative controls run. It takes over an hour and writes several gigabytes
-of synthetic frames, so `verify.py` runs the ordinary `selftest` and CI never throws the `--full`
-switch. `tests/test_pilot_selftest.py` asserts the controls still exist and still name every
-condition they are supposed to close, so they cannot be quietly deleted -- but nothing except a
-`--full` run tells you they still pass.
+the sixteen single-fault negative controls run. Measured on the development machine it took
+seventeen minutes of wall clock, not the hour this paragraph used to claim; it still writes
+gigabytes of synthetic frames. Two things changed because of that measurement: `tools/verify.py
+--profile full` now runs it (the ordinary `ci` profile still does not), and
+`.github/workflows/tests.yml` has a separate job, `real-plan-proof`, that runs it on pushes and is
+deliberately not the ordinary build -- the two prove different things and must not share one green
+tick. `tests/test_verify_readiness_contract.py` asserts both of those against the registered check
+graph and the parsed workflow, not against source text. `tests/test_pilot_selftest.py` asserts the
+controls still exist and still name every condition they are supposed to close, so they cannot be
+quietly deleted. None of that is a substitute for running it on the machine that will be on the
+bench, before the cut.
 
 **A rehearsal through the two front doors, not only through the bench.** The self-test drives the
 same module functions the CLI and the phone call, and since this round it goes through the same
@@ -327,6 +349,17 @@ A defensible answer is likely "cap concurrent *uploads* at a small number and gi
 which reuses the refusal the server already knows how to give. But the small number is a choice
 about the machine on the bench, and that machine is not described anywhere in this repository.
 
+**What has been built since, without choosing the number.** `server.py` now reserves an upload's
+bytes (at the measured 2x parse ratio) before reading its body and releases them however the
+request ends; over budget is a 503 that says the photograph was not recorded. The budget is read
+from `PILOT_MAX_INFLIGHT_UPLOAD_BYTES`, and there is deliberately no default:
+`DEFAULT_INFLIGHT_UPLOAD_BYTES = None`, asserted by a test. `serve --lan` refuses to start while it
+is unset and prints this section's number; a malformed value, zero, or anything below one permitted
+upload (`MAX_UPLOAD_BYTES`) is refused on loopback as well, because a budget that can never admit
+one motion clip loses evidence rather than protecting it. Loopback with the variable unset behaves
+exactly as before, so nothing in development or in the self-test needed the decision. The decision
+is now the only thing missing, and the server says so at the one moment it matters.
+
 ---
 
 ## 6. What a deviation may excuse, and the shape the answer took
@@ -366,11 +399,31 @@ The alternative — a single deviation that names several frames — was not bui
 harder to read back as evidence months later than one record per departure. If you would rather it
 took a list, that is a change to make deliberately, not one to discover at the table.
 
-The other ten `deviation_covers` call sites in `gates.py` were left unbounded. They are not the
-same shape: most name what departed (`--planned`/`--actual` values that the gate compares), and
-`spec_rebound` is already scoped to a specific on-disk hash. Adding an ordering bound to those is
-defensible and was not done, because each needs its own answer to "when did this departure come
-into existence" and inventing one per site is how a guard stops meaning anything.
+The other ten `deviation_covers` call sites in `gates.py` were left unbounded when this section was
+first written, with the reasoning that each needs its own answer to "when did this departure come
+into existence" and inventing one per site is how a guard stops meaning anything. That reasoning
+did not survive reading the sites. At every one but `spec_rebound` the answer is a sequence number
+already in the log -- the revising reading's entry, the second cut record's entry, the second wash
+record's entry, the rewrite's entry, the re-freeze's entry, the out-of-range reading's entry -- and
+most of the blockers were already printing it. All of them are bound now; `after` has no default,
+so a new consumer has to answer the question to compile; and `spec_rebound` passes `after=None`
+with its reason written beside it, because an edit to a file outside the log is genuinely something
+the log cannot date. `tests/test_pilot_deviation_ordering.py` scans the parsed module for any call
+that omits the answer.
+
+Two things in this section are now stated more precisely than before. Each blocker prints the
+deviation line for **at most four** of the frames it is blocking on, not for every frame; the rest
+are counted. And a per-frame acknowledgement now does what the blocker's last sentence always
+promised: `captures.required_complete` treats the acknowledged frame as **absent**. It had been
+counting it as captured and passing, so a photograph of the cut garment filed into an empty before
+slot went from blocked to accepted with one typed line -- the false READY the per-frame scoping was
+built to close, one command per frame instead of one for the session.
+
+**One waiver is still broader than its neighbours, and it is yours to look at.**
+`post_wash_out_of_range` is now bound in time, but unlike `measurement_revised:<name>` it has no
+per-measurement form: one acknowledgement still covers every out-of-range post-wash reading taken
+before it. Giving it a per-name form changes a command that a blocker prints, which is a
+vocabulary decision rather than a bug fix, and is left here rather than made.
 
 ---
 
