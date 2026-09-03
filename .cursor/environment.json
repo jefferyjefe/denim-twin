@@ -1,0 +1,5 @@
+{
+  "name": "denim-twin",
+  "install": "bash .cursor/install.sh",
+  "ports": [8765]
+}
